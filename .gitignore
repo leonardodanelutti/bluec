@@ -1,0 +1,8 @@
+*.o
+Testgrammar
+grammar.aux
+grammar.log
+grammar.pdf
+grammar.dvi
+grammar.ps
+grammar

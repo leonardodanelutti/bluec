@@ -1,0 +1,26 @@
+-- bnfc --c -m -o target grammar.cf
+-- TODO: overlap regole conflitti
+
+comment "#" ;
+
+XMLEmpty.       XML ::= ;
+XMLwImport.     XML ::= Import XML ;
+XMLwoImport.    XML ::= Section XMLS ;
+XMLSection.     XMLS ::= Section XMLS ;
+XMLSEmpty.      XMLS ::= ;
+
+-- ImportFile.     Import ::= "<" "import" ">" Path "</" "import" ">" ;
+ImportFile.     Import ::= String ;
+
+FileSection.    Section ::= "<" "section" "name" "=" Ident ">" SBody "</" "section" ">" ;
+SBodyEmpty.     SBody ::= ;
+SBodywInherit.  SBody ::= Inherit SBody ;
+SBodywoInherit. SBody ::= Field SBodyF ;
+SBodyField.     SBodyF ::= Field SBodyF ;
+SBodyFEmpty.    SBodyF ::= ;
+
+InheritSection. Inherit ::= "<" "inherit" ">" Ident "</" "inherit" ">" ;
+
+SectionField.   Field ::= "<" "field" "name" "=" Ident ">" Value "</" "field" ">" ;
+
+rules Value ::= Integer | "true" | "false" | String | "$" Ident | "$" Ident "." Ident ;
