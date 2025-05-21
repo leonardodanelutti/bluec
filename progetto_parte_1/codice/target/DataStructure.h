@@ -15,6 +15,14 @@ struct Sections_
     Fields fields;
     Sections next;
     /* Sections front; */
+    /* TODO: Inherit list to check non-existing section inherited, i.e.:
+       "
+       <section name=a>
+           <inherit>b</inherit> # where b is not defined
+       </section>
+       "
+       should throw a warning or an error reporting inherit usage of a non existing
+       section. */
 };
 
 /* Create a new section */
@@ -49,11 +57,11 @@ struct Fields_
 /* Create a new field */
 Fields make_FieldNew(Ident ident, Value val);
 
-/* Push a new field to the end of a linked list of Fields, 
+/* Push a new field to the end of a linked list of Fields,
    overwrites duplicate fields */
 void push_Field_internal(Fields current, Ident field_ident, Value val);
 
-/* Push a new field to the end of a valid linked list of Fields 
+/* Push a new field to the end of a valid linked list of Fields
    checks are performed */
 void push_Field(Fields current, Ident field_ident, Value val);
 
