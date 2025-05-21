@@ -90,9 +90,9 @@ IDENT [a-zA-Z0-9'_]
 
 <INITIAL>"#"[^\n]* /* skip */; /* BNFC: comment "#" */
 
-<INITIAL>"<import>"      LITERAL_BUFFER_CREATE(); BEGIN IMPORT;
+<INITIAL><[ \t\r\n\f]*import[ \t\r\n\f]*>      LITERAL_BUFFER_CREATE(); BEGIN IMPORT;
 <IMPORT>\\             	 BEGIN ESCAPEDI;
-<IMPORT>"</import>"      yylval->_string = LITERAL_BUFFER_HARVEST(); BEGIN INITIAL; return _STRING_;
+<IMPORT><\/[ \t\r\n\f]*import[ \t\r\n\f]*>      yylval->_string = LITERAL_BUFFER_HARVEST(); BEGIN INITIAL; return _STRING_;
 <IMPORT>.              	 LITERAL_BUFFER_APPEND_CHAR(yytext[0]);
 <ESCAPEDI>f             	 LITERAL_BUFFER_APPEND_CHAR('\f'); BEGIN IMPORT;
 <ESCAPEDI>n             	 LITERAL_BUFFER_APPEND_CHAR('\n'); BEGIN IMPORT;

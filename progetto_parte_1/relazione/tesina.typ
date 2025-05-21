@@ -20,6 +20,11 @@ par(
 
 - la grammatica non ha conflitti perchè bison li segnalerebbe
 - nella grammatica .cf Import messo come string e poi modificato file Flex per matchare <improt>.*</import>
-  come fossero stringhe. TODO: se metti whitespace tipo < import> non funzia
+  come fossero stringhe. 
+  TODO: 
+  <import>a</import
+  # commento
+  >
+  non funziona
 
 =
