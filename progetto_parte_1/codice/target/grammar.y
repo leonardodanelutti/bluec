@@ -23,7 +23,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "Absyn.h"
+#include "Colours.h"
 
 #define YYMAXDEPTH 10000000
 
@@ -93,9 +95,9 @@ extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
 %token<_int>    _INTEGER_
 %token<_string> _IDENT_
 
-%type <xml_> XML
+%type <xmls_> XML
 %type <xmls_> XMLS
-%type <import_> Import
+%type <xmls_> Import
 %type <section_> Section
 %type <sbody_> SBody
 %type <sbodyf_> SBodyF
@@ -107,14 +109,14 @@ extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
 
 %%
 
-XML : /* empty */ { $$ = make_XMLEmpty(); result->xml_ = $$; }
-  | Import XML { $$ = make_XMLwImport($1, $2); result->xml_ = $$; }
-  | Section XMLS { $$ = make_XMLwoImport($1, $2); result->xml_ = $$; }
+XML : /* empty */ { $$ = make_XMLSEmpty(); result->xmls_ = $$; }
+  | Import XML { $$ = make_XMLSwImport($1, $2); result->xmls_ = $$; }
+  | Section XMLS { $$ = make_XMLSection($1, $2); result->xmls_ = $$; }
 ;
 XMLS : Section XMLS { $$ = make_XMLSection($1, $2); result->xmls_ = $$; }
   | /* empty */ { $$ = make_XMLSEmpty(); result->xmls_ = $$; }
 ;
-Import : _STRING_ { $$ = make_ImportFile($1); result->import_ = $$; }
+Import : _STRING_ { $$ = make_ImportFile($1); result->xmls_ = $$; }
 ;
 Section : _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT { $$ = make_FileSection($5, $7); result->section_ = $$; }
 ;
@@ -139,10 +141,55 @@ Value : _INTEGER_ { $$ = make_ValueInteger($1); result->value_ = $$; }
 
 %%
 
+/* Custom global variable that stores the parsed files to avoid
+   recursive imports. */
+struct stat *parsed_files = NULL;
+long unsigned int parsed_files_size = 0;
+long unsigned int parsed_files_count = 0;
 
-/* Entrypoint: parse XML from file. */
-XML pXML(FILE *inp)
+/* Entrypoint: parse XML from file.
+   Returns NULL if XML was not parsed */
+XMLS pXML(FILE *inp, String filename)
 {
+    /* Check that filename is not NULL (i.e. not stdin) */
+    if (filename != NULL)
+    {
+        struct stat file_stat;
+        stat(filename, &file_stat);
+        /* Check if the file has already been parsed. */
+        for (long unsigned int i = 0; i < parsed_files_count; i++)
+        {
+            if ((parsed_files[i].st_ino == file_stat.st_ino) && (parsed_files[i].st_dev == file_stat.st_dev))
+            {
+                fprintf(stderr, ANSI_COLOR_YELLOW "WARNING:" ANSI_COLOR_RESET " multiple import (that could be caused by recursive imports) of the same file '%s' detected.\n", filename);
+                return make_XMLSEmpty();
+            }
+        }
+        /* Save the file name in the parsed files list. */
+        if (parsed_files_size == 0)
+        {
+            parsed_files_size = 1;
+            parsed_files = malloc(sizeof(*parsed_files) * parsed_files_size);
+            if (!parsed_files)
+            {
+                fprintf(stderr, "Failed to allocate memory for parsed files.\n");
+                return 0;
+            }
+        }
+        else if (parsed_files_count >= parsed_files_size)
+        {
+            parsed_files_size += 1;
+            parsed_files = realloc(parsed_files, sizeof(*parsed_files) * parsed_files_size);
+            if (!parsed_files)
+            {
+                fprintf(stderr, "Failed to reallocate memory for parsed files.\n");
+                return 0;
+            }
+        }
+        parsed_files[parsed_files_count] = file_stat;
+        parsed_files_count++;
+    }
+
   YYSTYPE result;
   yyscan_t scanner = grammar__initialize_lexer(inp);
   if (!scanner) {
@@ -157,7 +204,7 @@ XML pXML(FILE *inp)
   }
   else
   { /* Success */
-    return result.xml_;
+    return result.xmls_;
   }
 }
 

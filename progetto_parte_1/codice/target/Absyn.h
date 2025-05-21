@@ -9,8 +9,8 @@
  */
 #define _POSIX_C_SOURCE 200809L
 
-#include <stddef.h>  /* NULL */
-#include <string.h>  /* strdup */
+#include <stddef.h> /* NULL */
+#include <string.h> /* strdup */
 
 /* C++ Abstract Syntax Interface.*/
 
@@ -19,8 +19,8 @@
 typedef int Integer;
 typedef char Char;
 typedef double Double;
-typedef char* String;
-typedef char* Ident;
+typedef char *String;
+typedef char *Ident;
 
 /********************   Forward Declarations    ***********************/
 struct XML_;
@@ -54,25 +54,52 @@ typedef struct Value_ *Value;
 
 struct XML_
 {
-  enum { is_XMLEmpty, is_XMLwImport, is_XMLwoImport } kind;
-  union
-  {
-    struct { Import import_; XML xml_; } xmlwimport_;
-    struct { Section section_; XMLS xmls_; } xmlwoimport_;
-  } u;
+    enum
+    {
+        is_XMLEmpty,
+        is_XMLwImport,
+        is_XMLwoImport
+    } kind;
+    union
+    {
+        struct
+        {
+            Import import_;
+            XML xml_;
+        } xmlwimport_;
+        struct
+        {
+            Section section_;
+            XMLS xmls_;
+        } xmlwoimport_;
+    } u;
 };
 
+/*
+TODO: verificare che sia funzione inutilizzata
 XML make_XMLEmpty(void);
-XML make_XMLwImport(Import p0, XML p1);
+*/
+XMLS make_XMLSwImport(XMLS p0, XMLS p1);
+/*
+TODO: verificare che sia funzione inutilizzata
 XML make_XMLwoImport(Section p0, XMLS p1);
+*/
 
 struct XMLS_
 {
-  enum { is_XMLSection, is_XMLSEmpty } kind;
-  union
-  {
-    struct { Section section_; XMLS xmls_; } xmlsection_;
-  } u;
+    enum
+    {
+        is_XMLSection,
+        is_XMLSEmpty
+    } kind;
+    union
+    {
+        struct
+        {
+            Section section_;
+            XMLS xmls_;
+        } xmlsection_;
+    } u;
 };
 
 XMLS make_XMLSection(Section p0, XMLS p1);
@@ -80,34 +107,60 @@ XMLS make_XMLSEmpty(void);
 
 struct Import_
 {
-  enum { is_ImportFile } kind;
-  union
-  {
-    struct { String string_; } importfile_;
-  } u;
+    enum
+    {
+        is_ImportFile
+    } kind;
+    union
+    {
+        struct
+        {
+            String string_;
+        } importfile_;
+    } u;
 };
 
-Import make_ImportFile(String p0);
+XMLS make_ImportFile(String p0);
 
 struct Section_
 {
-  enum { is_FileSection } kind;
-  union
-  {
-    struct { Ident ident_; SBody sbody_; } filesection_;
-  } u;
+    enum
+    {
+        is_FileSection
+    } kind;
+    union
+    {
+        struct
+        {
+            Ident ident_;
+            SBody sbody_;
+        } filesection_;
+    } u;
 };
 
 Section make_FileSection(Ident p0, SBody p1);
 
 struct SBody_
 {
-  enum { is_SBodyEmpty, is_SBodywInherit, is_SBodywoInherit } kind;
-  union
-  {
-    struct { Inherit inherit_; SBody sbody_; } sbodywinherit_;
-    struct { Field field_; SBodyF sbodyf_; } sbodywoinherit_;
-  } u;
+    enum
+    {
+        is_SBodyEmpty,
+        is_SBodywInherit,
+        is_SBodywoInherit
+    } kind;
+    union
+    {
+        struct
+        {
+            Inherit inherit_;
+            SBody sbody_;
+        } sbodywinherit_;
+        struct
+        {
+            Field field_;
+            SBodyF sbodyf_;
+        } sbodywoinherit_;
+    } u;
 };
 
 SBody make_SBodyEmpty(void);
@@ -116,11 +169,19 @@ SBody make_SBodywoInherit(Field p0, SBodyF p1);
 
 struct SBodyF_
 {
-  enum { is_SBodyField, is_SBodyFEmpty } kind;
-  union
-  {
-    struct { Field field_; SBodyF sbodyf_; } sbodyfield_;
-  } u;
+    enum
+    {
+        is_SBodyField,
+        is_SBodyFEmpty
+    } kind;
+    union
+    {
+        struct
+        {
+            Field field_;
+            SBodyF sbodyf_;
+        } sbodyfield_;
+    } u;
 };
 
 SBodyF make_SBodyField(Field p0, SBodyF p1);
@@ -128,36 +189,69 @@ SBodyF make_SBodyFEmpty(void);
 
 struct Inherit_
 {
-  enum { is_InheritSection } kind;
-  union
-  {
-    struct { Ident ident_; } inheritsection_;
-  } u;
+    enum
+    {
+        is_InheritSection
+    } kind;
+    union
+    {
+        struct
+        {
+            Ident ident_;
+        } inheritsection_;
+    } u;
 };
 
 Inherit make_InheritSection(Ident p0);
 
 struct Field_
 {
-  enum { is_SectionField } kind;
-  union
-  {
-    struct { Ident ident_; Value value_; } sectionfield_;
-  } u;
+    enum
+    {
+        is_SectionField
+    } kind;
+    union
+    {
+        struct
+        {
+            Ident ident_;
+            Value value_;
+        } sectionfield_;
+    } u;
 };
 
 Field make_SectionField(Ident p0, Value p1);
 
 struct Value_
 {
-  enum { is_ValueInteger, is_Value_true, is_Value_false, is_ValueString, is_Value1, is_Value2 } kind;
-  union
-  {
-    struct { Integer integer_; } valueinteger_;
-    struct { String string_; } valuestring_;
-    struct { Ident ident_; } value1_;
-    struct { Ident ident_1, ident_2; } value2_;
-  } u;
+    enum
+    {
+        is_ValueInteger,
+        is_Value_true,
+        is_Value_false,
+        is_ValueString,
+        is_Value1,
+        is_Value2
+    } kind;
+    union
+    {
+        struct
+        {
+            Integer integer_;
+        } valueinteger_;
+        struct
+        {
+            String string_;
+        } valuestring_;
+        struct
+        {
+            Ident ident_;
+        } value1_;
+        struct
+        {
+            Ident ident_1, ident_2;
+        } value2_;
+    } u;
 };
 
 Value make_ValueInteger(Integer p0);
@@ -198,6 +292,5 @@ void free_SBodyF(SBodyF p);
 void free_Inherit(Inherit p);
 void free_Field(Field p);
 void free_Value(Value p);
-
 
 #endif

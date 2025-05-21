@@ -5,12 +5,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Absyn.h"
+#include "Utils.h"
+#include "Parser.h"
 
 /********************   XMLEmpty    ********************/
 
+/*
+TODO: verificare sia funzione inutilizzata
 XML make_XMLEmpty()
 {
-    XML tmp = (XML) malloc(sizeof(*tmp));
+    XML tmp = (XML)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating XMLEmpty!\n");
@@ -19,28 +23,36 @@ XML make_XMLEmpty()
     tmp->kind = is_XMLEmpty;
     return tmp;
 }
+*/
 
-/********************   XMLwImport    ********************/
+/********************   XMLSwImport    ********************/
 
-XML make_XMLwImport(Import p1, XML p2)
+XMLS make_XMLSwImport(XMLS imported, XMLS p)
 {
-    XML tmp = (XML) malloc(sizeof(*tmp));
+    /* If imported is empty the result of the merge is p. */
+    if (imported->kind == is_XMLSEmpty)
+    {
+        return p;
+    }
+
+    XMLS tmp = (XMLS)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating XMLwImport!\n");
         exit(1);
     }
-    tmp->kind = is_XMLwImport;
-    tmp->u.xmlwimport_.import_ = p1;
-    tmp->u.xmlwimport_.xml_ = p2;
+    tmp->kind = is_XMLSection;
+    tmp->u.xmlsection_.section_ = imported->u.xmlsection_.section_;
+    tmp->u.xmlsection_.xmls_ = mergeXMLS(imported->u.xmlsection_.xmls_, p);
     return tmp;
 }
 
 /********************   XMLwoImport    ********************/
 
+/*
 XML make_XMLwoImport(Section p1, XMLS p2)
 {
-    XML tmp = (XML) malloc(sizeof(*tmp));
+    XML tmp = (XML)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating XMLwoImport!\n");
@@ -51,12 +63,13 @@ XML make_XMLwoImport(Section p1, XMLS p2)
     tmp->u.xmlwoimport_.xmls_ = p2;
     return tmp;
 }
+*/
 
 /********************   XMLSection    ********************/
 
 XMLS make_XMLSection(Section p1, XMLS p2)
 {
-    XMLS tmp = (XMLS) malloc(sizeof(*tmp));
+    XMLS tmp = (XMLS)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating XMLSection!\n");
@@ -72,7 +85,7 @@ XMLS make_XMLSection(Section p1, XMLS p2)
 
 XMLS make_XMLSEmpty()
 {
-    XMLS tmp = (XMLS) malloc(sizeof(*tmp));
+    XMLS tmp = (XMLS)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating XMLSEmpty!\n");
@@ -83,25 +96,36 @@ XMLS make_XMLSEmpty()
 }
 
 /********************   ImportFile    ********************/
-
-Import make_ImportFile(String p1)
+/*
+Function modified to return the parsed XMLS.
+*/
+XMLS make_ImportFile(String p1)
 {
-    Import tmp = (Import) malloc(sizeof(*tmp));
-    if (!tmp)
+    /* Alloc memory for the import */
+    XMLS import = (XMLS)malloc(sizeof(*import));
+    if (!import)
     {
-        fprintf(stderr, "Error: out of memory when allocating ImportFile!\n");
+        fprintf(stderr, "Error: out of memory when allocating XMLwImport!\n");
         exit(1);
     }
-    tmp->kind = is_ImportFile;
-    tmp->u.importfile_.string_ = p1;
-    return tmp;
+    /* Perfrom import */
+    FILE *f = fopen(p1, "r");
+    if (!f)
+    {
+        /* TODO: error handling */
+        printf("Error: could not open file %s\n", p1);
+        exit(1);
+    }
+    import = pXML(f, p1);
+    fclose(f);
+    return import;
 }
 
 /********************   FileSection    ********************/
 
 Section make_FileSection(Ident p1, SBody p2)
 {
-    Section tmp = (Section) malloc(sizeof(*tmp));
+    Section tmp = (Section)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating FileSection!\n");
@@ -117,7 +141,7 @@ Section make_FileSection(Ident p1, SBody p2)
 
 SBody make_SBodyEmpty()
 {
-    SBody tmp = (SBody) malloc(sizeof(*tmp));
+    SBody tmp = (SBody)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating SBodyEmpty!\n");
@@ -131,7 +155,7 @@ SBody make_SBodyEmpty()
 
 SBody make_SBodywInherit(Inherit p1, SBody p2)
 {
-    SBody tmp = (SBody) malloc(sizeof(*tmp));
+    SBody tmp = (SBody)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating SBodywInherit!\n");
@@ -147,7 +171,7 @@ SBody make_SBodywInherit(Inherit p1, SBody p2)
 
 SBody make_SBodywoInherit(Field p1, SBodyF p2)
 {
-    SBody tmp = (SBody) malloc(sizeof(*tmp));
+    SBody tmp = (SBody)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating SBodywoInherit!\n");
@@ -163,7 +187,7 @@ SBody make_SBodywoInherit(Field p1, SBodyF p2)
 
 SBodyF make_SBodyField(Field p1, SBodyF p2)
 {
-    SBodyF tmp = (SBodyF) malloc(sizeof(*tmp));
+    SBodyF tmp = (SBodyF)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating SBodyField!\n");
@@ -179,7 +203,7 @@ SBodyF make_SBodyField(Field p1, SBodyF p2)
 
 SBodyF make_SBodyFEmpty()
 {
-    SBodyF tmp = (SBodyF) malloc(sizeof(*tmp));
+    SBodyF tmp = (SBodyF)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating SBodyFEmpty!\n");
@@ -193,7 +217,7 @@ SBodyF make_SBodyFEmpty()
 
 Inherit make_InheritSection(Ident p1)
 {
-    Inherit tmp = (Inherit) malloc(sizeof(*tmp));
+    Inherit tmp = (Inherit)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating InheritSection!\n");
@@ -208,7 +232,7 @@ Inherit make_InheritSection(Ident p1)
 
 Field make_SectionField(Ident p1, Value p2)
 {
-    Field tmp = (Field) malloc(sizeof(*tmp));
+    Field tmp = (Field)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating SectionField!\n");
@@ -224,7 +248,7 @@ Field make_SectionField(Ident p1, Value p2)
 
 Value make_ValueInteger(Integer p1)
 {
-    Value tmp = (Value) malloc(sizeof(*tmp));
+    Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating ValueInteger!\n");
@@ -239,7 +263,7 @@ Value make_ValueInteger(Integer p1)
 
 Value make_Value_true()
 {
-    Value tmp = (Value) malloc(sizeof(*tmp));
+    Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating Value_true!\n");
@@ -253,7 +277,7 @@ Value make_Value_true()
 
 Value make_Value_false()
 {
-    Value tmp = (Value) malloc(sizeof(*tmp));
+    Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating Value_false!\n");
@@ -267,7 +291,7 @@ Value make_Value_false()
 
 Value make_ValueString(String p1)
 {
-    Value tmp = (Value) malloc(sizeof(*tmp));
+    Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating ValueString!\n");
@@ -282,7 +306,7 @@ Value make_ValueString(String p1)
 
 Value make_Value1(Ident p1)
 {
-    Value tmp = (Value) malloc(sizeof(*tmp));
+    Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating Value1!\n");
@@ -297,7 +321,7 @@ Value make_Value1(Ident p1)
 
 Value make_Value2(Ident p1, Ident p2)
 {
-    Value tmp = (Value) malloc(sizeof(*tmp));
+    Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
     {
         fprintf(stderr, "Error: out of memory when allocating Value2!\n");
@@ -311,181 +335,157 @@ Value make_Value2(Ident p1, Ident p2)
 
 /***************************   Cloning   ******************************/
 
+/*
+TODO: clone rimossi perchè inutilizzati (verificare siano davvero inutili)
 XML clone_XML(XML p)
 {
-  switch(p->kind)
-  {
-  case is_XMLEmpty:
-    return make_XMLEmpty ();
+    switch (p->kind)
+    {
+    case is_XMLEmpty:
+        return make_XMLEmpty();
 
-  case is_XMLwImport:
-    return make_XMLwImport
-      ( clone_Import(p->u.xmlwimport_.import_)
-      , clone_XML(p->u.xmlwimport_.xml_)
-      );
+    case is_XMLwImport:
+        return make_XMLwImport(clone_Import(p->u.xmlwimport_.import_), clone_XML(p->u.xmlwimport_.xml_));
 
-  case is_XMLwoImport:
-    return make_XMLwoImport
-      ( clone_Section(p->u.xmlwoimport_.section_)
-      , clone_XMLS(p->u.xmlwoimport_.xmls_)
-      );
+    case is_XMLwoImport:
+        return make_XMLwoImport(clone_Section(p->u.xmlwoimport_.section_), clone_XMLS(p->u.xmlwoimport_.xmls_));
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning XML!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning XML!\n");
+        exit(1);
+    }
 }
 
 XMLS clone_XMLS(XMLS p)
 {
-  switch(p->kind)
-  {
-  case is_XMLSection:
-    return make_XMLSection
-      ( clone_Section(p->u.xmlsection_.section_)
-      , clone_XMLS(p->u.xmlsection_.xmls_)
-      );
+    switch (p->kind)
+    {
+    case is_XMLSection:
+        return make_XMLSection(clone_Section(p->u.xmlsection_.section_), clone_XMLS(p->u.xmlsection_.xmls_));
 
-  case is_XMLSEmpty:
-    return make_XMLSEmpty ();
+    case is_XMLSEmpty:
+        return make_XMLSEmpty();
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning XMLS!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning XMLS!\n");
+        exit(1);
+    }
 }
 
 Import clone_Import(Import p)
 {
-  switch(p->kind)
-  {
-  case is_ImportFile:
-    return make_ImportFile (strdup(p->u.importfile_.string_));
+    switch (p->kind)
+    {
+    case is_ImportFile:
+        return make_ImportFile(strdup(p->u.importfile_.string_));
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning Import!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning Import!\n");
+        exit(1);
+    }
 }
+*/
 
 Section clone_Section(Section p)
 {
-  switch(p->kind)
-  {
-  case is_FileSection:
-    return make_FileSection
-      ( strdup(p->u.filesection_.ident_)
-      , clone_SBody(p->u.filesection_.sbody_)
-      );
+    switch (p->kind)
+    {
+    case is_FileSection:
+        return make_FileSection(strdup(p->u.filesection_.ident_), clone_SBody(p->u.filesection_.sbody_));
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning Section!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning Section!\n");
+        exit(1);
+    }
 }
 
 SBody clone_SBody(SBody p)
 {
-  switch(p->kind)
-  {
-  case is_SBodyEmpty:
-    return make_SBodyEmpty ();
+    switch (p->kind)
+    {
+    case is_SBodyEmpty:
+        return make_SBodyEmpty();
 
-  case is_SBodywInherit:
-    return make_SBodywInherit
-      ( clone_Inherit(p->u.sbodywinherit_.inherit_)
-      , clone_SBody(p->u.sbodywinherit_.sbody_)
-      );
+    case is_SBodywInherit:
+        return make_SBodywInherit(clone_Inherit(p->u.sbodywinherit_.inherit_), clone_SBody(p->u.sbodywinherit_.sbody_));
 
-  case is_SBodywoInherit:
-    return make_SBodywoInherit
-      ( clone_Field(p->u.sbodywoinherit_.field_)
-      , clone_SBodyF(p->u.sbodywoinherit_.sbodyf_)
-      );
+    case is_SBodywoInherit:
+        return make_SBodywoInherit(clone_Field(p->u.sbodywoinherit_.field_), clone_SBodyF(p->u.sbodywoinherit_.sbodyf_));
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning SBody!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning SBody!\n");
+        exit(1);
+    }
 }
 
 SBodyF clone_SBodyF(SBodyF p)
 {
-  switch(p->kind)
-  {
-  case is_SBodyField:
-    return make_SBodyField
-      ( clone_Field(p->u.sbodyfield_.field_)
-      , clone_SBodyF(p->u.sbodyfield_.sbodyf_)
-      );
+    switch (p->kind)
+    {
+    case is_SBodyField:
+        return make_SBodyField(clone_Field(p->u.sbodyfield_.field_), clone_SBodyF(p->u.sbodyfield_.sbodyf_));
 
-  case is_SBodyFEmpty:
-    return make_SBodyFEmpty ();
+    case is_SBodyFEmpty:
+        return make_SBodyFEmpty();
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning SBodyF!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning SBodyF!\n");
+        exit(1);
+    }
 }
 
 Inherit clone_Inherit(Inherit p)
 {
-  switch(p->kind)
-  {
-  case is_InheritSection:
-    return make_InheritSection (strdup(p->u.inheritsection_.ident_));
+    switch (p->kind)
+    {
+    case is_InheritSection:
+        return make_InheritSection(strdup(p->u.inheritsection_.ident_));
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning Inherit!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning Inherit!\n");
+        exit(1);
+    }
 }
 
 Field clone_Field(Field p)
 {
-  switch(p->kind)
-  {
-  case is_SectionField:
-    return make_SectionField
-      ( strdup(p->u.sectionfield_.ident_)
-      , clone_Value(p->u.sectionfield_.value_)
-      );
+    switch (p->kind)
+    {
+    case is_SectionField:
+        return make_SectionField(strdup(p->u.sectionfield_.ident_), clone_Value(p->u.sectionfield_.value_));
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning Field!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning Field!\n");
+        exit(1);
+    }
 }
 
 Value clone_Value(Value p)
 {
-  switch(p->kind)
-  {
-  case is_ValueInteger:
-    return make_ValueInteger (p->u.valueinteger_.integer_);
+    switch (p->kind)
+    {
+    case is_ValueInteger:
+        return make_ValueInteger(p->u.valueinteger_.integer_);
 
-  case is_Value_true:
-    return make_Value_true ();
+    case is_Value_true:
+        return make_Value_true();
 
-  case is_Value_false:
-    return make_Value_false ();
+    case is_Value_false:
+        return make_Value_false();
 
-  case is_ValueString:
-    return make_ValueString (strdup(p->u.valuestring_.string_));
+    case is_ValueString:
+        return make_ValueString(strdup(p->u.valuestring_.string_));
 
-  case is_Value1:
-    return make_Value1 (strdup(p->u.value1_.ident_));
+    case is_Value1:
+        return make_Value1(strdup(p->u.value1_.ident_));
 
-  case is_Value2:
-    return make_Value2
-      ( strdup(p->u.value2_.ident_1)
-      , strdup(p->u.value2_.ident_2)
-      );
+    case is_Value2:
+        return make_Value2(strdup(p->u.value2_.ident_1), strdup(p->u.value2_.ident_2));
 
-  default:
-    fprintf(stderr, "Error: bad kind field when cloning Value!\n");
-    exit(1);
-  }
+    default:
+        fprintf(stderr, "Error: bad kind field when cloning Value!\n");
+        exit(1);
+    }
 }
 
 /********************   Recursive Destructors    **********************/
@@ -500,182 +500,181 @@ Value clone_Value(Value p)
 
 void free_XML(XML p)
 {
-  switch(p->kind)
-  {
-  case is_XMLEmpty:
-    break;
+    switch (p->kind)
+    {
+    case is_XMLEmpty:
+        break;
 
-  case is_XMLwImport:
-    free_Import(p->u.xmlwimport_.import_);
-    free_XML(p->u.xmlwimport_.xml_);
-    break;
+    case is_XMLwImport:
+        free_Import(p->u.xmlwimport_.import_);
+        free_XML(p->u.xmlwimport_.xml_);
+        break;
 
-  case is_XMLwoImport:
-    free_Section(p->u.xmlwoimport_.section_);
-    free_XMLS(p->u.xmlwoimport_.xmls_);
-    break;
+    case is_XMLwoImport:
+        free_Section(p->u.xmlwoimport_.section_);
+        free_XMLS(p->u.xmlwoimport_.xmls_);
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing XML!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing XML!\n");
+        exit(1);
+    }
+    free(p);
 }
 
 void free_XMLS(XMLS p)
 {
-  switch(p->kind)
-  {
-  case is_XMLSection:
-    free_Section(p->u.xmlsection_.section_);
-    free_XMLS(p->u.xmlsection_.xmls_);
-    break;
+    switch (p->kind)
+    {
+    case is_XMLSection:
+        free_Section(p->u.xmlsection_.section_);
+        free_XMLS(p->u.xmlsection_.xmls_);
+        break;
 
-  case is_XMLSEmpty:
-    break;
+    case is_XMLSEmpty:
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing XMLS!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing XMLS!\n");
+        exit(1);
+    }
+    free(p);
 }
 
 void free_Import(Import p)
 {
-  switch(p->kind)
-  {
-  case is_ImportFile:
-    free(p->u.importfile_.string_);
-    break;
+    switch (p->kind)
+    {
+    case is_ImportFile:
+        free(p->u.importfile_.string_);
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing Import!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing Import!\n");
+        exit(1);
+    }
+    free(p);
 }
 
 void free_Section(Section p)
 {
-  switch(p->kind)
-  {
-  case is_FileSection:
-    free(p->u.filesection_.ident_);
-    free_SBody(p->u.filesection_.sbody_);
-    break;
+    switch (p->kind)
+    {
+    case is_FileSection:
+        free(p->u.filesection_.ident_);
+        free_SBody(p->u.filesection_.sbody_);
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing Section!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing Section!\n");
+        exit(1);
+    }
+    free(p);
 }
 
 void free_SBody(SBody p)
 {
-  switch(p->kind)
-  {
-  case is_SBodyEmpty:
-    break;
+    switch (p->kind)
+    {
+    case is_SBodyEmpty:
+        break;
 
-  case is_SBodywInherit:
-    free_Inherit(p->u.sbodywinherit_.inherit_);
-    free_SBody(p->u.sbodywinherit_.sbody_);
-    break;
+    case is_SBodywInherit:
+        free_Inherit(p->u.sbodywinherit_.inherit_);
+        free_SBody(p->u.sbodywinherit_.sbody_);
+        break;
 
-  case is_SBodywoInherit:
-    free_Field(p->u.sbodywoinherit_.field_);
-    free_SBodyF(p->u.sbodywoinherit_.sbodyf_);
-    break;
+    case is_SBodywoInherit:
+        free_Field(p->u.sbodywoinherit_.field_);
+        free_SBodyF(p->u.sbodywoinherit_.sbodyf_);
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing SBody!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing SBody!\n");
+        exit(1);
+    }
+    free(p);
 }
 
 void free_SBodyF(SBodyF p)
 {
-  switch(p->kind)
-  {
-  case is_SBodyField:
-    free_Field(p->u.sbodyfield_.field_);
-    free_SBodyF(p->u.sbodyfield_.sbodyf_);
-    break;
+    switch (p->kind)
+    {
+    case is_SBodyField:
+        free_Field(p->u.sbodyfield_.field_);
+        free_SBodyF(p->u.sbodyfield_.sbodyf_);
+        break;
 
-  case is_SBodyFEmpty:
-    break;
+    case is_SBodyFEmpty:
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing SBodyF!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing SBodyF!\n");
+        exit(1);
+    }
+    free(p);
 }
 
 void free_Inherit(Inherit p)
 {
-  switch(p->kind)
-  {
-  case is_InheritSection:
-    free(p->u.inheritsection_.ident_);
-    break;
+    switch (p->kind)
+    {
+    case is_InheritSection:
+        free(p->u.inheritsection_.ident_);
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing Inherit!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing Inherit!\n");
+        exit(1);
+    }
+    free(p);
 }
 
 void free_Field(Field p)
 {
-  switch(p->kind)
-  {
-  case is_SectionField:
-    free(p->u.sectionfield_.ident_);
-    free_Value(p->u.sectionfield_.value_);
-    break;
+    switch (p->kind)
+    {
+    case is_SectionField:
+        free(p->u.sectionfield_.ident_);
+        free_Value(p->u.sectionfield_.value_);
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing Field!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing Field!\n");
+        exit(1);
+    }
+    free(p);
 }
 
 void free_Value(Value p)
 {
-  switch(p->kind)
-  {
-  case is_ValueInteger:
-    break;
+    switch (p->kind)
+    {
+    case is_ValueInteger:
+        break;
 
-  case is_Value_true:
-    break;
+    case is_Value_true:
+        break;
 
-  case is_Value_false:
-    break;
+    case is_Value_false:
+        break;
 
-  case is_ValueString:
-    free(p->u.valuestring_.string_);
-    break;
+    case is_ValueString:
+        free(p->u.valuestring_.string_);
+        break;
 
-  case is_Value1:
-    free(p->u.value1_.ident_);
-    break;
+    case is_Value1:
+        free(p->u.value1_.ident_);
+        break;
 
-  case is_Value2:
-    free(p->u.value2_.ident_1);
-    free(p->u.value2_.ident_2);
-    break;
+    case is_Value2:
+        free(p->u.value2_.ident_1);
+        free(p->u.value2_.ident_2);
+        break;
 
-  default:
-    fprintf(stderr, "Error: bad kind field when freeing Value!\n");
-    exit(1);
-  }
-  free(p);
+    default:
+        fprintf(stderr, "Error: bad kind field when freeing Value!\n");
+        exit(1);
+    }
+    free(p);
 }
-

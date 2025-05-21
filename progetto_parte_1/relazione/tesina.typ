@@ -27,4 +27,7 @@ par(
   >
   non funziona
 
-=
+= Import
+
+- implementato nel parser
+- import ciclici vengono detectati mantenendo una lista globale dei file parsati.
