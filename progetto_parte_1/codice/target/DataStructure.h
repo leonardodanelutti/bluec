@@ -17,6 +17,26 @@ struct Sections_
     /* Sections front; */
 };
 
+/* Create a new section */
+Sections make_Section(Ident ident);
+
+/* Push a new section to a linked list of sections,
+   checks if inserting a duplicate section */
+void push_Section(Sections sections_list, Ident section_ident);
+
+void append_Section_internal(Sections left_sections_list, Sections right_sections_list);
+
+/* Push a new field on a given section in a valid linked list of sections,
+   checks are performed */
+void push_FieldToSection(Sections sections_list, Ident section_ident, Ident field_ident, Value val);
+
+/* Delete a section from a valid linked list of Sections */
+void delete_Section(Sections sections_list, Ident section_ident);
+
+void delete_FieldInSection(Sections sections_list, Ident section_ident, Ident field_ident, Value val);
+
+/* TODO: modify */
+
 struct Fields_
 {
     Ident ident;
@@ -25,6 +45,22 @@ struct Fields_
     /* Fields front; */
     Sections section;
 };
+
+/* Create a new field */
+Fields make_FieldNew(Ident ident, Value val);
+
+/* Push a new field to the end of a linked list of Fields, 
+   overwrites duplicate fields */
+void push_Field_internal(Fields current, Ident field_ident, Value val);
+
+/* Push a new field to the end of a valid linked list of Fields 
+   checks are performed */
+void push_Field(Fields current, Ident field_ident, Value val);
+
+/* Delete a field from the linked list of Fields */
+void delete_Field(Fields current, Ident field_ident);
+
+/* TODO: add modify */
 
 struct Val_
 {
