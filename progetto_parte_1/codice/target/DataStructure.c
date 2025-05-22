@@ -38,7 +38,7 @@ Fields make_FieldNew(Ident ident, Val_ val)
 void check_Section(Sections sections_list, Ident section_ident);
 Fields convert_SBody_to_Fields(SBody sbody, Ident section_ident);
 Val_ convert_Value_to_Val_(Value value, Ident section_ident);
-void check_Inherit(Ident *inherit_section_list, Val_ val, Ident current_section);
+void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section);
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
 
 
@@ -119,7 +119,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Ident section_ident) {
 
     Ident field_ident = sbody->u.sbodywoinherit_.field_->u.sectionfield_.ident_;
     Val_ value = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
-    check_Inherit(inherit_section_list, value, section_ident);
+    check_Inherit(inherit_section_list, inherit_list_count, value, section_ident);
     Fields fields_list = make_FieldNew(field_ident, value);
     Fields last_field = fields_list;
     /* Move to the next field */
@@ -131,7 +131,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Ident section_ident) {
         Val_ val = convert_Value_to_Val_(value, section_ident);
 
         if (!overwrite_Field(fields_list, field_ident, val)) {
-            check_Inherit(inherit_section_list, val, section_ident);
+            check_Inherit(inherit_section_list, inherit_list_count, val, section_ident);
             Fields new_field = make_FieldNew(field_ident, val);
             last_field->next = new_field;
             last_field = new_field;
@@ -205,11 +205,26 @@ FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident) {
 }
 
 /* Check if non local variables are inherited */
-void check_Inherit(Ident *inherit_section_list, Val_ val, Ident current_section) {
-    
+void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section) {
+    if (val.kind == Ref_unresolved && val.u.unresolved_ref.section_ident != current_section) {
+        for (long unsigned int i = 0; i < inherit_list_count; i++) {
+            if (inherit_section_list[i] == val.u.unresolved_ref.section_ident) {
+                fprintf(stderr, "Non-local variable %s in section %s without inherit\n", val.u.unresolved_ref.field_ident, current_section);
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
 }
 
 /* Overwrite a field in a list of field if identifier is matched */
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val) {
-  return 0;
+    Fields current = fields_list;
+    while (current != NULL) {
+        if (current->ident == field_ident) {
+            current->val = val;
+            return 1; // Field found and overwritten
+        }
+        current = current->next;
+    }
+    return 0; // Field not found
 }
