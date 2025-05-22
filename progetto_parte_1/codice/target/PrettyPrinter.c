@@ -21,6 +21,7 @@ void printSections(Sections section) {
   while (section != NULL) {
     printf("<section name=%s>\n", section->ident);
     Fields field = section->fields;
+    printInherits2(field, section->ident);
     printFields(field);
     printf("</section>\n");
     section = section->next;
@@ -32,7 +33,7 @@ void printFields(Fields field) {
     printf("  <field name=%s>", field->ident);
     printInherits(field->val, field->section->ident);
     printVal(field->val, field->section->ident);
-    printf("  </field>\n");
+    printf(" </field>\n");
     field = field->next;
   }
 }
@@ -61,13 +62,36 @@ void printVal(Val_ val, Ident section_ident) {
       }
       break;
     case Ref_unresolved:
-      printf("Unexpected unresolved reference ");
-      printf(" $%s.%s ", val.u.unresolved_ref.section_ident, val.u.unresolved_ref.field_ident);
+      printf(" &%s.%s ", val.u.unresolved_ref.section_ident, val.u.unresolved_ref.field_ident);
       break;
     default:
       fprintf(stderr, "Unknown value type\n");
       exit(EXIT_FAILURE);
   }
+}
+
+void printInherits2(Fields field, Ident section_ident) {
+    //lista di ident
+    List list = NULL;
+
+    List ident_node;
+    while (field != NULL) {
+        if (field->val.kind == Ref) {
+            Ident sectionInherit = field->val.u.ref->section->ident;
+            if (not_in_list(sectionInherit, list)) {
+                ident_node = (List)malloc(sizeof(struct List_));
+                if (ident_node == NULL) {
+                    fprintf(stderr, "Memory allocation failed for new section\n");
+                    exit(EXIT_FAILURE);
+                }
+                ident_node->ident = sectionInherit;
+                ident_node->next = list;
+                list = ident_node;        
+                printf("  <inherit>%s</inherit>\n", sectionInherit);
+            };
+        }
+        field = field->next;
+    }
 }
 
 void printInherits(Val_ val, Ident section_ident) {
