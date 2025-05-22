@@ -30,7 +30,22 @@ par(
 = Import
 
 - implementato nel parser
-- import ciclici vengono detectati mantenendo una lista globale dei file parsati.
+
+== Recursive and multiple imports
+We chose to implement the scope of the variable for the whole file (both before and after
+its declaration).
+This means that variables are visible in the whole file (including the imported files) if
+inherited correctly.
+
+So recursive and multiple imports became basically the same "problem". We choose to
+implement a log that warns the user if a recursive or a multiple import is detected, but
+we continue to parse as the user would expect (ignoring the repeted imports, and thus also
+the backedges of cycles).
+
+This check is implemented thanks to a global list populated with the already parsed files.
+Files are represented by an unique ID thanks to `stat()` in `sys/stat.h`. The path of the
+erroneusly imported file is returned in the warn message to let the user resolve the
+problem.
 
 Trasformiamo l'abstract syntax tree nella nostra srtuttura dati, in questa operazione veniene anche controllato:
 - field duplicati
