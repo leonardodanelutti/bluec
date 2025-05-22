@@ -42,7 +42,7 @@ Fields make_FieldNew(Ident ident, Val_ val)
 /* Convert XMLS to a linked list of sections */
 
 void check_Section(Sections sections_list, Ident section_ident);
-Fields convert_SBody_to_Fields(SBody sbody, Ident section_ident);
+Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
 Val_ convert_Value_to_Val_(Value value, Ident section_ident);
 void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section);
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
@@ -68,7 +68,7 @@ Sections convert_XMLS_to_Sections(XMLS xml) {
 
         check_Section(sections_list, sec_ident);
         Sections new_section = make_SectionNew(sec_ident);
-        new_section->fields = convert_SBody_to_Fields(sbody, sec_ident);
+        new_section->fields = convert_SBody_to_Fields(sbody, new_section);
         last_section->next = new_section;
         last_section = new_section;
         /* Move to the next XMLS element */
@@ -92,10 +92,12 @@ void check_Section(Sections sections_list, Ident section_ident) {
 }
 
 
-Fields convert_SBody_to_Fields(SBody sbody, Ident section_ident) {
+Fields convert_SBody_to_Fields(SBody sbody, Sections current_section) {
     if (sbody == NULL || sbody->kind == is_SBodyEmpty) {
         return NULL;
     }
+
+    Ident section_ident = current_section->ident;
 
     /* Construct a list of all identifiers in the inherits */
 
@@ -127,6 +129,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Ident section_ident) {
     Val_ value = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
     check_Inherit(inherit_section_list, inherit_list_count, value, section_ident);
     Fields fields_list = make_FieldNew(field_ident, value);
+    fields_list->section = current_section;
     Fields last_field = fields_list;
     /* Move to the next field */
     SBodyF sbodyf = sbody->u.sbodywoinherit_.sbodyf_;
@@ -139,6 +142,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Ident section_ident) {
         if (!overwrite_Field(fields_list, field_ident, val)) {
             check_Inherit(inherit_section_list, inherit_list_count, val, section_ident);
             Fields new_field = make_FieldNew(field_ident, val);
+            new_field->section = current_section;
             last_field->next = new_field;
             last_field = new_field;
         }
@@ -228,6 +232,8 @@ int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val) {
     while (current != NULL) {
         if (current->ident == field_ident) {
             current->val = val;
+            /* TODO: warning with line */
+            printf("Field %s overwritten with new value\n", field_ident);
             return 1; // Field found and overwritten
         }
         current = current->next;
