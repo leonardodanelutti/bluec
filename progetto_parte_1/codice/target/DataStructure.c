@@ -27,11 +27,17 @@ Fields make_FieldNew(Ident ident, Val_ val)
     }
     new_field->ident = ident;
     new_field->val = val;
+    new_field->kind = Not_visited;
     new_field->next = NULL;
     new_field->section = NULL;
+    ValList_ pointed_by = {
+        .vals = NULL,
+        .vals_size = 0,
+        .vals_count = 0
+    };
+    new_field->pointed_by = pointed_by;
     return new_field;
 }
-
 
 /* Convert XMLS to a linked list of sections */
 
