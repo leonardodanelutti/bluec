@@ -150,12 +150,12 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                 if (strcmp(current_field->ident, field_ident.field_ident) == 0)
                 {
                     // Check the values that are currently pointed to this field
-                    for (int i = 0; i < current_field->pointed_by.vals_count; i++)
+                    for (long unsigned int i = 0; i < current_field->pointed_by.vals_count; i++)
                     {
                         // Get the i-th pointer to the field
                         Val pointer = current_field->pointed_by.vals[i];
                         // Copy the field value to the pointer value
-                        pointer->kind = current_field->kind;
+                        pointer->kind = current_field->val.kind;
                         pointer->u = current_field->val.u;
                     }
                     // Remove the field from the list
