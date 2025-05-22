@@ -4,6 +4,7 @@
         "prettyprinter.h": "c",
         "datastructure.h": "c",
         "absyn.h": "c",
-        "logs.h": "c"
+        "comments.h": "c",
+        "parser.h": "c"
     }
 }

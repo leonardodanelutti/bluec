@@ -5,6 +5,8 @@
 #include "Absyn.h"
 
 typedef struct SymbolLoc_ SymbolLoc_;
+typedef struct YYLTYPE YYLTYPE;
+typedef char *String;
 
 /* `SymbolLoc_` is used to store the location of a symbol (terminal or non-terminal) in a
    file. It is used as a connection with the lexer to retrieve the potential comments
