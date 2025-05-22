@@ -14,7 +14,7 @@ XMLS mergeXMLS(XMLS xmls1, XMLS xmls2)
     return r;
 }
 
-void resolveSections(Sections current_section, Sections start_sections_list)
+void resolveSections_recursive(Sections current_section, Sections start_sections_list)
 {
     /* Base case: we reached the end of the sections list */
     if (current_section == NULL)
@@ -32,11 +32,17 @@ void resolveSections(Sections current_section, Sections start_sections_list)
     }
 
     /* Recursively call the function for the next section */
-    resolveSections(current_section->next, start_sections_list);
+    resolveSections_recursive(current_section->next, start_sections_list);
+}
+
+void resolveSections(Sections sections_list)
+{
+    resolveSections_recursive(sections_list, sections_list);
 }
 
 void resolveField(Fields field, Sections start_sections_list)
 {
+    printf("Resolving %s that points to $%s.%s\n", field->ident, field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
     /* Base case: we reached the end of the sections list */
     if (start_sections_list == NULL)
         return;
@@ -47,12 +53,12 @@ void resolveField(Fields field, Sections start_sections_list)
         /* Find the section that contains the field */
         for (Sections section = start_sections_list; section != NULL; section = section->next)
         {
-            if (section->ident == field->val.u.unresolved_ref.section_ident)
+            if (strcmp(section->ident, field->val.u.unresolved_ref.section_ident) == 0)
             {
                 /* Find the field in the section */
                 for (Fields ref_field = section->fields; ref_field != NULL; ref_field = ref_field->next)
                 {
-                    if (ref_field->ident == field->val.u.unresolved_ref.field_ident)
+                    if (strcmp(ref_field->ident, field->val.u.unresolved_ref.field_ident) == 0)
                     {
                         if (ref_field->kind == Visited)
                         {
@@ -104,7 +110,8 @@ void resolveField(Fields field, Sections start_sections_list)
             }
         }
         /* The reference could not be resolved */
-        fprintf(stderr, ANSI_COLOR_RED "ERROR:" ANSI_COLOR_RESET " unresolved reference to section %s and field %s\n",
+        /* TODO: add file name in the error */
+        fprintf(stderr, ANSI_COLOR_RED "ERROR:" ANSI_COLOR_RESET " unresolved reference to section %s and field %s.\n",
                 field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
         exit(EXIT_FAILURE);
     }

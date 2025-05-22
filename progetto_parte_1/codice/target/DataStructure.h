@@ -1,5 +1,8 @@
 #include "Absyn.h"
 
+#ifndef DATASTRUCTURE_HEADER
+#define DATASTRUCTURE_HEADER
+
 typedef struct FieldIdent_
 {
     Ident field_ident;
@@ -116,3 +119,5 @@ FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident);
 
 /* Converts the abstract syntax tree to the datastruct defined by us */
 Sections convert_XMLS_to_Sections(XMLS xml);
+
+#endif

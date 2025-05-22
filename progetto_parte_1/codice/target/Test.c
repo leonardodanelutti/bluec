@@ -14,6 +14,8 @@
 #include "Parser.h"
 #include "Printer.h"
 #include "Absyn.h"
+#include "Utils.h"
+#include "PrettyPrinter.h"
 
 void usage(void)
 {
@@ -64,6 +66,18 @@ int main(int argc, char **argv)
         input = stdin;
     /* The default entry point is used. For other options see Parser.h */
     parse_tree = pXML(input, filename);
+    /* Close file if opened */
+    if (filename)
+        fclose(input);
+    /* Create custom data structure */
+    Sections sections = convert_XMLS_to_Sections(parse_tree);
+    printf("\n[Pretty Print (before references resolution)]\n");
+    printSections(sections);
+    /* Resolve references */
+    resolveSections(sections);
+    printf("\n[Pretty Print (before references resolution)]\n");
+    printSections(sections);
+
     if (parse_tree)
     {
         printf("\nParse Successful!\n");

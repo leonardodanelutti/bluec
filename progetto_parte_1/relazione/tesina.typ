@@ -47,6 +47,8 @@ Files are represented by an unique ID thanks to `stat()` in `sys/stat.h`. The pa
 erroneusly imported file is returned in the warn message to let the user resolve the
 problem.
 
+TODO: gli import dovrebbero essere relativi al file da cui importo non da dove viene chiamato il parser!
+
 Trasformiamo l'abstract syntax tree nella nostra srtuttura dati, in questa operazione veniene anche controllato:
 - field duplicati
 - sezioni duplicate
