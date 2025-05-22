@@ -31,6 +31,7 @@ typedef struct Val_
         FieldIdent_ unresolved_ref;
     } u;
 } Val_;
+typedef Val_ *Val;
 
 struct Sections_
 {
@@ -67,8 +68,14 @@ void delete_Section(Sections sections_list, Ident section_ident);
 
 /* Delete a field from a given section in a valid linked list of sections */
 void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident);
-
 /* TODO: modify */
+
+typedef struct ValList_
+{
+    Val *vals;
+    int vals_size;
+    int vals_count;
+} ValList_;
 
 struct Fields_
 {
@@ -82,6 +89,7 @@ struct Fields_
     Fields next;
     /* Fields front; */
     Sections section;
+    ValList_ pointed_by;
 };
 
 /* Create a new field */
