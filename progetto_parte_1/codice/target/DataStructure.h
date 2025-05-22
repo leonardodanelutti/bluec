@@ -9,6 +9,12 @@ typedef struct Fields_ *Fields;
 struct Val_;
 typedef struct Val_ *Val;
 
+typedef struct FieldIdent_
+{
+    Ident field_ident;
+    Ident section_ident;
+} FieldIdent_;
+
 struct Sections_
 {
     Ident ident;
@@ -32,16 +38,18 @@ Sections make_Section(Ident ident);
    checks if inserting a duplicate section */
 void push_Section(Sections sections_list, Ident section_ident);
 
+/* Append a section (or sections) on to the end of a linked list of sections */
 void append_Section_internal(Sections left_sections_list, Sections right_sections_list);
 
 /* Push a new field on a given section in a valid linked list of sections,
    checks are performed */
-void push_FieldToSection(Sections sections_list, Ident section_ident, Ident field_ident, Value val);
+void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Value val);
 
 /* Delete a section from a valid linked list of Sections */
 void delete_Section(Sections sections_list, Ident section_ident);
 
-void delete_FieldInSection(Sections sections_list, Ident section_ident, Ident field_ident, Value val);
+/* Delete a field from a given section in a valid linked list of sections */
+void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident);
 
 /* TODO: modify */
 
@@ -78,13 +86,14 @@ struct Val_
         Str,
         Bool,
         Ref,
-        Ref_null
+        Ref_unresolved
     } kind;
     union
     {
         int int_;
         String str;
         int bool_;
-        Fields section;
+        Fields ref;
+        FieldIdent_ unresolved_ref;
     } u;
 };
