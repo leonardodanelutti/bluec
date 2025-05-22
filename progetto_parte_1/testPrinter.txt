@@ -1,0 +1,18 @@
+<section name=sezfile2>
+</section>
+<section name=sezfile1>
+</section>
+<section name=nomesez1>
+  <field name=var1> 3 </field>
+  <field name=var2> "non dire gatto" </field>
+  <field name=var3> $var1 </field>
+</section>
+<section name=nomesez2>
+  <field name=miao> true </field>
+  <field name=var1> false </field>
+</section>
+<section name=nomesez3>
+  <inherit>nomesez1</inherit>
+  <field name=miao> $nomesez1.var3 </field>
+  <field name=var1> false </field>
+</section>

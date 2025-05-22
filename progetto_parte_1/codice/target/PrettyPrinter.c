@@ -21,7 +21,7 @@ void printSections(Sections section) {
   while (section != NULL) {
     printf("<section name=%s>\n", section->ident);
     Fields field = section->fields;
-    printInherits2(field, section->ident);
+    printInherits(field, section->ident);
     printFields(field);
     printf("</section>\n");
     section = section->next;
@@ -31,9 +31,8 @@ void printSections(Sections section) {
 void printFields(Fields field) {
   while (field != NULL) {
     printf("  <field name=%s>", field->ident);
-    printInherits(field->val, field->section->ident);
     printVal(field->val, field->section->ident);
-    printf(" </field>\n");
+    printf("</field>\n");
     field = field->next;
   }
 }
@@ -70,7 +69,7 @@ void printVal(Val_ val, Ident section_ident) {
   }
 }
 
-void printInherits2(Fields field, Ident section_ident) {
+void printInherits(Fields field, Ident section_ident) {
     //lista di ident
     List list = NULL;
 
@@ -78,7 +77,7 @@ void printInherits2(Fields field, Ident section_ident) {
     while (field != NULL) {
         if (field->val.kind == Ref) {
             Ident sectionInherit = field->val.u.ref->section->ident;
-            if (not_in_list(sectionInherit, list)) {
+            if (not_in_list(sectionInherit, list) && (sectionInherit != section_ident)) {
                 ident_node = (List)malloc(sizeof(struct List_));
                 if (ident_node == NULL) {
                     fprintf(stderr, "Memory allocation failed for new section\n");
@@ -93,7 +92,7 @@ void printInherits2(Fields field, Ident section_ident) {
         field = field->next;
     }
 }
-
+/*
 void printInherits(Val_ val, Ident section_ident) {
     //lista di ident
     List list = NULL;
@@ -114,6 +113,7 @@ void printInherits(Val_ val, Ident section_ident) {
     };
   }
 }
+  */
 
 int not_in_list(Ident section_ident, List list) {
     while (list != NULL) {
