@@ -73,8 +73,8 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident);
 typedef struct ValList_
 {
     Val *vals;
-    int vals_size;
-    int vals_count;
+    long unsigned int vals_size;
+    long unsigned int vals_count;
 } ValList_;
 
 struct Fields_
