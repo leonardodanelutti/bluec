@@ -33,8 +33,7 @@ Fields make_FieldNew(Ident ident, Val_ val)
     ValList_ pointed_by = {
         .vals = NULL,
         .vals_size = 0,
-        .vals_count = 0
-    };
+        .vals_count = 0};
     new_field->pointed_by = pointed_by;
     return new_field;
 }
@@ -47,9 +46,10 @@ Val_ convert_Value_to_Val_(Value value, Ident section_ident);
 void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section);
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
 
-
-Sections convert_XMLS_to_Sections(XMLS xml) {
-    if (xml == NULL || xml->kind == is_XMLSEmpty) {
+Sections convert_XMLS_to_Sections(XMLS xml)
+{
+    if (xml == NULL || xml->kind == is_XMLSEmpty)
+    {
         return NULL;
     }
 
@@ -62,7 +62,8 @@ Sections convert_XMLS_to_Sections(XMLS xml) {
     xml = xml->u.xmlsection_.xmls_;
 
     /* Iterate through the XMLS list and create sections */
-    while (xml->kind == is_XMLSection) {
+    while (xml->kind == is_XMLSection)
+    {
         Ident sec_ident = xml->u.xmlsection_.section_->u.filesection_.ident_;
         SBody sbody = xml->u.xmlsection_.section_->u.filesection_.sbody_;
 
@@ -79,10 +80,13 @@ Sections convert_XMLS_to_Sections(XMLS xml) {
 }
 
 /* Check if a section is already present in a section list */
-void check_Section(Sections sections_list, Ident section_ident) {
+void check_Section(Sections sections_list, Ident section_ident)
+{
     Sections current = sections_list;
-    while (current != NULL) {
-        if (current->ident == section_ident) {
+    while (current != NULL)
+    {
+        if (strcmp(current->ident, section_ident) == 0)
+        {
             /* TODO: add file and line number? */
             fprintf(stderr, "Duplicate section with identifier: %s\n", section_ident);
             exit(EXIT_FAILURE);
@@ -91,9 +95,10 @@ void check_Section(Sections sections_list, Ident section_ident) {
     }
 }
 
-
-Fields convert_SBody_to_Fields(SBody sbody, Sections current_section) {
-    if (sbody == NULL || sbody->kind == is_SBodyEmpty) {
+Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
+{
+    if (sbody == NULL || sbody->kind == is_SBodyEmpty)
+    {
         return NULL;
     }
 
@@ -105,11 +110,14 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section) {
     long unsigned int inherit_list_count = 0;
     long unsigned int inherit_list_size = 10;
 
-    while (sbody->kind == is_SBodywInherit) {
-        if (inherit_list_count >= inherit_list_size) {
+    while (sbody->kind == is_SBodywInherit)
+    {
+        if (inherit_list_count >= inherit_list_size)
+        {
             inherit_list_size += 5;
             inherit_section_list = realloc(inherit_section_list, sizeof(Ident) * inherit_list_size);
-            if (inherit_section_list == NULL) {
+            if (inherit_section_list == NULL)
+            {
                 fprintf(stderr, "Memory allocation failed for inherit section list\n");
                 exit(EXIT_FAILURE);
             }
@@ -119,7 +127,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section) {
     }
 
     /*  */
-    if (sbody->kind == is_SBodyEmpty) {
+    if (sbody->kind == is_SBodyEmpty)
+    {
         return NULL;
     }
 
@@ -134,19 +143,21 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section) {
     /* Move to the next field */
     SBodyF sbodyf = sbody->u.sbodywoinherit_.sbodyf_;
 
-    while (sbodyf->kind == is_SBodyField) {
+    while (sbodyf->kind == is_SBodyField)
+    {
         Ident field_ident = sbodyf->u.sbodyfield_.field_->u.sectionfield_.ident_;
         Value value = sbodyf->u.sbodyfield_.field_->u.sectionfield_.value_;
         Val_ val = convert_Value_to_Val_(value, section_ident);
 
-        if (!overwrite_Field(fields_list, field_ident, val)) {
+        if (!overwrite_Field(fields_list, field_ident, val))
+        {
             check_Inherit(inherit_section_list, inherit_list_count, val, section_ident);
             Fields new_field = make_FieldNew(field_ident, val);
             new_field->section = current_section;
             last_field->next = new_field;
             last_field = new_field;
         }
-        
+
         /* Move to the next field */
         sbodyf = sbodyf->u.sbodyfield_.sbodyf_;
     }
@@ -154,86 +165,96 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section) {
     return fields_list;
 }
 
-Val_ convert_Value_to_Val_(Value value, Ident section_ident) {
-    switch (value->kind) {
-        case is_ValueInteger:
-            return new_Int(value->u.valueinteger_.integer_);
-        case is_Value_true:
-            return new_Bool(1);
-        case is_Value_false:
-            return new_Bool(0);
-        case is_ValueString:
-            return new_Str(value->u.valuestring_.string_);
-        case is_Value1:
-            return new_Ref(new_FieldIdent(value->u.value1_.ident_, section_ident));
-        case is_Value2:
-            return new_Ref(new_FieldIdent(value->u.value2_.ident_2, value->u.value2_.ident_1));
-        default:
-            fprintf(stderr, "Unknown value kind\n");
-            exit(EXIT_FAILURE);
+Val_ convert_Value_to_Val_(Value value, Ident section_ident)
+{
+    switch (value->kind)
+    {
+    case is_ValueInteger:
+        return new_Int(value->u.valueinteger_.integer_);
+    case is_Value_true:
+        return new_Bool(1);
+    case is_Value_false:
+        return new_Bool(0);
+    case is_ValueString:
+        return new_Str(value->u.valuestring_.string_);
+    case is_Value1:
+        return new_Ref(new_FieldIdent(value->u.value1_.ident_, section_ident));
+    case is_Value2:
+        return new_Ref(new_FieldIdent(value->u.value2_.ident_2, value->u.value2_.ident_1));
+    default:
+        fprintf(stderr, "Unknown value kind\n");
+        exit(EXIT_FAILURE);
     }
 }
 
-Val_ new_Int(int int_) {
+Val_ new_Int(int int_)
+{
     Val_ val = {
         .kind = Int,
-        .u.int_ = int_
-    };
+        .u.int_ = int_};
     return val;
 }
 
-Val_ new_Str(String str) {
+Val_ new_Str(String str)
+{
     Val_ val = {
         .kind = Str,
-        .u.str = str
-    };
+        .u.str = str};
     return val;
 }
 
-Val_ new_Bool(int bool_) {
+Val_ new_Bool(int bool_)
+{
     Val_ val = {
         .kind = Bool,
-        .u.bool_ = bool_
-    };
+        .u.bool_ = bool_};
     return val;
 }
 
-Val_ new_Ref(FieldIdent_ ref) {
+Val_ new_Ref(FieldIdent_ ref)
+{
     Val_ val = {
         .kind = Ref_unresolved,
-        .u.unresolved_ref = ref
-    };
+        .u.unresolved_ref = ref};
     return val;
 }
 
-FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident) {
+FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident)
+{
     FieldIdent_ field_ident_ = {
         .field_ident = field_ident,
-        .section_ident = section_ident
-    };
+        .section_ident = section_ident};
     return field_ident_;
 }
 
 /* Check if non local variables are inherited */
-void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section) {
-    if (val.kind == Ref_unresolved && val.u.unresolved_ref.section_ident != current_section) {
-        for (long unsigned int i = 0; i < inherit_list_count; i++) {
-            if (inherit_section_list[i] == val.u.unresolved_ref.section_ident) {
-                fprintf(stderr, "Non-local variable %s in section %s without inherit\n", val.u.unresolved_ref.field_ident, current_section);
-                exit(EXIT_FAILURE);
+void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section)
+{
+    if (val.kind == Ref_unresolved && strcmp(val.u.unresolved_ref.section_ident, current_section) != 0)
+    {
+        for (long unsigned int i = 0; i < inherit_list_count; i++)
+        {
+            if (strcmp(inherit_section_list[i], val.u.unresolved_ref.section_ident) == 0)
+            {
+                return; // Inherit section found
             }
         }
+        fprintf(stderr, "Non-local variable %s in section %s without inherit\n", val.u.unresolved_ref.field_ident, current_section);
+        exit(EXIT_FAILURE);
     }
 }
 
 /* Overwrite a field in a list of field if identifier is matched */
-int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val) {
+int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
+{
     Fields current = fields_list;
-    while (current != NULL) {
-        if (current->ident == field_ident) {
+    while (current != NULL)
+    {
+        if (strcmp(current->ident, field_ident) == 0)
+        {
             current->val = val;
             /* TODO: warning with line */
-            printf("Field %s overwritten with new value\n", field_ident);
+            printf("Field %s overwritten with new value in section %s\n", field_ident, current->section->ident);
             return 1; // Field found and overwritten
         }
         current = current->next;
