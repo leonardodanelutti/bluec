@@ -1,7 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "Utils.h"
 #include "DataStructure.h"
+
+void check_Section(Sections sections_list, Ident section_ident);
+Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
+Val_ convert_Value_to_Val_(Value value, Ident section_ident);
+void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section);
+int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
 
 Sections make_SectionNew(Ident ident)
 {
@@ -38,13 +45,61 @@ Fields make_FieldNew(Ident ident, Val_ val)
     return new_field;
 }
 
-/* Convert XMLS to a linked list of sections */
+void push_Section(Sections sections_list, Ident section_ident)
+{
+    if (sections_list == NULL)
+    {
+        sections_list = make_SectionNew(section_ident);
+        return;
+    }
 
-void check_Section(Sections sections_list, Ident section_ident);
-Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
-Val_ convert_Value_to_Val_(Value value, Ident section_ident);
-void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section);
-int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
+    Sections current = sections_list;
+    while (current->next != NULL)
+    {
+        if (strcmp(current->ident, section_ident) == 0)
+        {
+            fprintf(stderr, "Duplicate section with identifier: %s\n", section_ident);
+            exit(EXIT_FAILURE);
+        }
+        current = current->next;
+    }
+    Sections new_section = make_SectionNew(section_ident);
+    current->next = new_section;
+}
+
+void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ val)
+{
+    Sections current = sections_list;
+    // Find the corresponding section
+    while (current != NULL)
+    {
+        if (strcmp(current->ident, field_ident.section_ident) == 0)
+        {
+            Fields new_field = make_FieldNew(field_ident.field_ident, val);
+            // resolve the field identifier
+            resolveField(new_field, sections_list);
+            // Check if the field already exists in the section, if it does, overwrite it
+            // otherwise, add it to the section
+            Fields current_field = current->fields;
+            while (current_field != NULL)
+            {
+                if (strcmp(current_field->ident, field_ident.field_ident) == 0)
+                {
+                    current_field->val = val;
+                    /* TODO: warning with line */
+                    printf("Warning field overwritten");
+                    return; // Field found and overwritten
+                }
+                current_field = current_field->next;
+            }
+            // TODO: If the field does not exist, add it to the section
+        }
+        current = current->next;
+    }
+    fprintf(stderr, "Section %s not found \n", field_ident.section_ident);
+}
+
+/* Convert XMLS to a linked list of sections */
 
 Sections convert_XMLS_to_Sections(XMLS xml)
 {

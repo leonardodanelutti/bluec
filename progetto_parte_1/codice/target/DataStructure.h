@@ -59,9 +59,6 @@ Sections make_Section(Ident ident);
    checks if inserting a duplicate section */
 void push_Section(Sections sections_list, Ident section_ident);
 
-/* Append a section (or sections) on to the end of a linked list of sections */
-void append_Section_internal(Sections left_sections_list, Sections right_sections_list);
-
 /* Push a new field on a given section in a valid linked list of sections,
    checks are performed */
 void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ val);
@@ -97,17 +94,6 @@ struct Fields_
 
 /* Create a new field */
 Fields make_FieldNew(Ident ident, Val_ val);
-
-/* Push a new field to the end of a linked list of Fields,
-   overwrites duplicate fields */
-void push_Field_internal(Fields current, Ident field_ident, Val_ val);
-
-/* Push a new field to the end of a valid linked list of Fields
-   checks are performed */
-void push_Field(Fields current, Ident field_ident, Val_ val);
-
-/* Delete a field from the linked list of Fields */
-void delete_Field(Fields current, Ident field_ident);
 
 /* TODO: add modify */
 
