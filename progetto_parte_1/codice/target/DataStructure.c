@@ -75,12 +75,15 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
     {
         if (strcmp(current->ident, field_ident.section_ident) == 0)
         {
+            // TODO: backpointer
             Fields new_field = make_FieldNew(field_ident.field_ident, val);
+            new_field->section = current;
             // resolve the field identifier
             resolveField(new_field, sections_list);
             // Check if the field already exists in the section, if it does, overwrite it
             // otherwise, add it to the section
             Fields current_field = current->fields;
+            Fields prev_field = NULL;
             while (current_field != NULL)
             {
                 if (strcmp(current_field->ident, field_ident.field_ident) == 0)
@@ -90,9 +93,11 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                     printf("Warning field overwritten");
                     return; // Field found and overwritten
                 }
+                prev_field = current_field;
                 current_field = current_field->next;
             }
-            // TODO: If the field does not exist, add it to the section
+            prev_field->next = new_field;
+            return; // Field added
         }
         current = current->next;
     }
