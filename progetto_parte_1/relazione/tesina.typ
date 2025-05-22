@@ -31,3 +31,10 @@ par(
 
 - implementato nel parser
 - import ciclici vengono detectati mantenendo una lista globale dei file parsati.
+
+Trasformiamo l'abstract syntax tree nella nostra srtuttura dati, in questa operazione veniene anche controllato:
+- field duplicati
+- sezioni duplicate
+- ci sono gli inherit per le variabili non locoali
+
+Creata la struttura risolviamo le variabili non locali ed eventuali cicli
