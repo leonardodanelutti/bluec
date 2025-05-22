@@ -79,7 +79,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
+#include <sys/stat.h> /* for stat() */
 #include "Absyn.h"
 #include "Colours.h"
 
@@ -1618,7 +1618,7 @@ XMLS pXML(FILE *inp, String filename)
         /* Save the file name in the parsed files list. */
         if (parsed_files_size == 0)
         {
-            parsed_files_size = 1;
+            parsed_files_size = 5;
             parsed_files = malloc(sizeof(*parsed_files) * parsed_files_size);
             if (!parsed_files)
             {
@@ -1628,7 +1628,7 @@ XMLS pXML(FILE *inp, String filename)
         }
         else if (parsed_files_count >= parsed_files_size)
         {
-            parsed_files_size += 1;
+            parsed_files_size += 5;
             parsed_files = realloc(parsed_files, sizeof(*parsed_files) * parsed_files_size);
             if (!parsed_files)
             {
