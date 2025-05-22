@@ -78,7 +78,7 @@ extern int grammar_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 53 "grammar.y"
+#line 54 "grammar.y"
 
   int    _int;
   char   _char;

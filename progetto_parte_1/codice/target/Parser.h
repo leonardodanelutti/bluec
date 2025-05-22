@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include "Absyn.h"
 
+/* Custom global variable that stores the parsed files to avoid
+   recursive imports. */
+extern String *parsed_files;
+extern long unsigned int parsed_files_size;
+extern long unsigned int parsed_files_count;
+
 XMLS pXML(FILE *inp, String filename);
 /* TODO: cosa facciamo con sta funzione sotto? Da trasformare in XMLS? */
 XML psXML(const char *str);

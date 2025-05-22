@@ -32,6 +32,8 @@ par(
 - implementato nel parser
 
 == Recursive and multiple imports
+Imports are implemented only for UNIX like paths.
+
 We chose to implement the scope of the variable for the whole file (both before and after
 its declaration).
 This means that variables are visible in the whole file (including the imported files) if

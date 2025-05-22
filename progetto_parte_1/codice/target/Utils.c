@@ -42,14 +42,23 @@ void resolveSections(Sections sections_list)
 
 void resolveField(Fields field, Sections start_sections_list)
 {
+    // Mark the field as visited
+    field->kind = Visited;
+
     /* Base case: we reached the end of the sections list */
     if (start_sections_list == NULL)
+    {
+        // Resolved reference
+        field->kind = Not_visited;
         return;
+    }
 
     /* Check if the field is a reference */
     if (field->val.kind == Ref_unresolved)
     {
-        printf("Resolving %s that points to $%s.%s\n", field->ident, field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
+        /* TODO: remove this debugging print
+           printf("Resolving %s that points to $%s.%s\n", field->ident, field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
+           */
         /* Find the section that contains the field */
         for (Sections section = start_sections_list; section != NULL; section = section->next)
         {
@@ -63,11 +72,10 @@ void resolveField(Fields field, Sections start_sections_list)
                         if (ref_field->kind == Visited)
                         {
                             /* Recursive reference detected */
-                            /* TODO: remove this debugging print
-                               fprintf(stderr, ANSI_COLOR_RED "ERROR:" ANSI_COLOR_RESET " recursive reference from $%s.%s to $%s.%s.\n",
+                            fprintf(stderr, ERROR "recursive reference from $%s.%s to $%s.%s.\n",
                                     field->section->ident, field->ident,
                                     ref_field->section->ident, ref_field->ident);
-                               */
+                            exit(EXIT_FAILURE);
                         }
                         /* Update the field value with the resolved reference */
                         field->val.kind = Ref;
@@ -80,7 +88,7 @@ void resolveField(Fields field, Sections start_sections_list)
                             ref_field->pointed_by.vals = malloc(sizeof(*ref_field->pointed_by.vals) * ref_field->pointed_by.vals_size);
                             if (ref_field->pointed_by.vals == NULL)
                             {
-                                fprintf(stderr, ANSI_COLOR_RED "ERROR:" ANSI_COLOR_RED " Memory allocation failed for pointed_by field.\n");
+                                fprintf(stderr, ERROR "Memory allocation failed for pointed_by field.\n");
                                 exit(EXIT_FAILURE);
                             }
                         }
@@ -91,7 +99,7 @@ void resolveField(Fields field, Sections start_sections_list)
                             ref_field->pointed_by.vals = realloc(ref_field->pointed_by.vals, sizeof(*ref_field->pointed_by.vals) * ref_field->pointed_by.vals_size);
                             if (ref_field->pointed_by.vals == NULL)
                             {
-                                fprintf(stderr, ANSI_COLOR_RED "ERROR:" ANSI_COLOR_RED " Memory reallocation failed for pointed_by field.\n");
+                                fprintf(stderr, ERROR "Memory reallocation failed for pointed_by field.\n");
                                 exit(EXIT_FAILURE);
                             }
                         }
@@ -99,13 +107,11 @@ void resolveField(Fields field, Sections start_sections_list)
                         ref_field->pointed_by.vals[ref_field->pointed_by.vals_count] = &field->val;
                         ref_field->pointed_by.vals_count++;
 
-                        /* Mark the field as visited */
-                        ref_field->kind = Visited;
                         /* Recursively resolve the reference */
                         resolveField(ref_field, start_sections_list);
 
-                        /* Resolved reference */
-                        ref_field->kind = Not_visited;
+                        // Resolved reference
+                        field->kind = Not_visited;
                         return;
                     }
                 }
@@ -113,12 +119,13 @@ void resolveField(Fields field, Sections start_sections_list)
         }
         /* The reference could not be resolved */
         /* TODO: add file name in the error */
-        fprintf(stderr, ANSI_COLOR_RED "ERROR:" ANSI_COLOR_RESET " unresolved reference to section %s and field %s.\n",
+        fprintf(stderr, ERROR "unresolved reference to section %s and field %s.\n",
                 field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
         exit(EXIT_FAILURE);
     }
 
     /* Not a reference */
+    field->kind = Not_visited;
     return;
 }
 

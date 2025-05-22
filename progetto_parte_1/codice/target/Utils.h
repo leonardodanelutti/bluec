@@ -1,6 +1,6 @@
 #include "Absyn.h"
 #include "DataStructure.h"
-#include "Colours.h"
+#include "Logs.h"
 
 #ifndef UTILS_HEADER
 #define UTILS_HEADER

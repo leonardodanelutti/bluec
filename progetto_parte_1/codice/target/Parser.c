@@ -81,7 +81,8 @@
 #include <string.h>
 #include <sys/stat.h> /* for stat() */
 #include "Absyn.h"
-#include "Colours.h"
+#include "Logs.h"
+#include "Parser.h"
 
 #define YYMAXDEPTH 10000000
 
@@ -104,7 +105,7 @@ extern yyscan_t grammar__initialize_lexer(FILE * inp);
 
 /* End C preamble code */
 
-#line 108 "Parser.c"
+#line 109 "Parser.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -166,7 +167,7 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 /* Second part of user prologue.  */
-#line 69 "grammar.y"
+#line 70 "grammar.y"
 
 void yyerror(YYLTYPE *loc, yyscan_t scanner, YYSTYPE *result, const char *msg)
 {
@@ -178,7 +179,7 @@ int yyparse(yyscan_t scanner, YYSTYPE *result);
 
 extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
 
-#line 182 "Parser.c"
+#line 183 "Parser.c"
 
 
 #ifdef short
@@ -559,9 +560,9 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   112,   112,   113,   114,   116,   117,   119,   121,   123,
-     124,   125,   127,   128,   130,   132,   134,   135,   136,   137,
-     138,   139
+       0,   113,   113,   114,   115,   117,   118,   120,   122,   124,
+     125,   126,   128,   129,   131,   133,   135,   136,   137,   138,
+     139,   140
 };
 #endif
 
@@ -1269,127 +1270,127 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* XML: %empty  */
-#line 112 "grammar.y"
+#line 113 "grammar.y"
                   { (yyval.xmls_) = make_XMLSEmpty(); result->xmls_ = (yyval.xmls_); }
-#line 1275 "Parser.c"
+#line 1276 "Parser.c"
     break;
 
   case 3: /* XML: Import XML  */
-#line 113 "grammar.y"
+#line 114 "grammar.y"
                { (yyval.xmls_) = make_XMLSwImport((yyvsp[-1].xmls_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1281 "Parser.c"
+#line 1282 "Parser.c"
     break;
 
   case 4: /* XML: Section XMLS  */
-#line 114 "grammar.y"
+#line 115 "grammar.y"
                  { (yyval.xmls_) = make_XMLSection((yyvsp[-1].section_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1287 "Parser.c"
+#line 1288 "Parser.c"
     break;
 
   case 5: /* XMLS: Section XMLS  */
-#line 116 "grammar.y"
+#line 117 "grammar.y"
                     { (yyval.xmls_) = make_XMLSection((yyvsp[-1].section_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1293 "Parser.c"
+#line 1294 "Parser.c"
     break;
 
   case 6: /* XMLS: %empty  */
-#line 117 "grammar.y"
+#line 118 "grammar.y"
                 { (yyval.xmls_) = make_XMLSEmpty(); result->xmls_ = (yyval.xmls_); }
-#line 1299 "Parser.c"
+#line 1300 "Parser.c"
     break;
 
   case 7: /* Import: _STRING_  */
-#line 119 "grammar.y"
+#line 120 "grammar.y"
                   { (yyval.xmls_) = make_ImportFile((yyvsp[0]._string)); result->xmls_ = (yyval.xmls_); }
-#line 1305 "Parser.c"
+#line 1306 "Parser.c"
     break;
 
   case 8: /* Section: _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT  */
-#line 121 "grammar.y"
+#line 122 "grammar.y"
                                                                                  { (yyval.section_) = make_FileSection((yyvsp[-5]._string), (yyvsp[-3].sbody_)); result->section_ = (yyval.section_); }
-#line 1311 "Parser.c"
+#line 1312 "Parser.c"
     break;
 
   case 9: /* SBody: %empty  */
-#line 123 "grammar.y"
+#line 124 "grammar.y"
                     { (yyval.sbody_) = make_SBodyEmpty(); result->sbody_ = (yyval.sbody_); }
-#line 1317 "Parser.c"
+#line 1318 "Parser.c"
     break;
 
   case 10: /* SBody: Inherit SBody  */
-#line 124 "grammar.y"
+#line 125 "grammar.y"
                   { (yyval.sbody_) = make_SBodywInherit((yyvsp[-1].inherit_), (yyvsp[0].sbody_)); result->sbody_ = (yyval.sbody_); }
-#line 1323 "Parser.c"
+#line 1324 "Parser.c"
     break;
 
   case 11: /* SBody: Field SBodyF  */
-#line 125 "grammar.y"
+#line 126 "grammar.y"
                  { (yyval.sbody_) = make_SBodywoInherit((yyvsp[-1].field_), (yyvsp[0].sbodyf_)); result->sbody_ = (yyval.sbody_); }
-#line 1329 "Parser.c"
+#line 1330 "Parser.c"
     break;
 
   case 12: /* SBodyF: Field SBodyF  */
-#line 127 "grammar.y"
+#line 128 "grammar.y"
                       { (yyval.sbodyf_) = make_SBodyField((yyvsp[-1].field_), (yyvsp[0].sbodyf_)); result->sbodyf_ = (yyval.sbodyf_); }
-#line 1335 "Parser.c"
+#line 1336 "Parser.c"
     break;
 
   case 13: /* SBodyF: %empty  */
-#line 128 "grammar.y"
+#line 129 "grammar.y"
                 { (yyval.sbodyf_) = make_SBodyFEmpty(); result->sbodyf_ = (yyval.sbodyf_); }
-#line 1341 "Parser.c"
+#line 1342 "Parser.c"
     break;
 
   case 14: /* Inherit: _LT _KW_inherit _GT _IDENT_ _SYMB_3 _KW_inherit _GT  */
-#line 130 "grammar.y"
+#line 131 "grammar.y"
                                                               { (yyval.inherit_) = make_InheritSection((yyvsp[-3]._string)); result->inherit_ = (yyval.inherit_); }
-#line 1347 "Parser.c"
+#line 1348 "Parser.c"
     break;
 
   case 15: /* Field: _LT _KW_field _KW_name _EQ _IDENT_ _GT Value _SYMB_3 _KW_field _GT  */
-#line 132 "grammar.y"
+#line 133 "grammar.y"
                                                                            { (yyval.field_) = make_SectionField((yyvsp[-5]._string), (yyvsp[-3].value_)); result->field_ = (yyval.field_); }
-#line 1353 "Parser.c"
+#line 1354 "Parser.c"
     break;
 
   case 16: /* Value: _INTEGER_  */
-#line 134 "grammar.y"
+#line 135 "grammar.y"
                   { (yyval.value_) = make_ValueInteger((yyvsp[0]._int)); result->value_ = (yyval.value_); }
-#line 1359 "Parser.c"
+#line 1360 "Parser.c"
     break;
 
   case 17: /* Value: _KW_true  */
-#line 135 "grammar.y"
+#line 136 "grammar.y"
              { (yyval.value_) = make_Value_true(); result->value_ = (yyval.value_); }
-#line 1365 "Parser.c"
+#line 1366 "Parser.c"
     break;
 
   case 18: /* Value: _KW_false  */
-#line 136 "grammar.y"
+#line 137 "grammar.y"
               { (yyval.value_) = make_Value_false(); result->value_ = (yyval.value_); }
-#line 1371 "Parser.c"
+#line 1372 "Parser.c"
     break;
 
   case 19: /* Value: _STRING_  */
-#line 137 "grammar.y"
+#line 138 "grammar.y"
              { (yyval.value_) = make_ValueString((yyvsp[0]._string)); result->value_ = (yyval.value_); }
-#line 1377 "Parser.c"
+#line 1378 "Parser.c"
     break;
 
   case 20: /* Value: _DOLLAR _IDENT_  */
-#line 138 "grammar.y"
+#line 139 "grammar.y"
                     { (yyval.value_) = make_Value1((yyvsp[0]._string)); result->value_ = (yyval.value_); }
-#line 1383 "Parser.c"
+#line 1384 "Parser.c"
     break;
 
   case 21: /* Value: _DOLLAR _IDENT_ _DOT _IDENT_  */
-#line 139 "grammar.y"
+#line 140 "grammar.y"
                                  { (yyval.value_) = make_Value2((yyvsp[-2]._string), (yyvsp[0]._string)); result->value_ = (yyval.value_); }
-#line 1389 "Parser.c"
+#line 1390 "Parser.c"
     break;
 
 
-#line 1393 "Parser.c"
+#line 1394 "Parser.c"
 
       default: break;
     }
@@ -1588,12 +1589,12 @@ yyreturn:
   return yyresult;
 }
 
-#line 142 "grammar.y"
+#line 143 "grammar.y"
 
 
 /* Custom global variable that stores the parsed files to avoid
    recursive imports. */
-struct stat *parsed_files = NULL;
+String *parsed_files = NULL;
 long unsigned int parsed_files_size = 0;
 long unsigned int parsed_files_count = 0;
 
@@ -1609,9 +1610,11 @@ XMLS pXML(FILE *inp, String filename)
         /* Check if the file has already been parsed. */
         for (long unsigned int i = 0; i < parsed_files_count; i++)
         {
-            if ((parsed_files[i].st_ino == file_stat.st_ino) && (parsed_files[i].st_dev == file_stat.st_dev))
+            struct stat parsed_file_stat;
+            stat(parsed_files[i], &parsed_file_stat);
+            if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
-                fprintf(stderr, ANSI_COLOR_YELLOW "WARNING:" ANSI_COLOR_RESET " multiple import (that could be caused by recursive imports) of the same file '%s' detected.\n", filename);
+                fprintf(stderr, WARNING "multiple import (that could be caused by recursive imports) of the same file '%s' detected.\n", filename);
                 return make_XMLSEmpty();
             }
         }
@@ -1636,7 +1639,7 @@ XMLS pXML(FILE *inp, String filename)
                 return 0;
             }
         }
-        parsed_files[parsed_files_count] = file_stat;
+        parsed_files[parsed_files_count] = filename;
         parsed_files_count++;
     }
 

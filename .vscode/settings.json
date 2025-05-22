@@ -3,6 +3,7 @@
         "*.typ": "typst",
         "prettyprinter.h": "c",
         "datastructure.h": "c",
-        "absyn.h": "c"
+        "absyn.h": "c",
+        "logs.h": "c"
     }
 }

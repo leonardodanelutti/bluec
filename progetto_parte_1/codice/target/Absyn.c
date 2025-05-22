@@ -105,17 +105,18 @@ XMLS make_ImportFile(String p1)
     XMLS import = (XMLS)malloc(sizeof(*import));
     if (!import)
     {
-        fprintf(stderr, "Error: out of memory when allocating XMLwImport!\n");
+        fprintf(stderr, ERROR "out of memory when allocating XMLwImport!\n");
         exit(1);
     }
-    /* Perfrom import */
+    /* File open */
     FILE *f = fopen(p1, "r");
     if (!f)
     {
         /* TODO: error handling */
-        printf("Error: could not open file %s\n", p1);
+        fprintf(stderr, ERROR "could not open file %s\n", p1);
         exit(1);
     }
+    /* Perform import */
     import = pXML(f, p1);
     fclose(f);
     return import;

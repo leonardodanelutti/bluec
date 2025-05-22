@@ -25,7 +25,8 @@
 #include <string.h>
 #include <sys/stat.h> /* for stat() */
 #include "Absyn.h"
-#include "Colours.h"
+#include "Logs.h"
+#include "Parser.h"
 
 #define YYMAXDEPTH 10000000
 
@@ -143,7 +144,7 @@ Value : _INTEGER_ { $$ = make_ValueInteger($1); result->value_ = $$; }
 
 /* Custom global variable that stores the parsed files to avoid
    recursive imports. */
-struct stat *parsed_files = NULL;
+String *parsed_files = NULL;
 long unsigned int parsed_files_size = 0;
 long unsigned int parsed_files_count = 0;
 
@@ -159,9 +160,11 @@ XMLS pXML(FILE *inp, String filename)
         /* Check if the file has already been parsed. */
         for (long unsigned int i = 0; i < parsed_files_count; i++)
         {
-            if ((parsed_files[i].st_ino == file_stat.st_ino) && (parsed_files[i].st_dev == file_stat.st_dev))
+            struct stat parsed_file_stat;
+            stat(parsed_files[i], &parsed_file_stat);
+            if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
-                fprintf(stderr, ANSI_COLOR_YELLOW "WARNING:" ANSI_COLOR_RESET " multiple import (that could be caused by recursive imports) of the same file '%s' detected.\n", filename);
+                fprintf(stderr, WARNING "multiple import (that could be caused by recursive imports) of the same file '%s' detected.\n", filename);
                 return make_XMLSEmpty();
             }
         }
@@ -186,7 +189,7 @@ XMLS pXML(FILE *inp, String filename)
                 return 0;
             }
         }
-        parsed_files[parsed_files_count] = file_stat;
+        parsed_files[parsed_files_count] = filename;
         parsed_files_count++;
     }
 
