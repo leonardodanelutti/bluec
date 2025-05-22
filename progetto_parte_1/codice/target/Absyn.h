@@ -9,8 +9,9 @@
  */
 #define _POSIX_C_SOURCE 200809L
 
-#include <stddef.h> /* NULL */
-#include <string.h> /* strdup */
+#include <stddef.h>   /* NULL */
+#include <string.h>   /* strdup */
+#include "Comments.h" /* SymbolLoc_ */
 
 /* C++ Abstract Syntax Interface.*/
 
@@ -52,6 +53,7 @@ typedef struct Value_ *Value;
 
 /********************   Abstract Syntax Classes    ********************/
 
+// TODO: Serve ancora XML_?
 struct XML_
 {
     enum
@@ -100,11 +102,13 @@ struct XMLS_
             XMLS xmls_;
         } xmlsection_;
     } u;
+    SymbolLoc_ symbol_loc;
 };
 
 XMLS make_XMLSection(Section p0, XMLS p1);
 XMLS make_XMLSEmpty(void);
 
+// TODO: serve ancora Import_?
 struct Import_
 {
     enum
@@ -136,6 +140,7 @@ struct Section_
             SBody sbody_;
         } filesection_;
     } u;
+    SymbolLoc_ symbol_loc;
 };
 
 Section make_FileSection(Ident p0, SBody p1);
@@ -161,6 +166,7 @@ struct SBody_
             SBodyF sbodyf_;
         } sbodywoinherit_;
     } u;
+    SymbolLoc_ symbol_loc;
 };
 
 SBody make_SBodyEmpty(void);
@@ -182,6 +188,7 @@ struct SBodyF_
             SBodyF sbodyf_;
         } sbodyfield_;
     } u;
+    SymbolLoc_ symbol_loc;
 };
 
 SBodyF make_SBodyField(Field p0, SBodyF p1);
@@ -200,6 +207,7 @@ struct Inherit_
             Ident ident_;
         } inheritsection_;
     } u;
+    SymbolLoc_ symbol_loc;
 };
 
 Inherit make_InheritSection(Ident p0);
@@ -218,6 +226,7 @@ struct Field_
             Value value_;
         } sectionfield_;
     } u;
+    SymbolLoc_ symbol_loc;
 };
 
 Field make_SectionField(Ident p0, Value p1);
@@ -252,6 +261,7 @@ struct Value_
             Ident ident_1, ident_2;
         } value2_;
     } u;
+    SymbolLoc_ symbol_loc;
 };
 
 Value make_ValueInteger(Integer p0);
