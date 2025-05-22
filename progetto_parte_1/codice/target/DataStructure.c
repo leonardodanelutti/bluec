@@ -56,7 +56,7 @@ Sections convert_XMLS_to_Sections(XMLS xml) {
     /* Create the head of the sections list */
     Sections sections_list = make_SectionNew(xml->u.xmlsection_.section_->u.filesection_.ident_);
     sections_list->fields = convert_SBody_to_Fields(xml->u.xmlsection_.section_->u.filesection_.sbody_,
-                                                    xml->u.xmlsection_.section_->u.filesection_.ident_);
+                                                    sections_list);
     Sections last_section = sections_list;
     /* Move to the next field */
     xml = xml->u.xmlsection_.xmls_;
