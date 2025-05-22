@@ -72,6 +72,11 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident);
 
 struct Fields_
 {
+    enum
+    {
+        Visited,
+        Not_visited
+    } kind;
     Ident ident;
     Val_ val;
     Fields next;
