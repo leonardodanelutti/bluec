@@ -3,9 +3,11 @@
 
 #include "DataStructure.h"
 
-Sections make_SectionNew(Ident ident) {
+Sections make_SectionNew(Ident ident)
+{
     Sections new_section = (Sections)malloc(sizeof(struct Sections_));
-    if (new_section == NULL) {
+    if (new_section == NULL)
+    {
         fprintf(stderr, "Memory allocation failed for new section\n");
         exit(EXIT_FAILURE);
     }
@@ -15,9 +17,11 @@ Sections make_SectionNew(Ident ident) {
     return new_section;
 }
 
-Fields make_FieldNew(Ident ident, Value val) {
+Fields make_FieldNew(Ident ident, Val_ val)
+{
     Fields new_field = (Fields)malloc(sizeof(struct Fields_));
-    if (new_field == NULL) {
+    if (new_field == NULL)
+    {
         fprintf(stderr, "Memory allocation failed for new field\n");
         exit(EXIT_FAILURE);
     }
@@ -27,4 +31,3 @@ Fields make_FieldNew(Ident ident, Value val) {
     new_field->section = NULL;
     return new_field;
 }
-

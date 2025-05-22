@@ -1,19 +1,36 @@
 #include "Absyn.h"
 
+typedef struct FieldIdent_
+{
+    Ident field_ident;
+    Ident section_ident;
+} FieldIdent_;
+
 struct Sections_;
 typedef struct Sections_ *Sections;
 
 struct Fields_;
 typedef struct Fields_ *Fields;
 
-struct Val_;
-typedef struct Val_ *Val;
-
-typedef struct FieldIdent_
+typedef struct Val_
 {
-    Ident field_ident;
-    Ident section_ident;
-} FieldIdent_;
+    enum
+    {
+        Int,
+        Str,
+        Bool,
+        Ref,
+        Ref_unresolved
+    } kind;
+    union
+    {
+        int int_;
+        String str;
+        int bool_;
+        Fields ref;
+        FieldIdent_ unresolved_ref;
+    } u;
+} Val_;
 
 struct Sections_
 {
@@ -43,7 +60,7 @@ void append_Section_internal(Sections left_sections_list, Sections right_section
 
 /* Push a new field on a given section in a valid linked list of sections,
    checks are performed */
-void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Value val);
+void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ val);
 
 /* Delete a section from a valid linked list of Sections */
 void delete_Section(Sections sections_list, Ident section_ident);
@@ -56,44 +73,27 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident);
 struct Fields_
 {
     Ident ident;
-    Value val;
+    Val_ val;
     Fields next;
     /* Fields front; */
     Sections section;
 };
 
 /* Create a new field */
-Fields make_FieldNew(Ident ident, Value val);
+Fields make_FieldNew(Ident ident, Val_ val);
 
 /* Push a new field to the end of a linked list of Fields,
    overwrites duplicate fields */
-void push_Field_internal(Fields current, Ident field_ident, Value val);
+void push_Field_internal(Fields current, Ident field_ident, Val_ val);
 
 /* Push a new field to the end of a valid linked list of Fields
    checks are performed */
-void push_Field(Fields current, Ident field_ident, Value val);
+void push_Field(Fields current, Ident field_ident, Val_ val);
 
 /* Delete a field from the linked list of Fields */
 void delete_Field(Fields current, Ident field_ident);
 
 /* TODO: add modify */
 
-struct Val_
-{
-    enum
-    {
-        Int,
-        Str,
-        Bool,
-        Ref,
-        Ref_unresolved
-    } kind;
-    union
-    {
-        int int_;
-        String str;
-        int bool_;
-        Fields ref;
-        FieldIdent_ unresolved_ref;
-    } u;
-};
+/* Converts the abstract syntax tree to the datastruct defined by us */
+Sections convert_XMLS_to_Sections(XMLS xml);
