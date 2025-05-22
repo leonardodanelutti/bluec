@@ -74,17 +74,6 @@ extern int grammar_debug;
   typedef enum yytokentype yytoken_kind_t;
 #endif
 
-typedef struct XML_ *XML;
-typedef struct XMLS_ *XMLS;
-typedef struct Import_ *Import;
-typedef struct Section_ *Section;
-typedef struct SBody_ *SBody;
-typedef struct SBodyF_ *SBodyF;
-typedef struct Inherit_ *Inherit;
-typedef struct Field_ *Field;
-typedef struct Value_ *Value;
-typedef void* yyscan_t;
-
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
