@@ -99,6 +99,86 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
     fprintf(stderr, "Section %s not found \n", field_ident.section_ident);
 }
 
+void delete_Section(Sections sections_list, Ident section_ident)
+{
+    Sections current = sections_list;
+    Sections prev_section = NULL;
+    // Find the section to delete
+    while (current != NULL)
+    {
+        if (strcmp(current->ident, section_ident) == 0)
+        {
+            // Manage the removal of all the fields in the section
+            for (Fields field = current->fields; field != NULL;)
+            {
+                Fields next_field = field->next;
+                // TODO: devo per forza creare un nuovo FieldIdent?
+                delete_FieldInSection(sections_list, new_FieldIdent(field->ident, section_ident));
+                field = next_field;
+            }
+            // Remove the section from the list
+            if (prev_section == NULL)
+            {
+                sections_list = current->next; // Delete the first section
+            }
+            else
+            {
+                prev_section->next = current->next; // Delete the section in the middle or end
+            }
+            free(current);
+            return; // Section deleted
+        }
+        prev_section = current;
+        current = current->next;
+    }
+    fprintf(stderr, "Section %s not found\n", section_ident);
+}
+
+void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
+{
+    Sections current = sections_list;
+    // Find the corresponding section
+    while (current != NULL)
+    {
+        if (strcmp(current->ident, field_ident.section_ident) == 0)
+        {
+            Fields current_field = current->fields;
+            Fields prev_field = NULL;
+            // Find the field to delete
+            while (current_field != NULL)
+            {
+                if (strcmp(current_field->ident, field_ident.field_ident) == 0)
+                {
+                    // Check the values that are currently pointed to this field
+                    for (int i = 0; i < current_field->pointed_by.vals_count; i++)
+                    {
+                        // Get the i-th pointer to the field
+                        Val pointer = current_field->pointed_by.vals[i];
+                        // Copy the field value to the pointer value
+                        pointer->kind = current_field->kind;
+                        pointer->u = current_field->val.u;
+                    }
+                    // Remove the field from the list
+                    if (prev_field == NULL)
+                    {
+                        current->fields = current_field->next; // Delete the first field
+                    }
+                    else
+                    {
+                        prev_field->next = current_field->next; // Delete the field in the middle or end
+                    }
+                    free(current_field);
+                    return; // Field deleted
+                }
+                prev_field = current_field;
+                current_field = current_field->next;
+            }
+        }
+        current = current->next;
+    }
+    fprintf(stderr, ERROR "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
+}
+
 /* Convert XMLS to a linked list of sections */
 
 Sections convert_XMLS_to_Sections(XMLS xml)
