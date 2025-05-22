@@ -12,4 +12,6 @@ void printFields(Fields field);
 
 void printVal(Val_ val, Ident section_ident);
 
+void printInherits(Val_ val, Ident section_ident);
+
 
