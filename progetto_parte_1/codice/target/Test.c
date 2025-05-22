@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     printSections(sections);
     /* Resolve references */
     resolveSections(sections);
-    printf("\n[Pretty Print (before references resolution)]\n");
+    printf("\n[Pretty Print (after references resolution)]\n");
     printSections(sections);
 
     if (parse_tree)

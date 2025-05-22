@@ -42,7 +42,6 @@ void resolveSections(Sections sections_list)
 
 void resolveField(Fields field, Sections start_sections_list)
 {
-    printf("Resolving %s that points to $%s.%s\n", field->ident, field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
     /* Base case: we reached the end of the sections list */
     if (start_sections_list == NULL)
         return;
@@ -50,6 +49,7 @@ void resolveField(Fields field, Sections start_sections_list)
     /* Check if the field is a reference */
     if (field->val.kind == Ref_unresolved)
     {
+        printf("Resolving %s that points to $%s.%s\n", field->ident, field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
         /* Find the section that contains the field */
         for (Sections section = start_sections_list; section != NULL; section = section->next)
         {
@@ -63,9 +63,11 @@ void resolveField(Fields field, Sections start_sections_list)
                         if (ref_field->kind == Visited)
                         {
                             /* Recursive reference detected */
-                            fprintf(stderr, ANSI_COLOR_RED "ERROR:" ANSI_COLOR_RESET " recursive reference from $%s.%s to $%s.%s.\n",
+                            /* TODO: remove this debugging print
+                               fprintf(stderr, ANSI_COLOR_RED "ERROR:" ANSI_COLOR_RESET " recursive reference from $%s.%s to $%s.%s.\n",
                                     field->section->ident, field->ident,
                                     ref_field->section->ident, ref_field->ident);
+                               */
                         }
                         /* Update the field value with the resolved reference */
                         field->val.kind = Ref;
