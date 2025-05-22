@@ -108,5 +108,11 @@ void delete_Field(Fields current, Ident field_ident);
 
 /* TODO: add modify */
 
+Val_ new_Int(int int_);
+Val_ new_Str(String str);
+Val_ new_Bool(int bool_);
+Val_ new_Ref(FieldIdent_ ref);
+FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident);
+
 /* Converts the abstract syntax tree to the datastruct defined by us */
 Sections convert_XMLS_to_Sections(XMLS xml);
