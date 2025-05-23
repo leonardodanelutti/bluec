@@ -1,0 +1,2 @@
+<import>../tests/glob/file1.cnf</import>
+<import>../tests/glob/file1.cnf</import>

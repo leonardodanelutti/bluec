@@ -1,0 +1,7 @@
+<section name= sez1 #commento1
+>
+    <field name= var1>4</field>
+    <field name= var2>$var1 #commento2
+    </field>
+    <field name= var2>7</field>
+</section>

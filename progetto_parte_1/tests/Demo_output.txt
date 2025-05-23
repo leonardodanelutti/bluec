@@ -1,0 +1,58 @@
+example 1
+
+[Pretty Print (after references resolution)]
+<section name=sez1>
+  <field name=var1> 4 </field>
+  <field name=var2> $var1 </field>
+</section>
+<section name=sez2>
+  <inherit>sez1</inherit>
+  <field name=var1> 4 </field>
+  <field name=var2> $sez1.var1 </field>
+  <field name=var3> $var1 </field>
+</section>
+example 2
+
+[Pretty Print (after references resolution)]
+<section name=sez1>
+  <inherit>sez2</inherit>
+  <field name=var1> 4 </field>
+  <field name=var2> $var1 </field>
+  <field name=var3> $sez2.var3 </field>
+</section>
+<section name=sez2>
+  <field name=var1> 4 </field>
+  <field name=var2> 6 </field>
+  <field name=var3> $var1 </field>
+</section>
+example 3
+Field var2 overwritten with new value in section sez1
+
+[Pretty Print (after references resolution)]
+<section name=sez1>
+  <field name=var1> 4 </field>
+  <field name=var2> 7 </field>
+</section>
+example 4
+Duplicate section with identifier: sez1
+example 5
+[33m[1mWARNING: [m[0mrecursive file import detected. Import chain: ../tests/glob/file2.cnf -> ../tests/glob/file1.cnf. Continuing parsing without it.
+
+[Pretty Print (after references resolution)]
+<section name=sezfile2>
+</section>
+<section name=sezfile1>
+</section>
+example 6
+[33m[1mWARNING: [m[0mrecursive file import detected. Import chain: ../tests/glob/file2.cnf -> ../tests/glob/file1.cnf. Continuing parsing without it.
+[33m[1mWARNING: [m[0mfile ../tests/glob/file1.cnf imported in ../tests/testCase6.txt but was already imported. Continuing parsing without reimporting it.
+
+[Pretty Print (after references resolution)]
+<section name=sezfile2>
+</section>
+<section name=sezfile1>
+</section>
+example 7
+Non-local variable in section without inherit
+example 8
+[31m[1mERROR: [m[0mrecursive reference from $sez2.var1 to $sez1.var1.
