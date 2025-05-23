@@ -98,3 +98,22 @@ example 9: Referring to unexisting section
 example 10: Referring to non-existing variable
 
 [31m[1mERROR: [m[0m../tests/testCase10.txt:9:23: reference to non-existing field var2 in section sez1.
+--------------------------------------
+
+example 11: Useless inherit
+
+[33m[1mWARNING: [m[0m../tests/testCase11.txt:8:5: inherited section `sez1` multiple times. Consider removing this duplicate.
+[33m[1mWARNING: [m[0m../tests/testCase11.txt:9:5: inherited section `sez1` multiple times. Consider removing this duplicate.
+[33m[1mWARNING: [m[0m../tests/testCase11.txt:10:5: inherited section `sez4` is not used. Consider removing it.
+
+[Pretty Print (after references resolution)]
+<section name=sez1>
+  <field name=var1> 7 </field>
+</section>
+<section name=sez2>
+  <inherit>sez1</inherit>
+  <field name=var1> $sez1.var1 </field>
+</section>
+<section name=sez4>
+  <field name=variable> true </field>
+</section>

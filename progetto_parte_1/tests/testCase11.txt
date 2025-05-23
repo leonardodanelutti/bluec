@@ -1,0 +1,20 @@
+<section name= sez1 #commento1
+>
+    <field name= var1>7</field>
+</section>
+
+<section name= sez2>
+    <inherit>sez1</inherit>
+    <inherit>sez1</inherit>
+    <inherit>sez1</inherit>
+    <inherit>sez4</inherit>
+    # Variabile 1
+    <field name= var1>$sez1.var1</field>
+</section>
+
+# Nuova sezione
+<section name= sez4>
+    <field name= variable>true</field>
+</section>
+
+# Fine

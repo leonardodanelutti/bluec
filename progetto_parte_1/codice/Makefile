@@ -81,6 +81,11 @@ demo: Testgrammar
 		echo "example 10: Referring to non-existing variable"; \
 		echo ""; \
 		./Testgrammar ../tests/testCase10.txt || true; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 11: Useless inherit"; \
+		echo ""; \
+		./Testgrammar ../tests/testCase11.txt || true; \
 	} > ../tests/Demo_output.txt 2>&1
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

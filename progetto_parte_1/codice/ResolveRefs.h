@@ -1,9 +1,12 @@
+/* This module implements reference resolution for the custom data structures. If a
+   variable cannot be resolved, an error is reported and the program is terminated.
+   Moreover, some warning checks are implemented to ensure that the user is aware of the
+   possible issues. */
+
 #ifndef RESOLVE_CONFLICTS_H
 #define RESOLVE_CONFLICTS_H
 
 #include "DataStructure.h"
-
-/***** CUSTOM DATA STRUCTURE UTILS *****/
 
 /* Recursivly resolve pointers in the `Sections` custom data structure. */
 void resolveSections(Sections sections_list);
