@@ -1,0 +1,9 @@
+<section name= sez1 #commento1
+>
+    <field name= var1>4</field>
+</section>
+
+<section name= sez1 #commento1
+>
+    <field name= var1>5</field>
+</section>

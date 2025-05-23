@@ -23,13 +23,26 @@ distclean : clean
 
 demo:
 	@echo "Running demo..."
-	@echo "exmaple 1"
-	./Testgrammar ../tests/test.txt
-	@echo "exmaple 2"
-	./Testgrammar ../tests/testcases.txt || true
-	@echo "exmaple 2"
-	./Testgrammar ../tests/testcases.txt || true
+	@{ \
+		echo "example 1"; \
+		./Testgrammar ../tests/testCase1.txt || true; \
+		echo "example 2"; \
+		./Testgrammar ../tests/testCase2.txt || true; \
+		echo "example 3"; \
+		./Testgrammar ../tests/testCase3.txt || true; \
+		echo "example 4"; \
+		./Testgrammar ../tests/testCase4.txt || true; \
+		echo "example 5"; \
+		./Testgrammar ../tests/testCase5.txt || true; \
+		echo "example 6"; \
+		./Testgrammar ../tests/testCase6.txt || true; \
+		echo "example 7"; \
+		./Testgrammar ../tests/testCase7.txt || true; \
+		echo "example 8"; \
+		./Testgrammar ../tests/testCase8.txt || true; \
+	} > ../tests/Demo_output.txt 2>&1
 	@echo "Demo completed."
+
 
 Testgrammar : ${OBJS} Test.o
 	@echo "Linking Testgrammar..."
