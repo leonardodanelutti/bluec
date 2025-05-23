@@ -16,6 +16,7 @@
 #define _POSIX_C_SOURCE 200809L
 }
 %{
+#include <string.h>
 #include "Absyn.h"
 #include "Bison.h"
 #include "Comments.h"
@@ -90,7 +91,7 @@ IDENT [a-zA-Z0-9'_]
 <INITIAL>"section"      	 return _KW_section;
 <INITIAL>"true"      	 return _KW_true;
 
-<INITIAL>"#"[^\n]* push_Comment(yylloc->first_line, parsed_files[current_file].file_path, yytext); /* BNFC: comment "#" */
+<INITIAL>"#"[^\n]* push_Comment(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); /* BNFC: comment "#" */
 
 <INITIAL><[ \t\r\n\f]*import[ \t\r\n\f]*>      LITERAL_BUFFER_CREATE(); BEGIN IMPORT;
 <IMPORT>\\             	 BEGIN ESCAPEDI;
