@@ -21,6 +21,7 @@ Sections make_SectionNew(Ident ident)
     new_section->ident = ident;
     new_section->fields = NULL;
     new_section->next = NULL;
+    new_section->inherits = da_init(sizeof(Ident));
     return new_section;
 }
 
@@ -246,15 +247,13 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     /* Construct a list of all identifiers in the inherits */
 
-    DynamicArray *inherit_section_list = da_init(sizeof(Ident));
+    DynamicArray *inherit_section_list = current_section->inherits;
 
     while (sbody->kind == is_SBodywInherit)
     {
         da_push(inherit_section_list, sbody->u.sbodywinherit_.inherit_->u.inheritsection_.ident_);
         sbody = sbody->u.sbodywinherit_.sbody_;
     }
-
-    current_section->inherits = inherit_section_list;
     
     if (sbody->kind == is_SBodyEmpty)
     {
@@ -364,7 +363,9 @@ void check_Inherit(DynamicArray *inherit_section_list, Val_ val, Ident current_s
         for (size_t i = 0; i < da_size(inherit_section_list); i++)
         {
             // TODO: Check if this is correct
-            if (strcmp(*(Ident*)da_get(inherit_section_list, i), val.u.unresolved_ref.section_ident) == 0)
+            Ident inherit_section = *(Ident *)da_get(inherit_section_list, i);
+            printf("%s", inherit_section);
+            if (strcmp(inherit_section, val.u.unresolved_ref.section_ident) == 0)
             {
                 return; // Inherit section found
             }
