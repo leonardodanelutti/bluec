@@ -60,10 +60,10 @@ Creata la struttura risolviamo le variabili non locali ed eventuali cicli
 
 TODO: 
 - testare operazioni su DataStructure
-- esempi con il make
 - commenti
 - migliori errori
 - relazione
 
 TODO: (finali solo se c'è tempo)
 - dare warning con inherit ricorsivi?
+- fixare caratteri speciali nell'output di `make demo`
