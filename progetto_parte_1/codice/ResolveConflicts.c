@@ -104,12 +104,13 @@ void resolveField(Fields field, Sections start_sections_list)
                         return;
                     }
                 }
+                fprintf(stderr, ERROR "Field %s does not exist in section %s.\n", field->val.u.unresolved_ref.field_ident, field->val.u.unresolved_ref.section_ident);
+                exit(EXIT_FAILURE);
             }
         }
         /* The reference could not be resolved */
         /* TODO: add file name in the error */
-        fprintf(stderr, ERROR "unresolved reference to section %s and field %s.\n",
-                field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
+        fprintf(stderr, ERROR "Section %s does not exist.\n", field->val.u.unresolved_ref.section_ident);
         exit(EXIT_FAILURE);
     }
 

@@ -23,11 +23,7 @@ void  print_Structure(char *filename);
 
 void usage(void)
 {
-    printf("usage: Call with one of the following argument combinations:\n");
-    printf("\t--help\t\tDisplay this help message.\n");
-    printf("\t(no arguments)\tParse stdin verbosely.\n");
-    printf("\t(files)\t\tParse content of files verbosely.\n");
-    printf("\t-s (files)\tSilent mode. Parse content of files silently.\n");
+    printf("Specify input as: ./Testgrammar filename.ext\n");
 }
 
 int main(int argc, char **argv)
@@ -41,10 +37,14 @@ int main(int argc, char **argv)
             {
                 filename = argv[2];
             }
-
         }
         else
         {
+            if (strcmp(argv[1], "--help") == 0)
+            {
+                usage();
+                exit(0);
+            };
             filename = argv[1];
         }
     }
@@ -63,6 +63,7 @@ Sections structure_FromFile(char *filename)
         input = fopen(filename, "r");
         if (!input)
         {
+            fprintf(stderr, ERROR "Cannot open file %s\n", filename);
             usage();
             exit(1);
         }

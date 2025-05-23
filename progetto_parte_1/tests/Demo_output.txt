@@ -85,3 +85,15 @@ example 7: using a non-local variable without inheritance
 example 8: recursive inheritance over a variable
 
 [31m[1mERROR: [m[0mrecursive reference from $sez2.var1 to $sez1.var1.
+
+--------------------------------------
+
+example 9: Referring to unexisting section
+
+[31m[1mERROR: [m[0mSection sez3 does not exist.
+
+--------------------------------------
+
+example 10: Referring to unexisting variable
+
+[31m[1mERROR: [m[0mField var2 does not exist in section sez1.

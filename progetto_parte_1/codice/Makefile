@@ -69,6 +69,18 @@ demo:
 		echo "example 8: recursive inheritance over a variable"; \
 		echo ""; \
 		./Testgrammar ../tests/testCase8.txt || true; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 9: Referring to unexisting section"; \
+		echo ""; \
+		./Testgrammar ../tests/testCase9.txt || true; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 10: Referring to non-existing variable"; \
+		echo ""; \
+		./Testgrammar ../tests/testCase10.txt || true; \
 	} > ../tests/Demo_output.txt 2>&1
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
