@@ -1,7 +1,7 @@
 #ifndef COMMENTS_HEADER
 #define COMMENTS_HEADER
 
-#include "Absyn.h"
+#include <stddef.h>
 #include "Utils.h"
 
 #if !defined YYLTYPE && !defined YYLTYPE_IS_DECLARED

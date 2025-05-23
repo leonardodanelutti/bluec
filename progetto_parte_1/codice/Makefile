@@ -9,7 +9,7 @@ FLEX_OPTS = -Pgrammar_
 BISON = bison
 BISON_OPTS = -t -pgrammar_
 
-OBJS = Absyn.o Buffer.o Lexer.o Parser.o Printer.o DataStructure.o Utils.o PrettyPrinter.o ResolveConflicts.o
+OBJS = Absyn.o Buffer.o Lexer.o Parser.o Printer.o DataStructure.o Utils.o PrettyPrinter.o ResolveConflicts.o Comments.o
 
 .PHONY : clean distclean
 
@@ -21,11 +21,21 @@ clean :
 distclean : clean
 	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c grammar.l Lexer.c grammar.y Parser.h Parser.c Printer.c Printer.h Skeleton.c Skeleton.h Test.c Makefile grammar.tex
 
+demo:
+	@echo "Running demo..."
+	@echo "exmaple 1"
+	./Testgrammar ../tests/test.txt
+	@echo "exmaple 2"
+	./Testgrammar ../tests/testcases.txt || true
+	@echo "exmaple 2"
+	./Testgrammar ../tests/testcases.txt || true
+	@echo "Demo completed."
+
 Testgrammar : ${OBJS} Test.o
 	@echo "Linking Testgrammar..."
 	${CC} ${OBJS} Test.o -o Testgrammar
 
-Absyn.o : Absyn.c Absyn.h
+Absyn.o : Absyn.c Absyn.h Comments.h
 	${CC} ${CCFLAGS} -c Absyn.c
 
 DataStructure.o : DataStructure.c DataStructure.h Absyn.h
@@ -39,6 +49,9 @@ PrettyPrinter.o : PrettyPrinter.c PrettyPrinter.h Absyn.h DataStructure.h
 
 ResolveConflicts.o : ResolveConflicts.c ResolveConflicts.h DataStructure.h
 	${CC} ${CCFLAGS} -c ResolveConflicts.c
+
+Comments.o : Comments.c Comments.h Utils.h
+	${CC} ${CCFLAGS} -c Comments.c
 
 Buffer.o : Buffer.c Buffer.h
 	${CC} ${CCFLAGS} -c Buffer.c
