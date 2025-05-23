@@ -4,10 +4,11 @@
 #include "ResolveConflicts.h"
 #include "DataStructure.h"
 
-
 void check_Section(Sections sections_list, Ident section_ident);
 Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
 Val_ convert_Value_to_Val_(Value value, Ident section_ident);
+Inherited_ convert_Inherit_to_Inherited_(Inherit val);
+Inherited_ new_Inherit(Ident section_ident, SymbolLoc_ symbol_loc);
 int check_Inherit(Sections section, Val_ val);
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
 
@@ -22,7 +23,9 @@ Sections make_SectionNew(Ident ident)
     new_section->ident = ident;
     new_section->fields = NULL;
     new_section->next = NULL;
-    new_section->inherits = da_init(sizeof(Ident));
+    new_section->inherits = da_init(sizeof(Inherited_));
+    SymbolLoc_ default_ = DEFAULT_SYMBOL_LOC_;
+    new_section->symbol_loc = default_;
     return new_section;
 }
 
@@ -44,6 +47,8 @@ Fields make_FieldNew(Ident ident, Val_ val)
         .vals_size = 0,
         .vals_count = 0};
     new_field->pointed_by = pointed_by;
+    SymbolLoc_ default_ = DEFAULT_SYMBOL_LOC_;
+    new_field->symbol_loc = default_;
     return new_field;
 }
 
@@ -60,7 +65,7 @@ void push_Section(Sections sections_list, Ident section_ident)
     {
         if (strcmp(current->ident, section_ident) == 0)
         {
-            fprintf(stderr,  ERROR "Section %s has multiple definitions\n", section_ident);
+            fprintf(stderr, ERROR "Section %s has multiple definitions\n", section_ident);
             exit(EXIT_FAILURE);
         }
         current = current->next;
@@ -80,8 +85,11 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
             Fields new_field = make_FieldNew(field_ident.field_ident, val);
             new_field->section = current;
             // Add inherit if not present
-            if (check_Inherit(current, val)) {
-                da_push(current->inherits, &val.u.unresolved_ref.section_ident);
+            if (check_Inherit(current, val))
+            {
+                SymbolLoc_ default_ = DEFAULT_SYMBOL_LOC_;
+                Inherited_ new_inherit = new_Inherit(val.u.unresolved_ref.section_ident, default_);
+                da_push(current->inherits, &new_inherit);
             }
             // resolve the field identifier
             resolveField(new_field, sections_list);
@@ -95,7 +103,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                 {
                     current_field->val = val;
                     /* TODO: warning with line */
-                    printf( WARNING "Field %s is overwritten", field_ident.field_ident);
+                    printf(WARNING "Field %s is overwritten", field_ident.field_ident);
                     return; // Field found and overwritten
                 }
                 prev_field = current_field;
@@ -255,10 +263,11 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     while (sbody->kind == is_SBodywInherit)
     {
-        da_push(inherit_section_list, &sbody->u.sbodywinherit_.inherit_->u.inheritsection_.ident_);
+        Inherited_ new_inherit = convert_Inherit_to_Inherited_(sbody->u.sbodywinherit_.inherit_);
+        da_push(inherit_section_list, &new_inherit);
         sbody = sbody->u.sbodywinherit_.sbody_;
     }
-    
+
     if (sbody->kind == is_SBodyEmpty)
     {
         return NULL;
@@ -268,8 +277,9 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     Ident field_ident = sbody->u.sbodywoinherit_.field_->u.sectionfield_.ident_;
     Val_ val = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
-    if (check_Inherit(current_section, val)) {
-        fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n", 
+    if (check_Inherit(current_section, val))
+    {
+        fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n",
                 field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
         exit(EXIT_FAILURE);
     }
@@ -287,9 +297,10 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
         if (!overwrite_Field(fields_list, field_ident, val))
         {
-            if (check_Inherit(current_section, val)) {
-                fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n", 
-                field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
+            if (check_Inherit(current_section, val))
+            {
+                fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n",
+                        field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
                 exit(EXIT_FAILURE);
             }
             Fields new_field = make_FieldNew(field_ident, val);
@@ -327,11 +338,20 @@ Val_ convert_Value_to_Val_(Value value, Ident section_ident)
     }
 }
 
+Inherited_ convert_Inherit_to_Inherited_(Inherit val)
+{
+    Inherited_ inherit = {
+        .section_ident = strdup(val->u.inheritsection_.ident_),
+        .symbol_loc = val->symbol_loc};
+    return inherit;
+}
+
 Val_ new_Int(int int_)
 {
     Val_ val = {
         .kind = Int,
-        .u.int_ = int_};
+        .u.int_ = int_,
+        .symbol_loc = DEFAULT_SYMBOL_LOC_};
     return val;
 }
 
@@ -339,7 +359,8 @@ Val_ new_Str(String str)
 {
     Val_ val = {
         .kind = Str,
-        .u.str = str};
+        .u.str = str,
+        .symbol_loc = DEFAULT_SYMBOL_LOC_};
     return val;
 }
 
@@ -347,7 +368,8 @@ Val_ new_Bool(int bool_)
 {
     Val_ val = {
         .kind = Bool,
-        .u.bool_ = bool_};
+        .u.bool_ = bool_,
+        .symbol_loc = DEFAULT_SYMBOL_LOC_};
     return val;
 }
 
@@ -355,7 +377,8 @@ Val_ new_Ref(FieldIdent_ ref)
 {
     Val_ val = {
         .kind = Ref_unresolved,
-        .u.unresolved_ref = ref};
+        .u.unresolved_ref = ref,
+        .symbol_loc = DEFAULT_SYMBOL_LOC_};
     return val;
 }
 
@@ -365,6 +388,14 @@ FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident)
         .field_ident = field_ident,
         .section_ident = section_ident};
     return field_ident_;
+}
+
+Inherited_ new_Inherit(Ident section_ident, SymbolLoc_ symbol_loc)
+{
+    Inherited_ inherit = {
+        .section_ident = strdup(section_ident),
+        .symbol_loc = symbol_loc};
+    return inherit;
 }
 
 /* Check if non local variables are inherited */
@@ -377,8 +408,8 @@ int check_Inherit(Sections section, Val_ val)
     {
         for (size_t i = 0; i < da_size(inherit_section_list); i++)
         {
-            Ident inherit_section = *(Ident *)da_get(inherit_section_list, i);
-            if (strcmp(inherit_section, val.u.unresolved_ref.section_ident) == 0)
+            Inherited_ inherit_section = *(Inherited_ *)da_get(inherit_section_list, i);
+            if (strcmp(inherit_section.section_ident, val.u.unresolved_ref.section_ident) == 0)
             {
                 return 0; // Inherit section found
             }

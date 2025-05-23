@@ -34,15 +34,23 @@ typedef struct Val_
         Fields ref;
         FieldIdent_ unresolved_ref;
     } u;
+    SymbolLoc_ symbol_loc;
 } Val_;
 typedef Val_ *Val;
+
+typedef struct Inherited_
+{
+    Ident section_ident;
+    SymbolLoc_ symbol_loc;
+} Inherited_;
 
 struct Sections_
 {
     Ident ident;
     Fields fields;
+    SymbolLoc_ symbol_loc;
     Sections next;
-    DynamicArray* inherits;
+    DynamicArray *inherits;
 };
 
 /* Create a new section */
@@ -62,7 +70,7 @@ void delete_Section(Sections sections_list, Ident section_ident);
 /* Delete a field from a given section in a valid linked list of sections */
 void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident);
 
-// TODO:
+// TODO: free section, devo fare clone anche
 void free_Sections(Sections sections_list);
 
 typedef struct ValList_
@@ -81,6 +89,7 @@ struct Fields_
     } kind;
     Ident ident;
     Val_ val;
+    SymbolLoc_ symbol_loc;
     Fields next;
     Sections section;
     ValList_ pointed_by;

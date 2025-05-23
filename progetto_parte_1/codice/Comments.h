@@ -38,6 +38,8 @@ struct SymbolLoc_
     String file_path;
 };
 
+#define DEFAULT_SYMBOL_LOC_ { {0, 0, 0, 0}, {0, 0, 0, 0}, NULL }
+
 /* A data structure that holds positional information about a comment. */
 struct Comment_
 {
