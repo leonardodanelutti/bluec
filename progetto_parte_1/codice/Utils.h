@@ -1,14 +1,7 @@
 #ifndef UTILS_HEADER
 #define UTILS_HEADER
 
-#include "Absyn.h"
 #include "Logs.h"
-
-/***** ABSTRACT SYNTAX TREE UTILS *****/
-
-/* Merge two XMLS structures */
-XMLS mergeXMLS(XMLS xmls1, XMLS xmls2);
-
 
 /***** DYNAMIC ARRAY *****/
 

@@ -27,6 +27,19 @@ XML make_XMLEmpty()
 
 /********************   XMLSwImport    ********************/
 
+/* Merge two XMLS structures */
+XMLS mergeXMLS(XMLS xmls1, XMLS xmls2)
+{
+    XMLS r = (XMLS)malloc(sizeof(*r));
+    r = xmls1;
+    while (xmls1->kind != is_XMLSEmpty)
+    {
+        xmls1 = xmls1->u.xmlsection_.xmls_;
+    }
+    *xmls1 = *xmls2;
+    return r;
+}
+
 XMLS make_XMLSwImport(XMLS imported, XMLS p)
 {
     /* If imported is empty the result of the merge is p. */

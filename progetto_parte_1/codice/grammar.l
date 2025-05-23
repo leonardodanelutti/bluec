@@ -18,6 +18,8 @@
 %{
 #include "Absyn.h"
 #include "Bison.h"
+#include "Comments.h"
+#include "Parser.h"
 
 #define initialize_lexer grammar__initialize_lexer
 
@@ -88,7 +90,7 @@ IDENT [a-zA-Z0-9'_]
 <INITIAL>"section"      	 return _KW_section;
 <INITIAL>"true"      	 return _KW_true;
 
-<INITIAL>"#"[^\n]* /* skip */; /* BNFC: comment "#" */
+<INITIAL>"#"[^\n]* push_Comment(yylloc->first_line, parsed_files[current_file].file_path, yytext); /* BNFC: comment "#" */
 
 <INITIAL><[ \t\r\n\f]*import[ \t\r\n\f]*>      LITERAL_BUFFER_CREATE(); BEGIN IMPORT;
 <IMPORT>\\             	 BEGIN ESCAPEDI;

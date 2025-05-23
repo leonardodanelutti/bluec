@@ -747,6 +747,8 @@ static const flex_int16_t yy_chk[209] =
 #line 19 "grammar.l"
 #include "Absyn.h"
 #include "Bison.h"
+#include "Comments.h"
+#include "Parser.h"
 
 #define initialize_lexer grammar__initialize_lexer
 
@@ -793,9 +795,9 @@ static void update_loc(YYLTYPE* loc, char* text)
 }
 #define YY_USER_ACTION update_loc(yylloc, yytext);
 
-#line 797 "Lexer.c"
-
 #line 799 "Lexer.c"
+
+#line 801 "Lexer.c"
 
 #define INITIAL 0
 #define CHAR 1
@@ -1082,10 +1084,10 @@ YY_DECL
 		}
 
 	{
-#line 76 "grammar.l"
+#line 78 "grammar.l"
 
 
-#line 1089 "Lexer.c"
+#line 1091 "Lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1144,213 +1146,213 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 78 "grammar.l"
+#line 80 "grammar.l"
 return _LT;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 79 "grammar.l"
+#line 81 "grammar.l"
 return _EQ;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 80 "grammar.l"
+#line 82 "grammar.l"
 return _GT;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 81 "grammar.l"
+#line 83 "grammar.l"
 return _SYMB_3;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 82 "grammar.l"
+#line 84 "grammar.l"
 return _DOLLAR;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 83 "grammar.l"
+#line 85 "grammar.l"
 return _DOT;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 84 "grammar.l"
+#line 86 "grammar.l"
 return _KW_false;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 85 "grammar.l"
+#line 87 "grammar.l"
 return _KW_field;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 86 "grammar.l"
+#line 88 "grammar.l"
 return _KW_inherit;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 87 "grammar.l"
+#line 89 "grammar.l"
 return _KW_name;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 88 "grammar.l"
+#line 90 "grammar.l"
 return _KW_section;
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 89 "grammar.l"
+#line 91 "grammar.l"
 return _KW_true;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 91 "grammar.l"
-/* skip */; /* BNFC: comment "#" */
+#line 93 "grammar.l"
+push_Comment(yylloc->first_line, parsed_files[current_file].file_path, yytext); /* BNFC: comment "#" */
 	YY_BREAK
 case 14:
 /* rule 14 can match eol */
 YY_RULE_SETUP
-#line 93 "grammar.l"
+#line 95 "grammar.l"
 LITERAL_BUFFER_CREATE(); BEGIN IMPORT;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 94 "grammar.l"
+#line 96 "grammar.l"
 BEGIN ESCAPEDI;
 	YY_BREAK
 case 16:
 /* rule 16 can match eol */
 YY_RULE_SETUP
-#line 95 "grammar.l"
+#line 97 "grammar.l"
 yylval->_string = LITERAL_BUFFER_HARVEST(); BEGIN INITIAL; return _STRING_;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 96 "grammar.l"
+#line 98 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR(yytext[0]);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 97 "grammar.l"
+#line 99 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\f'); BEGIN IMPORT;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 98 "grammar.l"
+#line 100 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\n'); BEGIN IMPORT;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 99 "grammar.l"
+#line 101 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\r'); BEGIN IMPORT;
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 100 "grammar.l"
+#line 102 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\t'); BEGIN IMPORT;
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 101 "grammar.l"
+#line 103 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('"');  BEGIN IMPORT;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 102 "grammar.l"
+#line 104 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\\'); BEGIN IMPORT;
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 103 "grammar.l"
+#line 105 "grammar.l"
 LITERAL_BUFFER_APPEND(yytext);    BEGIN IMPORT;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 105 "grammar.l"
+#line 107 "grammar.l"
 LITERAL_BUFFER_CREATE(); BEGIN STRING;
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 106 "grammar.l"
+#line 108 "grammar.l"
 BEGIN ESCAPED;
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 107 "grammar.l"
+#line 109 "grammar.l"
 yylval->_string = LITERAL_BUFFER_HARVEST(); BEGIN INITIAL; return _STRING_;
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 108 "grammar.l"
+#line 110 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR(yytext[0]);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 109 "grammar.l"
+#line 111 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\f'); BEGIN STRING;
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 110 "grammar.l"
+#line 112 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\n'); BEGIN STRING;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 111 "grammar.l"
+#line 113 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\r'); BEGIN STRING;
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 112 "grammar.l"
+#line 114 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\t'); BEGIN STRING;
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 113 "grammar.l"
+#line 115 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('"');  BEGIN STRING;
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 114 "grammar.l"
+#line 116 "grammar.l"
 LITERAL_BUFFER_APPEND_CHAR('\\'); BEGIN STRING;
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 115 "grammar.l"
+#line 117 "grammar.l"
 LITERAL_BUFFER_APPEND(yytext);    BEGIN STRING;
 	YY_BREAK
 case YY_STATE_EOF(STRING):
 case YY_STATE_EOF(ESCAPED):
-#line 116 "grammar.l"
+#line 118 "grammar.l"
 LITERAL_BUFFER_FREE(); return _ERROR_;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 117 "grammar.l"
+#line 119 "grammar.l"
 yylval->_int = atoi(yytext); return _INTEGER_;
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 118 "grammar.l"
+#line 120 "grammar.l"
 yylval->_string = strdup(yytext); return _IDENT_;
 	YY_BREAK
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 119 "grammar.l"
+#line 121 "grammar.l"
 /* ignore white space. */;
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 120 "grammar.l"
+#line 122 "grammar.l"
 return _ERROR_;
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 122 "grammar.l"
+#line 124 "grammar.l"
 ECHO;
 	YY_BREAK
-#line 1354 "Lexer.c"
+#line 1356 "Lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(CHAR):
 case YY_STATE_EOF(CHARESC):
@@ -2510,7 +2512,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 122 "grammar.l"
+#line 124 "grammar.l"
 
 
 yyscan_t initialize_lexer(FILE *inp)

@@ -3,18 +3,6 @@
 #include <string.h>
 #include "Utils.h"
 
-XMLS mergeXMLS(XMLS xmls1, XMLS xmls2)
-{
-    XMLS r = (XMLS)malloc(sizeof(*r));
-    r = xmls1;
-    while (xmls1->kind != is_XMLSEmpty)
-    {
-        xmls1 = xmls1->u.xmlsection_.xmls_;
-    }
-    *xmls1 = *xmls2;
-    return r;
-}
-
 // Initialize the dynamic array
 DynamicArray* da_init(size_t elem_size) {
     DynamicArray* arr = malloc(sizeof(DynamicArray));
