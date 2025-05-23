@@ -3,11 +3,38 @@
 
 #include "ResolveConflicts.h"
 
+/* Helper function to check whether inherited sections exist. */
+void check_inheritExistance(DynamicArray *inherits, Sections start_sections_list)
+{
+    for (size_t i = 0; i < inherits->size; i++)
+    {
+        Inherited_ inherit = *(Inherited_ *)da_get(inherits, i);
+        int found = 0;
+        for (Sections section = start_sections_list; section != NULL; section = section->next)
+        {
+            if (strcmp(section->ident, inherit.section_ident) == 0)
+            {
+                found = 1;
+                break;
+            }
+        }
+        if (!found)
+        {
+            fprintf(stderr, WARNING "%s:%d:%d: section %s does not exist.\n",
+                    inherit.symbol_loc.file_path, inherit.symbol_loc.top_loc.first_line,
+                    inherit.symbol_loc.top_loc.first_column + 1, inherit.section_ident);
+        }
+    }
+}
+
 void resolveSections_recursive(Sections current_section, Sections start_sections_list)
 {
     /* Base case: we reached the end of the sections list */
     if (current_section == NULL)
         return;
+
+    /* Check if inherits are of existing sections */
+    check_inheritExistance(current_section->inherits, start_sections_list);
 
     /* Iterate through the fields in the current section to search for dangling
        references */
@@ -104,13 +131,18 @@ void resolveField(Fields field, Sections start_sections_list)
                         return;
                     }
                 }
-                fprintf(stderr, ERROR "Field %s does not exist in section %s.\n", field->val.u.unresolved_ref.field_ident, field->val.u.unresolved_ref.section_ident);
+                fprintf(stderr, ERROR "%s:%d:%d: reference to non-existing field %s in section %s.\n",
+                        field->val.symbol_loc.file_path, field->val.symbol_loc.top_loc.first_line,
+                        field->val.symbol_loc.top_loc.first_column + 1, field->val.u.unresolved_ref.field_ident,
+                        field->val.u.unresolved_ref.section_ident);
                 exit(EXIT_FAILURE);
             }
         }
         /* The reference could not be resolved */
         /* TODO: add file name in the error */
-        fprintf(stderr, ERROR "Section %s does not exist.\n", field->val.u.unresolved_ref.section_ident);
+        fprintf(stderr, ERROR "%s:%d:%d: reference to non-existing section %s.\n",
+                field->val.symbol_loc.file_path, field->val.symbol_loc.top_loc.first_line,
+                field->val.symbol_loc.top_loc.first_column + 1, field->val.u.unresolved_ref.section_ident);
         exit(EXIT_FAILURE);
     }
 
@@ -119,4 +151,5 @@ void resolveField(Fields field, Sections start_sections_list)
     return;
 }
 
-// TODO: Inherit warning if section undefined
+// Dg
+// TODO: Inherit warning if unused? Forse no
