@@ -251,7 +251,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     while (sbody->kind == is_SBodywInherit)
     {
-        da_push(inherit_section_list, sbody->u.sbodywinherit_.inherit_->u.inheritsection_.ident_);
+        da_push(inherit_section_list, &sbody->u.sbodywinherit_.inherit_->u.inheritsection_.ident_);
         sbody = sbody->u.sbodywinherit_.sbody_;
     }
     
