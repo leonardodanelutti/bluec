@@ -6,11 +6,28 @@
 #include <stdio.h>
 #include "Absyn.h"
 
+/* Struct that holds an entry of the parsed_file list. */
+struct ParsedXML_;
+typedef struct ParsedXML_ ParsedXML_;
+typedef ParsedXML_ *ParsedXML;
+
 /* Custom global variable that stores the parsed files to avoid
    recursive imports. */
-extern String *parsed_files;
-extern long unsigned int parsed_files_size;
-extern long unsigned int parsed_files_count;
+// TODO: add a free function of these globals before exiting.
+extern ParsedXML_ *parsed_files;
+extern size_t parsed_files_size;
+extern size_t parsed_files_count;
+extern size_t current_file;
+
+struct ParsedXML_
+{
+    /* The file path; NULL if stdin. */
+    String file_path;
+    /* The location of the `ParsedXML_` entry that imported the current file.
+       These "pointers" create a dag-like structure to know the current file and detect
+       recursive imports. */
+    size_t prev;
+};
 
 XMLS pXML(FILE *inp, String filename);
 /* TODO: cosa facciamo con sta funzione sotto? Da trasformare in XMLS? */

@@ -144,71 +144,119 @@ Value : _INTEGER_ { $$ = make_ValueInteger($1); result->value_ = $$; }
 
 /* Custom global variable that stores the parsed files to avoid
    recursive imports. */
-String *parsed_files = NULL;
-long unsigned int parsed_files_size = 0;
-long unsigned int parsed_files_count = 0;
+ParsedXML_ *parsed_files = NULL;
+size_t parsed_files_size = 0;
+size_t parsed_files_count = 0;
+size_t current_file = 0;
 
 /* Entrypoint: parse XML from file.
    Returns NULL if XML was not parsed */
 XMLS pXML(FILE *inp, String filename)
 {
-    /* Check that filename is not NULL (i.e. not stdin) */
+    /* Check that filename is not NULL (i.e. not stdin).
+       If it is stdin it cannot be a repeated import. */
     if (filename != NULL)
     {
         struct stat file_stat;
         stat(filename, &file_stat);
-        /* Check if the file has already been parsed. */
-        for (long unsigned int i = 0; i < parsed_files_count; i++)
+        /* Check if the file has already been visited in the same import chain (i.e. there
+           is a recursive import). */
+        String chain = malloc(1);
+        chain[0] = ' ';
+        for (size_t parsed_file = current_file; parsed_file != 0; parsed_file = parsed_files[parsed_file].prev)
         {
+            // Reallocate the chain string to append the parsed_file path
+            size_t chain_size = strlen(chain) + strlen(parsed_files[parsed_file].file_path) + 5;
+            chain = realloc(chain, chain_size);
+            if (chain == NULL)
+            {
+                fprintf(stderr, ERROR "Memory reallocation failed for chain string.\n");
+                exit(EXIT_FAILURE);
+            }
+            // Append the parsed_file path to the chain
+            strncat(chain, parsed_files[parsed_file].file_path, chain_size);
+
+            ParsedXML file = &parsed_files[parsed_file];
             struct stat parsed_file_stat;
-            stat(parsed_files[i], &parsed_file_stat);
+            stat(file->file_path, &parsed_file_stat);
             if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
-                fprintf(stderr, WARNING "multiple import (that could be caused by recursive imports) of the same file '%s' detected.\n", filename);
+                // TODO: print chain of imports
+                fprintf(stderr, WARNING "recursive file import detected. Import chain:%s. Continuing parsing without it.\n",
+                        chain);
+                return make_XMLSEmpty();
+            }
+            // Append the arrow to the chain
+            char str_pointer[] = " -> ";
+            strncat(chain, str_pointer, chain_size);
+        }
+        // Free the chain string
+        free(chain);
+        /* Check if the file has already been parsed. */
+        for (size_t i = 0; i < parsed_files_count; i++)
+        {
+            struct stat parsed_file_stat;
+            stat(parsed_files[i].file_path, &parsed_file_stat);
+            if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
+            {
+                fprintf(stderr, WARNING "file %s imported in %s but was already imported. Continuing parsing without reimporting it.\n",
+                        filename, parsed_files[current_file].file_path);
                 return make_XMLSEmpty();
             }
         }
-        /* Save the file name in the parsed files list. */
-        if (parsed_files_size == 0)
+    }
+    /* Save the file name in the parsed files list. */
+    if (parsed_files_size == 0)
+    {
+        parsed_files_size = 5;
+        parsed_files = malloc(sizeof(*parsed_files) * parsed_files_size);
+        if (!parsed_files)
         {
-            parsed_files_size = 5;
-            parsed_files = malloc(sizeof(*parsed_files) * parsed_files_size);
-            if (!parsed_files)
-            {
-                fprintf(stderr, "Failed to allocate memory for parsed files.\n");
-                return 0;
-            }
+            fprintf(stderr, "Failed to allocate memory for parsed files.\n");
+            return 0;
         }
-        else if (parsed_files_count >= parsed_files_size)
+    }
+    else if (parsed_files_count >= parsed_files_size)
+    {
+        parsed_files_size += 5;
+        parsed_files = realloc(parsed_files, sizeof(*parsed_files) * parsed_files_size);
+        if (!parsed_files)
         {
-            parsed_files_size += 5;
-            parsed_files = realloc(parsed_files, sizeof(*parsed_files) * parsed_files_size);
-            if (!parsed_files)
-            {
-                fprintf(stderr, "Failed to reallocate memory for parsed files.\n");
-                return 0;
-            }
+            fprintf(stderr, ERROR "Failed to reallocate memory for parsed files.\n");
+            return 0;
         }
-        parsed_files[parsed_files_count] = filename;
-        parsed_files_count++;
+    }
+    ParsedXML_ parsed_file = {
+        .file_path = filename,
+        .prev = current_file,
+    };
+    parsed_files[parsed_files_count] = parsed_file;
+    current_file = parsed_files_count;
+    parsed_files_count++;
+
+    YYSTYPE result;
+    yyscan_t scanner = grammar__initialize_lexer(inp);
+    if (!scanner) {
+        fprintf(stderr, ERROR "Failed to initialize lexer.\n");
+        return 0;
+    }
+    int error = yyparse(scanner, &result);
+    grammar_lex_destroy(scanner);
+
+    /* Going back in the import chain because the file has been parsed. */
+    if (current_file != 0)
+    {
+        current_file = parsed_files[current_file].prev;
     }
 
-  YYSTYPE result;
-  yyscan_t scanner = grammar__initialize_lexer(inp);
-  if (!scanner) {
-    fprintf(stderr, "Failed to initialize lexer.\n");
-    return 0;
-  }
-  int error = yyparse(scanner, &result);
-  grammar_lex_destroy(scanner);
-  if (error)
-  { /* Failure */
-    return 0;
-  }
-  else
-  { /* Success */
-    return result.xmls_;
-  }
+    if (error)
+    { /* Failure */
+        return 0;
+    }
+    else
+    { /* Success */
+        return result.xmls_;
+    }
 }
 
 /* Entrypoint: parse XML from string. */
