@@ -41,7 +41,7 @@ struct Sections_
     Ident ident;
     Fields fields;
     Sections next;
-    /* Sections front; */
+
     /* TODO: Inherit list to check non-existing section inherited, i.e.:
        "
        <section name=a>
@@ -68,7 +68,9 @@ void delete_Section(Sections sections_list, Ident section_ident);
 
 /* Delete a field from a given section in a valid linked list of sections */
 void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident);
-/* TODO: modify */
+
+// TODO:
+void free_Sections(Sections sections_list);
 
 typedef struct ValList_
 {
@@ -87,7 +89,6 @@ struct Fields_
     Ident ident;
     Val_ val;
     Fields next;
-    /* Fields front; */
     Sections section;
     ValList_ pointed_by;
 };

@@ -7,7 +7,7 @@
 void check_Section(Sections sections_list, Ident section_ident);
 Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
 Val_ convert_Value_to_Val_(Value value, Ident section_ident);
-void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section);
+void check_Inherit(DynamicArray *inherit_section_list, Val_ val, Ident current_section);
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
 
 Sections make_SectionNew(Ident ident)
@@ -246,23 +246,11 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     /* Construct a list of all identifiers in the inherits */
 
-    Ident *inherit_section_list = malloc(sizeof(Ident) * 10);
-    long unsigned int inherit_list_count = 0;
-    long unsigned int inherit_list_size = 10;
+    DynamicArray *inherit_section_list = da_init(sizeof(Ident));
 
     while (sbody->kind == is_SBodywInherit)
     {
-        if (inherit_list_count >= inherit_list_size)
-        {
-            inherit_list_size += 5;
-            inherit_section_list = realloc(inherit_section_list, sizeof(Ident) * inherit_list_size);
-            if (inherit_section_list == NULL)
-            {
-                fprintf(stderr, "Memory allocation failed for inherit section list\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-        inherit_section_list[inherit_list_count++] = sbody->u.sbodywinherit_.inherit_->u.inheritsection_.ident_;
+        da_push(inherit_section_list, sbody->u.sbodywinherit_.inherit_->u.inheritsection_.ident_);
         sbody = sbody->u.sbodywinherit_.sbody_;
     }
 
@@ -276,7 +264,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     Ident field_ident = sbody->u.sbodywoinherit_.field_->u.sectionfield_.ident_;
     Val_ value = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
-    check_Inherit(inherit_section_list, inherit_list_count, value, section_ident);
+    check_Inherit(inherit_section_list, value, section_ident);
     Fields fields_list = make_FieldNew(field_ident, value);
     fields_list->section = current_section;
     Fields last_field = fields_list;
@@ -291,7 +279,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
         if (!overwrite_Field(fields_list, field_ident, val))
         {
-            check_Inherit(inherit_section_list, inherit_list_count, val, section_ident);
+            check_Inherit(inherit_section_list, val, section_ident);
             Fields new_field = make_FieldNew(field_ident, val);
             new_field->section = current_section;
             last_field->next = new_field;
@@ -368,13 +356,14 @@ FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident)
 }
 
 /* Check if non local variables are inherited */
-void check_Inherit(Ident *inherit_section_list, long unsigned int inherit_list_count, Val_ val, Ident current_section)
+void check_Inherit(DynamicArray *inherit_section_list, Val_ val, Ident current_section)
 {
     if (val.kind == Ref_unresolved && strcmp(val.u.unresolved_ref.section_ident, current_section) != 0)
     {
-        for (long unsigned int i = 0; i < inherit_list_count; i++)
+        for (size_t i = 0; i < da_size(inherit_section_list); i++)
         {
-            if (strcmp(inherit_section_list[i], val.u.unresolved_ref.section_ident) == 0)
+            // TODO: Check if this is correct
+            if (strcmp(*(Ident*)da_get(inherit_section_list, i), val.u.unresolved_ref.section_ident) == 0)
             {
                 return; // Inherit section found
             }
