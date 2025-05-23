@@ -7,7 +7,7 @@
 void check_Section(Sections sections_list, Ident section_ident);
 Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
 Val_ convert_Value_to_Val_(Value value, Ident section_ident);
-void check_Inherit(DynamicArray *inherit_section_list, Val_ val, Ident current_section);
+int check_Inherit(Sections section, Val_ val);
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
 
 Sections make_SectionNew(Ident ident)
@@ -76,9 +76,12 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
     {
         if (strcmp(current->ident, field_ident.section_ident) == 0)
         {
-            // TODO: backpointer
             Fields new_field = make_FieldNew(field_ident.field_ident, val);
             new_field->section = current;
+            // Add inherit if not present
+            if (check_Inherit(current, val)) {
+                da_push(current->inherits, &val.u.unresolved_ref.section_ident);
+            }
             // resolve the field identifier
             resolveField(new_field, sections_list);
             // Check if the field already exists in the section, if it does, overwrite it
@@ -263,9 +266,12 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
     /* Create the head of the fields list */
 
     Ident field_ident = sbody->u.sbodywoinherit_.field_->u.sectionfield_.ident_;
-    Val_ value = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
-    check_Inherit(inherit_section_list, value, section_ident);
-    Fields fields_list = make_FieldNew(field_ident, value);
+    Val_ val = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
+    if (check_Inherit(current_section, val)) {
+        fprintf(stderr, "Non-local variable in section without inherit\n");
+        exit(EXIT_FAILURE);
+    }
+    Fields fields_list = make_FieldNew(field_ident, val);
     fields_list->section = current_section;
     Fields last_field = fields_list;
     /* Move to the next field */
@@ -279,7 +285,10 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
         if (!overwrite_Field(fields_list, field_ident, val))
         {
-            check_Inherit(inherit_section_list, val, section_ident);
+            if (check_Inherit(current_section, val)) {
+                fprintf(stderr, "Non-local variable in section without inherit\n");
+                exit(EXIT_FAILURE);
+            }
             Fields new_field = make_FieldNew(field_ident, val);
             new_field->section = current_section;
             last_field->next = new_field;
@@ -356,22 +365,24 @@ FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident)
 }
 
 /* Check if non local variables are inherited */
-void check_Inherit(DynamicArray *inherit_section_list, Val_ val, Ident current_section)
+int check_Inherit(Sections section, Val_ val)
 {
+    DynamicArray *inherit_section_list = section->inherits;
+    Ident current_section = section->ident;
+
     if (val.kind == Ref_unresolved && strcmp(val.u.unresolved_ref.section_ident, current_section) != 0)
     {
         for (size_t i = 0; i < da_size(inherit_section_list); i++)
         {
-            // TODO: Check if this is correct
             Ident inherit_section = *(Ident *)da_get(inherit_section_list, i);
             if (strcmp(inherit_section, val.u.unresolved_ref.section_ident) == 0)
             {
-                return; // Inherit section found
+                return 0; // Inherit section found
             }
         }
-        fprintf(stderr, "Non-local variable %s in section %s without inherit\n", val.u.unresolved_ref.field_ident, current_section);
-        exit(EXIT_FAILURE);
+        return 1; // Inherit section not found
     }
+    return 0;
 }
 
 /* Overwrite a field in a list of field if identifier is matched */
