@@ -21,7 +21,7 @@ clean :
 distclean : clean
 	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c grammar.l Lexer.c grammar.y Parser.h Parser.c Printer.c Printer.h Skeleton.c Skeleton.h Test.c Makefile grammar.tex
 
-demo:
+demo: Testgrammar
 	@echo "Running demo..."
 	@{ \
 		echo "example 1: inherit from an above section"; \

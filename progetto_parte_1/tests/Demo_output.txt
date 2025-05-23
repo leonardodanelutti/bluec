@@ -90,10 +90,11 @@ example 8: recursive inheritance over a variable
 
 example 9: Referring to unexisting section
 
-[31m[1mERROR: [m[0mSection sez3 does not exist.
+[33m[1mWARNING: [m[0m../tests/testCase9.txt:3:5: section sez3 does not exist.
+[31m[1mERROR: [m[0m../tests/testCase9.txt:4:23: reference to non-existing section sez3.
 
 --------------------------------------
 
-example 10: Referring to unexisting variable
+example 10: Referring to non-existing variable
 
-[31m[1mERROR: [m[0mField var2 does not exist in section sez1.
+[31m[1mERROR: [m[0m../tests/testCase10.txt:9:23: reference to non-existing field var2 in section sez1.
