@@ -126,7 +126,7 @@ XMLS make_ImportFile(String p1)
     if (!f)
     {
         /* TODO: error handling */
-        fprintf(stderr, ERROR "could not open file %s\n", p1);
+        fprintf(stderr, ERROR "could not open file \"%s\"\n", p1);
         exit(1);
     }
     /* Perform import */

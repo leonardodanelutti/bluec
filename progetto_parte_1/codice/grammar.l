@@ -76,6 +76,8 @@ DIGIT [0-9]
 IDENT [a-zA-Z0-9'_]
 WHITE [ \t\r\n\f]
 COMMENT #[^\n]*
+COMMENT1 #[^\n]*\n
+IMP {WHITE}*{COMMENT1}?{WHITE}*
 %START CHAR CHARESC CHAREND STRING ESCAPED IMPORT ESCAPEDI
 
 %%  /* Rules. */
@@ -93,11 +95,11 @@ COMMENT #[^\n]*
 <INITIAL>"section"      	 return _KW_section;
 <INITIAL>"true"      	 return _KW_true;
 
-<INITIAL>{COMMENT} push_Comment(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); /* BNFC: comment "#" */
+<INITIAL,IMPORT>{COMMENT} push_Comment(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); /* BNFC: comment "#" */
 
-<INITIAL><{WHITE}*import{WHITE}*>      LITERAL_BUFFER_CREATE(); BEGIN IMPORT;
+<INITIAL><{IMP}*import{IMP}*>      LITERAL_BUFFER_CREATE(); BEGIN IMPORT;
 <IMPORT>\\             	   BEGIN ESCAPEDI;
-<IMPORT><\/{WHITE}*import{WHITE}*>      yylval->_string = LITERAL_BUFFER_HARVEST(); BEGIN INITIAL; return _STRING_;
+<IMPORT><\/{IMP}*import{IMP}*>      yylval->_string = LITERAL_BUFFER_HARVEST(); BEGIN INITIAL; return _STRING_;
 <IMPORT><              	   return _ERROR_;
 <IMPORT>.              	   LITERAL_BUFFER_APPEND_CHAR(yytext[0]);
 <ESCAPEDI>f             	 LITERAL_BUFFER_APPEND_CHAR('\f'); BEGIN IMPORT;
