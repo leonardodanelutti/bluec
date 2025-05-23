@@ -121,7 +121,7 @@ XMLS : Section XMLS { $$ = make_XMLSection($1, $2); result->xmls_ = $$; }
 ;
 Import : _STRING_ { $$ = make_ImportFile($1); result->xmls_ = $$; }
 ;
-Section : _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT { $$ = make_FileSection($5, $7,  make_loc(@1, @2, @8, @10)); result->section_ = $$; }
+Section : _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT { $$ = make_FileSection($5, $7,  make_loc(@1, @6, @8, @10)); result->section_ = $$; }
 ;
 SBody : /* empty */ { $$ = make_SBodyEmpty(); result->sbody_ = $$; }
   | Inherit SBody { $$ = make_SBodywInherit($1, $2); result->sbody_ = $$; }
@@ -130,7 +130,7 @@ SBody : /* empty */ { $$ = make_SBodyEmpty(); result->sbody_ = $$; }
 SBodyF : Field SBodyF { $$ = make_SBodyField($1, $2); result->sbodyf_ = $$; }
   | /* empty */ { $$ = make_SBodyFEmpty(); result->sbodyf_ = $$; }
 ;
-Inherit : _LT _KW_inherit _GT _IDENT_ _SYMB_3 _KW_inherit _GT { $$ = make_InheritSection($4, make_loc(@1, @2, @5, @7)); result->inherit_ = $$; }
+Inherit : _LT _KW_inherit _GT _IDENT_ _SYMB_3 _KW_inherit _GT { $$ = make_InheritSection($4, make_loc(@1, @3, @5, @7)); result->inherit_ = $$; }
 ;
 Field : _LT _KW_field _KW_name _EQ _IDENT_ _GT Value _SYMB_3 _KW_field _GT { $$ = make_SectionField($5, $7, make_loc(@1, @6, @8, @10)); result->field_ = $$; }
 ;
