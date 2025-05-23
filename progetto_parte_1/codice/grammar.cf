@@ -1,5 +1,4 @@
 -- bnfc --c -m -o target grammar.cf
--- TODO: overlap regole conflitti
 
 comment "#" ;
 

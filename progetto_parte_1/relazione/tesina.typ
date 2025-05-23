@@ -59,11 +59,17 @@ Trasformiamo l'abstract syntax tree nella nostra srtuttura dati, in questa opera
 Creata la struttura risolviamo le variabili non locali ed eventuali cicli
 
 TODO: 
-- testare operazioni su DataStructure
-- commenti
-- migliori errori
-- relazione
+- testare operazioni su DataStructure: Leo (remove dg)
+- commenti: F
+- migliori errori con linee: F
+- relazione 
+- commenti import: Leo
+- gli import dovrebbero essere relativi al file da cui importo non da dove viene chiamato il parser!: DG
+- eliminare funzioni inutilizzate: 
+- clonare AST: Leo
+- free globals: DG
+- risolvere tutti TODO
 
 TODO: (finali solo se c'è tempo)
-- dare warning con inherit ricorsivi?
-- fixare caratteri speciali nell'output di `make demo`
+- dare warning con inherit ricorsivi?: DG
+- fixare caratteri speciali nell'output di `make demo`: F

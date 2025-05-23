@@ -1633,7 +1633,6 @@ XMLS pXML(FILE *inp, String filename)
             stat(file->file_path, &parsed_file_stat);
             if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
-                // TODO: print chain of imports
                 fprintf(stderr, WARNING "recursive file import detected. Import chain:%s. Continuing parsing without it.\n",
                         chain);
                 return make_XMLSEmpty();
@@ -1729,8 +1728,7 @@ SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_ini
     SymbolLoc_ loc = {
         .top_loc = top_loc,
         .bottom_loc = bottom_loc,
-        // TODO:
-        .file_path = NULL,
+        .file_path = parsed_files[current_file].file_path,
     };
 
     return loc;

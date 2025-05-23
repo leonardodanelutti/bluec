@@ -30,7 +30,7 @@ struct ParsedXML_
 };
 
 XMLS pXML(FILE *inp, String filename);
-/* TODO: cosa facciamo con sta funzione sotto? Da trasformare in XMLS? */
+/* TODO: cosa facciamo con sta funzione sotto? Le eliminiamo */
 XML psXML(const char *str);
 XMLS pXMLS(FILE *inp);
 XMLS psXMLS(const char *str);
