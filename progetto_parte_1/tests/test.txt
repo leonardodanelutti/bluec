@@ -1,4 +1,4 @@
-<import>../glob/file1.cnf</import>
+<import>../tests/glob/file1.cnf</import>
 <section  name = nomesez1 # questo e' un commento
 >
 # questo e' un commento
