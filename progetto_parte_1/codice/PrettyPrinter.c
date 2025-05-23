@@ -9,20 +9,17 @@ struct List_ {
     List next;
 };
 
-int not_in_list(Ident section_ident, List list);
-void free_list(List list);
-List add_to_list(Ident ident, List list);
-
 // Funzione principale di stampa delle sezioni
 void printSections(Sections section) {
     while (section != NULL) {
-        printf("<section name=%s>\n", section->ident);
+        printf("<section name=%s>", section->ident);
 
         Fields field = section->fields;
-        printInherits(field, section->ident);  // stampa inherits unici
+        printInherits(*(section->inherits));   // stampa inherits 
         printFields(field);                    // stampa fields
 
         printf("</section>\n");
+        printf("file-lines: %s.%d-%d\n", section->symbol_loc.file_path, section->symbol_loc.top_loc.first_line, section->symbol_loc.bottom_loc.last_line);
         section = section->next;
     }
 }
@@ -33,7 +30,8 @@ void printFields(Fields field) {
     while (field != NULL) {
         printf("  <field name=%s>", field->ident);
         printVal(field->val, field->section->ident);
-        printf("</field>\n");
+        printf("</field>");
+        printf("lines: %d-%d\n", field->symbol_loc.top_loc, field->symbol_loc.bottom_loc);
         field = field->next;
     }
 }
@@ -43,24 +41,33 @@ void printVal(Val_ val, Ident section_ident) {
     switch (val.kind) {
         case Int:
             printf(" %d ", val.u.int_);
+            printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
             break;
         case Str:
             printf(" \"%s\" ", val.u.str);
+            printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
+
             break;
         case Bool:
             printf(val.u.bool_ ? " true " : " false ");
+            printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
+
             break;
         case Ref: {
             Ident sectionInherit = val.u.ref->section->ident;
             if (sectionInherit == section_ident) {
                 printf(" $%s ", val.u.ref->ident);
+                printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
+
             } else {
                 printf(" $%s.%s ", sectionInherit, val.u.ref->ident);
+                printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
             }
             break;
         }
         case Ref_unresolved:
             printf(" &%s.%s ", val.u.unresolved_ref.section_ident, val.u.unresolved_ref.field_ident);
+            printf("lines: %d-%d\n", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
             break;
         default:
             fprintf(stderr, "Unknown value type\n");
@@ -69,120 +76,18 @@ void printVal(Val_ val, Ident section_ident) {
 }
 
 
-// Stampa tutti gli inherit unici da una lista di field
-void printInherits(Fields field, Ident section_ident) {
-    List list = NULL;
-
-    while (field != NULL) {
-        if (field->val.kind == Ref) {
-            Ident sectionInherit = field->val.u.ref->section->ident;
-            if (strcmp(sectionInherit, section_ident) != 0 &&
-                not_in_list(sectionInherit, list)) {
-
-                list = add_to_list(sectionInherit, list);
-                printf("  <inherit>%s</inherit>\n", sectionInherit);
-            }
-        }
-        field = field->next;
-    }
-
-    // Libera la lista al termine
-    free_list(list);
-}
-
-// Ritorna 1 se l'ident non è già nella lista, 0 altrimenti
-int not_in_list(Ident section_ident, List list) {
-    while (list != NULL) {
-        if (strcmp(list->ident, section_ident) == 0) {
-            return 0;
-        }
-        list = list->next;
-    }
-    return 1;
-}
-
-// Aggiunge un nuovo ident all'inizio della lista
-List add_to_list(Ident ident, List list) {
-    List new_node = (List)malloc(sizeof(struct List_));
-    if (!new_node) {
-        fprintf(stderr, "Memory allocation failed for list node\n");
-        exit(EXIT_FAILURE);
-    }
-    new_node->ident = ident;
-    new_node->next = list;
-    return new_node;
-}
-
-// Libera tutta la memoria della lista
-void free_list(List list) {
-    while (list != NULL) {
-        List tmp = list;
-        list = list->next;
-        free(tmp);
+// Stampa tutti gli inherit di una sezione
+void printInherits(DynamicArray inherits) {
+    for (size_t i = 0; i < inherits.size; i++) {
+        Inherited_ inherit = *(Inherited_ *)da_get(&inherits, i);
+        printf("  <inherit> %s </inherit>\n", inherit.section_ident);
+        printf("lines: %d-%d\n", inherit.symbol_loc.top_loc, inherit.symbol_loc.bottom_loc);
     }
 }
 
-
-
-
-
-
-
-
-/*
-
-void printInherits(Fields field, Ident section_ident) {
-    //lista di ident
-    List list = NULL;
-
-    List ident_node;
-    while (field != NULL) {
-        if (field->val.kind == Ref) {
-            Ident sectionInherit = field->val.u.ref->section->ident;
-            if (not_in_list(sectionInherit, list) && (sectionInherit != section_ident)) {
-                ident_node = (List)malloc(sizeof(struct List_));
-                if (ident_node == NULL) {
-                    fprintf(stderr, "Memory allocation failed for new section\n");
-                    exit(EXIT_FAILURE);
-                }
-                ident_node->ident = sectionInherit;
-                ident_node->next = list;
-                list = ident_node;        
-                printf("  <inherit> %s </inherit>\n", sectionInherit);
-            };
-        }
-        field = field->next;
-    }
+//funzione per stampare i commenti
+void printComments(Comment_ comment) {
+    printf("Comment: %s\n", comment.comment);
+    printf("File: %s\n", comment.file_path);
+    printf("Line: %d\n", comment.line);
 }
-void printInherits(Val_ val, Ident section_ident) {
-    //lista di ident
-    List list = NULL;
-
-    List ident_node;
-    if (val.kind == Ref) {
-    Ident sectionInherit = val.u.ref->section->ident;
-    if (not_in_list(sectionInherit, list)) {
-        ident_node = (List)malloc(sizeof(struct List_));
-        if (ident_node == NULL) {
-            fprintf(stderr, "Memory allocation failed for new section\n");
-            exit(EXIT_FAILURE);
-        }
-        ident_node->ident = sectionInherit;
-        ident_node->next = list;
-        list = ident_node;        
-        printf(" <inherit>%s</inherit>\n", sectionInherit);
-    };
-  }
-}
-
-int not_in_list(Ident section_ident, List list) {
-    while (list != NULL) {
-        if (strcmp(list->ident, section_ident) == 0) {
-            return 0; // found
-        }
-        list = list->next;
-    }
-    return 1; // not found
-}
-
-*/

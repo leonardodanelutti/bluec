@@ -20,6 +20,8 @@
 
 Sections structure_FromFile(char *filename);
 void print_Structure(char *filename);
+void print_Comments();
+
 
 void usage(void)
 {
@@ -50,6 +52,7 @@ int main(int argc, char **argv)
     }
 
     print_Structure(filename);
+    print_Comments();
     return 0;
 }
 
@@ -81,6 +84,33 @@ Sections structure_FromFile(char *filename)
     return sections;
 }
 
+/*
+DynamicArray comments_FromFile(char *filename)
+{
+    FILE *input;
+    XMLS parse_tree;
+    DynamicArray *comments = NULL;
+    if (filename)
+    {
+        input = fopen(filename, "r");
+        if (!input)
+        {
+            fprintf(stderr, ERROR "Cannot open file %s\n", filename);
+            usage();
+            exit(1);
+        }
+    }
+    else
+        input = stdin;
+    parse_tree = pXML(input, filename);
+    if (filename)
+        fclose(input);
+    Sections sections = convert_XMLS_to_Sections(parse_tree);
+
+    resolveSections(sections);
+    return *comments;
+}
+*/
 void print_Structure(char *filename)
 {
     Sections sections = structure_FromFile(filename);
@@ -88,4 +118,16 @@ void print_Structure(char *filename)
     printf("\n[Pretty Print (after references resolution)]\n");
     printSections(sections);
     // Free memory
+}
+
+
+void print_Comments()
+{
+    for (size_t i = 0; i < comments->size; i++)
+    {
+        Comment_ *comment = (Comment_ *)da_get(comments, i);
+        printf("Comment: %s\n", comment->comment);
+        printf("File: %s\n", comment->file_path);
+        printf("Line: %d\n", comment->line);
+    }
 }

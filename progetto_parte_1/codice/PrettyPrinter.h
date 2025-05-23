@@ -1,4 +1,5 @@
 #include "DataStructure.h"
+#include "Comments.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +13,7 @@ void printFields(Fields field);
 
 void printVal(Val_ val, Ident section_ident);
 
-void printInherits(Fields field, Ident section_ident);
+void printInherits(DynamicArray inherits);
 
 
 
