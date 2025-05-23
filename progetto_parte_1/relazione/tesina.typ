@@ -54,6 +54,14 @@ TODO: gli import dovrebbero essere relativi al file da cui importo non da dove v
 Trasformiamo l'abstract syntax tree nella nostra srtuttura dati, in questa operazione veniene anche controllato:
 - field duplicati
 - sezioni duplicate
-- ci sono gli inherit per le variabili non locoali
+- ci sono gli inherit per le variabili non locali
 
 Creata la struttura risolviamo le variabili non locali ed eventuali cicli
+
+TODO: 
+- testare operazioni su DataStructure
+- esempi con il make
+- commenti
+- aggiungere inherit
+- migliori errori
+- relazione
