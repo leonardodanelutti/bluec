@@ -64,3 +64,6 @@ TODO:
 - commenti
 - migliori errori
 - relazione
+
+TODO: (finali solo se c'è tempo)
+- dare warning con inherit ricorsivi?
