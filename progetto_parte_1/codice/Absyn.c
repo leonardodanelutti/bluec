@@ -137,7 +137,7 @@ XMLS make_ImportFile(String p1)
 
 /********************   FileSection    ********************/
 
-Section make_FileSection(Ident p1, SBody p2)
+Section make_FileSection(Ident p1, SBody p2, SymbolLoc_ symbol_loc)
 {
     Section tmp = (Section)malloc(sizeof(*tmp));
     if (!tmp)
@@ -148,6 +148,7 @@ Section make_FileSection(Ident p1, SBody p2)
     tmp->kind = is_FileSection;
     tmp->u.filesection_.ident_ = p1;
     tmp->u.filesection_.sbody_ = p2;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
@@ -229,7 +230,7 @@ SBodyF make_SBodyFEmpty()
 
 /********************   InheritSection    ********************/
 
-Inherit make_InheritSection(Ident p1)
+Inherit make_InheritSection(Ident p1, SymbolLoc_ symbol_loc)
 {
     Inherit tmp = (Inherit)malloc(sizeof(*tmp));
     if (!tmp)
@@ -239,12 +240,13 @@ Inherit make_InheritSection(Ident p1)
     }
     tmp->kind = is_InheritSection;
     tmp->u.inheritsection_.ident_ = p1;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
 /********************   SectionField    ********************/
 
-Field make_SectionField(Ident p1, Value p2)
+Field make_SectionField(Ident p1, Value p2, SymbolLoc_ symbol_loc)
 {
     Field tmp = (Field)malloc(sizeof(*tmp));
     if (!tmp)
@@ -255,12 +257,13 @@ Field make_SectionField(Ident p1, Value p2)
     tmp->kind = is_SectionField;
     tmp->u.sectionfield_.ident_ = p1;
     tmp->u.sectionfield_.value_ = p2;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
 /********************   ValueInteger    ********************/
 
-Value make_ValueInteger(Integer p1)
+Value make_ValueInteger(Integer p1, SymbolLoc_ symbol_loc)
 {
     Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
@@ -270,12 +273,13 @@ Value make_ValueInteger(Integer p1)
     }
     tmp->kind = is_ValueInteger;
     tmp->u.valueinteger_.integer_ = p1;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
 /********************   Value_true    ********************/
 
-Value make_Value_true()
+Value make_Value_true(SymbolLoc_ symbol_loc)
 {
     Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
@@ -284,12 +288,13 @@ Value make_Value_true()
         exit(1);
     }
     tmp->kind = is_Value_true;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
 /********************   Value_false    ********************/
 
-Value make_Value_false()
+Value make_Value_false(SymbolLoc_ symbol_loc)
 {
     Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
@@ -298,12 +303,13 @@ Value make_Value_false()
         exit(1);
     }
     tmp->kind = is_Value_false;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
 /********************   ValueString    ********************/
 
-Value make_ValueString(String p1)
+Value make_ValueString(String p1, SymbolLoc_ symbol_loc)
 {
     Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
@@ -313,12 +319,13 @@ Value make_ValueString(String p1)
     }
     tmp->kind = is_ValueString;
     tmp->u.valuestring_.string_ = p1;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
 /********************   Value1    ********************/
 
-Value make_Value1(Ident p1)
+Value make_Value1(Ident p1, SymbolLoc_ symbol_loc)
 {
     Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
@@ -328,12 +335,13 @@ Value make_Value1(Ident p1)
     }
     tmp->kind = is_Value1;
     tmp->u.value1_.ident_ = p1;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
 /********************   Value2    ********************/
 
-Value make_Value2(Ident p1, Ident p2)
+Value make_Value2(Ident p1, Ident p2, SymbolLoc_ symbol_loc)
 {
     Value tmp = (Value)malloc(sizeof(*tmp));
     if (!tmp)
@@ -344,6 +352,7 @@ Value make_Value2(Ident p1, Ident p2)
     tmp->kind = is_Value2;
     tmp->u.value2_.ident_1 = p1;
     tmp->u.value2_.ident_2 = p2;
+    tmp->symbol_loc = symbol_loc;
     return tmp;
 }
 
@@ -405,7 +414,7 @@ Section clone_Section(Section p)
     switch (p->kind)
     {
     case is_FileSection:
-        return make_FileSection(strdup(p->u.filesection_.ident_), clone_SBody(p->u.filesection_.sbody_));
+        return make_FileSection(strdup(p->u.filesection_.ident_), clone_SBody(p->u.filesection_.sbody_), p->symbol_loc);
 
     default:
         fprintf(stderr, "Error: bad kind field when cloning Section!\n");
@@ -453,7 +462,7 @@ Inherit clone_Inherit(Inherit p)
     switch (p->kind)
     {
     case is_InheritSection:
-        return make_InheritSection(strdup(p->u.inheritsection_.ident_));
+        return make_InheritSection(strdup(p->u.inheritsection_.ident_), p->symbol_loc);
 
     default:
         fprintf(stderr, "Error: bad kind field when cloning Inherit!\n");
@@ -466,7 +475,7 @@ Field clone_Field(Field p)
     switch (p->kind)
     {
     case is_SectionField:
-        return make_SectionField(strdup(p->u.sectionfield_.ident_), clone_Value(p->u.sectionfield_.value_));
+        return make_SectionField(strdup(p->u.sectionfield_.ident_), clone_Value(p->u.sectionfield_.value_), p->symbol_loc);
 
     default:
         fprintf(stderr, "Error: bad kind field when cloning Field!\n");
@@ -479,22 +488,22 @@ Value clone_Value(Value p)
     switch (p->kind)
     {
     case is_ValueInteger:
-        return make_ValueInteger(p->u.valueinteger_.integer_);
+        return make_ValueInteger(p->u.valueinteger_.integer_, p->symbol_loc);
 
     case is_Value_true:
-        return make_Value_true();
+        return make_Value_true(p->symbol_loc);
 
     case is_Value_false:
-        return make_Value_false();
+        return make_Value_false(p->symbol_loc);
 
     case is_ValueString:
-        return make_ValueString(strdup(p->u.valuestring_.string_));
+        return make_ValueString(strdup(p->u.valuestring_.string_), p->symbol_loc);
 
     case is_Value1:
-        return make_Value1(strdup(p->u.value1_.ident_));
+        return make_Value1(strdup(p->u.value1_.ident_), p->symbol_loc);
 
     case is_Value2:
-        return make_Value2(strdup(p->u.value2_.ident_1), strdup(p->u.value2_.ident_2));
+        return make_Value2(strdup(p->u.value2_.ident_1), strdup(p->u.value2_.ident_2), p->symbol_loc);
 
     default:
         fprintf(stderr, "Error: bad kind field when cloning Value!\n");

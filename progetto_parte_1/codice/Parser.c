@@ -175,11 +175,13 @@ void yyerror(YYLTYPE *loc, yyscan_t scanner, YYSTYPE *result, const char *msg)
     loc->first_line, loc->first_column, msg, grammar_get_text(scanner));
 }
 
+SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_init_bottom, YYLTYPE loc_final_bottom);
+
 int yyparse(yyscan_t scanner, YYSTYPE *result);
 
 extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
 
-#line 183 "Parser.c"
+#line 185 "Parser.c"
 
 
 #ifdef short
@@ -560,9 +562,9 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   113,   113,   114,   115,   117,   118,   120,   122,   124,
-     125,   126,   128,   129,   131,   133,   135,   136,   137,   138,
-     139,   140
+       0,   115,   115,   116,   117,   119,   120,   122,   124,   126,
+     127,   128,   130,   131,   133,   135,   137,   138,   139,   140,
+     141,   142
 };
 #endif
 
@@ -1270,127 +1272,127 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* XML: %empty  */
-#line 113 "grammar.y"
+#line 115 "grammar.y"
                   { (yyval.xmls_) = make_XMLSEmpty(); result->xmls_ = (yyval.xmls_); }
-#line 1276 "Parser.c"
+#line 1278 "Parser.c"
     break;
 
   case 3: /* XML: Import XML  */
-#line 114 "grammar.y"
+#line 116 "grammar.y"
                { (yyval.xmls_) = make_XMLSwImport((yyvsp[-1].xmls_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1282 "Parser.c"
+#line 1284 "Parser.c"
     break;
 
   case 4: /* XML: Section XMLS  */
-#line 115 "grammar.y"
+#line 117 "grammar.y"
                  { (yyval.xmls_) = make_XMLSection((yyvsp[-1].section_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1288 "Parser.c"
+#line 1290 "Parser.c"
     break;
 
   case 5: /* XMLS: Section XMLS  */
-#line 117 "grammar.y"
+#line 119 "grammar.y"
                     { (yyval.xmls_) = make_XMLSection((yyvsp[-1].section_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1294 "Parser.c"
+#line 1296 "Parser.c"
     break;
 
   case 6: /* XMLS: %empty  */
-#line 118 "grammar.y"
+#line 120 "grammar.y"
                 { (yyval.xmls_) = make_XMLSEmpty(); result->xmls_ = (yyval.xmls_); }
-#line 1300 "Parser.c"
+#line 1302 "Parser.c"
     break;
 
   case 7: /* Import: _STRING_  */
-#line 120 "grammar.y"
+#line 122 "grammar.y"
                   { (yyval.xmls_) = make_ImportFile((yyvsp[0]._string)); result->xmls_ = (yyval.xmls_); }
-#line 1306 "Parser.c"
+#line 1308 "Parser.c"
     break;
 
   case 8: /* Section: _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT  */
-#line 122 "grammar.y"
-                                                                                 { (yyval.section_) = make_FileSection((yyvsp[-5]._string), (yyvsp[-3].sbody_)); result->section_ = (yyval.section_); }
-#line 1312 "Parser.c"
+#line 124 "grammar.y"
+                                                                                 { (yyval.section_) = make_FileSection((yyvsp[-5]._string), (yyvsp[-3].sbody_),  make_loc((yylsp[-9]), (yylsp[-8]), (yylsp[-2]), (yylsp[0]))); result->section_ = (yyval.section_); }
+#line 1314 "Parser.c"
     break;
 
   case 9: /* SBody: %empty  */
-#line 124 "grammar.y"
+#line 126 "grammar.y"
                     { (yyval.sbody_) = make_SBodyEmpty(); result->sbody_ = (yyval.sbody_); }
-#line 1318 "Parser.c"
+#line 1320 "Parser.c"
     break;
 
   case 10: /* SBody: Inherit SBody  */
-#line 125 "grammar.y"
+#line 127 "grammar.y"
                   { (yyval.sbody_) = make_SBodywInherit((yyvsp[-1].inherit_), (yyvsp[0].sbody_)); result->sbody_ = (yyval.sbody_); }
-#line 1324 "Parser.c"
+#line 1326 "Parser.c"
     break;
 
   case 11: /* SBody: Field SBodyF  */
-#line 126 "grammar.y"
+#line 128 "grammar.y"
                  { (yyval.sbody_) = make_SBodywoInherit((yyvsp[-1].field_), (yyvsp[0].sbodyf_)); result->sbody_ = (yyval.sbody_); }
-#line 1330 "Parser.c"
+#line 1332 "Parser.c"
     break;
 
   case 12: /* SBodyF: Field SBodyF  */
-#line 128 "grammar.y"
+#line 130 "grammar.y"
                       { (yyval.sbodyf_) = make_SBodyField((yyvsp[-1].field_), (yyvsp[0].sbodyf_)); result->sbodyf_ = (yyval.sbodyf_); }
-#line 1336 "Parser.c"
+#line 1338 "Parser.c"
     break;
 
   case 13: /* SBodyF: %empty  */
-#line 129 "grammar.y"
+#line 131 "grammar.y"
                 { (yyval.sbodyf_) = make_SBodyFEmpty(); result->sbodyf_ = (yyval.sbodyf_); }
-#line 1342 "Parser.c"
+#line 1344 "Parser.c"
     break;
 
   case 14: /* Inherit: _LT _KW_inherit _GT _IDENT_ _SYMB_3 _KW_inherit _GT  */
-#line 131 "grammar.y"
-                                                              { (yyval.inherit_) = make_InheritSection((yyvsp[-3]._string)); result->inherit_ = (yyval.inherit_); }
-#line 1348 "Parser.c"
+#line 133 "grammar.y"
+                                                              { (yyval.inherit_) = make_InheritSection((yyvsp[-3]._string), make_loc((yylsp[-6]), (yylsp[-5]), (yylsp[-2]), (yylsp[0]))); result->inherit_ = (yyval.inherit_); }
+#line 1350 "Parser.c"
     break;
 
   case 15: /* Field: _LT _KW_field _KW_name _EQ _IDENT_ _GT Value _SYMB_3 _KW_field _GT  */
-#line 133 "grammar.y"
-                                                                           { (yyval.field_) = make_SectionField((yyvsp[-5]._string), (yyvsp[-3].value_)); result->field_ = (yyval.field_); }
-#line 1354 "Parser.c"
+#line 135 "grammar.y"
+                                                                           { (yyval.field_) = make_SectionField((yyvsp[-5]._string), (yyvsp[-3].value_), make_loc((yylsp[-9]), (yylsp[-4]), (yylsp[-2]), (yylsp[0]))); result->field_ = (yyval.field_); }
+#line 1356 "Parser.c"
     break;
 
   case 16: /* Value: _INTEGER_  */
-#line 135 "grammar.y"
-                  { (yyval.value_) = make_ValueInteger((yyvsp[0]._int)); result->value_ = (yyval.value_); }
-#line 1360 "Parser.c"
+#line 137 "grammar.y"
+                  { (yyval.value_) = make_ValueInteger((yyvsp[0]._int), make_loc((yylsp[0]), (yylsp[0]), (yylsp[0]), (yylsp[0]))); result->value_ = (yyval.value_); }
+#line 1362 "Parser.c"
     break;
 
   case 17: /* Value: _KW_true  */
-#line 136 "grammar.y"
-             { (yyval.value_) = make_Value_true(); result->value_ = (yyval.value_); }
-#line 1366 "Parser.c"
+#line 138 "grammar.y"
+             { (yyval.value_) = make_Value_true(make_loc((yylsp[0]), (yylsp[0]), (yylsp[0]), (yylsp[0]))); result->value_ = (yyval.value_); }
+#line 1368 "Parser.c"
     break;
 
   case 18: /* Value: _KW_false  */
-#line 137 "grammar.y"
-              { (yyval.value_) = make_Value_false(); result->value_ = (yyval.value_); }
-#line 1372 "Parser.c"
+#line 139 "grammar.y"
+              { (yyval.value_) = make_Value_false(make_loc((yylsp[0]), (yylsp[0]), (yylsp[0]), (yylsp[0]))); result->value_ = (yyval.value_); }
+#line 1374 "Parser.c"
     break;
 
   case 19: /* Value: _STRING_  */
-#line 138 "grammar.y"
-             { (yyval.value_) = make_ValueString((yyvsp[0]._string)); result->value_ = (yyval.value_); }
-#line 1378 "Parser.c"
+#line 140 "grammar.y"
+             { (yyval.value_) = make_ValueString((yyvsp[0]._string), make_loc((yylsp[0]), (yylsp[0]), (yylsp[0]), (yylsp[0]))); result->value_ = (yyval.value_); }
+#line 1380 "Parser.c"
     break;
 
   case 20: /* Value: _DOLLAR _IDENT_  */
-#line 139 "grammar.y"
-                    { (yyval.value_) = make_Value1((yyvsp[0]._string)); result->value_ = (yyval.value_); }
-#line 1384 "Parser.c"
+#line 141 "grammar.y"
+                    { (yyval.value_) = make_Value1((yyvsp[0]._string), make_loc((yylsp[-1]), (yylsp[0]), (yylsp[-1]), (yylsp[0]))); result->value_ = (yyval.value_); }
+#line 1386 "Parser.c"
     break;
 
   case 21: /* Value: _DOLLAR _IDENT_ _DOT _IDENT_  */
-#line 140 "grammar.y"
-                                 { (yyval.value_) = make_Value2((yyvsp[-2]._string), (yyvsp[0]._string)); result->value_ = (yyval.value_); }
-#line 1390 "Parser.c"
+#line 142 "grammar.y"
+                                 { (yyval.value_) = make_Value2((yyvsp[-2]._string), (yyvsp[0]._string), make_loc((yylsp[-3]), (yylsp[0]), (yylsp[-3]), (yylsp[0]))); result->value_ = (yyval.value_); }
+#line 1392 "Parser.c"
     break;
 
 
-#line 1394 "Parser.c"
+#line 1396 "Parser.c"
 
       default: break;
     }
@@ -1589,7 +1591,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 143 "grammar.y"
+#line 145 "grammar.y"
 
 
 /* Custom global variable that stores the parsed files to avoid
@@ -1707,6 +1709,31 @@ XMLS pXML(FILE *inp, String filename)
     { /* Success */
         return result.xmls_;
     }
+}
+
+SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_init_bottom, YYLTYPE loc_final_bottom) {
+    YYLTYPE top_loc = {
+        .first_line = loc_init_top.first_line,
+        .first_column = loc_init_top.first_column,
+        .last_line = loc_final_top.last_line,
+        .last_column = loc_final_top.last_column,
+    };
+
+    YYLTYPE bottom_loc = {
+        .first_line = loc_init_bottom.first_line,
+        .first_column = loc_init_bottom.first_column,
+        .last_line = loc_final_bottom.last_line,
+        .last_column = loc_final_bottom.last_column,
+    };
+
+    SymbolLoc_ loc = {
+        .top_loc = top_loc,
+        .bottom_loc = bottom_loc,
+        // TODO:
+        .file_path = NULL,
+    };
+
+    return loc;
 }
 
 /* Entrypoint: parse XML from string. */

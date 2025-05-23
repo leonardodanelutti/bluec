@@ -102,7 +102,6 @@ struct XMLS_
             XMLS xmls_;
         } xmlsection_;
     } u;
-    SymbolLoc_ symbol_loc;
 };
 
 XMLS make_XMLSection(Section p0, XMLS p1);
@@ -143,7 +142,7 @@ struct Section_
     SymbolLoc_ symbol_loc;
 };
 
-Section make_FileSection(Ident p0, SBody p1);
+Section make_FileSection(Ident p0, SBody p1, SymbolLoc_ symbol_loc);
 
 struct SBody_
 {
@@ -166,7 +165,6 @@ struct SBody_
             SBodyF sbodyf_;
         } sbodywoinherit_;
     } u;
-    SymbolLoc_ symbol_loc;
 };
 
 SBody make_SBodyEmpty(void);
@@ -188,7 +186,6 @@ struct SBodyF_
             SBodyF sbodyf_;
         } sbodyfield_;
     } u;
-    SymbolLoc_ symbol_loc;
 };
 
 SBodyF make_SBodyField(Field p0, SBodyF p1);
@@ -210,7 +207,7 @@ struct Inherit_
     SymbolLoc_ symbol_loc;
 };
 
-Inherit make_InheritSection(Ident p0);
+Inherit make_InheritSection(Ident p0, SymbolLoc_ symbol_loc);
 
 struct Field_
 {
@@ -229,7 +226,7 @@ struct Field_
     SymbolLoc_ symbol_loc;
 };
 
-Field make_SectionField(Ident p0, Value p1);
+Field make_SectionField(Ident p0, Value p1, SymbolLoc_ symbol_loc);
 
 struct Value_
 {
@@ -264,12 +261,12 @@ struct Value_
     SymbolLoc_ symbol_loc;
 };
 
-Value make_ValueInteger(Integer p0);
-Value make_Value_true(void);
-Value make_Value_false(void);
-Value make_ValueString(String p0);
-Value make_Value1(Ident p0);
-Value make_Value2(Ident p0, Ident p1);
+Value make_ValueInteger(Integer p0, SymbolLoc_ symbol_loc);
+Value make_Value_true(SymbolLoc_ symbol_loc);
+Value make_Value_false(SymbolLoc_ symbol_loc);
+Value make_ValueString(String p0, SymbolLoc_ symbol_loc);
+Value make_Value1(Ident p0, SymbolLoc_ symbol_loc);
+Value make_Value2(Ident p0, Ident p1, SymbolLoc_ symbol_loc);
 
 /***************************   Cloning   ******************************/
 

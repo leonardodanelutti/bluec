@@ -74,6 +74,8 @@ void yyerror(YYLTYPE *loc, yyscan_t scanner, YYSTYPE *result, const char *msg)
     loc->first_line, loc->first_column, msg, grammar_get_text(scanner));
 }
 
+SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_init_bottom, YYLTYPE loc_final_bottom);
+
 int yyparse(yyscan_t scanner, YYSTYPE *result);
 
 extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
@@ -119,7 +121,7 @@ XMLS : Section XMLS { $$ = make_XMLSection($1, $2); result->xmls_ = $$; }
 ;
 Import : _STRING_ { $$ = make_ImportFile($1); result->xmls_ = $$; }
 ;
-Section : _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT { $$ = make_FileSection($5, $7); result->section_ = $$; }
+Section : _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT { $$ = make_FileSection($5, $7,  make_loc(@1, @2, @8, @10)); result->section_ = $$; }
 ;
 SBody : /* empty */ { $$ = make_SBodyEmpty(); result->sbody_ = $$; }
   | Inherit SBody { $$ = make_SBodywInherit($1, $2); result->sbody_ = $$; }
@@ -128,16 +130,16 @@ SBody : /* empty */ { $$ = make_SBodyEmpty(); result->sbody_ = $$; }
 SBodyF : Field SBodyF { $$ = make_SBodyField($1, $2); result->sbodyf_ = $$; }
   | /* empty */ { $$ = make_SBodyFEmpty(); result->sbodyf_ = $$; }
 ;
-Inherit : _LT _KW_inherit _GT _IDENT_ _SYMB_3 _KW_inherit _GT { $$ = make_InheritSection($4); result->inherit_ = $$; }
+Inherit : _LT _KW_inherit _GT _IDENT_ _SYMB_3 _KW_inherit _GT { $$ = make_InheritSection($4, make_loc(@1, @2, @5, @7)); result->inherit_ = $$; }
 ;
-Field : _LT _KW_field _KW_name _EQ _IDENT_ _GT Value _SYMB_3 _KW_field _GT { $$ = make_SectionField($5, $7); result->field_ = $$; }
+Field : _LT _KW_field _KW_name _EQ _IDENT_ _GT Value _SYMB_3 _KW_field _GT { $$ = make_SectionField($5, $7, make_loc(@1, @6, @8, @10)); result->field_ = $$; }
 ;
-Value : _INTEGER_ { $$ = make_ValueInteger($1); result->value_ = $$; }
-  | _KW_true { $$ = make_Value_true(); result->value_ = $$; }
-  | _KW_false { $$ = make_Value_false(); result->value_ = $$; }
-  | _STRING_ { $$ = make_ValueString($1); result->value_ = $$; }
-  | _DOLLAR _IDENT_ { $$ = make_Value1($2); result->value_ = $$; }
-  | _DOLLAR _IDENT_ _DOT _IDENT_ { $$ = make_Value2($2, $4); result->value_ = $$; }
+Value : _INTEGER_ { $$ = make_ValueInteger($1, make_loc(@1, @1, @1, @1)); result->value_ = $$; }
+  | _KW_true { $$ = make_Value_true(make_loc(@1, @1, @1, @1)); result->value_ = $$; }
+  | _KW_false { $$ = make_Value_false(make_loc(@1, @1, @1, @1)); result->value_ = $$; }
+  | _STRING_ { $$ = make_ValueString($1, make_loc(@1, @1, @1, @1)); result->value_ = $$; }
+  | _DOLLAR _IDENT_ { $$ = make_Value1($2, make_loc(@1, @2, @1, @2)); result->value_ = $$; }
+  | _DOLLAR _IDENT_ _DOT _IDENT_ { $$ = make_Value2($2, $4, make_loc(@1, @4, @1, @4)); result->value_ = $$; }
 ;
 
 %%
@@ -257,6 +259,31 @@ XMLS pXML(FILE *inp, String filename)
     { /* Success */
         return result.xmls_;
     }
+}
+
+SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_init_bottom, YYLTYPE loc_final_bottom) {
+    YYLTYPE top_loc = {
+        .first_line = loc_init_top.first_line,
+        .first_column = loc_init_top.first_column,
+        .last_line = loc_final_top.last_line,
+        .last_column = loc_final_top.last_column,
+    };
+
+    YYLTYPE bottom_loc = {
+        .first_line = loc_init_bottom.first_line,
+        .first_column = loc_init_bottom.first_column,
+        .last_line = loc_final_bottom.last_line,
+        .last_column = loc_final_bottom.last_column,
+    };
+
+    SymbolLoc_ loc = {
+        .top_loc = top_loc,
+        .bottom_loc = bottom_loc,
+        // TODO:
+        .file_path = NULL,
+    };
+
+    return loc;
 }
 
 /* Entrypoint: parse XML from string. */
