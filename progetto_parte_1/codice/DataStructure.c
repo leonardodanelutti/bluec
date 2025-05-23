@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ResolveConflicts.h"
 #include "DataStructure.h"
@@ -197,7 +198,7 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
     fprintf(stderr, ERROR "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
 }
 
-/* Convert XMLS to a linked list of sections */
+/***** CONVERT XMLS TO A LINKED LIST OF SECTIONS *****/
 
 Sections convert_XMLS_to_Sections(XMLS xml)
 {
@@ -208,6 +209,7 @@ Sections convert_XMLS_to_Sections(XMLS xml)
 
     /* Create the head of the sections list */
     Sections sections_list = make_SectionNew(xml->u.xmlsection_.section_->u.filesection_.ident_);
+    sections_list->symbol_loc = xml->u.xmlsection_.section_->symbol_loc;
     sections_list->fields = convert_SBody_to_Fields(xml->u.xmlsection_.section_->u.filesection_.sbody_,
                                                     sections_list);
     Sections last_section = sections_list;
@@ -218,10 +220,12 @@ Sections convert_XMLS_to_Sections(XMLS xml)
     while (xml->kind == is_XMLSection)
     {
         Ident sec_ident = xml->u.xmlsection_.section_->u.filesection_.ident_;
+        SymbolLoc_ symbol_loc = xml->u.xmlsection_.section_->symbol_loc;
         SBody sbody = xml->u.xmlsection_.section_->u.filesection_.sbody_;
 
         check_Section(sections_list, sec_ident);
         Sections new_section = make_SectionNew(sec_ident);
+        new_section->symbol_loc = symbol_loc;
         new_section->fields = convert_SBody_to_Fields(sbody, new_section);
         last_section->next = new_section;
         last_section = new_section;
@@ -277,6 +281,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     Ident field_ident = sbody->u.sbodywoinherit_.field_->u.sectionfield_.ident_;
     Val_ val = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
+    SymbolLoc_ symbol_loc = sbody->u.sbodywoinherit_.field_->symbol_loc;
+
     if (check_Inherit(current_section, val))
     {
         fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n",
@@ -285,6 +291,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
     }
     Fields fields_list = make_FieldNew(field_ident, val);
     fields_list->section = current_section;
+    fields_list->symbol_loc = symbol_loc;
+
     Fields last_field = fields_list;
     /* Move to the next field */
     SBodyF sbodyf = sbody->u.sbodywoinherit_.sbodyf_;
@@ -292,8 +300,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
     while (sbodyf->kind == is_SBodyField)
     {
         Ident field_ident = sbodyf->u.sbodyfield_.field_->u.sectionfield_.ident_;
-        Value value = sbodyf->u.sbodyfield_.field_->u.sectionfield_.value_;
-        Val_ val = convert_Value_to_Val_(value, section_ident);
+        Val_ val = convert_Value_to_Val_(sbodyf->u.sbodyfield_.field_->u.sectionfield_.value_, section_ident);
+        SymbolLoc_ symbol_loc = sbodyf->u.sbodyfield_.field_->symbol_loc;
 
         if (!overwrite_Field(fields_list, field_ident, val))
         {
@@ -305,6 +313,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
             }
             Fields new_field = make_FieldNew(field_ident, val);
             new_field->section = current_section;
+            new_field->symbol_loc = symbol_loc;
+
             last_field->next = new_field;
             last_field = new_field;
         }
@@ -318,20 +328,33 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
 Val_ convert_Value_to_Val_(Value value, Ident section_ident)
 {
+    Val_ new;
     switch (value->kind)
     {
     case is_ValueInteger:
-        return new_Int(value->u.valueinteger_.integer_);
+        new = new_Int(value->u.valueinteger_.integer_);
+        new.symbol_loc = value->symbol_loc;
+        return new;
     case is_Value_true:
-        return new_Bool(1);
+        new = new_Bool(1);
+        new.symbol_loc = value->symbol_loc;
+        return new;
     case is_Value_false:
-        return new_Bool(0);
+        new = new_Bool(0);
+        new.symbol_loc = value->symbol_loc;
+        return new;
     case is_ValueString:
-        return new_Str(value->u.valuestring_.string_);
+        new = new_Str(strdup(value->u.valuestring_.string_));
+        new.symbol_loc = value->symbol_loc;
+        return new;
     case is_Value1:
-        return new_Ref(new_FieldIdent(value->u.value1_.ident_, section_ident));
+        new = new_Ref(new_FieldIdent(strdup(value->u.value1_.ident_), strdup(section_ident)));
+        new.symbol_loc = value->symbol_loc;
+        return new;
     case is_Value2:
-        return new_Ref(new_FieldIdent(value->u.value2_.ident_2, value->u.value2_.ident_1));
+        new = new_Ref(new_FieldIdent(strdup(value->u.value2_.ident_2), strdup(value->u.value2_.ident_1)));
+        new.symbol_loc = value->symbol_loc;
+        return new;
     default:
         fprintf(stderr, ERROR "Unknown value kind variable in section %s\n", section_ident);
         exit(EXIT_FAILURE);
