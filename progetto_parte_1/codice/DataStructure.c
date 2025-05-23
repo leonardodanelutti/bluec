@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "Utils.h"
+#include "ResolveConflicts.h"
 #include "DataStructure.h"
 
 void check_Section(Sections sections_list, Ident section_ident);
@@ -254,7 +254,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
         sbody = sbody->u.sbodywinherit_.sbody_;
     }
 
-    /*  */
+    current_section->inherits = inherit_section_list;
+    
     if (sbody->kind == is_SBodyEmpty)
     {
         return NULL;

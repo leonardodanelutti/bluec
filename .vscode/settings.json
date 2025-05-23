@@ -5,6 +5,7 @@
         "datastructure.h": "c",
         "absyn.h": "c",
         "comments.h": "c",
-        "parser.h": "c"
+        "parser.h": "c",
+        "utils.h": "c"
     }
 }

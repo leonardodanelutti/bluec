@@ -1,7 +1,8 @@
-#include "Absyn.h"
-
 #ifndef DATASTRUCTURE_HEADER
 #define DATASTRUCTURE_HEADER
+
+#include "Absyn.h"
+#include "Utils.h"
 
 typedef struct FieldIdent_
 {
@@ -41,15 +42,7 @@ struct Sections_
     Ident ident;
     Fields fields;
     Sections next;
-
-    /* TODO: Inherit list to check non-existing section inherited, i.e.:
-       "
-       <section name=a>
-           <inherit>b</inherit> # where b is not defined
-       </section>
-       "
-       should throw a warning or an error reporting inherit usage of a non existing
-       section. */
+    DynamicArray* inherits;
 };
 
 /* Create a new section */
