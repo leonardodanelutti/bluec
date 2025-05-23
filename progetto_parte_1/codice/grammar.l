@@ -97,9 +97,10 @@ IMP {WHITE}*{COMMENT1}?{WHITE}*
 
 <INITIAL,IMPORT>{COMMENT} push_Comment(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); /* BNFC: comment "#" */
 
-<INITIAL><{IMP}*import{IMP}*>      LITERAL_BUFFER_CREATE(); BEGIN IMPORT;
+<INITIAL><{IMP}*import{IMP}*>      LITERAL_BUFFER_CREATE(); detect_Comments(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); BEGIN IMPORT;
 <IMPORT>\\             	   BEGIN ESCAPEDI;
-<IMPORT><\/{IMP}*import{IMP}*>      yylval->_string = LITERAL_BUFFER_HARVEST(); BEGIN INITIAL; return _STRING_;
+<IMPORT><\/{IMP}*import{IMP}*>     yylval->_string = LITERAL_BUFFER_HARVEST(); detect_Comments(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); BEGIN INITIAL; return _STRING_;
+<IMPORT>[ \t\r]            
 <IMPORT><              	   return _ERROR_;
 <IMPORT>.              	   LITERAL_BUFFER_APPEND_CHAR(yytext[0]);
 <ESCAPEDI>f             	 LITERAL_BUFFER_APPEND_CHAR('\f'); BEGIN IMPORT;

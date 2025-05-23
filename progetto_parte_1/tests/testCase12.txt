@@ -1,0 +1,9 @@
+< #Comment1
+import  #Comment2 #j
+> #Comment3
+#Comment4
+../tests/glob/file1.cnf # Comment5
+</import #Comment6
+#Comment 7
+> ##Comment 8
+<section name=a></section>

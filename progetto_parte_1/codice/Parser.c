@@ -1309,7 +1309,7 @@ yyreduce:
 
   case 8: /* Section: _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT  */
 #line 124 "grammar.y"
-                                                                                 { (yyval.section_) = make_FileSection((yyvsp[-5]._string), (yyvsp[-3].sbody_),  make_loc((yylsp[-9]), (yylsp[-8]), (yylsp[-2]), (yylsp[0]))); result->section_ = (yyval.section_); }
+                                                                                 { (yyval.section_) = make_FileSection((yyvsp[-5]._string), (yyvsp[-3].sbody_),  make_loc((yylsp[-9]), (yylsp[-4]), (yylsp[-2]), (yylsp[0]))); result->section_ = (yyval.section_); }
 #line 1314 "Parser.c"
     break;
 
@@ -1345,7 +1345,7 @@ yyreduce:
 
   case 14: /* Inherit: _LT _KW_inherit _GT _IDENT_ _SYMB_3 _KW_inherit _GT  */
 #line 133 "grammar.y"
-                                                              { (yyval.inherit_) = make_InheritSection((yyvsp[-3]._string), make_loc((yylsp[-6]), (yylsp[-5]), (yylsp[-2]), (yylsp[0]))); result->inherit_ = (yyval.inherit_); }
+                                                              { (yyval.inherit_) = make_InheritSection((yyvsp[-3]._string), make_loc((yylsp[-6]), (yylsp[-4]), (yylsp[-2]), (yylsp[0]))); result->inherit_ = (yyval.inherit_); }
 #line 1350 "Parser.c"
     break;
 

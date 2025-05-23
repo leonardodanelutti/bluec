@@ -54,4 +54,7 @@ struct Comment_
 /* Pushes a new comment to the global variable `comments`. */
 void push_Comment(unsigned int line, String file_path, String comment);
 
+/* Pushes all comments in a string to the global variable `comments`. */
+void detect_Comments(unsigned int first_line, String file_path, String str);
+
 #endif /* COMMENTS_H */
