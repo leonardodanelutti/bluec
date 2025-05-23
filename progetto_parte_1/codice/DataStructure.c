@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ResolveConflicts.h"
+#include "ResolveRefs.h"
 #include "DataStructure.h"
 
 void check_Section(Sections sections_list, Ident section_ident);

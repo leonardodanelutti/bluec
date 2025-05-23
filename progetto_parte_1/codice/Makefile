@@ -9,7 +9,7 @@ FLEX_OPTS = -Pgrammar_
 BISON = bison
 BISON_OPTS = -t -pgrammar_
 
-OBJS = Absyn.o Buffer.o Lexer.o Parser.o Printer.o DataStructure.o Utils.o PrettyPrinter.o ResolveConflicts.o Comments.o
+OBJS = Absyn.o Buffer.o Lexer.o Parser.o Printer.o DataStructure.o Utils.o PrettyPrinter.o ResolveRefs.o Comments.o
 
 .PHONY : clean distclean
 
@@ -101,8 +101,8 @@ Utils.o : Utils.c Utils.h Absyn.h DataStructure.h
 PrettyPrinter.o : PrettyPrinter.c PrettyPrinter.h Absyn.h DataStructure.h
 	${CC} ${CCFLAGS} -c PrettyPrinter.c
 
-ResolveConflicts.o : ResolveConflicts.c ResolveConflicts.h DataStructure.h
-	${CC} ${CCFLAGS} -c ResolveConflicts.c
+ResolveRefs.o : ResolveRefs.c ResolveRefs.h DataStructure.h
+	${CC} ${CCFLAGS} -c ResolveRefs.c
 
 Comments.o : Comments.c Comments.h Utils.h
 	${CC} ${CCFLAGS} -c Comments.c

@@ -15,11 +15,11 @@
 #include "Printer.h"
 #include "Absyn.h"
 #include "Utils.h"
-#include "ResolveConflicts.h"
+#include "ResolveRefs.h"
 #include "PrettyPrinter.h"
 
 Sections structure_FromFile(char *filename);
-void  print_Structure(char *filename);
+void print_Structure(char *filename);
 
 void usage(void)
 {
@@ -48,17 +48,16 @@ int main(int argc, char **argv)
             filename = argv[1];
         }
     }
-    
+
     print_Structure(filename);
     return 0;
 }
-
 
 Sections structure_FromFile(char *filename)
 {
     FILE *input;
     XMLS parse_tree;
-     if (filename)
+    if (filename)
     {
         input = fopen(filename, "r");
         if (!input)
