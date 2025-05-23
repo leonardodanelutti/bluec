@@ -62,6 +62,5 @@ TODO:
 - testare operazioni su DataStructure
 - esempi con il make
 - commenti
-- aggiungere inherit
 - migliori errori
 - relazione

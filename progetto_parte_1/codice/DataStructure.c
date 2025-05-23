@@ -364,7 +364,6 @@ void check_Inherit(DynamicArray *inherit_section_list, Val_ val, Ident current_s
         {
             // TODO: Check if this is correct
             Ident inherit_section = *(Ident *)da_get(inherit_section_list, i);
-            printf("%s", inherit_section);
             if (strcmp(inherit_section, val.u.unresolved_ref.section_ident) == 0)
             {
                 return; // Inherit section found
