@@ -17,6 +17,9 @@
 #include "Utils.h"
 #include "PrettyPrinter.h"
 
+Sections structure_FromFile(char *filename);
+void  print_Structure(char *filename);
+
 void usage(void)
 {
     printf("usage: Call with one of the following argument combinations:\n");
@@ -28,32 +31,33 @@ void usage(void)
 
 int main(int argc, char **argv)
 {
-    FILE *input;
-    XMLS parse_tree;
-    int quiet = 0;
     char *filename = NULL;
-
     if (argc > 1)
     {
         if (strcmp(argv[1], "-s") == 0)
         {
-            quiet = 1;
             if (argc > 2)
             {
                 filename = argv[2];
             }
-            else
-            {
-                input = stdin;
-            }
+
         }
         else
         {
             filename = argv[1];
         }
     }
+    
+    print_Structure(filename);
+    return 1;
+}
 
-    if (filename)
+
+Sections structure_FromFile(char *filename)
+{
+    FILE *input;
+    XMLS parse_tree;
+     if (filename)
     {
         input = fopen(filename, "r");
         if (!input)
@@ -71,25 +75,16 @@ int main(int argc, char **argv)
         fclose(input);
     /* Create custom data structure */
     Sections sections = convert_XMLS_to_Sections(parse_tree);
-    printf("\n[Pretty Print (before references resolution)]\n");
-    printSections(sections);
     /* Resolve references */
     resolveSections(sections);
+    return sections;
+}
+
+void print_Structure(char *filename)
+{
+    Sections sections = structure_FromFile(filename);
+    // Pretty print
     printf("\n[Pretty Print (after references resolution)]\n");
     printSections(sections);
-
-    if (parse_tree)
-    {
-        printf("\nParse Successful!\n");
-        if (!quiet)
-        {
-            printf("\n[Abstract Syntax]\n");
-            printf("%s\n\n", showXMLS(parse_tree));
-            printf("[Linearized Tree]\n");
-            printf("%s\n\n", printXMLS(parse_tree));
-        }
-        free_XMLS(parse_tree);
-        return 0;
-    }
-    return 1;
+    // Free memory
 }
