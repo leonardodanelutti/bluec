@@ -15,6 +15,7 @@
 #include "Printer.h"
 #include "Absyn.h"
 #include "Utils.h"
+#include "ResolveConflicts.h"
 #include "PrettyPrinter.h"
 
 Sections structure_FromFile(char *filename);
