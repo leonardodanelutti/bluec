@@ -4,6 +4,7 @@
 #include "ResolveConflicts.h"
 #include "DataStructure.h"
 
+
 void check_Section(Sections sections_list, Ident section_ident);
 Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
 Val_ convert_Value_to_Val_(Value value, Ident section_ident);
@@ -59,7 +60,7 @@ void push_Section(Sections sections_list, Ident section_ident)
     {
         if (strcmp(current->ident, section_ident) == 0)
         {
-            fprintf(stderr, "Duplicate section with identifier: %s\n", section_ident);
+            fprintf(stderr,  ERROR "Section %s has multiple definitions\n", section_ident);
             exit(EXIT_FAILURE);
         }
         current = current->next;
@@ -94,7 +95,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                 {
                     current_field->val = val;
                     /* TODO: warning with line */
-                    printf("Warning field overwritten");
+                    printf( WARNING "Field %s is overwritten", field_ident.field_ident);
                     return; // Field found and overwritten
                 }
                 prev_field = current_field;
@@ -105,7 +106,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
         }
         current = current->next;
     }
-    fprintf(stderr, "Section %s not found \n", field_ident.section_ident);
+    fprintf(stderr, ERROR "Section %s not found \n", field_ident.section_ident);
 }
 
 void delete_Section(Sections sections_list, Ident section_ident)
@@ -140,7 +141,7 @@ void delete_Section(Sections sections_list, Ident section_ident)
         prev_section = current;
         current = current->next;
     }
-    fprintf(stderr, "Section %s not found\n", section_ident);
+    fprintf(stderr, ERROR "Section %s not found\n", section_ident);
 }
 
 void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
@@ -232,7 +233,7 @@ void check_Section(Sections sections_list, Ident section_ident)
         if (strcmp(current->ident, section_ident) == 0)
         {
             /* TODO: add file and line number? */
-            fprintf(stderr, "Duplicate section with identifier: %s\n", section_ident);
+            fprintf(stderr, ERROR "Section %s has multiple definitions\n", section_ident);
             exit(EXIT_FAILURE);
         }
         current = current->next;
@@ -268,7 +269,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
     Ident field_ident = sbody->u.sbodywoinherit_.field_->u.sectionfield_.ident_;
     Val_ val = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
     if (check_Inherit(current_section, val)) {
-        fprintf(stderr, "Non-local variable in section without inherit\n");
+        fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n", 
+                field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
         exit(EXIT_FAILURE);
     }
     Fields fields_list = make_FieldNew(field_ident, val);
@@ -286,7 +288,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
         if (!overwrite_Field(fields_list, field_ident, val))
         {
             if (check_Inherit(current_section, val)) {
-                fprintf(stderr, "Non-local variable in section without inherit\n");
+                fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n", 
+                field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
                 exit(EXIT_FAILURE);
             }
             Fields new_field = make_FieldNew(field_ident, val);
@@ -319,7 +322,7 @@ Val_ convert_Value_to_Val_(Value value, Ident section_ident)
     case is_Value2:
         return new_Ref(new_FieldIdent(value->u.value2_.ident_2, value->u.value2_.ident_1));
     default:
-        fprintf(stderr, "Unknown value kind\n");
+        fprintf(stderr, ERROR "Unknown value kind variable in section %s\n", section_ident);
         exit(EXIT_FAILURE);
     }
 }
@@ -395,7 +398,7 @@ int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
         {
             current->val = val;
             /* TODO: warning with line */
-            printf("Field %s overwritten with new value in section %s\n", field_ident, current->section->ident);
+            printf(WARNING "Field %s is overwritten with new value in section %s\n", field_ident, current->section->ident);
             return 1; // Field found and overwritten
         }
         current = current->next;

@@ -24,24 +24,53 @@ distclean : clean
 demo:
 	@echo "Running demo..."
 	@{ \
-		echo "example 1"; \
+		echo "example 1: inherit from an above section"; \
+		echo ""; \
 		./Testgrammar ../tests/testCase1.txt || true; \
-		echo "example 2"; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 2: inherit from a section below"; \
+		echo ""; \
 		./Testgrammar ../tests/testCase2.txt || true; \
-		echo "example 3"; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 3: overwriting of a variable"; \
+		echo ""; \
 		./Testgrammar ../tests/testCase3.txt || true; \
-		echo "example 4"; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 4: repeated section"; \
+		echo ""; \
 		./Testgrammar ../tests/testCase4.txt || true; \
-		echo "example 5"; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 5: recursive import"; \
+		echo ""; \
 		./Testgrammar ../tests/testCase5.txt || true; \
-		echo "example 6"; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 6: repeated import"; \
+		echo ""; \
 		./Testgrammar ../tests/testCase6.txt || true; \
-		echo "example 7"; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 7: using a non-local variable without inheritance"; \
+		echo ""; \
 		./Testgrammar ../tests/testCase7.txt || true; \
-		echo "example 8"; \
+		echo ""; \
+		echo "--------------------------------------"; \
+		echo ""; \
+		echo "example 8: recursive inheritance over a variable"; \
+		echo ""; \
 		./Testgrammar ../tests/testCase8.txt || true; \
 	} > ../tests/Demo_output.txt 2>&1
-	@echo "Demo completed."
+	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
 
 Testgrammar : ${OBJS} Test.o
