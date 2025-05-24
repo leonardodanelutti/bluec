@@ -1,4 +1,4 @@
--- bnfc --c -m -o target grammar.cf
+-- bnfc --c -m grammar.cf
 
 comment "#" ;
 

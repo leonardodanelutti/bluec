@@ -12,7 +12,6 @@
 #include <string.h>
 
 #include "Parser.h"
-#include "Printer.h"
 #include "Absyn.h"
 #include "Utils.h"
 #include "ResolveRefs.h"

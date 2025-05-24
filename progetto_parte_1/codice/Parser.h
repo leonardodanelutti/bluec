@@ -29,23 +29,5 @@ struct ParsedXML_
 
 XMLS pXML(FILE *inp, String filename);
 XMLS pXMLrec(FILE *inp, String filename);
-/* TODO: cosa facciamo con sta funzione sotto? Le eliminiamo */
-XML psXML(const char *str);
-XMLS pXMLS(FILE *inp);
-XMLS psXMLS(const char *str);
-Import pImport(FILE *inp);
-Import psImport(const char *str);
-Section pSection(FILE *inp);
-Section psSection(const char *str);
-SBody pSBody(FILE *inp);
-SBody psSBody(const char *str);
-SBodyF pSBodyF(FILE *inp);
-SBodyF psSBodyF(const char *str);
-Inherit pInherit(FILE *inp);
-Inherit psInherit(const char *str);
-Field pField(FILE *inp);
-Field psField(const char *str);
-Value pValue(FILE *inp);
-Value psValue(const char *str);
 
 #endif

@@ -9,7 +9,7 @@ FLEX_OPTS = -Pgrammar_
 BISON = bison
 BISON_OPTS = -t -pgrammar_
 
-OBJS = Absyn.o Buffer.o Lexer.o Parser.o Printer.o DataStructure.o Utils.o PrettyPrinter.o ResolveRefs.o Comments.o
+OBJS = Absyn.o Buffer.o Lexer.o Parser.o DataStructure.o Utils.o PrettyPrinter.o ResolveRefs.o Comments.o
 
 .PHONY : clean distclean
 
@@ -19,7 +19,7 @@ clean :
 	rm -f *.o Testgrammar grammar.aux grammar.log grammar.pdf grammar.dvi grammar.ps grammar
 
 distclean : clean
-	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c grammar.l Lexer.c grammar.y Parser.h Parser.c Printer.c Printer.h Skeleton.c Skeleton.h Test.c Makefile grammar.tex
+	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c grammar.l Lexer.c grammar.y Parser.h Parser.c Test.c Makefile grammar.tex
 
 demo: Testgrammar
 	@echo "Running demo..."
@@ -129,15 +129,12 @@ Lexer.o : Lexer.c Bison.h
 Parser.o : Parser.c Absyn.h Bison.h
 	${CC} ${CCFLAGS} -c Parser.c
 
-Printer.o : Printer.c Printer.h Absyn.h
-	${CC} ${CCFLAGS} -c Printer.c
-
-Test.o : Test.c Parser.h Printer.h Absyn.h
+Test.o : Test.c Parser.h Absyn.h
 	${CC} ${CCFLAGS} -c Test.c
 
 TestModify : ${OBJS} TestModify.o
 	@echo "Linking TestModify..."
 	${CC} ${OBJS} TestModify.o -o TestModify
 
-TestModify.o : TestModify.c Parser.h Printer.h Absyn.h
+TestModify.o : TestModify.c Parser.h Absyn.h
 	${CC} ${CCFLAGS} -c TestModify.c
