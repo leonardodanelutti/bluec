@@ -74,6 +74,12 @@ Sections structure_FromFile(char *filename)
     /* Close file if opened */
     if (filename)
         fclose(input);
+
+    if (parse_tree == 0)
+    {
+        fprintf(stderr, ERROR "Failed to parse XML from file entrypoint: %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
     /* Create custom data structure */
     Sections sections = convert_XMLS_to_Sections(parse_tree);
     free_XMLS(parse_tree);
