@@ -134,3 +134,10 @@ Printer.o : Printer.c Printer.h Absyn.h
 
 Test.o : Test.c Parser.h Printer.h Absyn.h
 	${CC} ${CCFLAGS} -c Test.c
+
+TestModify : ${OBJS} TestModify.o
+	@echo "Linking TestModify..."
+	${CC} ${OBJS} TestModify.o -o TestModify
+
+TestModify.o : TestModify.c Parser.h Printer.h Absyn.h
+	${CC} ${CCFLAGS} -c TestModify.c

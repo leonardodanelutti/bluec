@@ -136,7 +136,7 @@ void push_Section(Sections sections_list, Ident section_ident)
     {
         if (strcmp(current->ident, section_ident) == 0)
         {
-            fprintf(stderr, ERROR "Section %s is already defined, section will not be pushed\n", section_ident);
+            fprintf(stderr, WARNING "Section %s is already defined, section will not be pushed\n", section_ident);
         }
         current = current->next;
     }
@@ -179,7 +179,14 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                 prev_field = current_field;
                 current_field = current_field->next;
             }
-            prev_field->next = new_field;
+            if (prev_field == NULL)
+            {
+                current->fields = new_field; // Add as the first field
+            }
+            else
+            {
+                prev_field->next = new_field; // Add to the end of the list
+            }
             return; // Field added
         }
         current = current->next;

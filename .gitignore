@@ -1,5 +1,6 @@
 *.o
 Testgrammar
+TestModify
 grammar.aux
 grammar.log
 grammar.pdf
