@@ -2,16 +2,26 @@ example 1: inherit from an above section
 
 
 [Pretty Print (after references resolution)]
-<section name=sez1>
-  <field name=var1> 4 </field>
-  <field name=var2> $var1 </field>
+<section name=sez1>  <field name=var1> 4 lines: 3-3</field>lines: 3-3
+  <field name=var2> $var1 lines: 4-4</field>lines: 4-4
 </section>
-<section name=sez2>
-  <inherit>sez1</inherit>
-  <field name=var1> 4 </field>
-  <field name=var2> $sez1.var1 </field>
-  <field name=var3> $var1 </field>
+file-lines: ../tests/testCase1.txt.1-5
+<section name=sez2>  <inherit> sez1 </inherit>
+lines: 8-8
+  <field name=var1> 4 lines: 9-9</field>lines: 9-9
+  <field name=var2> $sez1.var1 lines: 10-10</field>lines: 10-10
+  <field name=var3> $var1 lines: 11-11</field>lines: 11-11
 </section>
+file-lines: ../tests/testCase1.txt.7-12
+Comment: #commento1
+File: ../tests/testCase1.txt
+Line: 1
+Comment: #commento2
+File: ../tests/testCase1.txt
+Line: 4
+Comment: #commento2
+File: ../tests/testCase1.txt
+Line: 10
 
 --------------------------------------
 
@@ -19,29 +29,45 @@ example 2: inherit from a section below
 
 
 [Pretty Print (after references resolution)]
-<section name=sez1>
-  <inherit>sez2</inherit>
-  <field name=var1> 4 </field>
-  <field name=var2> $var1 </field>
-  <field name=var3> $sez2.var3 </field>
+<section name=sez1>  <inherit> sez2 </inherit>
+lines: 3-3
+  <field name=var1> 4 lines: 4-4</field>lines: 4-4
+  <field name=var2> $var1 lines: 5-5</field>lines: 5-5
+  <field name=var3> $sez2.var3 lines: 7-7</field>lines: 7-7
 </section>
-<section name=sez2>
-  <field name=var1> 4 </field>
-  <field name=var2> 6 </field>
-  <field name=var3> $var1 </field>
+file-lines: ../tests/testCase2.txt.1-8
+<section name=sez2>  <field name=var1> 4 lines: 10-10</field>lines: 10-10
+  <field name=var2> 6 lines: 11-11</field>lines: 11-11
+  <field name=var3> $var1 lines: 12-12</field>lines: 12-12
 </section>
+file-lines: ../tests/testCase2.txt.9-13
+Comment: #commento1
+File: ../tests/testCase2.txt
+Line: 1
+Comment: #commento2
+File: ../tests/testCase2.txt
+Line: 5
+Comment: #commento2
+File: ../tests/testCase2.txt
+Line: 11
 
 --------------------------------------
 
 example 3: overwriting of a variable
 
-[33m[1mWARNING: [m[0mField var2 is overwritten with new value in section sez1
+[33m[1mWARNING: [m[0mField var2 was overwritten with new value in section sez1
 
 [Pretty Print (after references resolution)]
-<section name=sez1>
-  <field name=var1> 4 </field>
-  <field name=var2> 7 </field>
+<section name=sez1>  <field name=var1> 4 lines: 3-3</field>lines: 3-3
+  <field name=var2> 7 lines: 6-6</field>lines: 4-4
 </section>
+file-lines: ../tests/testCase3.txt.1-7
+Comment: #commento1
+File: ../tests/testCase3.txt
+Line: 1
+Comment: #commento2
+File: ../tests/testCase3.txt
+Line: 4
 
 --------------------------------------
 
@@ -53,26 +79,16 @@ example 4: repeated section
 
 example 5: recursive import
 
-[33m[1mWARNING: [m[0mrecursive file import detected. Import chain: ../tests/glob/file2.cnf -> ../tests/glob/file1.cnf. Continuing parsing without it.
-
-[Pretty Print (after references resolution)]
-<section name=sezfile2>
-</section>
-<section name=sezfile1>
-</section>
+[33m[1mWARNING: [m[0mrecursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
+Segmentation fault
 
 --------------------------------------
 
 example 6: repeated import
 
-[33m[1mWARNING: [m[0mrecursive file import detected. Import chain: ../tests/glob/file2.cnf -> ../tests/glob/file1.cnf. Continuing parsing without it.
-[33m[1mWARNING: [m[0mfile ../tests/glob/file1.cnf imported in ../tests/testCase6.txt but was already imported. Continuing parsing without reimporting it.
-
-[Pretty Print (after references resolution)]
-<section name=sezfile2>
-</section>
-<section name=sezfile1>
-</section>
+[33m[1mWARNING: [m[0mrecursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
+[33m[1mWARNING: [m[0mfile /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf imported in ../tests/testCase6.txt but was already imported. Continuing parsing without reimporting it.
+Segmentation fault
 
 --------------------------------------
 
@@ -107,13 +123,32 @@ example 11: Useless inherit
 [33m[1mWARNING: [m[0m../tests/testCase11.txt:10:5: inherited section `sez4` is not used. Consider removing it.
 
 [Pretty Print (after references resolution)]
-<section name=sez1>
-  <field name=var1> 7 </field>
+<section name=sez1>  <field name=var1> 7 lines: 3-3</field>lines: 3-3
 </section>
-<section name=sez2>
-  <inherit>sez1</inherit>
-  <field name=var1> $sez1.var1 </field>
+file-lines: ../tests/testCase11.txt.1-4
+<section name=sez2>  <inherit> sez1 </inherit>
+lines: 7-7
+  <inherit> sez1 </inherit>
+lines: 8-8
+  <inherit> sez1 </inherit>
+lines: 9-9
+  <inherit> sez4 </inherit>
+lines: 10-10
+  <field name=var1> $sez1.var1 lines: 12-12</field>lines: 12-12
 </section>
-<section name=sez4>
-  <field name=variable> true </field>
+file-lines: ../tests/testCase11.txt.6-13
+<section name=sez4>  <field name=variable> true lines: 17-17</field>lines: 17-17
 </section>
+file-lines: ../tests/testCase11.txt.16-18
+Comment: #commento1
+File: ../tests/testCase11.txt
+Line: 1
+Comment: # Variabile 1
+File: ../tests/testCase11.txt
+Line: 11
+Comment: # Nuova sezione
+File: ../tests/testCase11.txt
+Line: 15
+Comment: # Fine
+File: ../tests/testCase11.txt
+Line: 20

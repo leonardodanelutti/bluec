@@ -122,15 +122,17 @@ XMLS make_ImportFile(String p1)
         exit(1);
     }
     /* File open */
-    FILE *f = fopen(p1, "r");
+    String p = relative_path(p1, parsed_files[current_file].file_path);
+    FILE *f = fopen(p, "r");
     if (!f)
     {
         /* TODO: error handling */
-        fprintf(stderr, ERROR "could not open file \"%s\"\n", p1);
+        fprintf(stderr, ERROR "%s: could not open file \"%s\"\n",
+                parsed_files[current_file].file_path, p);
         exit(1);
     }
     /* Perform import */
-    import = pXML(f, p1);
+    import = pXML(f, p);
     fclose(f);
     return import;
 }
