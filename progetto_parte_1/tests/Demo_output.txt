@@ -16,21 +16,6 @@ example 1: inherit from an above section
   <field name=var3> $var1 </field>
 </section>
 
-
-#commento1
-<section name=sez1>
-  <field name=var1> 4 </field>
-  #commento2
-  <field name=var2> $var1 </field>
-</section>
-<section name=sez2>
-  <inherit> sez1 </inherit>
-  <field name=var1> 4 </field>
-  #commento2
-  <field name=var2> $sez1.var1 </field>
-  <field name=var3> $var1 </field>
-</section>
-
 --------------------------------------
 
 example 2: inherit from a section below
@@ -52,37 +37,13 @@ example 2: inherit from a section below
   <field name=var3> $var1 </field>
 </section>
 
-
-#commento1
-<section name=sez1>
-  <inherit> sez2 </inherit>
-  <field name=var1> 4 </field>
-  #commento2
-  <field name=var2> $var1 </field>
-  <field name=var3> $sez2.var3 </field>
-</section>
-<section name=sez2>
-  <field name=var1> 4 </field>
-  #commento2
-  <field name=var2> 6 </field>
-  <field name=var3> $var1 </field>
-</section>
-
 --------------------------------------
 
 example 3: overwriting of a variable
 
-[33m[1mWARNING: [m[0mField var2 was overwritten with new value in section sez1
+WARNING: ../tests/testCase3.txt:4:5: Field var2 was overwritten with new value in section sez1
 
 [Pretty Print (after references resolution)]
-#commento1
-<section name=sez1>
-  <field name=var1> 4 </field>
-  #commento2
-  <field name=var2> 7 </field>
-</section>
-
-
 #commento1
 <section name=sez1>
   <field name=var1> 4 </field>
@@ -94,21 +55,15 @@ example 3: overwriting of a variable
 
 example 4: repeated section
 
-[31m[1mERROR: [m[0mSection sez1 has multiple definitions
+ERROR: ../tests/testCase4.txt:1:2: Section sez1 has multiple definitions
 
 --------------------------------------
 
 example 5: recursive import
 
-[33m[1mWARNING: [m[0mrecursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
+WARNING: recursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
 
 [Pretty Print (after references resolution)]
-<section name=sezfile2>
-</section>
-<section name=sezfile1>
-</section>
-
-
 <section name=sezfile2>
 </section>
 <section name=sezfile1>
@@ -118,16 +73,10 @@ example 5: recursive import
 
 example 6: repeated import
 
-[33m[1mWARNING: [m[0mrecursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
-[33m[1mWARNING: [m[0mfile /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf imported in ../tests/testCase6.txt but was already imported. Continuing parsing without reimporting it.
+WARNING: recursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
+WARNING: file /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf imported in ../tests/testCase6.txt but was already imported. Continuing parsing without reimporting it.
 
 [Pretty Print (after references resolution)]
-<section name=sezfile2>
-</section>
-<section name=sezfile1>
-</section>
-
-
 <section name=sezfile2>
 </section>
 <section name=sezfile1>
@@ -137,53 +86,35 @@ example 6: repeated import
 
 example 7: using a non-local variable without inheritance
 
-[31m[1mERROR: [m[0mThe variable var1 refers to section sez1, but section sez1 is not inherited.
+ERROR: ../tests/testCase7.txt:8:23: The variable var1 refers to section sez1, but section sez1 is not inherited.
 
 --------------------------------------
 
 example 8: recursive inheritance over a variable
 
-[31m[1mERROR: [m[0mrecursive reference from $sez2.var1 to $sez1.var1.
+ERROR: ../tests/testCase8.txt:10:23: recursive reference from $sez2.var1 to $sez1.var1.
 
 --------------------------------------
 
 example 9: Referring to unexisting section
 
-[33m[1mWARNING: [m[0m../tests/testCase9.txt:3:5: section sez3 does not exist.
-[31m[1mERROR: [m[0m../tests/testCase9.txt:4:23: reference to non-existing section sez3.
+WARNING: ../tests/testCase9.txt:3:5: section sez3 does not exist.
+ERROR: ../tests/testCase9.txt:4:23: reference to non-existing section sez3.
 
 --------------------------------------
 
 example 10: Referring to non-existing variable
 
-[31m[1mERROR: [m[0m../tests/testCase10.txt:9:23: reference to non-existing field var2 in section sez1.
+ERROR: ../tests/testCase10.txt:9:23: reference to non-existing field var2 in section sez1.
 --------------------------------------
 
 example 11: Useless inherit
 
-[33m[1mWARNING: [m[0m../tests/testCase11.txt:8:5: inherited section `sez1` multiple times. Consider removing this duplicate.
-[33m[1mWARNING: [m[0m../tests/testCase11.txt:9:5: inherited section `sez1` multiple times. Consider removing this duplicate.
-[33m[1mWARNING: [m[0m../tests/testCase11.txt:10:5: inherited section `sez4` is not used. Consider removing it.
+WARNING: ../tests/testCase11.txt:8:5: inherited section `sez1` multiple times. Consider removing this duplicate.
+WARNING: ../tests/testCase11.txt:9:5: inherited section `sez1` multiple times. Consider removing this duplicate.
+WARNING: ../tests/testCase11.txt:10:5: inherited section `sez4` is not used. Consider removing it.
 
 [Pretty Print (after references resolution)]
-#commento1
-<section name=sez1>
-  <field name=var1> 7 </field>
-</section>
-<section name=sez2>
-  <inherit> sez1 </inherit>
-  <inherit> sez1 </inherit>
-  <inherit> sez1 </inherit>
-  <inherit> sez4 </inherit>
-  # Variabile 1
-  <field name=var1> $sez1.var1 </field>
-</section>
-# Nuova sezione
-<section name=sez4>
-  <field name=variable> true </field>
-</section>
-
-
 #commento1
 <section name=sez1>
   <field name=var1> 7 </field>

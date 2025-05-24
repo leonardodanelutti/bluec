@@ -386,8 +386,9 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     if (check_Inherit(current_section, val))
     {
-        fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n",
-                field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
+        fprintf(stderr, ERROR "%s:%d:%d: The variable %s refers to section %s, but section %s is not inherited.\n",
+            val.symbol_loc.file_path, val.symbol_loc.top_loc.first_line, val.symbol_loc.top_loc.first_column + 1,
+            field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
         exit(EXIT_FAILURE);
     }
     Fields fields_list = new_FieldNew(strdup(field_ident), val);
@@ -408,8 +409,9 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
         {
             if (check_Inherit(current_section, val))
             {
-                fprintf(stderr, ERROR "The variable %s refers to section %s, but section %s is not inherited.\n",
-                        field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
+                fprintf(stderr, ERROR "%s:%d:%d: The variable %s refers to section %s, but section %s is not inherited.\n",
+                    val.symbol_loc.file_path, val.symbol_loc.top_loc.first_line, val.symbol_loc.top_loc.first_column + 1,
+                    field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
                 exit(EXIT_FAILURE);
             }
             Fields new_field = new_FieldNew(strdup(field_ident), val);
@@ -479,8 +481,8 @@ void check_Section(Sections sections_list, Ident section_ident)
     {
         if (strcmp(current->ident, section_ident) == 0)
         {
-            /* TODO: add file and line number? */
-            fprintf(stderr, ERROR "Section %s has multiple definitions\n", section_ident);
+            fprintf(stderr, ERROR "%s:%d:%d: Section %s has multiple definitions\n", current->symbol_loc.file_path,
+                current->symbol_loc.top_loc.first_line, current->symbol_loc.top_loc.first_column + 1, section_ident);
             exit(EXIT_FAILURE);
         }
         current = current->next;
@@ -516,7 +518,11 @@ int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
         {
             current->val = val;
             /* TODO: warning with line */
-            printf(WARNING "Field %s was overwritten with new value in section %s\n", field_ident, current->section->ident);
+            printf(WARNING "%s:%d:%d: Field %s was overwritten with new value in section %s\n", 
+                current->symbol_loc.file_path, current->symbol_loc.top_loc.first_line,
+                current->symbol_loc.top_loc.first_column + 1,
+                field_ident, current->section->ident);
+            return 1; // Field found and overwritten
             return 1; // Field found and overwritten
         }
         current = current->next;

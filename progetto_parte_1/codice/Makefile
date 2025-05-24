@@ -86,7 +86,7 @@ demo: Testgrammar
 		echo "example 11: Useless inherit"; \
 		echo ""; \
 		./Testgrammar ../tests/testCase11.txt || true; \
-	} > ../tests/Demo_output.txt 2>&1
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo_output.txt
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
 

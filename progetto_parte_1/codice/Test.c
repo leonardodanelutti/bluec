@@ -88,7 +88,7 @@ void print_Structure(char *filename)
     // Pretty print
     printf("\n[Pretty Print (after references resolution)]\n");
     printSections(sections);
-    printf("\n\n");
-    printSections(sections); // Print again to ensure all sections are printed
+    // printf("\n\n");
+    // printSections(sections); // Print again to ensure all sections are printed
     // Free memory
 }

@@ -135,7 +135,8 @@ void resolveField(Fields field, Sections start_sections_list, bool trust_refs)
                         if (ref_field->kind == Visited)
                         {
                             /* Recursive reference detected */
-                            fprintf(stderr, ERROR "recursive reference from $%s.%s to $%s.%s.\n",
+                            fprintf(stderr, ERROR "%s:%d:%d: recursive reference from $%s.%s to $%s.%s.\n",
+                                    field->val.symbol_loc.file_path, field->val.symbol_loc.top_loc.first_line, field->val.symbol_loc.top_loc.first_column + 1,
                                     field->section->ident, field->ident,
                                     ref_field->section->ident, ref_field->ident);
                             exit(EXIT_FAILURE);
