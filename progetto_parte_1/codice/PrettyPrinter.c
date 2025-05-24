@@ -80,7 +80,7 @@ void printFields(Fields field) {
             while (i < comments->size) {
                 Comment_ *current_comment = (Comment_ *)da_get(comments, i);
                 if (field->symbol_loc.file_path == current_comment->file_path &&
-                    (unsigned int) field->symbol_loc.bottom_loc.last_line >= current_comment->line) {
+                    (unsigned int) field->symbol_loc.top_loc.last_line >= current_comment->line) {
                     printf("  %s\n", current_comment->comment);
                     i++;
                 } else {
@@ -90,6 +90,18 @@ void printFields(Fields field) {
         }
         printf("  <field name=%s>", field->ident);
         printVal(field->val, field->section->ident);
+        if (comments != NULL) {
+            while (i < comments->size) {
+                Comment_ *current_comment = (Comment_ *)da_get(comments, i);
+                if (field->symbol_loc.file_path == current_comment->file_path &&
+                    (unsigned int) field->symbol_loc.bottom_loc.last_line >= current_comment->line) {
+                    printf("\n   %s\n  ", current_comment->comment);
+                    i++;
+                } else {
+                    break;
+                }
+            }
+        }
         printf("</field>\n");
         field = field->next;
     }
