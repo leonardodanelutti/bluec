@@ -5,13 +5,29 @@
 #include "ResolveRefs.h"
 #include "DataStructure.h"
 
-void check_Section(Sections sections_list, Ident section_ident);
-Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
-Val_ convert_Value_to_Val_(Value value, Ident section_ident);
-Inherited_ convert_Inherit_to_Inherited_(Inherit val);
+/***********************   Private Funcitons   ************************/
+
+/* Create a new Inherited */
 Inherited_ new_Inherit(Ident section_ident, SymbolLoc_ symbol_loc);
+
+/* Convert a Sbody (from the AST) to Fields */
+Fields convert_SBody_to_Fields(SBody sbody, Sections current_section);
+/* Convert a Value (from the AST) to Val_ */
+Val_ convert_Value_to_Val_(Value value, Ident section_ident);
+/* Convert an Inherit (from the AST) to Inherited_ */
+Inherited_ convert_Inherit_to_Inherited_(Inherit val);
+
+/* Check if a section is already present in a section list */
+void check_Section(Sections sections_list, Ident section_ident);
+/* Check if non local variables are inherited. If inherit is found 
+   return 1, if not return 0 */
 int check_Inherit(Sections section, Val_ val);
+/* Overwrite a field in a list of field if identifier is matched.
+   Returns 1 is value is overwritten, 0 otherwise */
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
+
+
+/**************************   Constructors   **************************/
 
 Sections make_SectionNew(Ident ident)
 {
@@ -53,6 +69,60 @@ Fields new_FieldNew(Ident ident, Val_ val)
     return new_field;
 }
 
+Val_ new_Int(int int_)
+{
+    Val_ val = {
+        .kind = Int,
+        .u.int_ = int_,
+        .symbol_loc = DEFAULT_SYMBOL_LOC_};
+    return val;
+}
+
+Val_ new_Str(String str)
+{
+    Val_ val = {
+        .kind = Str,
+        .u.str = str,
+        .symbol_loc = DEFAULT_SYMBOL_LOC_};
+    return val;
+}
+
+Val_ new_Bool(int bool_)
+{
+    Val_ val = {
+        .kind = Bool,
+        .u.bool_ = bool_,
+        .symbol_loc = DEFAULT_SYMBOL_LOC_};
+    return val;
+}
+
+Val_ new_Ref(FieldIdent_ ref)
+{
+    Val_ val = {
+        .kind = Ref_unresolved,
+        .u.unresolved_ref = ref,
+        .symbol_loc = DEFAULT_SYMBOL_LOC_};
+    return val;
+}
+
+FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident)
+{
+    FieldIdent_ field_ident_ = {
+        .field_ident = field_ident,
+        .section_ident = section_ident};
+    return field_ident_;
+}
+
+Inherited_ new_Inherit(Ident section_ident, SymbolLoc_ symbol_loc)
+{
+    Inherited_ inherit = {
+        .section_ident = strdup(section_ident),
+        .symbol_loc = symbol_loc};
+    return inherit;
+}
+
+/*********************   Data Structure Methods   *********************/
+
 void push_Section(Sections sections_list, Ident section_ident)
 {
     if (sections_list == NULL)
@@ -66,8 +136,7 @@ void push_Section(Sections sections_list, Ident section_ident)
     {
         if (strcmp(current->ident, section_ident) == 0)
         {
-            fprintf(stderr, ERROR "Section %s has multiple definitions\n", section_ident);
-            exit(EXIT_FAILURE);
+            fprintf(stderr, ERROR "Section %s is already defined, section will not be pushed\n", section_ident);
         }
         current = current->next;
     }
@@ -104,7 +173,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                 {
                     current_field->val = val;
                     /* TODO: warning with line */
-                    printf(WARNING "Field %s is overwritten", field_ident.field_ident);
+                    printf(WARNING "Field %s was overwritten", field_ident.field_ident);
                     return; // Field found and overwritten
                 }
                 prev_field = current_field;
@@ -115,7 +184,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
         }
         current = current->next;
     }
-    fprintf(stderr, ERROR "Section %s not found \n", field_ident.section_ident);
+    fprintf(stderr, WARNING "Section %s not found, field will not be pushed\n", field_ident.section_ident);
 }
 
 void delete_Section(Sections sections_list, Ident section_ident)
@@ -131,7 +200,6 @@ void delete_Section(Sections sections_list, Ident section_ident)
             for (Fields field = current->fields; field != NULL;)
             {
                 Fields next_field = field->next;
-                // TODO: devo per forza creare un nuovo FieldIdent?
                 delete_FieldInSection(sections_list, new_FieldIdent(field->ident, section_ident));
                 field = next_field;
             }
@@ -152,7 +220,7 @@ void delete_Section(Sections sections_list, Ident section_ident)
         prev_section = current;
         current = current->next;
     }
-    fprintf(stderr, ERROR "Section %s not found\n", section_ident);
+    fprintf(stderr, WARNING "Section %s not found\n", section_ident);
 }
 
 void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
@@ -200,10 +268,44 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
         }
         current = current->next;
     }
-    fprintf(stderr, ERROR "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
+    fprintf(stderr, WARNING "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
 }
 
-/***** CONVERT XMLS TO A LINKED LIST OF SECTIONS *****/
+int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val) {
+    Sections current = sections_list;
+    // Find the corresponding section
+    while (current != NULL)
+    {
+        if (strcmp(current->ident, field_ident.section_ident) == 0)
+        {
+            Fields current_field = current->fields;
+            // Find the field in the section
+            while (current_field != NULL)
+            {
+                if (strcmp(current_field->ident, field_ident.field_ident) == 0)
+                {
+                    Val_ current_val = current_field->val;
+                    
+                    // Resolve references if the value is a reference
+                    while (current_val.kind == Ref) {
+                        current_val = current_val.u.ref->val;
+                    }
+
+                    *return_val = current_val;
+                    return 0; // Value found
+                }
+                current_field = current_field->next;
+            }
+            fprintf(stderr, WARNING "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
+            return -2; // Field not found
+        }
+        current = current->next;
+    }
+    fprintf(stderr, WARNING "Section %s not found \n", field_ident.section_ident);
+    return -1; // Section not found
+}
+
+/***************************   Conversions   **************************/
 
 Sections convert_XMLS_to_Sections(XMLS xml)
 {
@@ -239,22 +341,6 @@ Sections convert_XMLS_to_Sections(XMLS xml)
     }
 
     return sections_list;
-}
-
-/* Check if a section is already present in a section list */
-void check_Section(Sections sections_list, Ident section_ident)
-{
-    Sections current = sections_list;
-    while (current != NULL)
-    {
-        if (strcmp(current->ident, section_ident) == 0)
-        {
-            /* TODO: add file and line number? */
-            fprintf(stderr, ERROR "Section %s has multiple definitions\n", section_ident);
-            exit(EXIT_FAILURE);
-        }
-        current = current->next;
-    }
 }
 
 Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
@@ -374,59 +460,23 @@ Inherited_ convert_Inherit_to_Inherited_(Inherit val)
     return inherit;
 }
 
-Val_ new_Int(int int_)
+/*****************************   Checks   *****************************/
+
+void check_Section(Sections sections_list, Ident section_ident)
 {
-    Val_ val = {
-        .kind = Int,
-        .u.int_ = int_,
-        .symbol_loc = DEFAULT_SYMBOL_LOC_};
-    return val;
+    Sections current = sections_list;
+    while (current != NULL)
+    {
+        if (strcmp(current->ident, section_ident) == 0)
+        {
+            /* TODO: add file and line number? */
+            fprintf(stderr, ERROR "Section %s has multiple definitions\n", section_ident);
+            exit(EXIT_FAILURE);
+        }
+        current = current->next;
+    }
 }
 
-Val_ new_Str(String str)
-{
-    Val_ val = {
-        .kind = Str,
-        .u.str = str,
-        .symbol_loc = DEFAULT_SYMBOL_LOC_};
-    return val;
-}
-
-Val_ new_Bool(int bool_)
-{
-    Val_ val = {
-        .kind = Bool,
-        .u.bool_ = bool_,
-        .symbol_loc = DEFAULT_SYMBOL_LOC_};
-    return val;
-}
-
-Val_ new_Ref(FieldIdent_ ref)
-{
-    Val_ val = {
-        .kind = Ref_unresolved,
-        .u.unresolved_ref = ref,
-        .symbol_loc = DEFAULT_SYMBOL_LOC_};
-    return val;
-}
-
-FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident)
-{
-    FieldIdent_ field_ident_ = {
-        .field_ident = field_ident,
-        .section_ident = section_ident};
-    return field_ident_;
-}
-
-Inherited_ new_Inherit(Ident section_ident, SymbolLoc_ symbol_loc)
-{
-    Inherited_ inherit = {
-        .section_ident = strdup(section_ident),
-        .symbol_loc = symbol_loc};
-    return inherit;
-}
-
-/* Check if non local variables are inherited */
 int check_Inherit(Sections section, Val_ val)
 {
     DynamicArray *inherit_section_list = section->inherits;
@@ -447,7 +497,6 @@ int check_Inherit(Sections section, Val_ val)
     return 0;
 }
 
-/* Overwrite a field in a list of field if identifier is matched */
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
 {
     Fields current = fields_list;
@@ -457,13 +506,15 @@ int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
         {
             current->val = val;
             /* TODO: warning with line */
-            printf(WARNING "Field %s is overwritten with new value in section %s\n", field_ident, current->section->ident);
+            printf(WARNING "Field %s was overwritten with new value in section %s\n", field_ident, current->section->ident);
             return 1; // Field found and overwritten
         }
         current = current->next;
     }
     return 0; // Field not found
 }
+
+/*********************   Recursive Destructors   **********************/
 
 void free_Sections(Sections sections_list)
 {

@@ -104,7 +104,7 @@ Val_ new_Ref(FieldIdent_ ref);
 /* Create a new Field identifier */
 FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident);
 
-/***************   Data Structure Modifying Functions   ***************/
+/*********************   Data Structure Methods   *********************/
 
 /* Push a new section to a linked list of sections,
    checks if inserting a duplicate section */
@@ -120,15 +120,18 @@ void delete_Section(Sections sections_list, Ident section_ident);
 /* Delete a field from a given section in a valid linked list of sections */
 void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident);
 
-/*********************   Recursive Destructors   **********************/
-
-void free_Sections(Sections sections_list);
-void free_Fields(Fields fields_list);
-void free_Val(Val_ val);
+/* Return a value associeted to a Field, the value returned is never a Ref */
+int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val);
 
 /***************************   Conversions   **************************/
 
 /* Converts the abstract syntax tree to the datastruct defined by us */
 Sections convert_XMLS_to_Sections(XMLS xml);
+
+/*********************   Recursive Destructors   **********************/
+
+void free_Sections(Sections sections_list);
+void free_Fields(Fields fields_list);
+void free_Val(Val_ val);
 
 #endif
