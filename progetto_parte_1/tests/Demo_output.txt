@@ -16,12 +16,43 @@ example 1: inherit from an above section
   <field name=var3> $var1 </field>
 </section>
 
+
+#commento1
+<section name=sez1>
+  <field name=var1> 4 </field>
+  #commento2
+  <field name=var2> $var1 </field>
+</section>
+<section name=sez2>
+  <inherit> sez1 </inherit>
+  <field name=var1> 4 </field>
+  #commento2
+  <field name=var2> $sez1.var1 </field>
+  <field name=var3> $var1 </field>
+</section>
+
 --------------------------------------
 
 example 2: inherit from a section below
 
 
 [Pretty Print (after references resolution)]
+#commento1
+<section name=sez1>
+  <inherit> sez2 </inherit>
+  <field name=var1> 4 </field>
+  #commento2
+  <field name=var2> $var1 </field>
+  <field name=var3> $sez2.var3 </field>
+</section>
+<section name=sez2>
+  <field name=var1> 4 </field>
+  #commento2
+  <field name=var2> 6 </field>
+  <field name=var3> $var1 </field>
+</section>
+
+
 #commento1
 <section name=sez1>
   <inherit> sez2 </inherit>
@@ -51,6 +82,14 @@ example 3: overwriting of a variable
   <field name=var2> 7 </field>
 </section>
 
+
+#commento1
+<section name=sez1>
+  <field name=var1> 4 </field>
+  #commento2
+  <field name=var2> 7 </field>
+</section>
+
 --------------------------------------
 
 example 4: repeated section
@@ -69,6 +108,12 @@ example 5: recursive import
 <section name=sezfile1>
 </section>
 
+
+<section name=sezfile2>
+</section>
+<section name=sezfile1>
+</section>
+
 --------------------------------------
 
 example 6: repeated import
@@ -77,6 +122,12 @@ example 6: repeated import
 [33m[1mWARNING: [m[0mfile /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf imported in ../tests/testCase6.txt but was already imported. Continuing parsing without reimporting it.
 
 [Pretty Print (after references resolution)]
+<section name=sezfile2>
+</section>
+<section name=sezfile1>
+</section>
+
+
 <section name=sezfile2>
 </section>
 <section name=sezfile1>
@@ -115,6 +166,24 @@ example 11: Useless inherit
 [33m[1mWARNING: [m[0m../tests/testCase11.txt:10:5: inherited section `sez4` is not used. Consider removing it.
 
 [Pretty Print (after references resolution)]
+#commento1
+<section name=sez1>
+  <field name=var1> 7 </field>
+</section>
+<section name=sez2>
+  <inherit> sez1 </inherit>
+  <inherit> sez1 </inherit>
+  <inherit> sez1 </inherit>
+  <inherit> sez4 </inherit>
+  # Variabile 1
+  <field name=var1> $sez1.var1 </field>
+</section>
+# Nuova sezione
+<section name=sez4>
+  <field name=variable> true </field>
+</section>
+
+
 #commento1
 <section name=sez1>
   <field name=var1> 7 </field>

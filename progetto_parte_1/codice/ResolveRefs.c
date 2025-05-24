@@ -46,7 +46,7 @@ void resolveSections_recursive(Sections current_section, Sections start_sections
         if (field->val.kind == Ref_unresolved)
         {
             /* Resolve the reference */
-            resolveField(field, start_sections_list);
+            resolveField(field, start_sections_list, 1);
         }
 
         if (field->val.kind == Ref)
@@ -95,34 +95,42 @@ void resolveSections(Sections sections_list)
     resolveSections_recursive(sections_list, sections_list);
 }
 
-void resolveField(Fields field, Sections start_sections_list)
+void resolveField(Fields field, Sections start_sections_list, bool trust_refs)
 {
-    // Mark the field as visited
+    // printf("Resolving field %s in section %s\n", field->ident, field->section->ident);
+    //  Mark the field as visited
     field->kind = Visited;
 
-    /* Base case: we reached the end of the sections list */
-    if (start_sections_list == NULL)
+    // Store the ident of the pointed field
+    FieldIdent_ pointed;
+    switch (field->val.kind)
     {
-        // Resolved reference
-        field->kind = Not_visited;
-        return;
+    case Ref_unresolved:
+        pointed.field_ident = field->val.u.unresolved_ref.field_ident;
+        pointed.section_ident = field->val.u.unresolved_ref.section_ident;
+        break;
+    case Ref:
+        pointed.field_ident = field->val.u.ref->ident;
+        pointed.section_ident = field->val.u.ref->section->ident;
+        break;
+    default:
+        pointed = (FieldIdent_){NULL, NULL};
     }
-
-    /* Check if the field is a reference */
-    if (field->val.kind == Ref_unresolved)
+    // Check if the field is a reference
+    if (field->val.kind == Ref_unresolved || (field->val.kind == Ref && !trust_refs))
     {
         /* TODO: remove this debugging print
-           printf("Resolving %s that points to $%s.%s\n", field->ident, field->val.u.unresolved_ref.section_ident, field->val.u.unresolved_ref.field_ident);
-           */
+        printf("Resolving %s that points to $%s.%s\n", field->ident, pointed.section_ident, pointed.field_ident); */
+
         /* Find the section that contains the field */
         for (Sections section = start_sections_list; section != NULL; section = section->next)
         {
-            if (strcmp(section->ident, field->val.u.unresolved_ref.section_ident) == 0)
+            if (strcmp(section->ident, pointed.section_ident) == 0)
             {
                 /* Find the field in the section */
                 for (Fields ref_field = section->fields; ref_field != NULL; ref_field = ref_field->next)
                 {
-                    if (strcmp(ref_field->ident, field->val.u.unresolved_ref.field_ident) == 0)
+                    if (strcmp(ref_field->ident, pointed.field_ident) == 0)
                     {
                         if (ref_field->kind == Visited)
                         {
@@ -163,7 +171,7 @@ void resolveField(Fields field, Sections start_sections_list)
                         ref_field->pointed_by.vals_count++;
 
                         /* Recursively resolve the reference */
-                        resolveField(ref_field, start_sections_list);
+                        resolveField(ref_field, start_sections_list, trust_refs);
 
                         // Resolved reference
                         field->kind = Not_visited;
@@ -172,15 +180,15 @@ void resolveField(Fields field, Sections start_sections_list)
                 }
                 fprintf(stderr, ERROR "%s:%d:%d: reference to non-existing field %s in section %s.\n",
                         field->val.symbol_loc.file_path, field->val.symbol_loc.top_loc.first_line,
-                        field->val.symbol_loc.top_loc.first_column + 1, field->val.u.unresolved_ref.field_ident,
-                        field->val.u.unresolved_ref.section_ident);
+                        field->val.symbol_loc.top_loc.first_column + 1, pointed.field_ident,
+                        pointed.section_ident);
                 exit(EXIT_FAILURE);
             }
         }
         /* The reference could not be resolved */
         fprintf(stderr, ERROR "%s:%d:%d: reference to non-existing section %s.\n",
                 field->val.symbol_loc.file_path, field->val.symbol_loc.top_loc.first_line,
-                field->val.symbol_loc.top_loc.first_column + 1, field->val.u.unresolved_ref.section_ident);
+                field->val.symbol_loc.top_loc.first_column + 1, pointed.section_ident);
         exit(EXIT_FAILURE);
     }
 

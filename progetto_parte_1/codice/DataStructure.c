@@ -19,13 +19,12 @@ Inherited_ convert_Inherit_to_Inherited_(Inherit val);
 
 /* Check if a section is already present in a section list */
 void check_Section(Sections sections_list, Ident section_ident);
-/* Check if non local variables are inherited. If inherit is found 
+/* Check if non local variables are inherited. If inherit is found
    return 1, if not return 0 */
 int check_Inherit(Sections section, Val_ val);
 /* Overwrite a field in a list of field if identifier is matched.
    Returns 1 is value is overwritten, 0 otherwise */
 int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val);
-
 
 /**************************   Constructors   **************************/
 
@@ -161,8 +160,6 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                 Inherited_ new_inherit = new_Inherit(val.u.unresolved_ref.section_ident, default_);
                 da_push(current->inherits, &new_inherit);
             }
-            // resolve the field identifier
-            resolveField(new_field, sections_list);
             // Check if the field already exists in the section, if it does, overwrite it
             // otherwise, add it to the section
             Fields current_field = current->fields;
@@ -172,6 +169,8 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                 if (strcmp(current_field->ident, field_ident.field_ident) == 0)
                 {
                     current_field->val = val;
+                    // resolve the field identifier
+                    resolveField(new_field, sections_list, 0);
                     /* TODO: warning with line */
                     printf(WARNING "Field %s was overwritten", field_ident.field_ident);
                     return; // Field found and overwritten
@@ -187,6 +186,8 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
             {
                 prev_field->next = new_field; // Add to the end of the list
             }
+            // resolve the field identifier
+            resolveField(new_field, sections_list, 0);
             return; // Field added
         }
         current = current->next;
@@ -278,7 +279,8 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
     fprintf(stderr, WARNING "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
 }
 
-int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val) {
+int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val)
+{
     Sections current = sections_list;
     // Find the corresponding section
     while (current != NULL)
@@ -292,9 +294,10 @@ int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val) {
                 if (strcmp(current_field->ident, field_ident.field_ident) == 0)
                 {
                     Val_ current_val = current_field->val;
-                    
+
                     // Resolve references if the value is a reference
-                    while (current_val.kind == Ref) {
+                    while (current_val.kind == Ref)
+                    {
                         current_val = current_val.u.ref->val;
                     }
 
