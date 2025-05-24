@@ -50,6 +50,7 @@ void printSections(Sections section) {
         printf("</section>\n");
         section = section->next;
     }
+    i = 0;
 }
 
 // This function prints the inherits of a section
