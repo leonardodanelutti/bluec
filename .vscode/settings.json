@@ -9,6 +9,7 @@
         "utils.h": "c",
         "stdio.h": "c",
         "unistd.h": "c",
-        "resolverefs.h": "c"
+        "resolverefs.h": "c",
+        "stdlib.h": "c"
     }
 }

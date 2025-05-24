@@ -27,6 +27,7 @@
 #include "Absyn.h"
 #include "Logs.h"
 #include "Parser.h"
+#include "DataStructure.h"
 
 #define YYMAXDEPTH 10000000
 
@@ -149,8 +150,27 @@ Value : _INTEGER_ { $$ = make_ValueInteger($1, make_loc(@1, @1, @1, @1)); result
 DynamicArray *parsed_files = NULL;
 size_t current_file = 0;
 
+/* Utility function to deallocate memory before exiting. */
+void exit_callback(void)
+{
+    /* Free the global variables used in the parser. */
+    if (parsed_files != NULL)
+    {
+        da_free(parsed_files);
+        parsed_files = NULL;
+    }
+    current_file = 0;
+
+    /* Delete the DataStructure if it exists. */
+    free_Sections(sections);
+}
+
 /* Calls pXMLrec and terminates the parsed_files global list when the parsing is done. */
-XMLS pXML(FILE *inp, String filename) {
+XMLS pXML(FILE *inp, String filename)
+{
+    // Register the exit callback.
+    atexit(exit_callback);
+
     // Initialize the DynamicArray for parsed files.
     parsed_files = da_init(sizeof(ParsedXML_));
 

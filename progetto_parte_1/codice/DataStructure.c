@@ -5,6 +5,8 @@
 #include "ResolveRefs.h"
 #include "DataStructure.h"
 
+Sections sections = NULL;
+
 /***********************   Private Funcitons   ************************/
 
 /* Create a new Inherited */
@@ -211,6 +213,8 @@ void delete_Section(Sections sections_list, Ident section_ident)
             if (prev_section == NULL)
             {
                 sections_list = current->next; // Delete the first section
+                // Update the global sections variable accordingly
+                sections = sections_list;
             }
             else
             {
@@ -338,6 +342,10 @@ Sections convert_XMLS_to_Sections(XMLS xml)
     sections_list->symbol_loc = xml->u.xmlsection_.section_->symbol_loc;
     sections_list->fields = convert_SBody_to_Fields(xml->u.xmlsection_.section_->u.filesection_.sbody_,
                                                     sections_list);
+
+    /* Set the global variable */
+    sections = sections_list;
+
     Sections last_section = sections_list;
     /* Move to the next field */
     xml = xml->u.xmlsection_.xmls_;

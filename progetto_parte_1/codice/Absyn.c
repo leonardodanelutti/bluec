@@ -8,23 +8,6 @@
 #include "Utils.h"
 #include "Parser.h"
 
-/********************   XMLEmpty    ********************/
-
-/*
-TODO: verificare sia funzione inutilizzata
-XML make_XMLEmpty()
-{
-    XML tmp = (XML)malloc(sizeof(*tmp));
-    if (!tmp)
-    {
-        fprintf(stderr, "Error: out of memory when allocating XMLEmpty!\n");
-        exit(1);
-    }
-    tmp->kind = is_XMLEmpty;
-    return tmp;
-}
-*/
-
 /********************   XMLSwImport    ********************/
 
 /* Merge two XMLS structures */
@@ -59,24 +42,6 @@ XMLS make_XMLSwImport(XMLS imported, XMLS p)
     tmp->u.xmlsection_.xmls_ = mergeXMLS(imported->u.xmlsection_.xmls_, p);
     return tmp;
 }
-
-/********************   XMLwoImport    ********************/
-
-/*
-XML make_XMLwoImport(Section p1, XMLS p2)
-{
-    XML tmp = (XML)malloc(sizeof(*tmp));
-    if (!tmp)
-    {
-        fprintf(stderr, "Error: out of memory when allocating XMLwoImport!\n");
-        exit(1);
-    }
-    tmp->kind = is_XMLwoImport;
-    tmp->u.xmlwoimport_.section_ = p1;
-    tmp->u.xmlwoimport_.xmls_ = p2;
-    return tmp;
-}
-*/
 
 /********************   XMLSection    ********************/
 
@@ -358,58 +323,8 @@ Value make_Value2(Ident p1, Ident p2, SymbolLoc_ symbol_loc)
     return tmp;
 }
 
+// TODO: remove clone?
 /***************************   Cloning   ******************************/
-
-/*
-TODO: clone rimossi perchè inutilizzati (verificare siano davvero inutili)
-XML clone_XML(XML p)
-{
-    switch (p->kind)
-    {
-    case is_XMLEmpty:
-        return make_XMLEmpty();
-
-    case is_XMLwImport:
-        return make_XMLwImport(clone_Import(p->u.xmlwimport_.import_), clone_XML(p->u.xmlwimport_.xml_));
-
-    case is_XMLwoImport:
-        return make_XMLwoImport(clone_Section(p->u.xmlwoimport_.section_), clone_XMLS(p->u.xmlwoimport_.xmls_));
-
-    default:
-        fprintf(stderr, "Error: bad kind field when cloning XML!\n");
-        exit(1);
-    }
-}
-
-XMLS clone_XMLS(XMLS p)
-{
-    switch (p->kind)
-    {
-    case is_XMLSection:
-        return make_XMLSection(clone_Section(p->u.xmlsection_.section_), clone_XMLS(p->u.xmlsection_.xmls_));
-
-    case is_XMLSEmpty:
-        return make_XMLSEmpty();
-
-    default:
-        fprintf(stderr, "Error: bad kind field when cloning XMLS!\n");
-        exit(1);
-    }
-}
-
-Import clone_Import(Import p)
-{
-    switch (p->kind)
-    {
-    case is_ImportFile:
-        return make_ImportFile(strdup(p->u.importfile_.string_));
-
-    default:
-        fprintf(stderr, "Error: bad kind field when cloning Import!\n");
-        exit(1);
-    }
-}
-*/
 
 Section clone_Section(Section p)
 {

@@ -1,5 +1,3 @@
--- bnfc --c -m grammar.cf
-
 comment "#" ;
 
 XMLEmpty.       XML ::= ;
@@ -8,7 +6,6 @@ XMLwoImport.    XML ::= Section XMLS ;
 XMLSection.     XMLS ::= Section XMLS ;
 XMLSEmpty.      XMLS ::= ;
 
--- ImportFile.     Import ::= "<" "import" ">" Path "</" "import" ">" ;
 ImportFile.     Import ::= String ;
 
 FileSection.    Section ::= "<" "section" "name" "=" Ident ">" SBody "</" "section" ">" ;

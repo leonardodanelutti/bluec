@@ -10,6 +10,9 @@
 struct Sections_;
 typedef struct Sections_ *Sections;
 
+/* Global variable pointing at the first section */
+extern Sections sections;
+
 /* Reference of a Fields_ struct */
 struct Fields_;
 typedef struct Fields_ *Fields;
