@@ -166,7 +166,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                 {
                     current_field->val = val;
                     // resolve the field identifier
-                    resolveField(new_field, sections_list, 0);
+                    resolveField(current_field, sections_list, 0);
                     /* TODO: warning with line */
                     printf(WARNING "Field %s was overwritten\n", field_ident.field_ident);
                     return; // Field found and overwritten
@@ -250,7 +250,8 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                         // Copy the field value to the pointer value
                         pointer->kind = current_field->val.kind;
                         pointer->u = current_field->val.u;
-                        if (current_field->val.kind == Ref) {
+                        if (current_field->val.kind == Ref)
+                        {
                             da_push(current_field->val.u.ref->pointed_by, &pointer);
                         }
                     }
@@ -386,8 +387,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
     if (check_Inherit(current_section, val))
     {
         fprintf(stderr, ERROR "%s:%d:%d: The variable %s refers to section %s, but section %s is not inherited.\n",
-            val.symbol_loc.file_path, val.symbol_loc.top_loc.first_line, val.symbol_loc.top_loc.first_column + 1,
-            field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
+                val.symbol_loc.file_path, val.symbol_loc.top_loc.first_line, val.symbol_loc.top_loc.first_column + 1,
+                field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
         exit(EXIT_FAILURE);
     }
     Fields fields_list = new_FieldNew(strdup(field_ident), val);
@@ -409,8 +410,8 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
             if (check_Inherit(current_section, val))
             {
                 fprintf(stderr, ERROR "%s:%d:%d: The variable %s refers to section %s, but section %s is not inherited.\n",
-                    val.symbol_loc.file_path, val.symbol_loc.top_loc.first_line, val.symbol_loc.top_loc.first_column + 1,
-                    field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
+                        val.symbol_loc.file_path, val.symbol_loc.top_loc.first_line, val.symbol_loc.top_loc.first_column + 1,
+                        field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
                 exit(EXIT_FAILURE);
             }
             Fields new_field = new_FieldNew(strdup(field_ident), val);
@@ -481,7 +482,7 @@ void check_Section(Sections sections_list, Ident section_ident)
         if (strcmp(current->ident, section_ident) == 0)
         {
             fprintf(stderr, ERROR "%s:%d:%d: Section %s has multiple definitions\n", current->symbol_loc.file_path,
-                current->symbol_loc.top_loc.first_line, current->symbol_loc.top_loc.first_column + 1, section_ident);
+                    current->symbol_loc.top_loc.first_line, current->symbol_loc.top_loc.first_column + 1, section_ident);
             exit(EXIT_FAILURE);
         }
         current = current->next;
@@ -517,10 +518,10 @@ int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
         {
             current->val = val;
             /* TODO: warning with line */
-            printf(WARNING "%s:%d:%d: Field %s was overwritten with new value in section %s\n", 
-                current->symbol_loc.file_path, current->symbol_loc.top_loc.first_line,
-                current->symbol_loc.top_loc.first_column + 1,
-                field_ident, current->section->ident);
+            printf(WARNING "%s:%d:%d: Field %s was overwritten with new value in section %s\n",
+                   current->symbol_loc.file_path, current->symbol_loc.top_loc.first_line,
+                   current->symbol_loc.top_loc.first_column + 1,
+                   field_ident, current->section->ident);
             return 1; // Field found and overwritten
             return 1; // Field found and overwritten
         }
