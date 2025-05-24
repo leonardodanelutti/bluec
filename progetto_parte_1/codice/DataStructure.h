@@ -77,7 +77,7 @@ struct Fields_
     SymbolLoc_ symbol_loc;
     Fields next;
     Sections section;
-    // Val
+    // Fields
     DynamicArray *pointed_by;
 };
 

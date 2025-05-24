@@ -144,9 +144,8 @@ void resolveField(Fields field, Sections start_sections_list, bool trust_refs)
                         /* Update the field value with the resolved reference */
                         field->val.kind = Ref;
                         field->val.u.ref = ref_field;
-                        Val val_ptr = &field->val;
                         /* Update the `pointed_by` field in the pointed `Field` */
-                        da_push(ref_field->pointed_by, &val_ptr);
+                        da_push(ref_field->pointed_by, &field);
 
                         /* Recursively resolve the reference */
                         resolveField(ref_field, start_sections_list, trust_refs);

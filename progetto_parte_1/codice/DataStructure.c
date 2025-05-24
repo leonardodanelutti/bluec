@@ -58,7 +58,7 @@ Fields new_FieldNew(Ident ident, Val_ val)
     new_field->kind = Not_visited;
     new_field->next = NULL;
     new_field->section = NULL;
-    new_field->pointed_by = da_init(sizeof(Val));
+    new_field->pointed_by = da_init(sizeof(Fields));
     SymbolLoc_ default_ = DEFAULT_SYMBOL_LOC_;
     new_field->symbol_loc = default_;
     return new_field;
@@ -243,15 +243,24 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                 if (strcmp(current_field->ident, field_ident.field_ident) == 0)
                 {
                     // Check the values that are currently pointed to this field
-                    for (long unsigned int i = 0; i < current_field->pointed_by->size; i++)
+                    for (long unsigned int i = 0; i < da_size(current_field->pointed_by); i++)
                     {
                         // Get the i-th pointer to the field
-                        Val pointer = *(Val *)da_get(current_field->pointed_by, i);
+                        Fields pointer = *(Fields *)da_get(current_field->pointed_by, i);
                         // Copy the field value to the pointer value
-                        pointer->kind = current_field->val.kind;
-                        pointer->u = current_field->val.u;
+                        pointer->val.kind = current_field->val.kind;
+                        pointer->val.u = current_field->val.u;
+                        // If the field value is a reference, we need to update the pointed_by
+                        // dynamic array of references and possibly add an inherit
                         if (current_field->val.kind == Ref)
                         {
+                            // Add inherit if not present
+                            if (check_Inherit(pointer->section, current_field->val))
+                            {
+                                SymbolLoc_ default_ = DEFAULT_SYMBOL_LOC_;
+                                Inherited_ new_inherit = new_Inherit(current_field->val.u.ref->section->ident, default_);
+                                da_push(pointer->section->inherits, &new_inherit);
+                            }
                             da_push(current_field->val.u.ref->pointed_by, &pointer);
                         }
                     }
@@ -494,12 +503,26 @@ int check_Inherit(Sections section, Val_ val)
     DynamicArray *inherit_section_list = section->inherits;
     Ident current_section = section->ident;
 
-    if (val.kind == Ref_unresolved && strcmp(val.u.unresolved_ref.section_ident, current_section) != 0)
+    Ident section_ident_ref;
+
+    switch (val.kind)
+    {
+    case Ref_unresolved:
+        section_ident_ref = val.u.unresolved_ref.section_ident;
+        break;
+    case Ref:
+        section_ident_ref = val.u.ref->section->ident;
+        break;
+    default:
+        return 0; // Not a reference, no inherit check needed
+    }
+
+    if (strcmp(section_ident_ref, current_section) != 0)
     {
         for (size_t i = 0; i < da_size(inherit_section_list); i++)
         {
             Inherited_ inherit_section = *(Inherited_ *)da_get(inherit_section_list, i);
-            if (strcmp(inherit_section.section_ident, val.u.unresolved_ref.section_ident) == 0)
+            if (strcmp(inherit_section.section_ident, section_ident_ref) == 0)
             {
                 return 0; // Inherit section found
             }
