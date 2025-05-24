@@ -1596,14 +1596,33 @@ yyreturn:
 
 /* Custom global variable that stores the parsed files to avoid
    recursive imports. */
-ParsedXML_ *parsed_files = NULL;
-size_t parsed_files_size = 0;
-size_t parsed_files_count = 0;
+DynamicArray *parsed_files = NULL;
 size_t current_file = 0;
+
+/* Calls pXMLrec and terminates the parsed_files global list when the parsing is done. */
+XMLS pXML(FILE *inp, String filename) {
+    // Initialize the DynamicArray for parsed files.
+    parsed_files = da_init(sizeof(ParsedXML_));
+
+    // Entrypoint for parsing XML with recursive import handling.
+    XMLS parsed = pXMLrec(inp, filename);
+
+    /* After all parsing is done, we terminate the parsed_files list with the placeholder
+       string "DynamicInput" (to tell that now dynamic operations on the DataStructure can
+       be done). */
+    ParsedXML_ terminator = {
+        .file_path = "DynamicInput",
+        .prev = current_file,
+    };
+    da_push(parsed_files, &terminator);
+    current_file = da_size(parsed_files) - 1;
+
+    return parsed;
+}
 
 /* Entrypoint: parse XML from file.
    Returns NULL if XML was not parsed */
-XMLS pXML(FILE *inp, String filename)
+XMLS pXMLrec(FILE *inp, String filename)
 {
     /* Check that filename is not NULL (i.e. not stdin).
        If it is stdin it cannot be a repeated import. */
@@ -1615,10 +1634,10 @@ XMLS pXML(FILE *inp, String filename)
            is a recursive import). */
         String chain = malloc(1);
         chain[0] = ' ';
-        for (size_t parsed_file = current_file; parsed_file != 0; parsed_file = parsed_files[parsed_file].prev)
+        for (size_t parsed_file = current_file; parsed_file != 0; parsed_file = (*(ParsedXML_ *)da_get(parsed_files, parsed_file)).prev)
         {
             // Reallocate the chain string to append the parsed_file path
-            size_t chain_size = strlen(chain) + strlen(parsed_files[parsed_file].file_path) + 5;
+            size_t chain_size = strlen(chain) + strlen((*(ParsedXML_ *)da_get(parsed_files, parsed_file)).file_path) + 5;
             chain = realloc(chain, chain_size);
             if (chain == NULL)
             {
@@ -1626,9 +1645,9 @@ XMLS pXML(FILE *inp, String filename)
                 exit(EXIT_FAILURE);
             }
             // Append the parsed_file path to the chain
-            strncat(chain, parsed_files[parsed_file].file_path, chain_size);
+            strncat(chain, (*(ParsedXML_ *)da_get(parsed_files, parsed_file)).file_path, chain_size);
 
-            ParsedXML file = &parsed_files[parsed_file];
+            ParsedXML file = (ParsedXML_ *)da_get(parsed_files, parsed_file);
             struct stat parsed_file_stat;
             stat(file->file_path, &parsed_file_stat);
             if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
@@ -1644,46 +1663,25 @@ XMLS pXML(FILE *inp, String filename)
         // Free the chain string
         free(chain);
         /* Check if the file has already been parsed. */
-        for (size_t i = 0; i < parsed_files_count; i++)
+        for (size_t i = 0; i < da_size(parsed_files); i++)
         {
             struct stat parsed_file_stat;
-            stat(parsed_files[i].file_path, &parsed_file_stat);
+            stat((*(ParsedXML_ *)da_get(parsed_files, i)).file_path, &parsed_file_stat);
             if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
                 fprintf(stderr, WARNING "file %s imported in %s but was already imported. Continuing parsing without reimporting it.\n",
-                        filename, parsed_files[current_file].file_path);
+                        filename, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path);
                 return make_XMLSEmpty();
             }
         }
     }
     /* Save the file name in the parsed files list. */
-    if (parsed_files_size == 0)
-    {
-        parsed_files_size = 5;
-        parsed_files = malloc(sizeof(*parsed_files) * parsed_files_size);
-        if (!parsed_files)
-        {
-            fprintf(stderr, "Failed to allocate memory for parsed files.\n");
-            return 0;
-        }
-    }
-    else if (parsed_files_count >= parsed_files_size)
-    {
-        parsed_files_size += 5;
-        parsed_files = realloc(parsed_files, sizeof(*parsed_files) * parsed_files_size);
-        if (!parsed_files)
-        {
-            fprintf(stderr, ERROR "Failed to reallocate memory for parsed files.\n");
-            return 0;
-        }
-    }
     ParsedXML_ parsed_file = {
         .file_path = filename,
         .prev = current_file,
     };
-    parsed_files[parsed_files_count] = parsed_file;
-    current_file = parsed_files_count;
-    parsed_files_count++;
+    current_file = da_size(parsed_files);
+    da_push(parsed_files, &parsed_file);
 
     YYSTYPE result;
     yyscan_t scanner = grammar__initialize_lexer(inp);
@@ -1697,7 +1695,7 @@ XMLS pXML(FILE *inp, String filename)
     /* Going back in the import chain because the file has been parsed. */
     if (current_file != 0)
     {
-        current_file = parsed_files[current_file].prev;
+        current_file = (*(ParsedXML_ *)da_get(parsed_files, current_file)).prev;
     }
 
     if (error)
@@ -1728,7 +1726,7 @@ SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_ini
     SymbolLoc_ loc = {
         .top_loc = top_loc,
         .bottom_loc = bottom_loc,
-        .file_path = parsed_files[current_file].file_path,
+        .file_path = (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path,
     };
 
     return loc;

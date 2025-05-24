@@ -1239,13 +1239,13 @@ return _KW_true;
 case 13:
 YY_RULE_SETUP
 #line 98 "grammar.l"
-push_Comment(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); /* BNFC: comment "#" */
+push_Comment(yylloc->first_line, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, strdup(yytext)); /* BNFC: comment "#" */
 	YY_BREAK
 case 14:
 /* rule 14 can match eol */
 YY_RULE_SETUP
 #line 100 "grammar.l"
-LITERAL_BUFFER_CREATE(); detect_Comments(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); BEGIN IMPORT;
+LITERAL_BUFFER_CREATE(); detect_Comments(yylloc->first_line, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, strdup(yytext)); BEGIN IMPORT;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
@@ -1256,7 +1256,7 @@ case 16:
 /* rule 16 can match eol */
 YY_RULE_SETUP
 #line 102 "grammar.l"
-yylval->_string = LITERAL_BUFFER_HARVEST(); detect_Comments(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); BEGIN INITIAL; return _STRING_;
+yylval->_string = LITERAL_BUFFER_HARVEST(); detect_Comments(yylloc->first_line, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, strdup(yytext)); BEGIN INITIAL; return _STRING_;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP

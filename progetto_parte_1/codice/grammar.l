@@ -95,11 +95,11 @@ IMP {WHITE}*{COMMENT1}?{WHITE}*
 <INITIAL>"section"      	 return _KW_section;
 <INITIAL>"true"      	 return _KW_true;
 
-<INITIAL,IMPORT>{COMMENT} push_Comment(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); /* BNFC: comment "#" */
+<INITIAL,IMPORT>{COMMENT} push_Comment(yylloc->first_line, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, strdup(yytext)); /* BNFC: comment "#" */
 
-<INITIAL><{IMP}*import{IMP}*>      LITERAL_BUFFER_CREATE(); detect_Comments(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); BEGIN IMPORT;
+<INITIAL><{IMP}*import{IMP}*>      LITERAL_BUFFER_CREATE(); detect_Comments(yylloc->first_line, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, strdup(yytext)); BEGIN IMPORT;
 <IMPORT>\\             	   BEGIN ESCAPEDI;
-<IMPORT><\/{IMP}*import{IMP}*>     yylval->_string = LITERAL_BUFFER_HARVEST(); detect_Comments(yylloc->first_line, parsed_files[current_file].file_path, strdup(yytext)); BEGIN INITIAL; return _STRING_;
+<IMPORT><\/{IMP}*import{IMP}*>     yylval->_string = LITERAL_BUFFER_HARVEST(); detect_Comments(yylloc->first_line, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, strdup(yytext)); BEGIN INITIAL; return _STRING_;
 <IMPORT>[ \t\r]            
 <IMPORT><              	   return _ERROR_;
 <IMPORT>.              	   LITERAL_BUFFER_APPEND_CHAR(yytext[0]);

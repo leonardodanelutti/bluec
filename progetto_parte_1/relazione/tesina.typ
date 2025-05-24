@@ -58,6 +58,10 @@ problem.
 
 TODO: gli import dovrebbero essere relativi al file da cui importo non da dove viene chiamato il parser!
 
+= DataStructure
+
+== Resolving
+
 Trasformiamo l'abstract syntax tree nella nostra srtuttura dati, in questa operazione veniene anche controllato:
 - field duplicati
 - sezioni duplicate

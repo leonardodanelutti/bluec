@@ -14,9 +14,7 @@ typedef ParsedXML_ *ParsedXML;
 /* Custom global variable that stores the parsed files to avoid
    recursive imports. */
 // TODO: add a free function of these globals before exiting.
-extern ParsedXML_ *parsed_files;
-extern size_t parsed_files_size;
-extern size_t parsed_files_count;
+extern DynamicArray *parsed_files;
 extern size_t current_file;
 
 struct ParsedXML_
@@ -30,6 +28,7 @@ struct ParsedXML_
 };
 
 XMLS pXML(FILE *inp, String filename);
+XMLS pXMLrec(FILE *inp, String filename);
 /* TODO: cosa facciamo con sta funzione sotto? Le eliminiamo */
 XML psXML(const char *str);
 XMLS pXMLS(FILE *inp);
