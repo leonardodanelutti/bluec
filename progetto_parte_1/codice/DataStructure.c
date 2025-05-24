@@ -172,7 +172,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                     // resolve the field identifier
                     resolveField(new_field, sections_list, 0);
                     /* TODO: warning with line */
-                    printf(WARNING "Field %s was overwritten", field_ident.field_ident);
+                    printf(WARNING "Field %s was overwritten\n", field_ident.field_ident);
                     return; // Field found and overwritten
                 }
                 prev_field = current_field;
