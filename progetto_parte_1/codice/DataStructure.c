@@ -30,7 +30,7 @@ Sections make_SectionNew(Ident ident)
     return new_section;
 }
 
-Fields make_FieldNew(Ident ident, Val_ val)
+Fields new_FieldNew(Ident ident, Val_ val)
 {
     Fields new_field = (Fields)malloc(sizeof(struct Fields_));
     if (new_field == NULL)
@@ -83,7 +83,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
     {
         if (strcmp(current->ident, field_ident.section_ident) == 0)
         {
-            Fields new_field = make_FieldNew(field_ident.field_ident, val);
+            Fields new_field = new_FieldNew(field_ident.field_ident, val);
             new_field->section = current;
             // Add inherit if not present
             if (check_Inherit(current, val))
@@ -144,6 +144,8 @@ void delete_Section(Sections sections_list, Ident section_ident)
             {
                 prev_section->next = current->next; // Delete the section in the middle or end
             }
+            da_free(current->inherits);
+            free(current->ident);
             free(current);
             return; // Section deleted
         }
@@ -186,6 +188,9 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                     {
                         prev_field->next = current_field->next; // Delete the field in the middle or end
                     }
+                    free(current_field->ident);
+                    free(current_field->pointed_by.vals);
+                    free_Val(current_field->val);
                     free(current_field);
                     return; // Field deleted
                 }
@@ -208,9 +213,9 @@ Sections convert_XMLS_to_Sections(XMLS xml)
     }
 
     /* Create the head of the sections list */
-    Sections sections_list = make_SectionNew(xml->u.xmlsection_.section_->u.filesection_.ident_);
+    Sections sections_list = make_SectionNew(strdup(xml->u.xmlsection_.section_->u.filesection_.ident_));
     sections_list->symbol_loc = xml->u.xmlsection_.section_->symbol_loc;
-    sections_list->fields = convert_SBody_to_Fields(xml->u.xmlsection_.section_->u.filesection_.sbody_,
+    sections_list->fields = convert_SBody_to_Fields(xml->u.xmlsection_.section_->u.filesection_.sbody_, //
                                                     sections_list);
     Sections last_section = sections_list;
     /* Move to the next field */
@@ -224,9 +229,9 @@ Sections convert_XMLS_to_Sections(XMLS xml)
         SBody sbody = xml->u.xmlsection_.section_->u.filesection_.sbody_;
 
         check_Section(sections_list, sec_ident);
-        Sections new_section = make_SectionNew(sec_ident);
+        Sections new_section = make_SectionNew(strdup(sec_ident));
         new_section->symbol_loc = symbol_loc;
-        new_section->fields = convert_SBody_to_Fields(sbody, new_section);
+        new_section->fields = convert_SBody_to_Fields(sbody, new_section); //
         last_section->next = new_section;
         last_section = new_section;
         /* Move to the next XMLS element */
@@ -289,7 +294,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
                 field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
         exit(EXIT_FAILURE);
     }
-    Fields fields_list = make_FieldNew(field_ident, val);
+    Fields fields_list = new_FieldNew(strdup(field_ident), val);
     fields_list->section = current_section;
     fields_list->symbol_loc = symbol_loc;
 
@@ -311,7 +316,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
                         field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
                 exit(EXIT_FAILURE);
             }
-            Fields new_field = make_FieldNew(field_ident, val);
+            Fields new_field = new_FieldNew(strdup(field_ident), val);
             new_field->section = current_section;
             new_field->symbol_loc = symbol_loc;
 
@@ -458,4 +463,49 @@ int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
         current = current->next;
     }
     return 0; // Field not found
+}
+
+void free_Sections(Sections sections_list) {
+    Sections current = sections_list;
+    while (current != NULL) {
+        Sections next_section = current->next;
+
+        free_Fields(current->fields);
+        da_free(current->inherits);
+        free(current->ident);
+        free(current);
+        
+        current = next_section;
+    }
+    sections_list = NULL;
+}
+
+void free_Fields(Fields fields_list) {
+    Fields current = fields_list;
+    while (current != NULL) {
+        Fields next_field = current->next;
+
+        free(current->ident);
+        free(current->pointed_by.vals);
+        free_Val(current->val);
+        free(current);
+
+        current = next_field;
+    }
+    fields_list = NULL;
+}
+
+void free_Val(Val_ val) {
+    switch (val.kind) {
+        case Str:
+            free(val.u.str);
+            break;
+        case Ref_unresolved:
+            free(val.u.unresolved_ref.field_ident);
+            free(val.u.unresolved_ref.section_ident);
+            break;
+        default:
+            // No dynamic memory to free for other kinds
+            break;
+    }
 }

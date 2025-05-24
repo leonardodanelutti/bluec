@@ -63,10 +63,8 @@ TODO:
 - commenti: F
 - migliori errori con linee: F
 - relazione 
-- commenti import: Leo
 - gli import dovrebbero essere relativi al file da cui importo non da dove viene chiamato il parser!: DG
 - eliminare funzioni inutilizzate: 
-- clonare AST: Leo
 - free globals: DG
 - risolvere tutti TODO
 

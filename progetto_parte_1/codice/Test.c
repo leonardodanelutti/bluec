@@ -79,6 +79,7 @@ Sections structure_FromFile(char *filename)
         fclose(input);
     /* Create custom data structure */
     Sections sections = convert_XMLS_to_Sections(parse_tree);
+    free_XMLS(parse_tree);
     /* Resolve references */
     resolveSections(sections);
     return sections;
@@ -106,7 +107,7 @@ DynamicArray comments_FromFile(char *filename)
     if (filename)
         fclose(input);
     Sections sections = convert_XMLS_to_Sections(parse_tree);
-
+    free_XMLS(parse_tree);
     resolveSections(sections);
     return *comments;
 }
