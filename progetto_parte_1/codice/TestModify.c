@@ -52,7 +52,9 @@ int main(int argc, char **argv)
         {
             printf(ERROR "Unexpected value retrived.\n");
         }
-    } else {
+    }
+    else
+    {
         // Section or field not found
     }
 
@@ -68,10 +70,8 @@ int main(int argc, char **argv)
     // push_FieldToSection(section_list, new_FieldIdent("var1", "nomesez1"), new_Ref(new_FieldIdent("new_field1", "new_section")));
     push_FieldToSection(section_list, new_FieldIdent("var1", "nomesez2"), new_Str("ciao"));
 
-
     // push_FieldToSection(section_list, new_FieldIdent("var3", "nomesez1"), new_Ref(new_FieldIdent("miao", "nomesez2")));
     // delete_FieldInSection(section_list, new_FieldIdent("var3", "nomesez1"));
-
 
     // Check the 'delete_FieldInSection' function
     delete_FieldInSection(section_list, new_FieldIdent("var3", "nomesez1"));

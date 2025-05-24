@@ -13,86 +13,86 @@ OBJS = Absyn.o Buffer.o Lexer.o Parser.o DataStructure.o Utils.o PrettyPrinter.o
 
 .PHONY : clean distclean
 
-all : Testgrammar
+all : build
 
 clean :
-	rm -f *.o Testgrammar grammar.aux grammar.log grammar.pdf grammar.dvi grammar.ps grammar
+	rm -f *.o build grammar.aux grammar.log grammar.pdf grammar.dvi grammar.ps grammar
 
 distclean : clean
-	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c grammar.l Lexer.c grammar.y Parser.h Parser.c Test.c Makefile grammar.tex
+	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c grammar.l Lexer.c grammar.y Parser.h Parser.c Build.c Makefile grammar.tex
 
-demo: Testgrammar
+demo: build
 	@echo "Running demo..."
 	@{ \
 		echo "example 1: inherit from an above section"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase1.txt || true; \
+		./build ../tests/testCase1.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 2: inherit from a section below"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase2.txt || true; \
+		./build ../tests/testCase2.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 3: overwriting of a variable"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase3.txt || true; \
+		./build ../tests/testCase3.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 4: repeated section"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase4.txt || true; \
+		./build ../tests/testCase4.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 5: recursive import"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase5.txt || true; \
+		./build ../tests/testCase5.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 6: repeated import"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase6.txt || true; \
+		./build ../tests/testCase6.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 7: using a non-local variable without inheritance"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase7.txt || true; \
+		./build ../tests/testCase7.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 8: recursive inheritance over a variable"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase8.txt || true; \
+		./build ../tests/testCase8.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 9: Referring to unexisting section"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase9.txt || true; \
+		./build ../tests/testCase9.txt || true; \
 		echo ""; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 10: Referring to non-existing variable"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase10.txt || true; \
+		./build ../tests/testCase10.txt || true; \
 		echo "--------------------------------------"; \
 		echo ""; \
 		echo "example 11: Useless inherit"; \
 		echo ""; \
-		./Testgrammar ../tests/testCase11.txt || true; \
+		./build ../tests/testCase11.txt || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo_output.txt
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
 
-Testgrammar : ${OBJS} Test.o
-	@echo "Linking Testgrammar..."
-	${CC} ${OBJS} Test.o -o Testgrammar
+build : ${OBJS} build.o
+	@echo "Linking build..."
+	${CC} ${OBJS} build.o -o build
 
 Absyn.o : Absyn.c Absyn.h Comments.h
 	${CC} ${CCFLAGS} -c Absyn.c
@@ -129,8 +129,8 @@ Lexer.o : Lexer.c Bison.h
 Parser.o : Parser.c Absyn.h Bison.h
 	${CC} ${CCFLAGS} -c Parser.c
 
-Test.o : Test.c Parser.h Absyn.h
-	${CC} ${CCFLAGS} -c Test.c
+build.o : build.c Parser.h Absyn.h
+	${CC} ${CCFLAGS} -c build.c
 
 TestModify : ${OBJS} TestModify.o
 	@echo "Linking TestModify..."
