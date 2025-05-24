@@ -1,5 +1,5 @@
 *.o
-Testgrammar
+build
 TestModify
 grammar.aux
 grammar.log
