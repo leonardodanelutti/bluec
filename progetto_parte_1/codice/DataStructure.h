@@ -60,16 +60,9 @@ struct Sections_
     Fields fields;
     SymbolLoc_ symbol_loc;
     Sections next;
+    // Inherited_
     DynamicArray *inherits;
 };
-
-/* Dynamic array of values */
-typedef struct ValList_
-{
-    Val *vals;
-    long unsigned int vals_size;
-    long unsigned int vals_count;
-} ValList_;
 
 /* A linked list of Fields */
 struct Fields_
@@ -84,7 +77,8 @@ struct Fields_
     SymbolLoc_ symbol_loc;
     Fields next;
     Sections section;
-    ValList_ pointed_by;
+    // Val
+    DynamicArray *pointed_by;
 };
 
 /**************************   Constructors   **************************/

@@ -58,11 +58,7 @@ Fields new_FieldNew(Ident ident, Val_ val)
     new_field->kind = Not_visited;
     new_field->next = NULL;
     new_field->section = NULL;
-    ValList_ pointed_by = {
-        .vals = NULL,
-        .vals_size = 0,
-        .vals_count = 0};
-    new_field->pointed_by = pointed_by;
+    new_field->pointed_by = da_init(sizeof(Val));
     SymbolLoc_ default_ = DEFAULT_SYMBOL_LOC_;
     new_field->symbol_loc = default_;
     return new_field;
@@ -247,13 +243,16 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                 if (strcmp(current_field->ident, field_ident.field_ident) == 0)
                 {
                     // Check the values that are currently pointed to this field
-                    for (long unsigned int i = 0; i < current_field->pointed_by.vals_count; i++)
+                    for (long unsigned int i = 0; i < current_field->pointed_by->size; i++)
                     {
                         // Get the i-th pointer to the field
-                        Val pointer = current_field->pointed_by.vals[i];
+                        Val pointer = *(Val *)da_get(current_field->pointed_by, i);
                         // Copy the field value to the pointer value
                         pointer->kind = current_field->val.kind;
                         pointer->u = current_field->val.u;
+                        if (current_field->val.kind == Ref) {
+                            da_push(current_field->val.u.ref->pointed_by, &pointer);
+                        }
                     }
                     // Remove the field from the list
                     if (prev_field == NULL)
@@ -265,7 +264,7 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                         prev_field->next = current_field->next; // Delete the field in the middle or end
                     }
                     free(current_field->ident);
-                    free(current_field->pointed_by.vals);
+                    da_free(current_field->pointed_by);
                     free_Val(current_field->val);
                     free(current_field);
                     return; // Field deleted
@@ -557,7 +556,7 @@ void free_Fields(Fields fields_list)
         Fields next_field = current->next;
 
         free(current->ident);
-        free(current->pointed_by.vals);
+        da_free(current->pointed_by);
         free_Val(current->val);
         free(current);
 

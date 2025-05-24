@@ -144,32 +144,9 @@ void resolveField(Fields field, Sections start_sections_list, bool trust_refs)
                         /* Update the field value with the resolved reference */
                         field->val.kind = Ref;
                         field->val.u.ref = ref_field;
+                        Val val_ptr = &field->val;
                         /* Update the `pointed_by` field in the pointed `Field` */
-                        if (ref_field->pointed_by.vals_size == 0)
-                        {
-                            /* Initialize the pointed_by field if it is empty */
-                            ref_field->pointed_by.vals_size = 5;
-                            ref_field->pointed_by.vals = malloc(sizeof(*ref_field->pointed_by.vals) * ref_field->pointed_by.vals_size);
-                            if (ref_field->pointed_by.vals == NULL)
-                            {
-                                fprintf(stderr, ERROR "Memory allocation failed for pointed_by field.\n");
-                                exit(EXIT_FAILURE);
-                            }
-                        }
-                        else if (ref_field->pointed_by.vals_count >= ref_field->pointed_by.vals_size)
-                        {
-                            /* Resize the pointed_by field if it is full */
-                            ref_field->pointed_by.vals_size += 5;
-                            ref_field->pointed_by.vals = realloc(ref_field->pointed_by.vals, sizeof(*ref_field->pointed_by.vals) * ref_field->pointed_by.vals_size);
-                            if (ref_field->pointed_by.vals == NULL)
-                            {
-                                fprintf(stderr, ERROR "Memory reallocation failed for pointed_by field.\n");
-                                exit(EXIT_FAILURE);
-                            }
-                        }
-                        /* Add the field to the pointed_by list */
-                        ref_field->pointed_by.vals[ref_field->pointed_by.vals_count] = &field->val;
-                        ref_field->pointed_by.vals_count++;
+                        da_push(ref_field->pointed_by, &val_ptr);
 
                         /* Recursively resolve the reference */
                         resolveField(ref_field, start_sections_list, trust_refs);

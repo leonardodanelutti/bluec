@@ -15,6 +15,11 @@ DynamicArray *da_init(size_t elem_size)
     DynamicArray *arr = malloc(sizeof(DynamicArray));
     size_t capacity = 5; // Initial capacity
     arr->data = malloc(elem_size * capacity);
+    if (arr->data == NULL)
+    {
+        fprintf(stderr, ERROR "Memory allocation failed for dynamic array data.\n");
+        exit(EXIT_FAILURE);
+    }
     arr->size = 0;
     arr->capacity = capacity;
     arr->elem_size = elem_size;
@@ -34,6 +39,11 @@ void da_free(DynamicArray *arr)
 void da_resize(DynamicArray *arr, size_t new_capacity)
 {
     arr->data = realloc(arr->data, arr->elem_size * new_capacity);
+    if (arr->data == NULL)
+    {
+        fprintf(stderr, ERROR "Memory allocation failed in reallocating in dynamic array.\n");
+        exit(EXIT_FAILURE);
+    }
     arr->capacity = new_capacity;
 }
 

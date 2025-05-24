@@ -69,15 +69,15 @@ int main(int argc, char **argv)
     push_FieldToSection(section_list, new_FieldIdent("var1", "nomesez2"), new_Str("ciao"));
 
 
-    push_FieldToSection(section_list, new_FieldIdent("var3", "nomesez1"), new_Ref(new_FieldIdent("miao", "nomesez2")));
+    // push_FieldToSection(section_list, new_FieldIdent("var3", "nomesez1"), new_Ref(new_FieldIdent("miao", "nomesez2")));
     // delete_FieldInSection(section_list, new_FieldIdent("var3", "nomesez1"));
 
 
     // Check the 'delete_FieldInSection' function
-    // delete_FieldInSection(section_list, new_FieldIdent("var3", "nomesez1"));
+    delete_FieldInSection(section_list, new_FieldIdent("var3", "nomesez1"));
 
     // Check the 'delete_Section' function
-    //delete_Section(section_list, "nomesez1");
+    delete_Section(section_list, "nomesez1");
 
     printf("\nAfter:\n");
     printSections(section_list);
