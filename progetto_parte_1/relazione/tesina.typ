@@ -18,6 +18,18 @@ par(
 
 = Grammatica labelled-BNFC
 
+$
+&"<XML>" &-> &epsilon | "<Import>" "<XML>" | "<Section>" "<XMLS>"  \
+&"<XMLS>" &-> &epsilon | "<Section>" "<XMLS>" \
+&"<Import>" &-> &"\"<\"" "import" "\">\"" "<Path>" "\"<\\\"" "import" "\">\"" | "String" \
+&"<Section>" &-> &"\"<\"" "section" "name" "=" "<Ident>" "\">\"" "<SBody>" "\"<\\\"" "section" "\">\"" \
+&"<SBody>" &-> &epsilon | "<Inherit>" "<SBody>" | "<Field>" "<SBodyF>" \
+&"<SBodyF>" &-> &epsilon | "<Field>" "<SBodyF>" \
+&"<Inherit>" &-> &"\"<\"" "inherit" "\">\"" "<Ident>" "\"<\\\"" "inherit" "\">\"" \
+&"<Field>" &-> &"\"<\"" "field" "name" "=" "<Ident>" "\">\"" "<Value>" "\"<\\\"" "field" "\">\"" \
+&"<Value>" &-> &"<Integer>" | "true" | "false" | "<String>" | "$" "<Ident>" | "$" "<Ident>" "." "<Ident>" ;
+$
+
 - la grammatica non ha conflitti perchè bison li segnalerebbe
 - nella grammatica .cf Import messo come string e poi modificato file Flex per matchare <improt>.*</import>
   come fossero stringhe. 
