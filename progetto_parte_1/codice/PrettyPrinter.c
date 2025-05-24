@@ -1,93 +1,138 @@
 #include "PrettyPrinter.h"
 
+size_t i = 0;
 
-struct List_;
-typedef struct List_ *List;
 
-struct List_ {
-    Ident ident;
-    List next;
-};
+// This function retrieves the current comment based on the index `i`.
+Comment_ get_current_comment(size_t i) {
+    Comment_ *current_comment = (Comment_ *)da_get(comments, i);
+    if (current_comment == NULL) {
+        fprintf(stderr, ERROR "No comments found\n");
+        exit(EXIT_FAILURE);
+    }
+    return *current_comment;
+}
 
-// Funzione principale di stampa delle sezioni
+// This function prints the sections of the XML structure
 void printSections(Sections section) {
     while (section != NULL) {
-        printf("<section name=%s>", section->ident);
+        if (comments != NULL) {
+            while (i < comments->size) {
+                Comment_ *current_comment = (Comment_ *)da_get(comments, i);
+                if (section->symbol_loc.file_path == current_comment->file_path &&
+                    (unsigned int) section->symbol_loc.top_loc.last_line >= current_comment->line) {
+                    printf("%s\n", current_comment->comment);
+                    i++;
+                } else {
+                    break;
+                }
+            }
+        }
 
-        Fields field = section->fields;
+        printf("<section name=%s>\n", section->ident);
+
         printInherits(*(section->inherits));   // stampa inherits 
-        printFields(field);                    // stampa fields
+        printFields(section->fields);          // stampa fields
+
+        if (comments != NULL) {
+            while (i < comments->size) {
+                Comment_ *current_comment = (Comment_ *)da_get(comments, i);
+                if (section->symbol_loc.file_path == current_comment->file_path &&
+                    (unsigned int) section->symbol_loc.bottom_loc.last_line >= current_comment->line) {
+                    printf("%s\n", current_comment->comment);
+                    i++;
+                } else {
+                    break;
+                }
+            }
+        }
 
         printf("</section>\n");
-        printf("file-lines: %s.%d-%d\n", section->symbol_loc.file_path, section->symbol_loc.top_loc.first_line, section->symbol_loc.bottom_loc.last_line);
         section = section->next;
     }
 }
 
+// This function prints the inherits of a section
+void printInherits(DynamicArray inherits) {
+    for (size_t j = 0; j < inherits.size; j++) {
+        Inherited_ inherit = *(Inherited_ *)da_get(&inherits, j);
+        if (comments != NULL) {
+            while (i < comments->size) {
+                Comment_ *current_comment = (Comment_ *)da_get(comments, i);
+                if (inherit.symbol_loc.file_path == current_comment->file_path &&
+                    (unsigned int) inherit.symbol_loc.bottom_loc.last_line >= current_comment->line) {
+                    printf("  %s\n", current_comment->comment);
+                    i++;
+                } else {
+                    break;
+                }
+            }
+        }
+        printf("  <inherit> %s </inherit>\n", inherit.section_ident);
+    }
+}
 
-// Stampa tutti i field di una sezione
+// This function prints the fields of a section
 void printFields(Fields field) {
     while (field != NULL) {
+        if (comments != NULL) {
+            while (i < comments->size) {
+                Comment_ *current_comment = (Comment_ *)da_get(comments, i);
+                if (field->symbol_loc.file_path == current_comment->file_path &&
+                    (unsigned int) field->symbol_loc.bottom_loc.last_line >= current_comment->line) {
+                    printf("  %s\n", current_comment->comment);
+                    i++;
+                } else {
+                    break;
+                }
+            }
+        }
         printf("  <field name=%s>", field->ident);
         printVal(field->val, field->section->ident);
-        printf("</field>");
-        printf("lines: %d-%d\n", field->symbol_loc.top_loc, field->symbol_loc.bottom_loc);
+        printf("</field>\n");
         field = field->next;
     }
 }
 
-// Stampa il valore del field
+// This function prints the value of a field.
 void printVal(Val_ val, Ident section_ident) {
+    if (comments != NULL){
+        while (i < comments->size) {
+            Comment_ *current_comment = (Comment_ *)da_get(comments, i);
+            if (val.symbol_loc.file_path == current_comment->file_path &&
+                (unsigned int) val.symbol_loc.top_loc.first_line >= current_comment->line) {
+                printf("  %s\n", current_comment->comment);
+                i++;
+            } else {
+                break;
+            }
+        }
+    }
+
     switch (val.kind) {
         case Int:
             printf(" %d ", val.u.int_);
-            printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
             break;
         case Str:
             printf(" \"%s\" ", val.u.str);
-            printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
-
             break;
         case Bool:
             printf(val.u.bool_ ? " true " : " false ");
-            printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
-
             break;
         case Ref: {
             Ident sectionInherit = val.u.ref->section->ident;
             if (sectionInherit == section_ident) {
                 printf(" $%s ", val.u.ref->ident);
-                printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
-
             } else {
                 printf(" $%s.%s ", sectionInherit, val.u.ref->ident);
-                printf("lines: %d-%d", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
             }
             break;
         }
         case Ref_unresolved:
             printf(" &%s.%s ", val.u.unresolved_ref.section_ident, val.u.unresolved_ref.field_ident);
-            printf("lines: %d-%d\n", val.symbol_loc.top_loc, val.symbol_loc.bottom_loc);
             break;
         default:
             fprintf(stderr, "Unknown value type\n");
             exit(EXIT_FAILURE);
     }
-}
-
-
-// Stampa tutti gli inherit di una sezione
-void printInherits(DynamicArray inherits) {
-    for (size_t i = 0; i < inherits.size; i++) {
-        Inherited_ inherit = *(Inherited_ *)da_get(&inherits, i);
-        printf("  <inherit> %s </inherit>\n", inherit.section_ident);
-        printf("lines: %d-%d\n", inherit.symbol_loc.top_loc, inherit.symbol_loc.bottom_loc);
-    }
-}
-
-//funzione per stampare i commenti
-void printComments(Comment_ comment) {
-    printf("Comment: %s\n", comment.comment);
-    printf("File: %s\n", comment.file_path);
-    printf("Line: %d\n", comment.line);
 }

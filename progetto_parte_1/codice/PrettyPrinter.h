@@ -15,5 +15,7 @@ void printVal(Val_ val, Ident section_ident);
 
 void printInherits(DynamicArray inherits);
 
+Comment_ get_current_comment(size_t i);
+
 
 
