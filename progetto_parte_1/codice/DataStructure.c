@@ -215,7 +215,7 @@ Sections convert_XMLS_to_Sections(XMLS xml)
     /* Create the head of the sections list */
     Sections sections_list = make_SectionNew(strdup(xml->u.xmlsection_.section_->u.filesection_.ident_));
     sections_list->symbol_loc = xml->u.xmlsection_.section_->symbol_loc;
-    sections_list->fields = convert_SBody_to_Fields(xml->u.xmlsection_.section_->u.filesection_.sbody_, //
+    sections_list->fields = convert_SBody_to_Fields(xml->u.xmlsection_.section_->u.filesection_.sbody_,
                                                     sections_list);
     Sections last_section = sections_list;
     /* Move to the next field */
@@ -231,7 +231,7 @@ Sections convert_XMLS_to_Sections(XMLS xml)
         check_Section(sections_list, sec_ident);
         Sections new_section = make_SectionNew(strdup(sec_ident));
         new_section->symbol_loc = symbol_loc;
-        new_section->fields = convert_SBody_to_Fields(sbody, new_section); //
+        new_section->fields = convert_SBody_to_Fields(sbody, new_section);
         last_section->next = new_section;
         last_section = new_section;
         /* Move to the next XMLS element */
@@ -465,24 +465,28 @@ int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
     return 0; // Field not found
 }
 
-void free_Sections(Sections sections_list) {
+void free_Sections(Sections sections_list)
+{
     Sections current = sections_list;
-    while (current != NULL) {
+    while (current != NULL)
+    {
         Sections next_section = current->next;
 
         free_Fields(current->fields);
         da_free(current->inherits);
         free(current->ident);
         free(current);
-        
+
         current = next_section;
     }
     sections_list = NULL;
 }
 
-void free_Fields(Fields fields_list) {
+void free_Fields(Fields fields_list)
+{
     Fields current = fields_list;
-    while (current != NULL) {
+    while (current != NULL)
+    {
         Fields next_field = current->next;
 
         free(current->ident);
@@ -495,17 +499,19 @@ void free_Fields(Fields fields_list) {
     fields_list = NULL;
 }
 
-void free_Val(Val_ val) {
-    switch (val.kind) {
-        case Str:
-            free(val.u.str);
-            break;
-        case Ref_unresolved:
-            free(val.u.unresolved_ref.field_ident);
-            free(val.u.unresolved_ref.section_ident);
-            break;
-        default:
-            // No dynamic memory to free for other kinds
-            break;
+void free_Val(Val_ val)
+{
+    switch (val.kind)
+    {
+    case Str:
+        free(val.u.str);
+        break;
+    case Ref_unresolved:
+        free(val.u.unresolved_ref.field_ident);
+        free(val.u.unresolved_ref.section_ident);
+        break;
+    default:
+        // No dynamic memory to free for other kinds
+        break;
     }
 }

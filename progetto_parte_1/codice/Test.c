@@ -22,7 +22,6 @@ Sections structure_FromFile(char *filename);
 void print_Structure(char *filename);
 void print_Comments();
 
-
 void usage(void)
 {
     printf("Specify input as: ./Testgrammar filename.ext\n");
@@ -120,7 +119,6 @@ void print_Structure(char *filename)
     printSections(sections);
     // Free memory
 }
-
 
 void print_Comments()
 {
