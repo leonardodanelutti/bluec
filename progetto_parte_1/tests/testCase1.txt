@@ -7,6 +7,6 @@
 <section name= sez2>
     <inherit>sez1</inherit>
     <field name= var1>4</field>
-    <field name= var2>$sez1.var1</field> #commento2
+    <field name= var2>$sez1.var1</field> #commento3
     <field name= var3>$var1 </field>
 </section>

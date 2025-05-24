@@ -61,7 +61,7 @@ void printInherits(DynamicArray inherits) {
             while (i < comments->size) {
                 Comment_ *current_comment = (Comment_ *)da_get(comments, i);
                 if (inherit.symbol_loc.file_path == current_comment->file_path &&
-                    (unsigned int) inherit.symbol_loc.bottom_loc.last_line >= current_comment->line) {
+                    (unsigned int) inherit.symbol_loc.top_loc.last_line >= current_comment->line) {
                     printf("  %s\n", current_comment->comment);
                     i++;
                 } else {
@@ -69,7 +69,23 @@ void printInherits(DynamicArray inherits) {
                 }
             }
         }
-        printf("  <inherit> %s </inherit>\n", inherit.section_ident);
+        printf("  <inherit>");
+
+        printf("%s", inherit.section_ident);
+
+        if (comments != NULL) {
+            while (i < comments->size) {
+                Comment_ *current_comment = (Comment_ *)da_get(comments, i);
+                if (inherit.symbol_loc.file_path == current_comment->file_path &&
+                    (unsigned int) inherit.symbol_loc.bottom_loc.last_line >= current_comment->line) {
+                    printf("\n  %s\n", current_comment->comment);
+                    i++;
+                } else {
+                    break;
+                }
+            }
+        }
+         printf(" </inherit>\n");
     }
 }
 

@@ -15,8 +15,11 @@
   <field name=var1> false </field>
 </section>
 <section name=nomesez3>
-  <inherit> nomesez1 </inherit>
-  <inherit> nomesez2 </inherit>
+  #commento inherit
+  <inherit>nomesez1
+  #commento inherit
+ </inherit>
+  <inherit>nomesez2 </inherit>
   <field name=miao> $nomesez1.var3 </field>
   <field name=var1> false </field>
 </section>

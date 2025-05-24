@@ -8,6 +8,6 @@
 </section>
 <section name= sez2>
     <field name= var1>4</field>
-    <field name= var2>6</field> #commento2
+    <field name= var2>6</field> #commento3
     <field name= var3>$var1 </field>
 </section>

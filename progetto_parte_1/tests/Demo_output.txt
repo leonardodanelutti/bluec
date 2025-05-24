@@ -9,9 +9,9 @@ example 1: inherit from an above section
   <field name=var2> $var1 </field>
 </section>
 <section name=sez2>
-  <inherit> sez1 </inherit>
+  <inherit>sez1 </inherit>
   <field name=var1> 4 </field>
-  #commento2
+  #commento3
   <field name=var2> $sez1.var1 </field>
   <field name=var3> $var1 </field>
 </section>
@@ -24,7 +24,7 @@ example 2: inherit from a section below
 [Pretty Print (after references resolution)]
 #commento1
 <section name=sez1>
-  <inherit> sez2 </inherit>
+  <inherit>sez2 </inherit>
   <field name=var1> 4 </field>
   #commento2
   <field name=var2> $var1 </field>
@@ -32,7 +32,7 @@ example 2: inherit from a section below
 </section>
 <section name=sez2>
   <field name=var1> 4 </field>
-  #commento2
+  #commento3
   <field name=var2> 6 </field>
   <field name=var3> $var1 </field>
 </section>
@@ -120,10 +120,10 @@ WARNING: ../tests/testCase11.txt:10:5: inherited section `sez4` is not used. Con
   <field name=var1> 7 </field>
 </section>
 <section name=sez2>
-  <inherit> sez1 </inherit>
-  <inherit> sez1 </inherit>
-  <inherit> sez1 </inherit>
-  <inherit> sez4 </inherit>
+  <inherit>sez1 </inherit>
+  <inherit>sez1 </inherit>
+  <inherit>sez1 </inherit>
+  <inherit>sez4 </inherit>
   # Variabile 1
   <field name=var1> $sez1.var1 </field>
 </section>
