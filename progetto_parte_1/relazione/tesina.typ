@@ -175,13 +175,15 @@ un errore.
 
 === Risoluzione del valore di un field
 
-Per risalire al valore di un field si può utilizzare la funzione `get_value`, che, dopo aver trovato il field richiesto, se il valore è una reference risale la catena di riferimenti fino a trovare il valore effettivo. Non si può incorrere in cicli o riferimenti non risolti in quanto questa funzione viene chiamata dopo la risoluzione dei puntatori.
+Per risalire al valore di un field si può utilizzare la funzione `get_value`, che, dopo aver trovato il field richiesto, se il valore è una reference risale la catena di riferimenti fino a trovare il valore effettivo. Non si può incorrere in cicli o riferimenti non risolti in quanto la funzione viene chiamata dopo la risoluzione dei puntatori.
 
 === Aggiunta
 
 Viene aggiunto un field nella sezione specificata, se il field esiste già viene sovrascritto il valore, altrimenti viene creato un nuovo field. Se viene inserita una reference il riferimento viene risolto e viene aggiunto anche l'inherit corrispondente se non è già presente.
 
 === Cancellazione
+
+La cancellazione di un field fa uso dell'array dinamico `pointed_by` che contiene tutti i field che puntano a quel field. Quando il field viene cancellato, vengono anche aggiornati tutti i valori dei field presenti in `pointed_by` con il valore del field eliminato. Se il field eliminato è una reference, viene aggiornato anche il campo `pointed_by` del field puntato e vengono aggiunti eventuali inherits mancanti.
 
 #pagebreak()
 
