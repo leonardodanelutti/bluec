@@ -1,3 +1,7 @@
+/* This module implements a global data structure that stores comments associated with
+   their location in the source code. It provides functions to push new comments and to
+   detect comments in a given string. */
+
 #ifndef COMMENTS_HEADER
 #define COMMENTS_HEADER
 
@@ -19,7 +23,8 @@ struct YYLTYPE
 
 typedef char *String;
 
-/* Global variable that stores an array of the comments */
+/* Global variable that stores an array of the comments. Holds the comments in the parsing
+   order. */
 extern DynamicArray *comments;
 
 typedef struct SymbolLoc_ SymbolLoc_;
@@ -38,7 +43,7 @@ struct SymbolLoc_
     String file_path;
 };
 
-#define DEFAULT_SYMBOL_LOC_ { {0, 0, 0, 0}, {0, 0, 0, 0}, NULL }
+#define DEFAULT_SYMBOL_LOC_ {{0, 0, 0, 0}, {0, 0, 0, 0}, NULL}
 
 /* A data structure that holds positional information about a comment. */
 struct Comment_
@@ -57,4 +62,4 @@ void push_Comment(unsigned int line, String file_path, String comment);
 /* Pushes all comments in a string to the global variable `comments`. */
 void detect_Comments(unsigned int first_line, String file_path, String str);
 
-#endif /* COMMENTS_H */
+#endif /* COMMENTS_HEADER */

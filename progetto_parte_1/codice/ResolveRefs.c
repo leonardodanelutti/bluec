@@ -4,6 +4,8 @@
 #include "ResolveRefs.h"
 #include "Logs.h"
 
+/***** UTILITIES *****/
+
 /* Helper function to check whether inherited sections exist. */
 void check_inheritExistance(DynamicArray *inherits, Sections start_sections_list)
 {
@@ -90,6 +92,8 @@ void resolveSections_recursive(Sections current_section, Sections start_sections
     /* Recursively call the function for the next section */
     resolveSections_recursive(current_section->next, start_sections_list);
 }
+
+/***** ENDPOINTS *****/
 
 void resolveSections(Sections sections_list)
 {
