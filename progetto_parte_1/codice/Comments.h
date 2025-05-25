@@ -27,6 +27,8 @@ typedef char *String;
    order. */
 extern DynamicArray *comments;
 
+void free_Comments(void);
+
 typedef struct SymbolLoc_ SymbolLoc_;
 typedef struct Comment_ Comment_;
 

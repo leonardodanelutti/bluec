@@ -4,6 +4,16 @@
 
 DynamicArray *comments = NULL;
 
+/* Free the memory used by the global variable `comments`. */
+void free_Comments(void)
+{
+    if (comments != NULL)
+    {
+        da_free(comments);
+        comments = NULL;
+    }
+}
+
 /* Helper function that creates a new `Comment_`. */
 Comment_ make_Comment(unsigned int line, String file_path, String comment)
 {

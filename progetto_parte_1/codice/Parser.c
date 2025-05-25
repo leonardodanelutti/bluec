@@ -1610,6 +1610,9 @@ void exit_callback(void)
     }
     current_file = 0;
 
+    /* Free the comments global variable */
+    free_Comments();
+
     /* Delete the DataStructure if it exists. */
     free_Sections(sections);
 }
