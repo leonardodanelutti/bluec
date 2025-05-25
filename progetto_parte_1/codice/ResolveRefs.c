@@ -124,9 +124,6 @@ void resolveField(Fields field, Sections start_sections_list, bool trust_refs)
     // Check if the field is a reference
     if (field->val.kind == Ref_unresolved || (field->val.kind == Ref && !trust_refs))
     {
-        /* TODO: remove this debugging print
-        printf("Resolving %s that points to $%s.%s\n", field->ident, pointed.section_ident, pointed.field_ident); */
-
         /* Find the section that contains the field */
         for (Sections section = start_sections_list; section != NULL; section = section->next)
         {

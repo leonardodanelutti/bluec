@@ -77,8 +77,6 @@ Sections structure_FromFile(char *filename)
 
     if (parse_tree == 0)
     {
-        // TODO: Perchè printare un doppio errore?
-        // fprintf(stderr, ERROR "Failed to parse XML from file entrypoint: %s\n", filename);
         exit(EXIT_FAILURE);
     }
     /* Create custom data structure */
