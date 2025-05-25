@@ -23,7 +23,7 @@ void print_Structure(char *filename);
 
 void usage(void)
 {
-    printf("Specify input as: ./Testgrammar filename.ext\n");
+    printf("Specify input as: ./build filename.ext\n");
 }
 
 int main(int argc, char **argv)

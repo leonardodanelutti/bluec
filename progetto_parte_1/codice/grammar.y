@@ -168,8 +168,7 @@ void exit_callback(void)
 XMLS pXML(FILE *inp, String filename)
 {
     // Register the exit callback.
-    // TODO: why TestModify aborts if this is uncommented??
-    // atexit(exit_callback);
+    atexit(exit_callback);
 
     // Initialize the DynamicArray for parsed files.
     parsed_files = da_init(sizeof(ParsedXML_));

@@ -39,7 +39,7 @@ Sections make_SectionNew(Ident ident)
         fprintf(stderr, "Memory allocation failed for new section\n");
         exit(EXIT_FAILURE);
     }
-    new_section->ident = ident;
+    new_section->ident = strdup(ident);
     new_section->fields = NULL;
     new_section->next = NULL;
     new_section->inherits = da_init(sizeof(Inherited_));
@@ -56,7 +56,7 @@ Fields new_FieldNew(Ident ident, Val_ val)
         fprintf(stderr, "Memory allocation failed for new field\n");
         exit(EXIT_FAILURE);
     }
-    new_field->ident = ident;
+    new_field->ident = strdup(ident);
     new_field->val = val;
     new_field->kind = Not_visited;
     new_field->next = NULL;
@@ -80,7 +80,7 @@ Val_ new_Str(String str)
 {
     Val_ val = {
         .kind = Str,
-        .u.str = str,
+        .u.str = strdup(str),
         .symbol_loc = DEFAULT_SYMBOL_LOC_};
     return val;
 }
@@ -106,8 +106,8 @@ Val_ new_Ref(FieldIdent_ ref)
 FieldIdent_ new_FieldIdent(Ident field_ident, Ident section_ident)
 {
     FieldIdent_ field_ident_ = {
-        .field_ident = field_ident,
-        .section_ident = section_ident};
+        .field_ident = strdup(field_ident),
+        .section_ident = strdup(section_ident)};
     return field_ident_;
 }
 
@@ -156,7 +156,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
             if (check_Inherit(current, val))
             {
                 SymbolLoc_ default_ = DEFAULT_SYMBOL_LOC_;
-                Inherited_ new_inherit = new_Inherit(val.u.unresolved_ref.section_ident, default_);
+                Inherited_ new_inherit = new_Inherit(strdup(val.u.unresolved_ref.section_ident), default_);
                 da_push(current->inherits, &new_inherit);
             }
             // Check if the field already exists in the section, if it does, overwrite it
@@ -170,7 +170,6 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                     current_field->val = val;
                     // resolve the field identifier
                     resolveField(current_field, sections_list, 0);
-                    /* TODO: warning with line */
                     WARNING_F(NULL, "Field %s was overwritten\n", field_ident.field_ident);
                     return; // Field found and overwritten
                 }
@@ -263,7 +262,7 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                             if (check_Inherit(pointer->section, current_field->val))
                             {
                                 SymbolLoc_ default_ = DEFAULT_SYMBOL_LOC_;
-                                Inherited_ new_inherit = new_Inherit(current_field->val.u.ref->section->ident, default_);
+                                Inherited_ new_inherit = new_Inherit(strdup(current_field->val.u.ref->section->ident), default_);
                                 da_push(pointer->section->inherits, &new_inherit);
                             }
                             da_push(current_field->val.u.ref->pointed_by, &pointer);
@@ -469,11 +468,11 @@ Val_ convert_Value_to_Val_(Value value, Ident section_ident)
         new.symbol_loc = value->symbol_loc;
         return new;
     case is_Value1:
-        new = new_Ref(new_FieldIdent(strdup(value->u.value1_.ident_), strdup(section_ident)));
+        new = new_Ref(new_FieldIdent(value->u.value1_.ident_, section_ident));
         new.symbol_loc = value->symbol_loc;
         return new;
     case is_Value2:
-        new = new_Ref(new_FieldIdent(strdup(value->u.value2_.ident_2), strdup(value->u.value2_.ident_1)));
+        new = new_Ref(new_FieldIdent(value->u.value2_.ident_2, value->u.value2_.ident_1));
         new.symbol_loc = value->symbol_loc;
         return new;
     default:

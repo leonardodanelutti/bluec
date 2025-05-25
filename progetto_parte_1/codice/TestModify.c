@@ -47,11 +47,11 @@ int main(int argc, char **argv)
     {
         if (val.kind == Int && val.u.int_ == 3)
         {
-            printf("Successfully retrieved value\n");
+            printf("\nSuccessfully retrieved value\n\n");
         }
         else
         {
-            printf(ERROR "Unexpected value retrived.\n");
+            printf(ERROR "\nUnexpected value retrived.\n\n");
         }
     }
     else
