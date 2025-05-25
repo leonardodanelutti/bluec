@@ -1,7 +1,12 @@
+/* This module implements logging utilities to standardize error and warning messages
+   across the project: it provides macros for formatted error and warning messages. */
+
 #ifndef LOGS_HEADER
 #define LOGS_HEADER
 
 #include "Parser.h"
+
+/* Colors and font styles */
 
 #define ANSI_COLOR_RED "\x1b[31m"
 #define ANSI_COLOR_GREEN "\x1b[32m"
@@ -14,8 +19,12 @@
 #define ANSI_BOLD "\e[1m"
 #define ANSI_BOLD_RESET "\e[m"
 
+/* Error and warning messages */
+
 #define ERROR ANSI_COLOR_RED ANSI_BOLD "ERROR: " ANSI_BOLD_RESET ANSI_COLOR_RESET
 #define WARNING ANSI_COLOR_YELLOW ANSI_BOLD "WARNING: " ANSI_BOLD_RESET ANSI_COLOR_RESET
+
+/* Macros that print location information. */
 
 #define ERROR_F(loc, fmt, ...)                                                                                          \
     do                                                                                                                  \
@@ -45,4 +54,4 @@
                     _file_path ? _file_path : "<stdin>", ##__VA_ARGS__);                                                \
     } while (0)
 
-#endif
+#endif /* LOGS_HEADER */
