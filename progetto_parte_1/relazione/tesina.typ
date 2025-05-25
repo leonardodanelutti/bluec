@@ -209,50 +209,59 @@ Questa sezione descrive il funzionamento del Pretty Printer progettato per il no
 
 == Struttura principale
 
-Il printer è composto da quattro funzioni principali, ognuna responsabile della stampa di un particolare tipo di nodo nella struttura dati:
-- _printSections_: stampa le sezioni del programma;
-- _printInherits_: stampa gli inherits di una sezione;
-- _printFields_: stampa i campi di una sezione;
-- _printVal_: stampa il valore di un campo.
+Il printer è composto da quattro funzioni principali, ognuna responsabile della stampa di un particolare tipo di nodo nella struttura dati:\ \
+- `printSections`: stampa le sezioni del programma;
+- `printInherits`: stampa gli inherits di una sezione;
+- `printFields`: stampa i campi di una sezione;
+- `printVal`: stampa il valore di un campo.
 \
-La funzione _printSections_ prende in input una lista di sezioni (un oggetto di tipo _Sections_) e, per ciascuna sezione, stampa il nome, gli eventuali commenti associati, gli elementi ereditati (inherits) e i campi (fields). La stampa degli elementi ereditati, per ogni sezione, è gestita dalla funzione _printInherits_, che riceve in input un oggetto di tipo _DynamicArray_, ovvero un vettore di elementi di tipo _Inherited_ e stampa ciascun elemento insieme agli eventuali commenti associati. I campi, rappresentati da una lista di oggetti Fields, sono stampati tramite la funzione _printFields_, che per ogni _field_ riporta il nome, i commenti eventualmente presenti e il valore. Quest'ultimo è elaborato dalla funzione _printVal_, che lo stampa in base al tipo (intero, stringa, booleano, riferimento), includendo anche in questo caso i commenti associati. Tutte queste funzioni fanno uso della procedura ausiliaria _get_current_comment_, che consente di ottenere il commento corrente sulla base dell'indice globale i.
+La funzione _printSections_ prende in input una lista di sezioni e, per ciascuna sezione, stampa il nome, gli eventuali commenti associati, gli elementi ereditati (inherits) e i campi (fields). La stampa degli elementi ereditati, per ogni sezione, è gestita dalla funzione _printInherits_, che riceve in input un _DynamicArray_ di elementi di tipo _Inherited_ e stampa ciascun elemento insieme agli eventuali commenti associati.
+ I campi, rappresentati da una lista di oggetti _Fields_, sono stampati tramite la funzione _printFields_, che per ogni _field_ riporta il nome, i commenti eventualmente presenti e il valore. Quest'ultimo è elaborato dalla funzione _printVal_, la quale lo stampa in base al tipo (intero, stringa, booleano, riferimento), includendo anche in questo caso i commenti associati. Tutte queste funzioni fanno uso della procedura ausiliaria _get_current_comment_, che consente di ottenere il commento corrente sulla base dell'indice globale i.
 
 == Commenti
 La serializzazione effettuata dal Pretty Printer deve contenere anche i commenti presenti
 nel file originario. A tale scopo è stato modificato il parser in modo che, invece di
 ignorare i commenti, li conservi nell' array globale `comments`.
-In particolare `comments` è un `DynamicArray` contenente elementi di tipo `Comment_`,  ciascuno composto dai seguenti campi:
+In particolare `comments` è un `DynamicArray` contenente elementi di tipo `Comment_`,  ciascuno composto dai seguenti campi: \ \
 - `file_path`: il percorso del file in cui è presente il commento;
 - `line`: il numero di riga del file in cui si trova il commento;
 - `comment`: il testo del commento.
 `file_path` e `line` permettono di identificare univocamente i commenti, e quindi
 associarli correttamente al codice in fase di print.
 \
+\
+
 Quando si stampa una sezione, un `inherit`, un `field`, o un valore vengono stampati anche i commenti associati, se ve ne sono. In particolare la stampa avviene come segue:
-- Per `Sections`, `inherit` e `fields`, sono considerati sia il valore `top_loc.last_line`#footnote[`last_line` indica la riga in cui termina il delimitatore di un elemento.
+- Per `Sections`, `inherit` e `fields`, sono considerati sia il valore `top_loc.last_line`#footnote[_last_line_ indica la riga in cui termina il delimitatore di un elemento.
 Ad esempio, nel seguente frammento:\ `1 <field name=var2> $var1
 2 </field
-3 >` \ `top_loc.last_line` = 1, mentre `bottom_loc->last_line` = 3.
+3 >` \ `top_loc.last_line = 1`, mentre `bottom_loc->last_line = 3`.
 ] che il valore `bottom_loc.last_line`, ovvero la posizione iniziale e finale dei delimitatori dell’elemento nel file. Un commento è stampato sopra il delimitatore di un elemento se:
   + il percorso del file del commento coincide con quello dell'elemento;
-  + la riga del commento è minore o uguale a `top_loc.last_line` (o `bottom_loc.last_line`) dell'elemento.
+  + la riga del commento è minore o uguale a `top_loc.last_line` (o`bottom_loc.last_line`) dell'elemento.
 - Per i `Val_` viene invece utilizzato solo `bottom_loc`, poiché si assumono definiti su una singola riga. Il commento viene quindi stampato se:
   + il percorso del file coincide;
   + la riga del commento è minore o uguale a `bottom_loc->last_line`.
+\
 
 In entrambi i casi, se un commento soddisfa le condizioni, viene stampato prima dell’elemento corrispondente, e l’indice globale _i_ viene incrementato per passare al commento successivo. Al contrario, se le condizioni non sono soddisfatte, si procede con la stampa dell’elemento corrente e si continua il controllo con l’elemento successivo.
+\
+
+Si nota che, nel caso degli import, il commento viene stampato all'interno della sezione del file principale, poiché il percorso del file associato al commento corrisponde
+ a quello del file in cui è stato scritto, e non al file importato.
 
 #pagebreak()
 
 = Demo
 
 I principali casi di test sono disponibili nella cartella _tests_.\
-È possibile verificarne il corretto funzionamento eseguendo il comando make demo da riga di comando.
+
+È possibile verificarne il corretto funzionamento eseguendo il comando make demo da riga di comando.\ \
 
 #grid(
   columns: 3,
   column-gutter: 10pt,
-  row-gutter: 5pt,
+  row-gutter: 12pt,
 
   [*ID*],[*Descrizione*],[*Comportamento atteso*],
   [1],[Ereditarietà da una sezione precedente],[Esecuzione corretta, senza errori né warning],
@@ -267,7 +276,6 @@ I principali casi di test sono disponibili nella cartella _tests_.\
   [10],[Riferimento a una variabile inesistente],[Segnala che la variabile riferita è inesistente; esecuzione interrotta],
   [11],[Ereditarietà superflua],[Segnala l'inherit non necessario. Esegue senza modificare l'input.],
 )
-
 /*
 TODO: 
 - testare operazioni su DataStructure: Leo (remove dg)
