@@ -67,7 +67,8 @@ Il non terminale `<Import>` in BNFC ha un'unica regola:
 ```
 ImportFile.     Import ::= String ;
 ```
-dove `String` è il token predefinito di BNFC che riconosce le stringhe delimitate da apici. Il lexer prodotto da BNFC è stato poi modificato e reso conforme con quanto richiesto dalla consegna: gli apici sono stati sostituiti dalle le espressioni regolari `<{IMP}*import{IMP}*>` (in apertura) e `<\/{IMP}*import{IMP}*>` (in chiusura), dove `{IMP}` è un qualsiasi whitespace e/o commento.
+dove `String` è il token predefinito di BNFC che riconosce le stringhe delimitate da apici. Il lexer prodotto da BNFC è stato poi modificato e reso conforme con quanto richiesto dalla consegna: gli apici sono stati sostituiti dalle le espressioni regolari `<{IMP}*import{IMP}*>` (in apertura) e `<\/{IMP}*import{IMP}*>` (in chiusura), dove `{IMP}` è un qualsiasi whitespace e/o commento; sono stati anche creati nuovi stati `IMPORT` e `ESCAPEDI` in maniera analoga a quanto viene generato per `String`.
+
 
 == Path
 Il controllo della correttezza della stringa rappresenate il path, e quindi anche l'import del file, è delegata al parser.
@@ -125,11 +126,9 @@ Creata la struttura risolviamo le variabili non locali ed eventuali cicli
 
 #pagebreak()
 
-= Inherit
-
-#pagebreak()
-
 = DataStructure
+
+== Creazione della struttura dati
 
 == Risoluzione puntatori
 I riferimenti vengono risolti dalle funzioni del modulo `ResolveRefs` direttamente sulla
@@ -146,6 +145,8 @@ parsing.
 
 Anche nel caso di reference a sezioni / field non esistenti il parsing viene fermato con
 un errore.
+
+== Metodi
 
 #pagebreak()
 
