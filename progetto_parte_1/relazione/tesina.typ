@@ -35,7 +35,7 @@ $
 &"<Value>" &-> &"<Integer>" | "\"true\"" | "\"false\"" | "<String>" | "\"$\"" "<Ident>" | "\"$\"" "<Ident>" "\".\"" "<Ident>" ;
 $
 
-Dove $"<Ident>"$ e $"<String>"$ sono Tocken predefiniti di BNFC.
+Dove $"<Ident>"$, $"<String>"$ ed $"<Integer>"$ sono Tocken predefiniti di BNFC.
 
 Il parser generato da Bison a partire da tale grammatica non presenta alcun tipo di
 conflitto.
