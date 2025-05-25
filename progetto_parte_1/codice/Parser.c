@@ -1727,6 +1727,7 @@ XMLS pXMLrec(FILE *inp, String filename)
     }
 }
 
+// Function to create a SymbolLoc_ structure from the given locations.
 SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_init_bottom, YYLTYPE loc_final_bottom) {
     YYLTYPE top_loc = {
         .first_line = loc_init_top.first_line,

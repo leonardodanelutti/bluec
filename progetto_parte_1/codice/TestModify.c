@@ -6,6 +6,8 @@
 #include "PrettyPrinter.h"
 #include "Logs.h"
 
+// Create a new Sections structure from a file
+// Just a copy of build.c
 Sections structure_FromFile(char *filename)
 {
     FILE *input;
@@ -21,15 +23,14 @@ Sections structure_FromFile(char *filename)
     }
     else
         input = stdin;
-    /* The default entry point is used. For other options see Parser.h */
     parse_tree = pXML(input, filename);
-    /* Close file if opened */
+    // Close file if opened
     if (filename)
         fclose(input);
-    /* Create custom data structure */
+    // Create custom data structure
     Sections sections = convert_XMLS_to_Sections(parse_tree);
     free_XMLS(parse_tree);
-    /* Resolve references */
+    // Resolve references
     resolveSections(sections);
     return sections;
 }

@@ -48,7 +48,7 @@ Sections make_SectionNew(Ident ident)
     return new_section;
 }
 
-Fields new_FieldNew(Ident ident, Val_ val)
+Fields new_Field(Ident ident, Val_ val)
 {
     Fields new_field = (Fields)malloc(sizeof(struct Fields_));
     if (new_field == NULL)
@@ -123,12 +123,14 @@ Inherited_ new_Inherit(Ident section_ident, SymbolLoc_ symbol_loc)
 
 void push_Section(Sections sections_list, Ident section_ident)
 {
+    // If sections_list is empty just return the pointer to the new section
     if (sections_list == NULL)
     {
         sections_list = make_SectionNew(section_ident);
         return;
     }
 
+    // else append the new section to the end of the list 
     Sections current = sections_list;
     while (current->next != NULL)
     {
@@ -144,14 +146,16 @@ void push_Section(Sections sections_list, Ident section_ident)
 
 void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ val)
 {
-    Sections current = sections_list;
     // Find the corresponding section
+    Sections current = sections_list;
     while (current != NULL)
     {
         if (strcmp(current->ident, field_ident.section_ident) == 0)
         {
-            Fields new_field = new_FieldNew(field_ident.field_ident, val);
+            // Create field
+            Fields new_field = new_Field(field_ident.field_ident, val);
             new_field->section = current;
+
             // Add inherit if not present
             if (check_Inherit(current, val))
             {
@@ -159,8 +163,9 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                 Inherited_ new_inherit = new_Inherit(strdup(val.u.unresolved_ref.section_ident), default_);
                 da_push(current->inherits, &new_inherit);
             }
+
             // Check if the field already exists in the section, if it does, overwrite it
-            // otherwise, add it to the section
+            // otherwise, add it to the back of the field list
             Fields current_field = current->fields;
             Fields prev_field = NULL;
             while (current_field != NULL)
@@ -195,9 +200,9 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
 
 void delete_Section(Sections sections_list, Ident section_ident)
 {
+    // Find the section to delete
     Sections current = sections_list;
     Sections prev_section = NULL;
-    // Find the section to delete
     while (current != NULL)
     {
         if (strcmp(current->ident, section_ident) == 0)
@@ -233,8 +238,8 @@ void delete_Section(Sections sections_list, Ident section_ident)
 
 void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
 {
-    Sections current = sections_list;
     // Find the corresponding section
+    Sections current = sections_list;
     while (current != NULL)
     {
         if (strcmp(current->ident, field_ident.section_ident) == 0)
@@ -254,6 +259,7 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                         // Copy the field value to the pointer value
                         pointer->val.kind = current_field->val.kind;
                         pointer->val.u = current_field->val.u;
+
                         // If the field value is a reference, we need to update the pointed_by
                         // dynamic array of references and possibly add an inherit
                         if (current_field->val.kind == Ref)
@@ -265,6 +271,8 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                                 Inherited_ new_inherit = new_Inherit(strdup(current_field->val.u.ref->section->ident), default_);
                                 da_push(pointer->section->inherits, &new_inherit);
                             }
+
+                            // Update the pointed_by dynamic array of references
                             da_push(current_field->val.u.ref->pointed_by, &pointer);
                         }
                     }
@@ -277,6 +285,7 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
                     {
                         prev_field->next = current_field->next; // Delete the field in the middle or end
                     }
+                    // Free the field resources
                     free(current_field->ident);
                     da_free(current_field->pointed_by);
                     free_Val(current_field->val);
@@ -294,8 +303,8 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
 
 int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val)
 {
-    Sections current = sections_list;
     // Find the corresponding section
+    Sections current = sections_list;
     while (current != NULL)
     {
         if (strcmp(current->ident, field_ident.section_ident) == 0)
@@ -308,7 +317,7 @@ int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val)
                 {
                     Val_ current_val = current_field->val;
 
-                    // Resolve references if the value is a reference
+                    // Go to the pointed field if it is a reference
                     while (current_val.kind == Ref)
                     {
                         current_val = current_val.u.ref->val;
@@ -337,20 +346,20 @@ Sections convert_XMLS_to_Sections(XMLS xml)
         return NULL;
     }
 
-    /* Create the head of the sections list */
-    Sections sections_list = make_SectionNew(strdup(xml->u.xmlsection_.section_->u.filesection_.ident_));
+    // Create the head of the sections list
+    Sections sections_list = make_SectionNew(xml->u.xmlsection_.section_->u.filesection_.ident_);
     sections_list->symbol_loc = xml->u.xmlsection_.section_->symbol_loc;
     sections_list->fields = convert_SBody_to_Fields(xml->u.xmlsection_.section_->u.filesection_.sbody_,
                                                     sections_list);
 
-    /* Set the global variable */
+    // Set the global variable
     sections = sections_list;
 
     Sections last_section = sections_list;
-    /* Move to the next field */
+    // Move to the next field
     xml = xml->u.xmlsection_.xmls_;
 
-    /* Iterate through the XMLS list and create sections */
+    // Iterate through the XMLS list and create sections
     while (xml->kind == is_XMLSection)
     {
         Ident sec_ident = xml->u.xmlsection_.section_->u.filesection_.ident_;
@@ -358,12 +367,12 @@ Sections convert_XMLS_to_Sections(XMLS xml)
         SBody sbody = xml->u.xmlsection_.section_->u.filesection_.sbody_;
 
         check_Section(sections_list, sec_ident);
-        Sections new_section = make_SectionNew(strdup(sec_ident));
+        Sections new_section = make_SectionNew(sec_ident);
         new_section->symbol_loc = symbol_loc;
         new_section->fields = convert_SBody_to_Fields(sbody, new_section);
         last_section->next = new_section;
         last_section = new_section;
-        /* Move to the next XMLS element */
+        // Move to the next XMLS element
         xml = xml->u.xmlsection_.xmls_;
     }
 
@@ -379,8 +388,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
 
     Ident section_ident = current_section->ident;
 
-    /* Construct a list of all identifiers in the inherits */
-
+    // Construct a dynamic array of all identifiers in the inherits
     DynamicArray *inherit_section_list = current_section->inherits;
 
     while (sbody->kind == is_SBodywInherit)
@@ -390,17 +398,17 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
         sbody = sbody->u.sbodywinherit_.sbody_;
     }
 
+    // Create the head of the fields list
     if (sbody->kind == is_SBodyEmpty)
     {
         return NULL;
     }
 
-    /* Create the head of the fields list */
-
     Ident field_ident = sbody->u.sbodywoinherit_.field_->u.sectionfield_.ident_;
     Val_ val = convert_Value_to_Val_(sbody->u.sbodywoinherit_.field_->u.sectionfield_.value_, section_ident);
     SymbolLoc_ symbol_loc = sbody->u.sbodywoinherit_.field_->symbol_loc;
 
+    // Check if the field is inherited
     if (check_Inherit(current_section, val))
     {
         fprintf(stderr, ERROR "%s:%d:%d: The variable %s refers to section %s, but section %s is not inherited.\n",
@@ -408,14 +416,17 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
                 field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
         exit(EXIT_FAILURE);
     }
-    Fields fields_list = new_FieldNew(strdup(field_ident), val);
+    // Create the first field
+    Fields fields_list = new_Field(field_ident, val);
     fields_list->section = current_section;
     fields_list->symbol_loc = symbol_loc;
 
     Fields last_field = fields_list;
-    /* Move to the next field */
+
+    // Move to the next field
     SBodyF sbodyf = sbody->u.sbodywoinherit_.sbodyf_;
 
+    // Repeat until we reach the end of the SBodyF list
     while (sbodyf->kind == is_SBodyField)
     {
         Ident field_ident = sbodyf->u.sbodyfield_.field_->u.sectionfield_.ident_;
@@ -431,7 +442,7 @@ Fields convert_SBody_to_Fields(SBody sbody, Sections current_section)
                         field_ident, val.u.unresolved_ref.section_ident, val.u.unresolved_ref.section_ident);
                 exit(EXIT_FAILURE);
             }
-            Fields new_field = new_FieldNew(strdup(field_ident), val);
+            Fields new_field = new_Field(field_ident, val);
             new_field->section = current_section;
             new_field->symbol_loc = symbol_loc;
 
@@ -548,12 +559,10 @@ int overwrite_Field(Fields fields_list, Ident field_ident, Val_ val)
         if (strcmp(current->ident, field_ident) == 0)
         {
             current->val = val;
-            /* TODO: warning with line */
             printf(WARNING "%s:%d:%d: Field %s was overwritten with new value in section %s\n",
                    current->symbol_loc.file_path, current->symbol_loc.top_loc.first_line,
                    current->symbol_loc.top_loc.first_column + 1,
                    field_ident, current->section->ident);
-            return 1; // Field found and overwritten
             return 1; // Field found and overwritten
         }
         current = current->next;

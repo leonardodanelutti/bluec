@@ -90,7 +90,7 @@ struct Fields_
 Sections new_Section(Ident ident);
 
 /* Create a new Field */
-Fields new_FieldNew(Ident ident, Val_ val);
+Fields new_Field(Ident ident, Val_ val);
 
 /* Create a new Val */
 Val_ new_Int(int int_);

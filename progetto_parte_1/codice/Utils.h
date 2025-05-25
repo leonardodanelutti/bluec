@@ -17,10 +17,15 @@ typedef struct
     size_t elem_size; // Size of each element
 } DynamicArray;
 
+/* Initialize the dynamic array */
 DynamicArray *da_init(size_t elem_size);
+/* Free the memory used by the array */
 void da_free(DynamicArray *arr);
+/* Add an element to the end */
 void da_push(DynamicArray *arr, void *elem);
+/* Get a pointer to an element at index */
 void *da_get(DynamicArray *arr, size_t index);
+/* Get the array size */
 size_t da_size(DynamicArray *arr);
 
 /***** FILE OPERATIONS *****/

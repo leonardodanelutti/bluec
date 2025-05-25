@@ -10,7 +10,6 @@
 
 /***** DYNAMIC ARRAY *****/
 
-// Initialize the dynamic array
 DynamicArray *da_init(size_t elem_size)
 {
     DynamicArray *arr = malloc(sizeof(DynamicArray));
@@ -27,7 +26,6 @@ DynamicArray *da_init(size_t elem_size)
     return arr;
 }
 
-// Free the memory used by the array
 void da_free(DynamicArray *arr)
 {
     free(arr->data);
@@ -36,7 +34,6 @@ void da_free(DynamicArray *arr)
     arr->capacity = 0;
 }
 
-// Resize the array when needed
 void da_resize(DynamicArray *arr, size_t new_capacity)
 {
     arr->data = realloc(arr->data, arr->elem_size * new_capacity);
@@ -48,7 +45,6 @@ void da_resize(DynamicArray *arr, size_t new_capacity)
     arr->capacity = new_capacity;
 }
 
-// Add an element to the end
 void da_push(DynamicArray *arr, void *elem)
 {
     if (arr->size == arr->capacity)
@@ -60,7 +56,6 @@ void da_push(DynamicArray *arr, void *elem)
     arr->size++;
 }
 
-// Get a pointer to an element at index
 void *da_get(DynamicArray *arr, size_t index)
 {
     if (index >= arr->size)
