@@ -128,9 +128,21 @@ Creata la struttura risolviamo le variabili non locali ed eventuali cicli
 
 = DataStructure
 
+La struttura dati principale è una lista si sezioni, una sezione contiene il suo identificatore, un array dinamico di inherits (ognuno con identificatore e posizione), un puntatore ad una lista di field e il puntatore alla sezione successiva. Un field contiene il suo identificatore, il suo valore, un puntatore alla sezione a cui appartiene ed il puntatore ad il prossimo elemento della lista; inoltre sono stati aggiunti i campi `kind` e `pointed_by` per gestire i riferimenti e le eliminazioni. Un valore è una union dei vari tipi di valore possibili, vengono distinti le reference risolte e non risolte.
+
+Tutte le strutture riportate hanno anche un capo `symbol_loc` che tiene traccia della posizione del simbolo nel file di input, in modo da poter stampare errori e warning con la riga corretta e per poter stampare i commenti associati.
+
+Per ogni sezione viene salvata anche l'array di inherit in modo da poter controllare se ci sono inherit inutilizzati e per poter assegnare i commenti correttamente anche agli inherits.
+
 == Creazione della struttura dati
 
+La struttura dati viene creata a partire dal AST generato dalla funzione `pXML`. Viene visitato l'albero, che in questo caso è una lista per come è stata definita la grammatica, e quindi creata la struttura. Durante questa visita vengono anche eseguiti i seguenti controlli:
+- Viene verificato che non ci siano sezioni duplicate, in tal caso viene stampato un errore e il parsing viene interrotto.
+- Viene verificato che non ci siano field duplicati all'interno della stessa sezione, in tal caso viene stampato un warning e il field viene sovrascritto. E' stato assunto che il valore di un field ripetuta sia l'ultimo valore assegnato.
+- Viene verificato che se sono presenti variabili non locali deve esserci un inherit per la sezione che le contiene, altrimenti viene stampato un errore e il parsing viene interrotto.
+
 == Risoluzione puntatori
+// TODO: parla dello scoping
 I riferimenti vengono risolti dalle funzioni del modulo `ResolveRefs` direttamente sulla
 struttura dati `DataStructure` costruita.
 Nello specifico la funzione `resolveSections` scorre ricorsivamente tutte le `Sections` e
