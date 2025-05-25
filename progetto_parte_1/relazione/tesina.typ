@@ -1,5 +1,6 @@
 #import "template.typ": *
 #import "@preview/fletcher:0.5.5" as fletcher: diagram, node, edge
+#import "@preview/colorful-boxes:1.4.3": colorbox
 
 #show: template
 #set par(spacing: 0.65em)
@@ -41,6 +42,22 @@ Di seguito sono riportate tutte le modifiche effettuate al lexer ed al parser ge
 implementare quanto specificato nella consegna. Ogni sezione tratta una specifica
 richiesta, indipendentemente dal fatto che questa sia stata realizzata a livello di lexer
 o parser.
+
+#colorbox(
+    title: "Versioni",
+    color: "gray",
+    radius: 2pt,
+    width: auto,
+)[
+    Di seguito le versioni / standard degli strumenti utilizzati per realizzare questo
+    progetto:
+    + `C`: standard `C11`;
+    + `BNFC`: 2.9.5;
+    + `Flex`: 2.6.4-8.
+    + `Bison`: 2:3.7.5+dfsg-1;
+
+    È fornito un `Dockerfile` con le versioni usate per semplificare l'uso del progetto.
+]
 
 #pagebreak()
 
