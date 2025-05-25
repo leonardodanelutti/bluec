@@ -204,35 +204,36 @@ La cancellazione di un field fa uso dell'array dinamico `pointed_by` che contien
 
 #figure(
     grid(
+        gutter: 20pt,
         columns: 2,
         [
             #diagram(
                 node-stroke: 1pt,
                 node((0,0), [1]),
-                edge((0,0), (1,1), "-|>", bend: +40deg),
+                edge((0,0), (1,1), "-|>", bend: +20deg),
                 node((0,1), [2]),
                 edge((0,1), (1,1), "-|>"),
                 node((0,2), [3]),
-                edge((0,2), (1,1), "-|>", bend: -40deg),
+                edge((0,2), (1,1), "-|>", bend: -20deg),
                 node((1,1), [4]),
                 edge("-|>"),
                 node((2,1), [5]),
-            ),
+            )
         ],
         [
             #diagram(
                 node-stroke: 1pt,
                 node((0,0), [1]),
-                edge((0,0), (2,1), "-|>", bend: +40deg),
+                edge((0,0), (2,1), "-|>", bend: +30deg),
                 node((0,1), [2]),
                 edge((0,1), (2,1), "-|>"),
                 node((0,2), [3]),
-                edge((0,2), (2,1), "-|>", bend: -40deg),
+                edge((0,2), (2,1), "-|>", bend: -30deg),
                 node((2,1), [5]),
-            ),
+            )
         ],
     ),
-    caption: "Esempio aggiornamento di `pointed_by` durante una cancellazione."
+    caption: "Esempio aggiornamento dei puntatori durante una cancellazione."
 )
 
 #pagebreak()
