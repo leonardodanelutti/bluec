@@ -17,9 +17,10 @@ par(
 }
 #set strike(stroke: 1.5pt + red)
 
-Si è scelto di implementare il progetto in C mediante BNFC
-
 = Grammatica labelled-BNFC
+
+Si è scelto di implementare il progetto in C mediante BNFC. La grammatica con cui è stato
+generato il codice da BNFC è la seguente:
 
 $
 &"<XML>" &-> &epsilon | "<Import>" "<XML>" | "<Section>" "<XMLS>"  \
@@ -31,17 +32,17 @@ $
 &"<Inherit>" &-> &"\"<\"" "inherit" "\">\"" "<Ident>" "\"<\\\"" "inherit" "\">\"" \
 &"<Field>" &-> &"\"<\"" "field" "name" "=" "<Ident>" "\">\"" "<Value>" "\"<\\\"" "field" "\">\"" \
 &"<Value>" &-> &"<Integer>" | "true" | "false" | "<String>" | "$" "<Ident>" | "$" "<Ident>" "." "<Ident>" ;
-
 $
 
-- la grammatica non ha conflitti perchè bison li segnalerebbe
-- nella grammatica .cf Import messo come string e poi modificato file Flex per matchare \<improt>.\*</import>
-  come fossero stringhe. 
-  TODO: 
-  \<import>a</import
-  \# commento
-  >
-  non funziona
+Il parser generato da Bison a partire da tale grammatica non presenta alcun tipo di
+conflitto.
+
+Di seguito sono riportate tutte le modifiche effettuate al lexer ed al parser generati per
+implementare quanto specificato nella consegna. Ogni sezione tratta una specifica
+richiesta, indipendentemente dal fatto che questa sia stata realizzata a livello di lexer
+o parser.
+
+#pagebreak()
 
 = Import
 
@@ -94,6 +95,7 @@ Invece per verificare che non ci siano input ripetuti (ma non ricorsivi) è suff
 
 Entrambe queste situazioni producono un corrispondende warning, senza però bloccare il parsing (gli import ripetuti e/o ricorsivi vengono semplicemente ignorati).
 
+/*
 TODO: gli import dovrebbero essere relativi al file da cui importo non da dove viene chiamato il parser!
 
 Trasformiamo l'abstract syntax tree nella nostra srtuttura dati, in questa operazione veniene anche controllato:
@@ -102,10 +104,17 @@ Trasformiamo l'abstract syntax tree nella nostra srtuttura dati, in questa opera
 - ci sono gli inherit per le variabili non locali
 
 Creata la struttura risolviamo le variabili non locali ed eventuali cicli
+*/
+
+#pagebreak()
+
+= Inherit
+
+#pagebreak()
 
 = DataStructure
 
-== Risolutione puntatori
+== Risoluzione puntatori
 I riferimenti vengono risolti dalle funzioni del modulo `ResolveRefs` direttamente sulla
 struttura dati `DataStructure` costruita.
 Nello specifico la funzione `resolveSections` scorre ricorsivamente tutte le `Sections` e
@@ -120,6 +129,8 @@ parsing.
 
 Anche nel caso di reference a sezioni / field non esistenti il parsing viene fermato con
 un errore.
+
+#pagebreak()
 
 = Pretty Printer
 Questa sezione descrive il funzionamento del Pretty Printer progettato per il nostro linguaggio.
@@ -154,6 +165,7 @@ Ad esempio, nel seguente frammento:\ `1 <field name=var2> $var1
 
 In entrambi i casi, se un commento soddisfa le condizioni, viene stampato prima dell’elemento corrispondente, e l’indice globale _i_ viene incrementato per passare al commento successivo. Al contrario, se le condizioni non sono soddisfatte, si procede con la stampa dell’elemento corrente e si continua il controllo con l’elemento successivo.
 
+#pagebreak()
 
 = Demo
 
@@ -179,8 +191,7 @@ I principali casi di test sono disponibili nella cartella _tests_.\
   [11],[Ereditarietà superflua],[Segnala l'inherit non necessario. Esegue senza modificare l'input.],
 )
 
-
-#pagebreak()
+/*
 TODO: 
 - testare operazioni su DataStructure: Leo (remove dg)
 - migliori errori con linee: F
@@ -192,3 +203,4 @@ TODO:
 
 TODO: (finali solo se c'è tempo)
 - dare warning con inherit ricorsivi?: DG
+*/
