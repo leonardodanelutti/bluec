@@ -141,10 +141,13 @@ La struttura dati viene creata a partire dal AST generato dalla funzione `pXML`.
 - Viene verificato che non ci siano field duplicati all'interno della stessa sezione, in tal caso viene stampato un warning e il field viene sovrascritto. E' stato assunto che il valore di un field ripetuta sia l'ultimo valore assegnato.
 - Viene verificato che se sono presenti variabili non locali deve esserci un inherit per la sezione che le contiene, altrimenti viene stampato un errore e il parsing viene interrotto.
 
-== Risoluzione puntatori
-// TODO: parla dello scoping
-I riferimenti vengono risolti dalle funzioni del modulo `ResolveRefs` direttamente sulla
-struttura dati `DataStructure` costruita.
+== Risoluzione riferimenti
+Trattandosi del parsing di un file di configurazione, si è ritenuto ragionevole permettere
+che alcune variabili siano dichiarate anche dopo il loro utilizzo (comportamento simile
+all’**hoisting** in alcuni linguaggi di programmazione).
+
+I riferimenti vengono quindi risolti alla fine del parsing dalle funzioni del modulo
+`ResolveRefs` direttamente sulla struttura dati `DataStructure` costruita.
 Nello specifico la funzione `resolveSections` scorre ricorsivamente tutte le `Sections` e
 itera sui loro `Fields`. Per ogni valore del tipo `Ref_unresolved` (overo una reference
 ancora non risolta), viene chiamata la funzione `resolveField`.
