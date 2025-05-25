@@ -83,6 +83,10 @@ creare un'istanza della struttura `Import`, chiama ricorsivamente la funzione `p
 file da importare.
 Tale funzione è pensata per essere usata esclusivamente con path UNIX-like.
 
+In questo modo l'effetto è che nell'abstract syntax tree non ci saranno mai `Import`. Per
+questo motivo le strutture `Import` e `XML` (la versione di `XMLS` che è preceduta da uno
+o più `Import`) sono state eliminate.
+
 I path dei file da importare possono essere di due tipi:
 + path assoluti: in questo caso non c'è ambiguità, viene importato il file corrispondente
   se esiste, altrimenti viene ritornato un errore e viene fermato il parsing;
