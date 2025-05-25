@@ -26,14 +26,16 @@ generato il codice da BNFC è la seguente:
 $
 &"<XML>" &-> &epsilon | "<Import>" "<XML>" | "<Section>" "<XMLS>"  \
 &"<XMLS>" &-> &epsilon | "<Section>" "<XMLS>" \
-&"<Import>" &-> &"\"<\"" "import" "\">\"" "<Path>" "\"<\\\"" "import" "\">\"" | "String" \
-&"<Section>" &-> &"\"<\"" "section" "name" "=" "<Ident>" "\">\"" "<SBody>" "\"<\\\"" "section" "\">\"" \
+&"<Import>" &-> &"String" \
+&"<Section>" &-> &"\"<\"" "\"section\"" "\"name\"" "\"=\"" "<Ident>" "\">\"" "<SBody>" "\"<\\\"" "\"section\"" "\">\"" \
 &"<SBody>" &-> &epsilon | "<Inherit>" "<SBody>" | "<Field>" "<SBodyF>" \
 &"<SBodyF>" &-> &epsilon | "<Field>" "<SBodyF>" \
-&"<Inherit>" &-> &"\"<\"" "inherit" "\">\"" "<Ident>" "\"<\\\"" "inherit" "\">\"" \
-&"<Field>" &-> &"\"<\"" "field" "name" "=" "<Ident>" "\">\"" "<Value>" "\"<\\\"" "field" "\">\"" \
-&"<Value>" &-> &"<Integer>" | "true" | "false" | "<String>" | "$" "<Ident>" | "$" "<Ident>" "." "<Ident>" ;
+&"<Inherit>" &-> &"\"<\"" "\"inherit\"" "\">\"" "<Ident>" "\"<\\\"" "\"inherit\"" "\">\"" \
+&"<Field>" &-> &"\"<\"" "\"field\"" "\"name\"" "\"=\"" "<Ident>" "\">\"" "<Value>" "\"<\\\"" "\"field\"" "\">\"" \
+&"<Value>" &-> &"<Integer>" | "\"true\"" | "\"false\"" | "<String>" | "\"$\"" "<Ident>" | "\"$\"" "<Ident>" "\".\"" "<Ident>" ;
 $
+
+Dove $<Ident>$ e $<String>$ sono Tocken predefiniti di BNFC.
 
 Il parser generato da Bison a partire da tale grammatica non presenta alcun tipo di
 conflitto.
