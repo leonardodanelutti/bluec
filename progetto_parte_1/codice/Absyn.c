@@ -92,7 +92,6 @@ XMLS make_ImportFile(String p1, YYLTYPE loc)
     FILE *f = fopen(p, "r");
     if (!f)
     {
-        /* TODO: error handling */
         ERROR_F(&loc, "%s: could not open file \"%s\"\n",
                 (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, p);
         exit(1);
@@ -324,7 +323,6 @@ Value make_Value2(Ident p1, Ident p2, SymbolLoc_ symbol_loc)
     return tmp;
 }
 
-// TODO: remove clone?
 /***************************   Cloning   ******************************/
 
 Section clone_Section(Section p)
@@ -439,30 +437,6 @@ Value clone_Value(Value p)
  * it will attempt to free the same memory twice.
  */
 
-void free_XML(XML p)
-{
-    switch (p->kind)
-    {
-    case is_XMLEmpty:
-        break;
-
-    case is_XMLwImport:
-        free_Import(p->u.xmlwimport_.import_);
-        free_XML(p->u.xmlwimport_.xml_);
-        break;
-
-    case is_XMLwoImport:
-        free_Section(p->u.xmlwoimport_.section_);
-        free_XMLS(p->u.xmlwoimport_.xmls_);
-        break;
-
-    default:
-        fprintf(stderr, "Error: bad kind field when freeing XML!\n");
-        exit(1);
-    }
-    free(p);
-}
-
 void free_XMLS(XMLS p)
 {
     switch (p->kind)
@@ -477,21 +451,6 @@ void free_XMLS(XMLS p)
 
     default:
         fprintf(stderr, "Error: bad kind field when freeing XMLS!\n");
-        exit(1);
-    }
-    free(p);
-}
-
-void free_Import(Import p)
-{
-    switch (p->kind)
-    {
-    case is_ImportFile:
-        free(p->u.importfile_.string_);
-        break;
-
-    default:
-        fprintf(stderr, "Error: bad kind field when freeing Import!\n");
         exit(1);
     }
     free(p);

@@ -53,39 +53,7 @@ typedef struct Value_ *Value;
 
 /********************   Abstract Syntax Classes    ********************/
 
-// TODO: Serve ancora XML_?
-struct XML_
-{
-    enum
-    {
-        is_XMLEmpty,
-        is_XMLwImport,
-        is_XMLwoImport
-    } kind;
-    union
-    {
-        struct
-        {
-            Import import_;
-            XML xml_;
-        } xmlwimport_;
-        struct
-        {
-            Section section_;
-            XMLS xmls_;
-        } xmlwoimport_;
-    } u;
-};
-
-/*
-TODO: verificare che sia funzione inutilizzata
-XML make_XMLEmpty(void);
-*/
 XMLS make_XMLSwImport(XMLS p0, XMLS p1);
-/*
-TODO: verificare che sia funzione inutilizzata
-XML make_XMLwoImport(Section p0, XMLS p1);
-*/
 
 struct XMLS_
 {
@@ -106,22 +74,6 @@ struct XMLS_
 
 XMLS make_XMLSection(Section p0, XMLS p1);
 XMLS make_XMLSEmpty(void);
-
-// TODO: serve ancora Import_?
-struct Import_
-{
-    enum
-    {
-        is_ImportFile
-    } kind;
-    union
-    {
-        struct
-        {
-            String string_;
-        } importfile_;
-    } u;
-};
 
 XMLS make_ImportFile(String p0, YYLTYPE loc);
 
@@ -270,9 +222,7 @@ Value make_Value2(Ident p0, Ident p1, SymbolLoc_ symbol_loc);
 
 /***************************   Cloning   ******************************/
 
-XML clone_XML(XML p);
 XMLS clone_XMLS(XMLS p);
-Import clone_Import(Import p);
 Section clone_Section(Section p);
 SBody clone_SBody(SBody p);
 SBodyF clone_SBodyF(SBodyF p);
@@ -290,9 +240,7 @@ Value clone_Value(Value p);
  * it will attempt to free the same memory twice.
  */
 
-void free_XML(XML p);
 void free_XMLS(XMLS p);
-void free_Import(Import p);
 void free_Section(Section p);
 void free_SBody(SBody p);
 void free_SBodyF(SBodyF p);

@@ -14,7 +14,6 @@ typedef ParsedXML_ *ParsedXML;
 
 /* Custom global variable that stores the parsed files to avoid
    recursive imports. */
-// TODO: add a free function of these globals before exiting.
 extern DynamicArray *parsed_files;
 extern size_t current_file;
 
