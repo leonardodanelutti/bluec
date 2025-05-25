@@ -67,20 +67,30 @@ Il non terminale `<Import>` in BNFC ha un'unica regola:
 ```
 ImportFile.     Import ::= String ;
 ```
-dove `String` è il token predefinito di BNFC che riconosce le stringhe delimitate da apici. Il lexer prodotto da BNFC è stato poi modificato e reso conforme con quanto richiesto dalla consegna: gli apici sono stati sostituiti dalle le espressioni regolari `<{IMP}*import{IMP}*>` (in apertura) e `<\/{IMP}*import{IMP}*>` (in chiusura), dove `{IMP}` è un qualsiasi whitespace e/o commento; sono stati anche creati nuovi stati `IMPORT` e `ESCAPEDI` in maniera analoga a quanto viene generato per `String`.
+dove `String` è il token predefinito di BNFC che riconosce le stringhe delimitate da
+apici. Il lexer prodotto da BNFC è stato poi modificato e reso conforme con quanto
+richiesto dalla consegna: gli apici sono stati sostituiti dalle le espressioni regolari
+`<{IMP}*import{IMP}*>` (in apertura) e `<\/{IMP}*import{IMP}*>` (in chiusura), dove
+`{IMP}` è un qualsiasi whitespace e/o commento; sono stati anche creati nuovi stati
+`IMPORT` e `ESCAPEDI` in maniera analoga a quanto viene generato per `String`.
 
 
 == Path
-Il controllo della correttezza della stringa rappresenate il path, e quindi anche l'import del file, è delegata al parser.
-In particolare la funzione `make_ImportFile` generata da BNFC è stata modificata: anzichè creare un'istanza della struttura `Import`, chiama ricorsivamente la funzione `pXML` sul file da importare.
+Il controllo della correttezza della stringa rappresenate il path, e quindi anche l'import
+del file, è delegata al parser.
+In particolare la funzione `make_ImportFile` generata da BNFC è stata modificata: anzichè
+creare un'istanza della struttura `Import`, chiama ricorsivamente la funzione `pXML` sul
+file da importare.
 Tale funzione è pensata per essere usata esclusivamente con path UNIX-like.
 
 I path dei file da importare possono essere di due tipi:
-+ path assoluti: in questo caso non c'è ambiguità, viene importato il file corrispondente se esiste, altrimenti viene ritornato un errore e viene fermato il parsing;
-+ path relativi: vengono "risolti" rispetto al path del file da cui sono stati importati (o rispetto a dove è stato chiamato l'eseguibile `build` se importati dallo standard input) tramite l'apposita funzione `relative_path`.
++ path assoluti: in questo caso non c'è ambiguità, viene importato il file corrispondente
+  se esiste, altrimenti viene ritornato un errore e viene fermato il parsing;
++ path relativi: vengono "risolti" rispetto al path del file da cui sono stati importati
+  (o rispetto a dove è stato chiamato l'eseguibile `build` se importati dallo standard
+  input) tramite l'apposita funzione `relative_path`.
 
 == Import ricorsivi e multipli
-// TODO: questa sezione copiarla da typst online che avevo modificato qualche roba
 Per gestire import ricorsivi e multipli è stata creato un array globale `parsed_files` che viene popolato ad ogni import con il nome del file importato ed un puntatore al file che lo ha importato.
 
 Ad esempio, consideriamo 4 file che i cui import sono descritti dal seguente grafo delle dipendenze:
@@ -100,18 +110,18 @@ Ad esempio, consideriamo 4 file che i cui import sono descritti dal seguente gra
   caption: "Esempio grafo dipendenze di import."
 )
 
-alla fine dell'elaborazione degli import da parte del parser l'array `parsed_files` sarebbe diventato:
+alla fine dell'elaborazione degli import di 2 in 1 e di 3 in 2, l'array `parsed_files` sarebbe diventato:
 $ mat(
-  1, 2, 3, 4;
-  2, 1, 2, 1;
+  1, 2, 3;
+  3, 1, 2;
 ) $
-dove la prima riga indica i nomi dei file, mentre la seconda riga i puntatori ai file che hanno importato il file nella stessa colonna (ad esempio il file 4 è importato dal file 1).
+dove la prima riga indica i nomi dei file, mentre la seconda riga i puntatori ai file che hanno importato il file nella stessa colonna (ad esempio il file 3 è importato dal file 2).
 
-Dunque per individuare gli input ricorsivi sarà sufficiente percorrere la catena dei riferimenti e verificare che non ce ne siano di ripetuti. In questo esempio nella catena $2 -> 1 -> 2$ il $2$ è ripetuto, e quindi sono import ricorsivi.
+L'import successivo è nuovamente quello di 1. Prima dell'aggiunta a `parsed_files`, la funzione atta al parsing `pXML`, si sarebbe accorta della catena dei riferimenti $3 -> 2 -> 1 -> 3$, dove il $3$ è ripetuto. Quindi avrebbe rifiutato l'import e stampato un opportuno warning conenente la catena di riferimenti ciclica che ha causato il problema.
 
-Invece per verificare che non ci siano input ripetuti (ma non ricorsivi) è sufficiente controllare che non ci siano file ripetuti nella lista `parsed_files`.
+Invece per verificare che non ci siano input ripetuti in generale viene controllato che non ci siano file ripetuti nella lista `parsed_files`. Anche in questo caso viene prodotto il corrispondente warning, e l'import ripetuto viene ignorato.
 
-Entrambe queste situazioni producono un corrispondende warning, senza però bloccare il parsing (gli import ripetuti e/o ricorsivi vengono semplicemente ignorati).
+Infine si sarebbe continuato con l'import di 4.
 
 /*
 TODO: gli import dovrebbero essere relativi al file da cui importo non da dove viene chiamato il parser!
