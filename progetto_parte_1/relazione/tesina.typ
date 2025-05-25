@@ -164,22 +164,27 @@ Il printer è composto da quattro funzioni principali, ognuna responsabile della
 La funzione _printSections_ prende in input una lista di sezioni (un oggetto di tipo _Sections_) e, per ciascuna sezione, stampa il nome, gli eventuali commenti associati, gli elementi ereditati (inherits) e i campi (fields). La stampa degli elementi ereditati, per ogni sezione, è gestita dalla funzione _printInherits_, che riceve in input un oggetto di tipo _DynamicArray_, ovvero un vettore di elementi di tipo _Inherited_ e stampa ciascun elemento insieme agli eventuali commenti associati. I campi, rappresentati da una lista di oggetti Fields, sono stampati tramite la funzione _printFields_, che per ogni _field_ riporta il nome, i commenti eventualmente presenti e il valore. Quest'ultimo è elaborato dalla funzione _printVal_, che lo stampa in base al tipo (intero, stringa, booleano, riferimento), includendo anche in questo caso i commenti associati. Tutte queste funzioni fanno uso della procedura ausiliaria _get_current_comment_, che consente di ottenere il commento corrente sulla base dell'indice globale i.
 
 == Commenti
-Per la gestione dei commenti viene utilizzata una variabile globale _comments_, di tipo _DynamicArray_. Si tratta di un vettore contenente elementi di tipo _Comment\__,  ciascuno composto dai seguenti campi:
-- _file_path_: il percorso del file in cui è presente il commento;
-- _line_: il numero di riga del file in cui si trova il commento;
-- _comment_: il testo del commento.
+La serializzazione effettuata dal Pretty Printer deve contenere anche i commenti presenti
+nel file originario. A tale scopo è stato modificato il parser in modo che, invece di
+ignorare i commenti, li conservi nell' array globale `comments`.
+In particolare `comments` è un `DynamicArray` contenente elementi di tipo `Comment_`,  ciascuno composto dai seguenti campi:
+- `file_path`: il percorso del file in cui è presente il commento;
+- `line`: il numero di riga del file in cui si trova il commento;
+- `comment`: il testo del commento.
+`file_path` e `line` permettono di identificare univocamente i commenti, e quindi
+associarli correttamente al codice in fase di print.
 \
-Quando si stampa una sezione, un _inherit_, un _field_, o un valore vengono stampati anche i commenti associati, se ve ne sono. In particolare la stampa avviene come segue:
-- Per _Sections_, _inherit_ e _fields_, sono considerati sia il valore _top_loc.last_line_#footnote[_last_line_ indica la riga in cui termina il delimitatore di un elemento.
+Quando si stampa una sezione, un `inherit`, un `field`, o un valore vengono stampati anche i commenti associati, se ve ne sono. In particolare la stampa avviene come segue:
+- Per `Sections`, `inherit` e `fields`, sono considerati sia il valore `top_loc.last_line`#footnote[`last_line` indica la riga in cui termina il delimitatore di un elemento.
 Ad esempio, nel seguente frammento:\ `1 <field name=var2> $var1
 2 </field
-3 >` \ _top_loc.last_line_ = 1, mentre _bottom_loc->last_line_ = 3.
-] che il valore _bottom_loc.last_line_, ovvero la posizione iniziale e finale dei delimitatori dell’elemento nel file. Un commento è stampato sopra il delimitatore di un elemento se:
+3 >` \ `top_loc.last_line` = 1, mentre `bottom_loc->last_line` = 3.
+] che il valore `bottom_loc.last_line`, ovvero la posizione iniziale e finale dei delimitatori dell’elemento nel file. Un commento è stampato sopra il delimitatore di un elemento se:
   + il percorso del file del commento coincide con quello dell'elemento;
-  + la riga del commento è minore o uguale a _top_loc.last_line_ (o _bottom_loc.last_line_) dell'elemento.
-- Per i _Val\__ viene invece utilizzato solo bottom_loc, poiché si assumono definiti su una singola riga. Il commento viene quindi stampato se:
+  + la riga del commento è minore o uguale a `top_loc.last_line` (o `bottom_loc.last_line`) dell'elemento.
+- Per i `Val_` viene invece utilizzato solo `bottom_loc`, poiché si assumono definiti su una singola riga. Il commento viene quindi stampato se:
   + il percorso del file coincide;
-  + la riga del commento è minore o uguale a _bottom_loc->last_line_.
+  + la riga del commento è minore o uguale a `bottom_loc->last_line`.
 
 In entrambi i casi, se un commento soddisfa le condizioni, viene stampato prima dell’elemento corrispondente, e l’indice globale _i_ viene incrementato per passare al commento successivo. Al contrario, se le condizioni non sono soddisfatte, si procede con la stampa dell’elemento corrente e si continua il controllo con l’elemento successivo.
 
