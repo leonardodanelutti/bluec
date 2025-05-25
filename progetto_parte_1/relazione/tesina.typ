@@ -202,6 +202,39 @@ Viene aggiunto un field nella sezione specificata, se il field esiste già viene
 
 La cancellazione di un field fa uso dell'array dinamico `pointed_by` che contiene tutti i field che puntano al field da eliminare. Quando il field viene cancellato, vengono anche aggiornati tutti i valori dei field presenti in `pointed_by` con il valore del field eliminato. Se il field eliminato è una reference, viene aggiornato anche il campo `pointed_by` del field puntato e vengono aggiunti eventuali inherits mancanti.
 
+#figure(
+    grid(
+        columns: 2,
+        [
+            #diagram(
+                node-stroke: 1pt,
+                node((0,0), [1]),
+                edge((0,0), (1,1), "-|>", bend: +40deg),
+                node((0,1), [2]),
+                edge((0,1), (1,1), "-|>"),
+                node((0,2), [3]),
+                edge((0,2), (1,1), "-|>", bend: -40deg),
+                node((1,1), [4]),
+                edge("-|>"),
+                node((2,1), [5]),
+            ),
+        ],
+        [
+            #diagram(
+                node-stroke: 1pt,
+                node((0,0), [1]),
+                edge((0,0), (2,1), "-|>", bend: +40deg),
+                node((0,1), [2]),
+                edge((0,1), (2,1), "-|>"),
+                node((0,2), [3]),
+                edge((0,2), (2,1), "-|>", bend: -40deg),
+                node((2,1), [5]),
+            ),
+        ],
+    ),
+    caption: "Esempio aggiornamento di `pointed_by` durante una cancellazione."
+)
+
 #pagebreak()
 
 = Pretty Printer
