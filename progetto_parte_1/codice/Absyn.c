@@ -7,6 +7,7 @@
 #include "Absyn.h"
 #include "Utils.h"
 #include "Parser.h"
+#include "Logs.h"
 
 /********************   XMLSwImport    ********************/
 
@@ -77,22 +78,22 @@ XMLS make_XMLSEmpty()
 /*
 Function modified to return the parsed XMLS.
 */
-XMLS make_ImportFile(String p1)
+XMLS make_ImportFile(String p1, YYLTYPE loc)
 {
     /* Alloc memory for the import */
     XMLS import = (XMLS)malloc(sizeof(*import));
     if (!import)
     {
-        fprintf(stderr, ERROR "out of memory when allocating XMLwImport!\n");
+        ERROR_F(&loc, "out of memory when allocating XMLwImport!\n");
         exit(1);
     }
     /* File open */
-    String p = relative_path(p1, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path);
+    String p = relative_path(p1, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, &loc);
     FILE *f = fopen(p, "r");
     if (!f)
     {
         /* TODO: error handling */
-        fprintf(stderr, ERROR "%s: could not open file \"%s\"\n",
+        ERROR_F(&loc, "%s: could not open file \"%s\"\n",
                 (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path, p);
         exit(1);
     }

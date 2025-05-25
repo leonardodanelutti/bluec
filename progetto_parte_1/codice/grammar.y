@@ -71,8 +71,7 @@ extern yyscan_t grammar__initialize_lexer(FILE * inp);
 %{
 void yyerror(YYLTYPE *loc, yyscan_t scanner, YYSTYPE *result, const char *msg)
 {
-  fprintf(stderr, "error: %d,%d: %s at %s\n",
-    loc->first_line, loc->first_column, msg, grammar_get_text(scanner));
+  ERROR_F(loc, "%s at \"%s\"\n", msg, grammar_get_text(scanner));
 }
 
 SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_init_bottom, YYLTYPE loc_final_bottom);
@@ -120,7 +119,7 @@ XML : /* empty */ { $$ = make_XMLSEmpty(); result->xmls_ = $$; }
 XMLS : Section XMLS { $$ = make_XMLSection($1, $2); result->xmls_ = $$; }
   | /* empty */ { $$ = make_XMLSEmpty(); result->xmls_ = $$; }
 ;
-Import : _STRING_ { $$ = make_ImportFile($1); result->xmls_ = $$; }
+Import : _STRING_ { $$ = make_ImportFile($1, @1); result->xmls_ = $$; }
 ;
 Section : _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT { $$ = make_FileSection($5, $7,  make_loc(@1, @6, @8, @10)); result->section_ = $$; }
 ;
@@ -169,7 +168,8 @@ void exit_callback(void)
 XMLS pXML(FILE *inp, String filename)
 {
     // Register the exit callback.
-    atexit(exit_callback);
+    // TODO: why TestModify aborts if this is uncommented??
+    // atexit(exit_callback);
 
     // Initialize the DynamicArray for parsed files.
     parsed_files = da_init(sizeof(ParsedXML_));
@@ -211,7 +211,7 @@ XMLS pXMLrec(FILE *inp, String filename)
             chain = realloc(chain, chain_size);
             if (chain == NULL)
             {
-                fprintf(stderr, ERROR "Memory reallocation failed for chain string.\n");
+                ERROR_F(NULL, "Memory reallocation failed for chain string.\n");
                 exit(EXIT_FAILURE);
             }
             // Append the parsed_file path to the chain
@@ -222,7 +222,7 @@ XMLS pXMLrec(FILE *inp, String filename)
             stat(file->file_path, &parsed_file_stat);
             if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
-                fprintf(stderr, WARNING "recursive file import detected. Import chain:%s. Continuing parsing without it.\n",
+                WARNING_F(NULL, "Recursive file import detected. Import chain:%s. Continuing parsing without it.\n",
                         chain);
                 return make_XMLSEmpty();
             }
@@ -239,7 +239,7 @@ XMLS pXMLrec(FILE *inp, String filename)
             stat((*(ParsedXML_ *)da_get(parsed_files, i)).file_path, &parsed_file_stat);
             if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
-                fprintf(stderr, WARNING "file %s imported in %s but was already imported. Continuing parsing without reimporting it.\n",
+                WARNING_F(NULL, "File %s imported in %s but was already imported. Continuing parsing without reimporting it.\n",
                         filename, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path);
                 return make_XMLSEmpty();
             }
@@ -256,7 +256,7 @@ XMLS pXMLrec(FILE *inp, String filename)
     YYSTYPE result;
     yyscan_t scanner = grammar__initialize_lexer(inp);
     if (!scanner) {
-        fprintf(stderr, ERROR "Failed to initialize lexer.\n");
+        ERROR_F(NULL, "Failed to initialize lexer.\n");
         return 0;
     }
     int error = yyparse(scanner, &result);

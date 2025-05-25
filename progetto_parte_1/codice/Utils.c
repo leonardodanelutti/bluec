@@ -6,6 +6,7 @@
 #include <libgen.h> // For dirname
 #include <errno.h>  // For errno
 #include "Utils.h"
+#include "Logs.h"
 
 /***** DYNAMIC ARRAY *****/
 
@@ -17,7 +18,7 @@ DynamicArray *da_init(size_t elem_size)
     arr->data = malloc(elem_size * capacity);
     if (arr->data == NULL)
     {
-        fprintf(stderr, ERROR "Memory allocation failed for dynamic array data.\n");
+        printf(ERROR "Memory allocation failed for dynamic array data.\n");
         exit(EXIT_FAILURE);
     }
     arr->size = 0;
@@ -41,7 +42,7 @@ void da_resize(DynamicArray *arr, size_t new_capacity)
     arr->data = realloc(arr->data, arr->elem_size * new_capacity);
     if (arr->data == NULL)
     {
-        fprintf(stderr, ERROR "Memory allocation failed in reallocating in dynamic array.\n");
+        printf(ERROR "Memory allocation failed in reallocating in dynamic array.\n");
         exit(EXIT_FAILURE);
     }
     arr->capacity = new_capacity;
@@ -74,7 +75,7 @@ size_t da_size(DynamicArray *arr)
 
 /***** FILE OPERATIONS *****/
 
-char *relative_path(char *filename1, char *filename2)
+char *relative_path(char *filename1, char *filename2, YYLTYPE *loc)
 {
     // Check if `filename1` is a UNIX absolute path
     if (filename1[0] == '/')
@@ -86,7 +87,7 @@ char *relative_path(char *filename1, char *filename2)
     char *full_path = malloc(strlen(filename2) + strlen(filename1) + 2);
     if (!full_path)
     {
-        fprintf(stderr, ERROR "out of memory when allocating full_path!\n");
+        printf(ERROR "out of memory when allocating full_path!\n");
         exit(1);
     }
 
@@ -101,7 +102,7 @@ char *relative_path(char *filename1, char *filename2)
 
     if (!abs_path)
     {
-        fprintf(stderr, ERROR "%s imported from %s: %s\n", filename1, filename2, strerror(errno));
+        ERROR_F(loc, "%s imported from %s: %s\n", filename1, filename2, strerror(errno));
         exit(1);
     }
     return abs_path;

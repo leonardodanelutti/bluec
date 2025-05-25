@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "ResolveRefs.h"
+#include "Logs.h"
 
 /* Helper function to check whether inherited sections exist. */
 void check_inheritExistance(DynamicArray *inherits, Sections start_sections_list)

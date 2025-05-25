@@ -4,6 +4,7 @@
 #include "Parser.h"
 #include "ResolveRefs.h"
 #include "PrettyPrinter.h"
+#include "Logs.h"
 
 Sections structure_FromFile(char *filename)
 {

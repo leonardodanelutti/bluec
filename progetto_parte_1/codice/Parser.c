@@ -172,8 +172,7 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 void yyerror(YYLTYPE *loc, yyscan_t scanner, YYSTYPE *result, const char *msg)
 {
-  fprintf(stderr, "error: %d,%d: %s at %s\n",
-    loc->first_line, loc->first_column, msg, grammar_get_text(scanner));
+  ERROR_F(loc, "%s at \"%s\"\n", msg, grammar_get_text(scanner));
 }
 
 SymbolLoc_ make_loc(YYLTYPE loc_init_top, YYLTYPE loc_final_top, YYLTYPE loc_init_bottom, YYLTYPE loc_final_bottom);
@@ -182,7 +181,7 @@ int yyparse(yyscan_t scanner, YYSTYPE *result);
 
 extern int yylex(YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
 
-#line 186 "Parser.c"
+#line 185 "Parser.c"
 
 
 #ifdef short
@@ -563,9 +562,9 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   116,   116,   117,   118,   120,   121,   123,   125,   127,
-     128,   129,   131,   132,   134,   136,   138,   139,   140,   141,
-     142,   143
+       0,   115,   115,   116,   117,   119,   120,   122,   124,   126,
+     127,   128,   130,   131,   133,   135,   137,   138,   139,   140,
+     141,   142
 };
 #endif
 
@@ -1273,127 +1272,127 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* XML: %empty  */
-#line 116 "grammar.y"
+#line 115 "grammar.y"
                   { (yyval.xmls_) = make_XMLSEmpty(); result->xmls_ = (yyval.xmls_); }
-#line 1279 "Parser.c"
+#line 1278 "Parser.c"
     break;
 
   case 3: /* XML: Import XML  */
-#line 117 "grammar.y"
+#line 116 "grammar.y"
                { (yyval.xmls_) = make_XMLSwImport((yyvsp[-1].xmls_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1285 "Parser.c"
+#line 1284 "Parser.c"
     break;
 
   case 4: /* XML: Section XMLS  */
-#line 118 "grammar.y"
+#line 117 "grammar.y"
                  { (yyval.xmls_) = make_XMLSection((yyvsp[-1].section_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1291 "Parser.c"
+#line 1290 "Parser.c"
     break;
 
   case 5: /* XMLS: Section XMLS  */
-#line 120 "grammar.y"
+#line 119 "grammar.y"
                     { (yyval.xmls_) = make_XMLSection((yyvsp[-1].section_), (yyvsp[0].xmls_)); result->xmls_ = (yyval.xmls_); }
-#line 1297 "Parser.c"
+#line 1296 "Parser.c"
     break;
 
   case 6: /* XMLS: %empty  */
-#line 121 "grammar.y"
+#line 120 "grammar.y"
                 { (yyval.xmls_) = make_XMLSEmpty(); result->xmls_ = (yyval.xmls_); }
-#line 1303 "Parser.c"
+#line 1302 "Parser.c"
     break;
 
   case 7: /* Import: _STRING_  */
-#line 123 "grammar.y"
-                  { (yyval.xmls_) = make_ImportFile((yyvsp[0]._string)); result->xmls_ = (yyval.xmls_); }
-#line 1309 "Parser.c"
+#line 122 "grammar.y"
+                  { (yyval.xmls_) = make_ImportFile((yyvsp[0]._string), (yylsp[0])); result->xmls_ = (yyval.xmls_); }
+#line 1308 "Parser.c"
     break;
 
   case 8: /* Section: _LT _KW_section _KW_name _EQ _IDENT_ _GT SBody _SYMB_3 _KW_section _GT  */
-#line 125 "grammar.y"
+#line 124 "grammar.y"
                                                                                  { (yyval.section_) = make_FileSection((yyvsp[-5]._string), (yyvsp[-3].sbody_),  make_loc((yylsp[-9]), (yylsp[-4]), (yylsp[-2]), (yylsp[0]))); result->section_ = (yyval.section_); }
-#line 1315 "Parser.c"
+#line 1314 "Parser.c"
     break;
 
   case 9: /* SBody: %empty  */
-#line 127 "grammar.y"
+#line 126 "grammar.y"
                     { (yyval.sbody_) = make_SBodyEmpty(); result->sbody_ = (yyval.sbody_); }
-#line 1321 "Parser.c"
+#line 1320 "Parser.c"
     break;
 
   case 10: /* SBody: Inherit SBody  */
-#line 128 "grammar.y"
+#line 127 "grammar.y"
                   { (yyval.sbody_) = make_SBodywInherit((yyvsp[-1].inherit_), (yyvsp[0].sbody_)); result->sbody_ = (yyval.sbody_); }
-#line 1327 "Parser.c"
+#line 1326 "Parser.c"
     break;
 
   case 11: /* SBody: Field SBodyF  */
-#line 129 "grammar.y"
+#line 128 "grammar.y"
                  { (yyval.sbody_) = make_SBodywoInherit((yyvsp[-1].field_), (yyvsp[0].sbodyf_)); result->sbody_ = (yyval.sbody_); }
-#line 1333 "Parser.c"
+#line 1332 "Parser.c"
     break;
 
   case 12: /* SBodyF: Field SBodyF  */
-#line 131 "grammar.y"
+#line 130 "grammar.y"
                       { (yyval.sbodyf_) = make_SBodyField((yyvsp[-1].field_), (yyvsp[0].sbodyf_)); result->sbodyf_ = (yyval.sbodyf_); }
-#line 1339 "Parser.c"
+#line 1338 "Parser.c"
     break;
 
   case 13: /* SBodyF: %empty  */
-#line 132 "grammar.y"
+#line 131 "grammar.y"
                 { (yyval.sbodyf_) = make_SBodyFEmpty(); result->sbodyf_ = (yyval.sbodyf_); }
-#line 1345 "Parser.c"
+#line 1344 "Parser.c"
     break;
 
   case 14: /* Inherit: _LT _KW_inherit _GT _IDENT_ _SYMB_3 _KW_inherit _GT  */
-#line 134 "grammar.y"
+#line 133 "grammar.y"
                                                               { (yyval.inherit_) = make_InheritSection((yyvsp[-3]._string), make_loc((yylsp[-6]), (yylsp[-4]), (yylsp[-2]), (yylsp[0]))); result->inherit_ = (yyval.inherit_); }
-#line 1351 "Parser.c"
+#line 1350 "Parser.c"
     break;
 
   case 15: /* Field: _LT _KW_field _KW_name _EQ _IDENT_ _GT Value _SYMB_3 _KW_field _GT  */
-#line 136 "grammar.y"
+#line 135 "grammar.y"
                                                                            { (yyval.field_) = make_SectionField((yyvsp[-5]._string), (yyvsp[-3].value_), make_loc((yylsp[-9]), (yylsp[-4]), (yylsp[-2]), (yylsp[0]))); result->field_ = (yyval.field_); }
-#line 1357 "Parser.c"
+#line 1356 "Parser.c"
     break;
 
   case 16: /* Value: _INTEGER_  */
-#line 138 "grammar.y"
+#line 137 "grammar.y"
                   { (yyval.value_) = make_ValueInteger((yyvsp[0]._int), make_loc((yylsp[0]), (yylsp[0]), (yylsp[0]), (yylsp[0]))); result->value_ = (yyval.value_); }
-#line 1363 "Parser.c"
+#line 1362 "Parser.c"
     break;
 
   case 17: /* Value: _KW_true  */
-#line 139 "grammar.y"
+#line 138 "grammar.y"
              { (yyval.value_) = make_Value_true(make_loc((yylsp[0]), (yylsp[0]), (yylsp[0]), (yylsp[0]))); result->value_ = (yyval.value_); }
-#line 1369 "Parser.c"
+#line 1368 "Parser.c"
     break;
 
   case 18: /* Value: _KW_false  */
-#line 140 "grammar.y"
+#line 139 "grammar.y"
               { (yyval.value_) = make_Value_false(make_loc((yylsp[0]), (yylsp[0]), (yylsp[0]), (yylsp[0]))); result->value_ = (yyval.value_); }
-#line 1375 "Parser.c"
+#line 1374 "Parser.c"
     break;
 
   case 19: /* Value: _STRING_  */
-#line 141 "grammar.y"
+#line 140 "grammar.y"
              { (yyval.value_) = make_ValueString((yyvsp[0]._string), make_loc((yylsp[0]), (yylsp[0]), (yylsp[0]), (yylsp[0]))); result->value_ = (yyval.value_); }
-#line 1381 "Parser.c"
+#line 1380 "Parser.c"
     break;
 
   case 20: /* Value: _DOLLAR _IDENT_  */
-#line 142 "grammar.y"
+#line 141 "grammar.y"
                     { (yyval.value_) = make_Value1((yyvsp[0]._string), make_loc((yylsp[-1]), (yylsp[0]), (yylsp[-1]), (yylsp[0]))); result->value_ = (yyval.value_); }
-#line 1387 "Parser.c"
+#line 1386 "Parser.c"
     break;
 
   case 21: /* Value: _DOLLAR _IDENT_ _DOT _IDENT_  */
-#line 143 "grammar.y"
+#line 142 "grammar.y"
                                  { (yyval.value_) = make_Value2((yyvsp[-2]._string), (yyvsp[0]._string), make_loc((yylsp[-3]), (yylsp[0]), (yylsp[-3]), (yylsp[0]))); result->value_ = (yyval.value_); }
-#line 1393 "Parser.c"
+#line 1392 "Parser.c"
     break;
 
 
-#line 1397 "Parser.c"
+#line 1396 "Parser.c"
 
       default: break;
     }
@@ -1592,7 +1591,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 146 "grammar.y"
+#line 145 "grammar.y"
 
 
 /* Custom global variable that stores the parsed files to avoid
@@ -1619,7 +1618,7 @@ void exit_callback(void)
 XMLS pXML(FILE *inp, String filename)
 {
     // Register the exit callback.
-    atexit(exit_callback);
+    // atexit(exit_callback);
 
     // Initialize the DynamicArray for parsed files.
     parsed_files = da_init(sizeof(ParsedXML_));
@@ -1661,7 +1660,7 @@ XMLS pXMLrec(FILE *inp, String filename)
             chain = realloc(chain, chain_size);
             if (chain == NULL)
             {
-                fprintf(stderr, ERROR "Memory reallocation failed for chain string.\n");
+                ERROR_F(NULL, "Memory reallocation failed for chain string.\n");
                 exit(EXIT_FAILURE);
             }
             // Append the parsed_file path to the chain
@@ -1672,7 +1671,7 @@ XMLS pXMLrec(FILE *inp, String filename)
             stat(file->file_path, &parsed_file_stat);
             if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
-                fprintf(stderr, WARNING "recursive file import detected. Import chain:%s. Continuing parsing without it.\n",
+                WARNING_F(NULL, "Recursive file import detected. Import chain:%s. Continuing parsing without it.\n",
                         chain);
                 return make_XMLSEmpty();
             }
@@ -1689,7 +1688,7 @@ XMLS pXMLrec(FILE *inp, String filename)
             stat((*(ParsedXML_ *)da_get(parsed_files, i)).file_path, &parsed_file_stat);
             if ((parsed_file_stat.st_ino == file_stat.st_ino) && (parsed_file_stat.st_dev == file_stat.st_dev))
             {
-                fprintf(stderr, WARNING "file %s imported in %s but was already imported. Continuing parsing without reimporting it.\n",
+                WARNING_F(NULL, "File %s imported in %s but was already imported. Continuing parsing without reimporting it.\n",
                         filename, (*(ParsedXML_ *)da_get(parsed_files, current_file)).file_path);
                 return make_XMLSEmpty();
             }
@@ -1706,7 +1705,7 @@ XMLS pXMLrec(FILE *inp, String filename)
     YYSTYPE result;
     yyscan_t scanner = grammar__initialize_lexer(inp);
     if (!scanner) {
-        fprintf(stderr, ERROR "Failed to initialize lexer.\n");
+        ERROR_F(NULL, "Failed to initialize lexer.\n");
         return 0;
     }
     int error = yyparse(scanner, &result);

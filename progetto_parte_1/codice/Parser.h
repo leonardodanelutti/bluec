@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "Absyn.h"
+#include "Utils.h"
 
 /* Struct that holds an entry of the parsed_file list. */
 struct ParsedXML_;

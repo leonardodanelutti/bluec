@@ -16,6 +16,7 @@
 #include "Utils.h"
 #include "ResolveRefs.h"
 #include "PrettyPrinter.h"
+#include "Logs.h"
 
 Sections structure_FromFile(char *filename);
 void print_Structure(char *filename);
@@ -76,7 +77,8 @@ Sections structure_FromFile(char *filename)
 
     if (parse_tree == 0)
     {
-        fprintf(stderr, ERROR "Failed to parse XML from file entrypoint: %s\n", filename);
+        // TODO: Perchè printare un doppio errore?
+        // fprintf(stderr, ERROR "Failed to parse XML from file entrypoint: %s\n", filename);
         exit(EXIT_FAILURE);
     }
     /* Create custom data structure */

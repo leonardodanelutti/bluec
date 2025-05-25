@@ -123,7 +123,7 @@ struct Import_
     } u;
 };
 
-XMLS make_ImportFile(String p0);
+XMLS make_ImportFile(String p0, YYLTYPE loc);
 
 struct Section_
 {

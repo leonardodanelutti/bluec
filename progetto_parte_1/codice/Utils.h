@@ -1,7 +1,7 @@
 #ifndef UTILS_HEADER
 #define UTILS_HEADER
 
-#include "Logs.h"
+typedef struct YYLTYPE YYLTYPE;
 
 /***** DYNAMIC ARRAY *****/
 
@@ -22,6 +22,6 @@ size_t da_size(DynamicArray *arr);
 /***** FILE OPERATIONS *****/
 
 /* Open a file (`filename1`) relatively to another file path (`filename2`). */
-char *relative_path(char *filename1, char *filename2);
+char *relative_path(char *filename1, char *filename2, YYLTYPE *loc);
 
 #endif

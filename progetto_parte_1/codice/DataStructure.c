@@ -4,6 +4,7 @@
 
 #include "ResolveRefs.h"
 #include "DataStructure.h"
+#include "Logs.h"
 
 Sections sections = NULL;
 
@@ -133,7 +134,7 @@ void push_Section(Sections sections_list, Ident section_ident)
     {
         if (strcmp(current->ident, section_ident) == 0)
         {
-            fprintf(stderr, WARNING "Section %s is already defined, section will not be pushed\n", section_ident);
+            WARNING_F(NULL, "Section %s is already defined, section will not be pushed\n", section_ident);
         }
         current = current->next;
     }
@@ -170,7 +171,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
                     // resolve the field identifier
                     resolveField(current_field, sections_list, 0);
                     /* TODO: warning with line */
-                    printf(WARNING "Field %s was overwritten\n", field_ident.field_ident);
+                    WARNING_F(NULL, "Field %s was overwritten\n", field_ident.field_ident);
                     return; // Field found and overwritten
                 }
                 prev_field = current_field;
@@ -190,7 +191,7 @@ void push_FieldToSection(Sections sections_list, FieldIdent_ field_ident, Val_ v
         }
         current = current->next;
     }
-    fprintf(stderr, WARNING "Section %s not found, field will not be pushed\n", field_ident.section_ident);
+    WARNING_F(NULL, "Section %s not found, field will not be pushed\n", field_ident.section_ident);
 }
 
 void delete_Section(Sections sections_list, Ident section_ident)
@@ -228,7 +229,7 @@ void delete_Section(Sections sections_list, Ident section_ident)
         prev_section = current;
         current = current->next;
     }
-    fprintf(stderr, WARNING "Section %s not found\n", section_ident);
+    WARNING_F(NULL, "Section %s not found\n", section_ident);
 }
 
 void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
@@ -289,7 +290,7 @@ void delete_FieldInSection(Sections sections_list, FieldIdent_ field_ident)
         }
         current = current->next;
     }
-    fprintf(stderr, WARNING "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
+    WARNING_F(NULL, "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
 }
 
 int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val)
@@ -319,12 +320,12 @@ int get_value(Sections sections_list, FieldIdent_ field_ident, Val return_val)
                 }
                 current_field = current_field->next;
             }
-            fprintf(stderr, WARNING "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
+            WARNING_F(NULL, "Field %s not found in section %s\n", field_ident.field_ident, field_ident.section_ident);
             return -2; // Field not found
         }
         current = current->next;
     }
-    fprintf(stderr, WARNING "Section %s not found \n", field_ident.section_ident);
+    WARNING_F(NULL, "Section %s not found \n", field_ident.section_ident);
     return -1; // Section not found
 }
 

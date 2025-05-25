@@ -61,7 +61,8 @@ ERROR: ../tests/testCase4.txt:1:2: Section sez1 has multiple definitions
 
 example 5: recursive import
 
-WARNING: recursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
+WARNING: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf: Recursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
+
 
 [Pretty Print (after references resolution)]
 <section name=sezfile2>
@@ -73,8 +74,10 @@ WARNING: recursive file import detected. Import chain: /workspaces/compilers/pro
 
 example 6: repeated import
 
-WARNING: recursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
-WARNING: file /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf imported in ../tests/testCase6.txt but was already imported. Continuing parsing without reimporting it.
+WARNING: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf: Recursive file import detected. Import chain: /workspaces/compilers/progetto_parte_1/tests/glob/file2.cnf -> /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf. Continuing parsing without it.
+
+WARNING: ../tests/testCase6.txt: File /workspaces/compilers/progetto_parte_1/tests/glob/file1.cnf imported in ../tests/testCase6.txt but was already imported. Continuing parsing without reimporting it.
+
 
 [Pretty Print (after references resolution)]
 <section name=sezfile2>
