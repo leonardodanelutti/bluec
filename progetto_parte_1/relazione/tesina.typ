@@ -158,7 +158,7 @@ La struttura dati viene creata a partire dal AST generato dalla funzione `pXML`.
 == Risoluzione riferimenti
 Trattandosi del parsing di un file di configurazione, si è ritenuto ragionevole permettere
 che alcune variabili siano dichiarate anche dopo il loro utilizzo (comportamento simile
-all’**hoisting** in alcuni linguaggi di programmazione).
+all’_hoisting_ in alcuni linguaggi di programmazione).
 
 I riferimenti vengono quindi risolti alla fine del parsing dalle funzioni del modulo
 `ResolveRefs` direttamente sulla struttura dati `DataStructure` costruita.
