@@ -1,5 +1,5 @@
 #import "template.typ": *
-#import "@preview/fletcher:0.5.7" as fletcher: diagram, node, edge
+#import "@preview/fletcher:0.5.5" as fletcher: diagram, node, edge
 
 #show: template
 #set par(spacing: 0.65em)
@@ -61,6 +61,7 @@ I path dei file da importare possono essere di due tipi:
 + path relativi: vengono "risolti" rispetto al path del file da cui sono stati importati (o rispetto a dove è stato chiamato l'eseguibile `build` se importati dallo standard input) tramite l'apposita funzione `relative_path`.
 
 == Import ricorsivi e multipli
+// TODO: questa sezione copiarla da typst online che avevo modificato qualche roba
 Per gestire import ricorsivi e multipli è stata creato un array globale `parsed_files` che viene popolato ad ogni import con il nome del file importato ed un puntatore al file che lo ha importato.
 
 Ad esempio, consideriamo 4 file che i cui import sono descritti dal seguente grafo delle dipendenze:
@@ -105,6 +106,20 @@ Creata la struttura risolviamo le variabili non locali ed eventuali cicli
 = DataStructure
 
 == Risolutione puntatori
+I riferimenti vengono risolti dalle funzioni del modulo `ResolveRefs` direttamente sulla
+struttura dati `DataStructure` costruita.
+Nello specifico la funzione `resolveSections` scorre ricorsivamente tutte le `Sections` e
+itera sui loro `Fields`. Per ogni valore del tipo `Ref_unresolved` (overo una reference
+ancora non risolta), viene chiamata la funzione `resolveField`.
+`resolveField` esegue una visita simil DFS scoprendo tutta la catena di reference (sul
+field su cui è stata chiamata) fino ad un valore già risolto.
+
+Sempre in stile DFS, i field vengono marcati come `Visited` o `Not_visited` per scoprire
+eventuali dipendenze cicliche. In tal caso viene stampato un errore e viene abortito il
+parsing.
+
+Anche nel caso di reference a sezioni / field non esistenti il parsing viene fermato con
+un errore.
 
 = Pretty Printer
 Questa sezione descrive il funzionamento del Pretty Printer progettato per il nostro linguaggio.
