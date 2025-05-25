@@ -160,6 +160,16 @@ un errore.
 
 == Metodi
 
+=== Risoluzione del valore di un field
+
+Per risalire al valore di un field si può utilizzare la funzione `get_value`, che, dopo aver trovato il field richiesto, se il valore è una reference risale la catena di riferimenti fino a trovare il valore effettivo. Non si può incorrere in cicli o riferimenti non risolti in quanto questa funzione viene chiamata dopo la risoluzione dei puntatori.
+
+=== Aggiunta
+
+Viene aggiunto un field nella sezione specificata, se il field esiste già viene sovrascritto il valore, altrimenti viene creato un nuovo field. Se viene inserita una reference il riferimento viene risolto e viene aggiunto anche l'inherit corrispondente se non è già presente.
+
+=== Cancellazione
+
 #pagebreak()
 
 = Pretty Printer
