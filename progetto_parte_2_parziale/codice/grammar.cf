@@ -1,0 +1,89 @@
+-- Blue has only single line comments
+-- (https://www.crescenziogallo.it/unifg/SSIS/PLPA/2006-2007/lmobj/blue/resources/lang-manual/blue0014.htm#E9E14).
+-- == comment removed from the grammar
+comment "--";
+-- Multi-line comments added to the grammar
+comment "/*" "*/";
+
+-- Blue identifiers differ from haskell identifiers
+-- (https://www.crescenziogallo.it/unifg/SSIS/PLPA/2006-2007/lmobj/blue/resources/lang-manual/blue0004.htm#E9E4).
+token BlueIdent ((letter | '_') (letter | digit | '_')*);
+
+entrypoints Program;
+
+-- PROGRAM
+ProgramDecl.                    Program ::= ConstB VarB [P];
+separator P "";
+FunDecl.                        P ::= FunD;
+ProcDecl.                       P ::= ProcD;
+
+separator nonempty BlueIdent ",";
+separator nonempty Expr ",";
+
+-- VARS
+VarBlockEmpty.                  VarB ::= {- empty -}; -- Var block can be empty
+VarBlock.                       VarB ::= "var" [VarA];
+VarDeclAss.                     VarA ::= [BlueIdent] ":" Type ":=" [Expr];
+separator nonempty VarA "";
+
+-- CONSTS
+ConstBlockEmpty.                ConstB ::= {- empty -}; -- Const block can be empty
+ConstBlock.                     ConstB ::= "const" [ConstA];
+ConstDeclAss.                   ConstA ::= [BlueIdent] ":" PType ":=" [Expr];
+separator nonempty  ConstA "";
+
+rules PType ::= "Boolean" | "Integer" | "Real" | "String" | "Char";
+rules CType ::= "Array" "<" Type ";" Integer ">" | "&" Type;
+rules Type ::= PType | CType;
+
+-- ROUTINES
+Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody;
+FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody;
+Proc.                           FunD ::= BlueIdent "(" [Param] ")" RoutBody;
+ProcEmpty.                      FunD ::= BlueIdent RoutBody;
+RoutParam.                      Param ::= Mode Ident ":" PType;
+separator Type ",";
+separator Param ",";
+
+RoutBody.                       RoutBody ::=  "is" ConstB VarB "do" [Statement] "end" BlueIdent;
+
+rules Mode ::= "ref" | "valres" | {- empty -};
+-- TODO: altre modalità di passaggio
+
+-- STATEMENTS
+StatementAss.                   Statement ::= [LExpr] ":=" [RExpr];
+StatementProcCall.              Statement ::= BlueIdent "(" [RExpr] ")"; -- TODO: check if it is correct that takes a RExpr
+StatementProcEmptyCall.         Statement ::= BlueIdent;
+StatementReturn.                Statement ::= "return" [RExpr];
+StatementContinue.              Statement ::= "continue";
+StatementIf.                    Statement ::= If;
+-- TODO: StatementCase.                  Statement ::= Case;
+StatementLoop.                  Statement ::= Loop;
+separator RExpr ",";
+
+-- CONDITIONALS
+CondIf.                         If ::= "if" RExpr "then" [Statement] "end" "if";
+CondIfElse.                     If ::= "if" RExpr "then" [Statement] "else" [Statement] "end" "if";
+-- TODO: CondCase.                       Case ::= ;
+
+-- INDETERMINATE ITERATION
+Loop.                           Loop ::= "loop" [Statement] [Exit];
+LoopExit.                       Exit ::= "exit" "on" RExpr [Statement];
+separator Exit "";
+
+-- DETERMINATE ITERATION
+-- TODO:
+
+-- EXPRESSIONS
+ExpressionFunCall.              RExpr ::= ;
+ExpressionFunEmptyCall.         RExpr ::= ;
+
+
+- procedure funzioni con modalità esplicite (default per value) (in qualsasi blocco)
+- variabili in qualsiasi blocco
+- operazioni
+- tipi base e composti
+- condizionali semplici
+- (non richiesto - case)
+- iterazione indeterminata (while do (e non richiesto do while))
+- (non richiesto - iterazione determinata (for o foreach))
