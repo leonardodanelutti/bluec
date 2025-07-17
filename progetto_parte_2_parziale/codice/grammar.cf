@@ -7,9 +7,10 @@ comment "/*" "*/";
 
 -- Blue identifiers differ from haskell identifiers
 -- (https://www.crescenziogallo.it/unifg/SSIS/PLPA/2006-2007/lmobj/blue/resources/lang-manual/blue0004.htm#E9E4).
-token DeclIdent ((letter | '_') (letter | digit | '_')*) (':');
-token DeclIdentNonLast ((letter | '_') (letter | digit | '_')*) (',');
 token BlueIdent ((letter | '_') (letter | digit | '_')*);
+-- TODO: fix conflitti stati 21 41 da capire se togliere
+-- token DeclIdent ((letter | '_') (letter | digit | '_')*) (':');
+-- token DeclIdentNonLast ((letter | '_') (letter | digit | '_')*) (',');
 
 entrypoints Program;
 
@@ -24,14 +25,14 @@ ProcDecl.                       P ::= ProcD;
 -- VARS
 VarBlockEmpty.                  VarB ::= {- empty -}; -- Var block can be empty
 VarBlock.                       VarB ::= "var" [VarA];
-VarDeclAss.                     VarA ::= [DeclIdentNonLast] DeclIdent Type ":=" [RExpNE];
+VarDeclAss.                     VarA ::= [BlueIdent] Type ":=" [RExpNE];
 terminator nonempty VarA ";";
-separator DeclIdentNonLast "";
+separator BlueIdent "";
 
 -- CONSTS
 ConstBlockEmpty.                ConstB ::= {- empty -}; -- Const block can be empty
 ConstBlock.                     ConstB ::= "const" [ConstA];
-ConstDeclAss.                   ConstA ::= [DeclIdentNonLast] DeclIdent PType ":=" [RExpNE];
+ConstDeclAss.                   ConstA ::= [BlueIdent] PType ":=" [RExpNE];
 terminator nonempty  ConstA ";";
 
 rules PType ::= "Boolean" | "Integer" | "Real" | "String" | "Char";
@@ -48,7 +49,7 @@ separator Type ",";
 separator Param ",";
 
 RoutineBody.                    RoutBody ::=  "is" ConstB VarB "do" [Statement] "end" BlueIdent;
-terminator Statement ";";
+terminator Statement "";
 
 rules Mode ::= "val" | "valres" | "ref" | {- empty -};
 
@@ -56,13 +57,13 @@ RoutineCall.                    RoutCall ::= BlueIdent "(" [RExp] ")";
 -- RoutineCallEmpty.               RoutCall ::= BlueIdent; TODO: this was removed because it is unused (RExpr can be a BlueIdent and RoutCall can only be a RExpr)
 
 -- STATEMENTS
-StatementAss.                   Statement ::= [LExp] ":=" [RExpNE];
-StatementProcCall.              Statement ::= BlueIdent "(" [RExp] ")";
-StatementProcEmptyCall.         Statement ::= BlueIdent;
-StatementReturn.                Statement ::= "return" [RExp];
-StatementContinue.              Statement ::= "continue";
-StatementIf.                    Statement ::= If;
-StatementLoop.                  Statement ::= Loop;
+StatementAss.                   Statement ::= [LExp] ":=" [RExpNE] ";";
+StatementProcCall.              Statement ::= BlueIdent "(" [RExp] ")" ";";
+StatementProcEmptyCall.         Statement ::= BlueIdent ";";
+StatementReturn.                Statement ::= "return" [RExp] ";";
+StatementContinue.              Statement ::= "continue" ";";
+StatementIf.                    Statement ::= If "end" "if";
+StatementLoop.                  Statement ::= Loop "end" "loop";
 -- TODO: Case
 separator RExp ",";
 separator LExp ",";
@@ -70,8 +71,8 @@ NotEmptyRExp.                   RExpNE ::= RExp;
 separator nonempty RExpNE ",";
 
 -- CONDITIONALS
-CondIf.                         If ::= "if" RExp "then" [Statement] "end" "if";
-CondIfElse.                     If ::= "if" RExp "then" [Statement] "else" [Statement] "end" "if";
+CondIf.                         If ::= "if" RExp "then" [Statement];
+CondIfElse.                     If ::= "if" RExp "then" [Statement] "else" [Statement];
 
 -- INDETERMINATE ITERATION
 LoopEntry.                      Loop ::= "loop" [Statement] [Exit];
