@@ -24,14 +24,14 @@ ProcDecl.                       P ::= ProcD;
 -- VARS
 VarBlockEmpty.                  VarB ::= {- empty -}; -- Var block can be empty
 VarBlock.                       VarB ::= "var" [VarA];
-VarDeclAss.                     VarA ::= [DeclIdentNonLast] DeclIdent Type ":=" [RExp];
+VarDeclAss.                     VarA ::= [DeclIdentNonLast] DeclIdent Type ":=" [RExpNE];
 separator nonempty VarA "";
 separator DeclIdentNonLast "";
 
 -- CONSTS
 ConstBlockEmpty.                ConstB ::= {- empty -}; -- Const block can be empty
 ConstBlock.                     ConstB ::= "const" [ConstA];
-ConstDeclAss.                   ConstA ::= [DeclIdentNonLast] DeclIdent PType ":=" [RExp];
+ConstDeclAss.                   ConstA ::= [DeclIdentNonLast] DeclIdent PType ":=" [RExpNE];
 separator nonempty  ConstA "";
 
 rules PType ::= "Boolean" | "Integer" | "Real" | "String" | "Char";
