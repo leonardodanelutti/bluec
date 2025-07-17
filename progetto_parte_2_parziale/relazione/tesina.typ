@@ -31,3 +31,8 @@ par(
     - limitare la sintassi concreta e fare i due casi (mettendo la condizione all'inizio o alla fine)
 - leo ha deciso warning (o no) se nelle funzioni ci sono le parentesi senza niente dentro
 - nelle function call no punto (ovviamente perchè non abbiamo le classi)
+
+
+= Conflitti
+Conflitto LExp vs RExp fare sempre shift (?)
+Inseriti i ; per separare le istruzioni. Così risolti sia i problemi legati alle funzioni che ai deref
