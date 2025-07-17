@@ -34,5 +34,8 @@ par(
 
 
 = Conflitti
-Conflitto LExp vs RExp fare sempre shift (?)
+Conflitto state 94 LExp vs RExp fare sempre shift (?)
 Inseriti i ; per separare le istruzioni. Così risolti sia i problemi legati alle funzioni che ai deref
+; come terminator su VarA, constA e statement
+aggiunte parentesi sull'exit di loop (altrimenti manca il terminale per la condizione. Possibile anche ; ma meno elegante)
+check conflitti 21 e 41 (shift o fix commentato nella grammatica)
