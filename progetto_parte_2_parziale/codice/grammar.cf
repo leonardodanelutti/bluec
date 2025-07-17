@@ -47,36 +47,78 @@ separator Param ",";
 
 RoutBody.                       RoutBody ::=  "is" ConstB VarB "do" [Statement] "end" BlueIdent;
 
-rules Mode ::= "ref" | "valres" | {- empty -};
--- TODO: altre modalità di passaggio
+rules Mode ::= "val" | "valres" | "ref" | {- empty -};
+
+RoutineCall.                    RoutCall ::= BlueIdent "(" [RExp] ")";
+RoutineCallEmpty.               RoutCall ::= BlueIdent;
 
 -- STATEMENTS
-StatementAss.                   Statement ::= [LExpr] ":=" [RExpr];
-StatementProcCall.              Statement ::= BlueIdent "(" [RExpr] ")"; -- TODO: check if it is correct that takes a RExpr
+StatementAss.                   Statement ::= [LExp] ":=" [RExpNE];
+StatementProcCall.              Statement ::= BlueIdent "(" [RExp] ")";
 StatementProcEmptyCall.         Statement ::= BlueIdent;
-StatementReturn.                Statement ::= "return" [RExpr];
+StatementReturn.                Statement ::= "return" [RExp];
 StatementContinue.              Statement ::= "continue";
 StatementIf.                    Statement ::= If;
--- TODO: StatementCase.                  Statement ::= Case;
 StatementLoop.                  Statement ::= Loop;
-separator RExpr ",";
+-- TODO: Case
+separator RExp ",";
+NotEmptyRExp.                   RExpNE ::= RExp;
+separator nonempty RExpNE ",";
 
 -- CONDITIONALS
-CondIf.                         If ::= "if" RExpr "then" [Statement] "end" "if";
-CondIfElse.                     If ::= "if" RExpr "then" [Statement] "else" [Statement] "end" "if";
--- TODO: CondCase.                       Case ::= ;
+CondIf.                         If ::= "if" RExp "then" [Statement] "end" "if";
+CondIfElse.                     If ::= "if" RExp "then" [Statement] "else" [Statement] "end" "if";
 
 -- INDETERMINATE ITERATION
 Loop.                           Loop ::= "loop" [Statement] [Exit];
-LoopExit.                       Exit ::= "exit" "on" RExpr [Statement];
+LoopExit.                       Exit ::= "exit" "on" RExp [Statement];
 separator Exit "";
 
 -- DETERMINATE ITERATION
 -- TODO:
 
 -- EXPRESSIONS
-ExpressionFunCall.              RExpr ::= ;
-ExpressionFunEmptyCall.         RExpr ::= ;
+coercions RExp 9;
+RExpOr.                         RExp ::= RExp "or" RExp1;
+RExpAnd.                        RExp1 ::= RExp1 "and" RExp2;
+
+RExpGt.                         RExp2 ::= RExp3 ">"  RExp3;
+RExpLs.                         RExp2 ::= RExp3 "<"  RExp3;
+RExpGe.                         RExp2 ::= RExp3 ">=" RExp3;
+RExpLe.                         RExp2 ::= RExp3 "<=" RExp3;
+RExpEq.                         RExp2 ::= RExp3 "=" RExp3;
+RExpNe.                         RExp2 ::= RExp3 "<>" RExp3;
+
+RExpPlus.                       RExp3 ::= RExp3 "+" RExp4;
+RExpMinus.                      RExp3 ::= RExp3 "-" RExp4;
+
+RExpMult.                       RExp4 ::= RExp4 "*" RExp5;
+RExpDivReal.                    RExp4 ::= RExp4 "/" RExp5;
+RExpDivInt.                     RExp4 ::= RExp4 "div" RExp5;
+RExpMod.                        RExp4 ::= RExp4 "mod" RExp5;
+
+RExpPow.                        RExp5 ::= RExp5 "^" RExp6;
+
+RExpSign.                       RExp6 ::= "-" RExp7;
+RExpNeg.                        RExp6 ::= "not" RExp7;
+RExpRef.                        RExp6 ::= "&" LExp;
+
+RExpInt.                        RExp9 ::= Integer;
+RExpChar.                       RExp9 ::= Char;
+RExpString.                     RExp9 ::= String;
+RExpBool.                       RExp9 ::= Bool;
+RExpDouble.                     RExp9 ::= Double;
+RExpCall.                       RExp9 ::= FunCall;
+RExpLExp.                       RExp9 ::= LExp;
+RExpArray.                      RExp9 ::= "Array" "[" [RExp] "]";
+
+rules Bool ::= "true" | "false";
+
+coercions LExp 1;
+LExpDeref.                      LExp ::= "*";
+
+LExpArrayDeref.                 LExp1 ::= LExp1 "[" RExp "]";
+LExpBase.                       LExp1 ::= BlueIdent;
 
 
 - procedure funzioni con modalità esplicite (default per value) (in qualsasi blocco)
