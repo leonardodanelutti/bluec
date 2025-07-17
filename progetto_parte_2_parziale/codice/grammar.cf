@@ -7,8 +7,8 @@ comment "/*" "*/";
 
 -- Blue identifiers differ from haskell identifiers
 -- (https://www.crescenziogallo.it/unifg/SSIS/PLPA/2006-2007/lmobj/blue/resources/lang-manual/blue0004.htm#E9E4).
-token DeclIdent   ((letter | '_') (letter | digit | '_')*)  (':') ;
-token DeclIdentNonLast   ((letter | '_') (letter | digit | '_')*)  (',') ;
+token DeclIdent ((letter | '_') (letter | digit | '_')*) (':');
+token DeclIdentNonLast ((letter | '_') (letter | digit | '_')*) (',');
 token BlueIdent ((letter | '_') (letter | digit | '_')*);
 
 entrypoints Program;
@@ -25,14 +25,14 @@ ProcDecl.                       P ::= ProcD;
 VarBlockEmpty.                  VarB ::= {- empty -}; -- Var block can be empty
 VarBlock.                       VarB ::= "var" [VarA];
 VarDeclAss.                     VarA ::= [DeclIdentNonLast] DeclIdent Type ":=" [RExpNE];
-separator nonempty VarA "";
+terminator nonempty VarA ";";
 separator DeclIdentNonLast "";
 
 -- CONSTS
 ConstBlockEmpty.                ConstB ::= {- empty -}; -- Const block can be empty
 ConstBlock.                     ConstB ::= "const" [ConstA];
 ConstDeclAss.                   ConstA ::= [DeclIdentNonLast] DeclIdent PType ":=" [RExpNE];
-separator nonempty  ConstA "";
+terminator nonempty  ConstA ";";
 
 rules PType ::= "Boolean" | "Integer" | "Real" | "String" | "Char";
 rules CType ::= "Array" "<" Type ";" Integer ">" | "&" Type;
@@ -48,7 +48,7 @@ separator Type ",";
 separator Param ",";
 
 RoutineBody.                    RoutBody ::=  "is" ConstB VarB "do" [Statement] "end" BlueIdent;
-separator Statement "";
+terminator Statement ";";
 
 rules Mode ::= "val" | "valres" | "ref" | {- empty -};
 
@@ -75,7 +75,7 @@ CondIfElse.                     If ::= "if" RExp "then" [Statement] "else" [Stat
 
 -- INDETERMINATE ITERATION
 LoopEntry.                      Loop ::= "loop" [Statement] [Exit];
-LoopExit.                       Exit ::= "exit" "on" RExp [Statement];
+LoopExit.                       Exit ::= "exit" "on" "(" RExp ")" [Statement];
 separator Exit "";
 
 -- DETERMINATE ITERATION
@@ -119,11 +119,21 @@ RExpArray.                      RExp9 ::= "Array" "[" [RExp] "]";
 rules Bool ::= "true" | "false";
 
 coercions LExp 1;
-LExpDeref.                      LExp ::= "*";
+LExpDeref.                      LExp ::= "*" LExp;
 
 LExpArrayDeref.                 LExp1 ::= LExp1 "[" RExp "]";
 LExpBase.                       LExp1 ::= BlueIdent;
 
+-- TODO: Remove below
+-- LExpDeref.                      LExp ::= "*" LExpP;
+-- LExpArrayDeref.                 LExp ::= LExp "[" RExp "]";
+-- LExpBase.                       LExp ::= BlueIdent;
+
+-- coercions LExpP 1;
+-- LExpPDeref.                     LExpP ::= "*" LExpP;
+-- LExpPArrayDeref.                LExpP1 ::= LExpP1 "[" RExp "]";
+-- LExpPBase.                      LExpP1 ::= BlueIdent;
+-- TODO: till here
 
 -- procedure funzioni con modalità esplicite (default per value) (in qualsasi blocco)
 -- variabili in qualsiasi blocco
