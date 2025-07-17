@@ -18,18 +18,17 @@ FunDecl.                        P ::= FunD;
 ProcDecl.                       P ::= ProcD;
 
 separator nonempty BlueIdent ",";
-separator nonempty Expr ",";
 
 -- VARS
 VarBlockEmpty.                  VarB ::= {- empty -}; -- Var block can be empty
 VarBlock.                       VarB ::= "var" [VarA];
-VarDeclAss.                     VarA ::= [BlueIdent] ":" Type ":=" [Expr];
+VarDeclAss.                     VarA ::= [BlueIdent] ":" Type ":=" [RExp];
 separator nonempty VarA "";
 
 -- CONSTS
 ConstBlockEmpty.                ConstB ::= {- empty -}; -- Const block can be empty
 ConstBlock.                     ConstB ::= "const" [ConstA];
-ConstDeclAss.                   ConstA ::= [BlueIdent] ":" PType ":=" [Expr];
+ConstDeclAss.                   ConstA ::= [BlueIdent] ":" PType ":=" [RExp];
 separator nonempty  ConstA "";
 
 rules PType ::= "Boolean" | "Integer" | "Real" | "String" | "Char";
@@ -39,13 +38,14 @@ rules Type ::= PType | CType;
 -- ROUTINES
 Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody;
 FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody;
-Proc.                           FunD ::= BlueIdent "(" [Param] ")" RoutBody;
-ProcEmpty.                      FunD ::= BlueIdent RoutBody;
+Proc.                           ProcD ::= BlueIdent "(" [Param] ")" RoutBody;
+ProcEmpty.                      ProcD ::= BlueIdent RoutBody;
 RoutParam.                      Param ::= Mode Ident ":" PType;
 separator Type ",";
 separator Param ",";
 
-RoutBody.                       RoutBody ::=  "is" ConstB VarB "do" [Statement] "end" BlueIdent;
+RoutineBody.                    RoutBody ::=  "is" ConstB VarB "do" [Statement] "end" BlueIdent;
+separator Statement "";
 
 rules Mode ::= "val" | "valres" | "ref" | {- empty -};
 
@@ -62,6 +62,7 @@ StatementIf.                    Statement ::= If;
 StatementLoop.                  Statement ::= Loop;
 -- TODO: Case
 separator RExp ",";
+separator LExp ",";
 NotEmptyRExp.                   RExpNE ::= RExp;
 separator nonempty RExpNE ",";
 
@@ -70,7 +71,7 @@ CondIf.                         If ::= "if" RExp "then" [Statement] "end" "if";
 CondIfElse.                     If ::= "if" RExp "then" [Statement] "else" [Statement] "end" "if";
 
 -- INDETERMINATE ITERATION
-Loop.                           Loop ::= "loop" [Statement] [Exit];
+LoopEntry.                      Loop ::= "loop" [Statement] [Exit];
 LoopExit.                       Exit ::= "exit" "on" RExp [Statement];
 separator Exit "";
 
@@ -108,7 +109,7 @@ RExpChar.                       RExp9 ::= Char;
 RExpString.                     RExp9 ::= String;
 RExpBool.                       RExp9 ::= Bool;
 RExpDouble.                     RExp9 ::= Double;
-RExpCall.                       RExp9 ::= FunCall;
+RExpCall.                       RExp9 ::= RoutCall;
 RExpLExp.                       RExp9 ::= LExp;
 RExpArray.                      RExp9 ::= "Array" "[" [RExp] "]";
 
@@ -121,11 +122,11 @@ LExpArrayDeref.                 LExp1 ::= LExp1 "[" RExp "]";
 LExpBase.                       LExp1 ::= BlueIdent;
 
 
-- procedure funzioni con modalità esplicite (default per value) (in qualsasi blocco)
-- variabili in qualsiasi blocco
-- operazioni
-- tipi base e composti
-- condizionali semplici
-- (non richiesto - case)
-- iterazione indeterminata (while do (e non richiesto do while))
-- (non richiesto - iterazione determinata (for o foreach))
+-- procedure funzioni con modalità esplicite (default per value) (in qualsasi blocco)
+-- variabili in qualsiasi blocco
+-- operazioni
+-- tipi base e composti
+-- condizionali semplici
+-- (non richiesto - case)
+-- iterazione indeterminata (while do (e non richiesto do while))
+-- (non richiesto - iterazione determinata (for o foreach))
