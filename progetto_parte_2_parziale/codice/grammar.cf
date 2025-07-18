@@ -25,14 +25,14 @@ ProcDecl.                       P ::= ProcD;
 -- VARS
 VarBlockEmpty.                  VarB ::= {- empty -}; -- Var block can be empty
 VarBlock.                       VarB ::= "var" [VarA];
-VarDeclAss.                     VarA ::= [BlueIdent] Type ":=" [RExpNE];
+VarDeclAss.                     VarA ::= [BlueIdent] ":" Type ":=" [RExpNE];
 terminator nonempty VarA ";";
-separator BlueIdent "";
+separator BlueIdent ",";
 
 -- CONSTS
 ConstBlockEmpty.                ConstB ::= {- empty -}; -- Const block can be empty
 ConstBlock.                     ConstB ::= "const" [ConstA];
-ConstDeclAss.                   ConstA ::= [BlueIdent] PType ":=" [RExpNE];
+ConstDeclAss.                   ConstA ::= [BlueIdent] ":" PType ":=" [RExpNE];
 terminator nonempty  ConstA ";";
 
 rules PType ::= "Boolean" | "Integer" | "Real" | "String" | "Char";
@@ -44,7 +44,7 @@ Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Typ
 FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody;
 Proc.                           ProcD ::= BlueIdent "(" [Param] ")" RoutBody;
 ProcEmpty.                      ProcD ::= BlueIdent RoutBody;
-RoutParam.                      Param ::= Mode Ident ":" PType;
+RoutParam.                      Param ::= Mode BlueIdent ":" PType;
 separator Type ",";
 separator Param ",";
 
@@ -76,7 +76,7 @@ CondIfElse.                     If ::= "if" RExp "then" [Statement] "else" [Stat
 
 -- INDETERMINATE ITERATION
 LoopEntry.                      Loop ::= "loop" [Statement] [Exit];
-LoopExit.                       Exit ::= "exit" "on" "(" RExp ")" [Statement];
+LoopExit.                       Exit ::= "exit" "on" RExp ";" [Statement];
 separator Exit "";
 
 -- DETERMINATE ITERATION
