@@ -34,8 +34,7 @@ par(
 
 
 = Conflitti
-Conflitto state 94 LExp vs RExp fare sempre shift (?)
-Inseriti i ; per separare le istruzioni. Così risolti sia i problemi legati alle funzioni che ai deref
-; come terminator su VarA, constA e statement
-aggiunte parentesi sull'exit di loop (altrimenti manca il terminale per la condizione. Possibile anche ; ma meno elegante)
-check conflitti 21 e 41 (shift o fix commentato nella grammatica)
+Conflitto state 106 LExp vs RExp fare sempre shift (?)
+Inseriti i ";" per separare gli statement (tranni per loop e funzioni). Così risolti sia i problemi legati alle funzioni che ai deref
+aggiunto ";" sull'exit di loop (per lo stesso motivo degli statement)
+Le dichiarazioni di funzioni, nell'ambiente più esterno, devono essere precedute dalla keyword "routines" similmente a quanto succede in Blue per le dichiarazioni delle routines nelle classi.  
