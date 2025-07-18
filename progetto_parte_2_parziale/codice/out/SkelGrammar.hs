@@ -15,17 +15,18 @@ type Result = Err String
 failure :: Show a => a -> Result
 failure x = Left $ "Undefined case: " ++ show x
 
-transIdent :: AbsGrammar.Ident -> Result
-transIdent x = case x of
-  AbsGrammar.Ident string -> failure x
-
 transBlueIdent :: AbsGrammar.BlueIdent -> Result
 transBlueIdent x = case x of
   AbsGrammar.BlueIdent string -> failure x
 
 transProgram :: AbsGrammar.Program -> Result
 transProgram x = case x of
-  AbsGrammar.ProgramDecl constb varb ps -> failure x
+  AbsGrammar.ProgramDecl constb varb routb -> failure x
+
+transRoutB :: AbsGrammar.RoutB -> Result
+transRoutB x = case x of
+  AbsGrammar.RoutineBlockEmpty -> failure x
+  AbsGrammar.RoutineBlock ps -> failure x
 
 transP :: AbsGrammar.P -> Result
 transP x = case x of
@@ -39,7 +40,7 @@ transVarB x = case x of
 
 transVarA :: AbsGrammar.VarA -> Result
 transVarA x = case x of
-  AbsGrammar.VarDeclAss blueidents type_ rexps -> failure x
+  AbsGrammar.VarDeclAss blueidents type_ rexpnes -> failure x
 
 transConstB :: AbsGrammar.ConstB -> Result
 transConstB x = case x of
@@ -48,7 +49,7 @@ transConstB x = case x of
 
 transConstA :: AbsGrammar.ConstA -> Result
 transConstA x = case x of
-  AbsGrammar.ConstDeclAss blueidents ptype rexps -> failure x
+  AbsGrammar.ConstDeclAss blueidents ptype rexpnes -> failure x
 
 transPType :: AbsGrammar.PType -> Result
 transPType x = case x of
@@ -80,7 +81,7 @@ transProcD x = case x of
 
 transParam :: AbsGrammar.Param -> Result
 transParam x = case x of
-  AbsGrammar.RoutParam mode ident ptype -> failure x
+  AbsGrammar.RoutParam mode blueident ptype -> failure x
 
 transRoutBody :: AbsGrammar.RoutBody -> Result
 transRoutBody x = case x of
@@ -96,7 +97,6 @@ transMode x = case x of
 transRoutCall :: AbsGrammar.RoutCall -> Result
 transRoutCall x = case x of
   AbsGrammar.RoutineCall blueident rexps -> failure x
-  AbsGrammar.RoutineCallEmpty blueident -> failure x
 
 transStatement :: AbsGrammar.Statement -> Result
 transStatement x = case x of
@@ -161,6 +161,6 @@ transBool x = case x of
 
 transLExp :: AbsGrammar.LExp -> Result
 transLExp x = case x of
-  AbsGrammar.LExpDeref -> failure x
+  AbsGrammar.LExpDeref lexp -> failure x
   AbsGrammar.LExpArrayDeref lexp rexp -> failure x
   AbsGrammar.LExpBase blueident -> failure x

@@ -28,7 +28,7 @@ $u = [. \n]          -- universal: any character
 
 -- Symbols and non-identifier-like reserved words
 
-@rsyms = \, | \: | \: \= | \< | \; | \> | \& | \( | \) | \- \> | \> \= | \< \= | \= | \< \> | \+ | \- | \* | \/ | \^ | \[ | \]
+@rsyms = \: | \: \= | \; | \, | \< | \> | \& | \( | \) | \- \> | \> \= | \< \= | \= | \< \> | \+ | \- | \* | \/ | \^ | \[ | \]
 
 :-
 
@@ -192,12 +192,13 @@ resWords =
              (b "do" 32 (b "div" 31 N N) N))
           (b "false" 36
              (b "exit" 35 (b "end" 34 N N) N) (b "is" 38 (b "if" 37 N N) N)))
-       (b "return" 45
-          (b "on" 42
-             (b "not" 41 (b "mod" 40 N N) N) (b "ref" 44 (b "or" 43 N N) N))
-          (b "val" 48
-             (b "true" 47 (b "then" 46 N N) N)
-             (b "var" 50 (b "valres" 49 N N) N))))
+       (b "routine" 46
+          (b "or" 43
+             (b "not" 41 (b "mod" 40 N N) (b "on" 42 N N))
+             (b "return" 45 (b "ref" 44 N N) N))
+          (b "val" 49
+             (b "true" 48 (b "then" 47 N N) N)
+             (b "var" 51 (b "valres" 50 N N) N))))
   where
   b s n = B bs (TS bs n)
     where

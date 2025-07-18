@@ -1,4 +1,5 @@
 *.o
+*.hi
 build
 TestModify
 grammar.aux
@@ -7,3 +8,6 @@ grammar.pdf
 grammar.dvi
 grammar.ps
 grammar
+ParGrammar.hs
+LexGrammar.hs
+TestGrammar

@@ -10,7 +10,10 @@ import Prelude (Char, Double, Integer, String)
 import qualified Prelude as C (Eq, Ord, Show, Read)
 import qualified Data.String
 
-data Program = ProgramDecl ConstB VarB [P]
+data Program = ProgramDecl ConstB VarB RoutB
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data RoutB = RoutineBlockEmpty | RoutineBlock [P]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data P = FunDecl FunD | ProcDecl ProcD
@@ -19,13 +22,13 @@ data P = FunDecl FunD | ProcDecl ProcD
 data VarB = VarBlockEmpty | VarBlock [VarA]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data VarA = VarDeclAss [BlueIdent] Type [RExp]
+data VarA = VarDeclAss [BlueIdent] Type [RExpNE]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data ConstB = ConstBlockEmpty | ConstBlock [ConstA]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data ConstA = ConstDeclAss [BlueIdent] PType [RExp]
+data ConstA = ConstDeclAss [BlueIdent] PType [RExpNE]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data PType
@@ -51,7 +54,7 @@ data ProcD
     = Proc BlueIdent [Param] RoutBody | ProcEmpty BlueIdent RoutBody
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data Param = RoutParam Mode Ident PType
+data Param = RoutParam Mode BlueIdent PType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RoutBody = RoutineBody ConstB VarB [Statement] BlueIdent
@@ -60,8 +63,7 @@ data RoutBody = RoutineBody ConstB VarB [Statement] BlueIdent
 data Mode = Mode_val | Mode_valres | Mode_ref | Mode1
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data RoutCall
-    = RoutineCall BlueIdent [RExp] | RoutineCallEmpty BlueIdent
+data RoutCall = RoutineCall BlueIdent [RExp]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Statement
@@ -120,11 +122,8 @@ data Bool = Bool_true | Bool_false
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data LExp
-    = LExpDeref | LExpArrayDeref LExp RExp | LExpBase BlueIdent
+    = LExpDeref LExp | LExpArrayDeref LExp RExp | LExpBase BlueIdent
   deriving (C.Eq, C.Ord, C.Show, C.Read)
-
-newtype Ident = Ident String
-  deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
 
 newtype BlueIdent = BlueIdent String
   deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)

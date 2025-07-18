@@ -137,13 +137,16 @@ instance Print Integer where
 instance Print Double where
   prt _ x = doc (shows x)
 
-instance Print AbsGrammar.Ident where
-  prt _ (AbsGrammar.Ident i) = doc $ showString i
 instance Print AbsGrammar.BlueIdent where
   prt _ (AbsGrammar.BlueIdent i) = doc $ showString i
 instance Print AbsGrammar.Program where
   prt i = \case
-    AbsGrammar.ProgramDecl constb varb ps -> prPrec i 0 (concatD [prt 0 constb, prt 0 varb, prt 0 ps])
+    AbsGrammar.ProgramDecl constb varb routb -> prPrec i 0 (concatD [prt 0 constb, prt 0 varb, prt 0 routb])
+
+instance Print AbsGrammar.RoutB where
+  prt i = \case
+    AbsGrammar.RoutineBlockEmpty -> prPrec i 0 (concatD [])
+    AbsGrammar.RoutineBlock ps -> prPrec i 0 (concatD [doc (showString "routine"), prt 0 ps])
 
 instance Print [AbsGrammar.P] where
   prt _ [] = concatD []
@@ -154,11 +157,6 @@ instance Print AbsGrammar.P where
     AbsGrammar.FunDecl fund -> prPrec i 0 (concatD [prt 0 fund])
     AbsGrammar.ProcDecl procd -> prPrec i 0 (concatD [prt 0 procd])
 
-instance Print [AbsGrammar.BlueIdent] where
-  prt _ [] = concatD []
-  prt _ [x] = concatD [prt 0 x]
-  prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
-
 instance Print AbsGrammar.VarB where
   prt i = \case
     AbsGrammar.VarBlockEmpty -> prPrec i 0 (concatD [])
@@ -166,12 +164,17 @@ instance Print AbsGrammar.VarB where
 
 instance Print AbsGrammar.VarA where
   prt i = \case
-    AbsGrammar.VarDeclAss blueidents type_ rexps -> prPrec i 0 (concatD [prt 0 blueidents, doc (showString ":"), prt 0 type_, doc (showString ":="), prt 0 rexps])
+    AbsGrammar.VarDeclAss blueidents type_ rexpnes -> prPrec i 0 (concatD [prt 0 blueidents, doc (showString ":"), prt 0 type_, doc (showString ":="), prt 0 rexpnes])
 
 instance Print [AbsGrammar.VarA] where
   prt _ [] = concatD []
+  prt _ [x] = concatD [prt 0 x, doc (showString ";")]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ";"), prt 0 xs]
+
+instance Print [AbsGrammar.BlueIdent] where
+  prt _ [] = concatD []
   prt _ [x] = concatD [prt 0 x]
-  prt _ (x:xs) = concatD [prt 0 x, prt 0 xs]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ","), prt 0 xs]
 
 instance Print AbsGrammar.ConstB where
   prt i = \case
@@ -180,12 +183,12 @@ instance Print AbsGrammar.ConstB where
 
 instance Print AbsGrammar.ConstA where
   prt i = \case
-    AbsGrammar.ConstDeclAss blueidents ptype rexps -> prPrec i 0 (concatD [prt 0 blueidents, doc (showString ":"), prt 0 ptype, doc (showString ":="), prt 0 rexps])
+    AbsGrammar.ConstDeclAss blueidents ptype rexpnes -> prPrec i 0 (concatD [prt 0 blueidents, doc (showString ":"), prt 0 ptype, doc (showString ":="), prt 0 rexpnes])
 
 instance Print [AbsGrammar.ConstA] where
   prt _ [] = concatD []
-  prt _ [x] = concatD [prt 0 x]
-  prt _ (x:xs) = concatD [prt 0 x, prt 0 xs]
+  prt _ [x] = concatD [prt 0 x, doc (showString ";")]
+  prt _ (x:xs) = concatD [prt 0 x, doc (showString ";"), prt 0 xs]
 
 instance Print AbsGrammar.PType where
   prt i = \case
@@ -217,7 +220,7 @@ instance Print AbsGrammar.ProcD where
 
 instance Print AbsGrammar.Param where
   prt i = \case
-    AbsGrammar.RoutParam mode id_ ptype -> prPrec i 0 (concatD [prt 0 mode, prt 0 id_, doc (showString ":"), prt 0 ptype])
+    AbsGrammar.RoutParam mode blueident ptype -> prPrec i 0 (concatD [prt 0 mode, prt 0 blueident, doc (showString ":"), prt 0 ptype])
 
 instance Print [AbsGrammar.Type] where
   prt _ [] = concatD []
@@ -247,17 +250,16 @@ instance Print AbsGrammar.Mode where
 instance Print AbsGrammar.RoutCall where
   prt i = \case
     AbsGrammar.RoutineCall blueident rexps -> prPrec i 0 (concatD [prt 0 blueident, doc (showString "("), prt 0 rexps, doc (showString ")")])
-    AbsGrammar.RoutineCallEmpty blueident -> prPrec i 0 (concatD [prt 0 blueident])
 
 instance Print AbsGrammar.Statement where
   prt i = \case
-    AbsGrammar.StatementAss lexps rexpnes -> prPrec i 0 (concatD [prt 0 lexps, doc (showString ":="), prt 0 rexpnes])
-    AbsGrammar.StatementProcCall blueident rexps -> prPrec i 0 (concatD [prt 0 blueident, doc (showString "("), prt 0 rexps, doc (showString ")")])
-    AbsGrammar.StatementProcEmptyCall blueident -> prPrec i 0 (concatD [prt 0 blueident])
-    AbsGrammar.StatementReturn rexps -> prPrec i 0 (concatD [doc (showString "return"), prt 0 rexps])
-    AbsGrammar.StatementContinue -> prPrec i 0 (concatD [doc (showString "continue")])
-    AbsGrammar.StatementIf if_ -> prPrec i 0 (concatD [prt 0 if_])
-    AbsGrammar.StatementLoop loop -> prPrec i 0 (concatD [prt 0 loop])
+    AbsGrammar.StatementAss lexps rexpnes -> prPrec i 0 (concatD [prt 0 lexps, doc (showString ":="), prt 0 rexpnes, doc (showString ";")])
+    AbsGrammar.StatementProcCall blueident rexps -> prPrec i 0 (concatD [prt 0 blueident, doc (showString "("), prt 0 rexps, doc (showString ")"), doc (showString ";")])
+    AbsGrammar.StatementProcEmptyCall blueident -> prPrec i 0 (concatD [prt 0 blueident, doc (showString ";")])
+    AbsGrammar.StatementReturn rexps -> prPrec i 0 (concatD [doc (showString "return"), prt 0 rexps, doc (showString ";")])
+    AbsGrammar.StatementContinue -> prPrec i 0 (concatD [doc (showString "continue"), doc (showString ";")])
+    AbsGrammar.StatementIf if_ -> prPrec i 0 (concatD [prt 0 if_, doc (showString "end"), doc (showString "if")])
+    AbsGrammar.StatementLoop loop -> prPrec i 0 (concatD [prt 0 loop, doc (showString "end"), doc (showString "loop")])
 
 instance Print [AbsGrammar.RExp] where
   prt _ [] = concatD []
@@ -280,8 +282,8 @@ instance Print [AbsGrammar.RExpNE] where
 
 instance Print AbsGrammar.If where
   prt i = \case
-    AbsGrammar.CondIf rexp statements -> prPrec i 0 (concatD [doc (showString "if"), prt 0 rexp, doc (showString "then"), prt 0 statements, doc (showString "end"), doc (showString "if")])
-    AbsGrammar.CondIfElse rexp statements1 statements2 -> prPrec i 0 (concatD [doc (showString "if"), prt 0 rexp, doc (showString "then"), prt 0 statements1, doc (showString "else"), prt 0 statements2, doc (showString "end"), doc (showString "if")])
+    AbsGrammar.CondIf rexp statements -> prPrec i 0 (concatD [doc (showString "if"), prt 0 rexp, doc (showString "then"), prt 0 statements])
+    AbsGrammar.CondIfElse rexp statements1 statements2 -> prPrec i 0 (concatD [doc (showString "if"), prt 0 rexp, doc (showString "then"), prt 0 statements1, doc (showString "else"), prt 0 statements2])
 
 instance Print AbsGrammar.Loop where
   prt i = \case
@@ -289,7 +291,7 @@ instance Print AbsGrammar.Loop where
 
 instance Print AbsGrammar.Exit where
   prt i = \case
-    AbsGrammar.LoopExit rexp statements -> prPrec i 0 (concatD [doc (showString "exit"), doc (showString "on"), prt 0 rexp, prt 0 statements])
+    AbsGrammar.LoopExit rexp statements -> prPrec i 0 (concatD [doc (showString "exit"), doc (showString "on"), prt 0 rexp, doc (showString ";"), prt 0 statements])
 
 instance Print [AbsGrammar.Exit] where
   prt _ [] = concatD []
@@ -331,6 +333,6 @@ instance Print AbsGrammar.Bool where
 
 instance Print AbsGrammar.LExp where
   prt i = \case
-    AbsGrammar.LExpDeref -> prPrec i 0 (concatD [doc (showString "*")])
+    AbsGrammar.LExpDeref lexp -> prPrec i 0 (concatD [doc (showString "*"), prt 0 lexp])
     AbsGrammar.LExpArrayDeref lexp rexp -> prPrec i 1 (concatD [prt 1 lexp, doc (showString "["), prt 0 rexp, doc (showString "]")])
     AbsGrammar.LExpBase blueident -> prPrec i 1 (concatD [prt 0 blueident])
