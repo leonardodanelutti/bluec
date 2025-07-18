@@ -40,10 +40,10 @@ rules CType ::= "Array" "<" Type ";" Integer ">" | "&" Type;
 rules Type ::= PType | CType;
 
 -- ROUTINES
-Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody;
-FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody;
-Proc.                           ProcD ::= BlueIdent "(" [Param] ")" RoutBody;
-ProcEmpty.                      ProcD ::= BlueIdent RoutBody;
+Fun.                            FunD ::= "fn" BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody;
+FunEmpty.                       FunD ::= "fn" BlueIdent "->" "(" [Type] ")" RoutBody;
+Proc.                           ProcD ::= "fn" BlueIdent "(" [Param] ")" RoutBody;
+ProcEmpty.                      ProcD ::= "fn" BlueIdent RoutBody;
 RoutParam.                      Param ::= Mode BlueIdent ":" PType;
 separator Type ",";
 separator Param ",";

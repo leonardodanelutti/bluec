@@ -1,0 +1,15 @@
+const
+    a: Integer := 0;
+    d: Integer := 0;
+var
+    _b:Real := 1.0;
+fn main is
+    var
+        a: Integer:=c;
+    do
+        if a > 0 then a:=0;
+        end if
+        if a > 0 then a:=0;
+        end if
+        end
+main
