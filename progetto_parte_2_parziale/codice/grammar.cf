@@ -44,15 +44,15 @@ rules CType ::= "Array" "<" Type ";" Integer ">" | "&" Type;
 rules Type ::= PType | CType;
 
 -- ROUTINES
-Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody;
-FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody;
-Proc.                           ProcD ::= BlueIdent "(" [Param] ")" RoutBody;
-ProcEmpty.                      ProcD ::= BlueIdent RoutBody;
+Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody BlueIdent;
+FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody BlueIdent;
+Proc.                           ProcD ::= BlueIdent "(" [Param] ")" RoutBody BlueIdent;
+ProcEmpty.                      ProcD ::= BlueIdent RoutBody BlueIdent;
 RoutParam.                      Param ::= Mode BlueIdent ":" Type;
 separator Type ",";
 separator Param ",";
 
-RoutineBody.                    RoutBody ::=  "is" ConstB VarB "do" [Statement] "end" BlueIdent;
+RoutineBody.                    RoutBody ::=  "is" ConstB VarB "do" [Statement] "end";
 terminator Statement "";
 
 rules Mode ::= "val" | "valres" | "ref" | {- empty -};

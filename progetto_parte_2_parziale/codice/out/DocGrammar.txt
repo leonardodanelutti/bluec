@@ -94,10 +94,10 @@ All other symbols are terminals.
   |  |  **|**  | ``&`` //Type//
   | //Type// | -> | //PType//
   |  |  **|**  | //CType//
-  | //FunD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` ``->`` ``(`` //[Type]// ``)`` //RoutBody//
-  |  |  **|**  | //BlueIdent// ``->`` ``(`` //[Type]// ``)`` //RoutBody//
-  | //ProcD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` //RoutBody//
-  |  |  **|**  | //BlueIdent// //RoutBody//
+  | //FunD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` ``->`` ``(`` //[Type]// ``)`` //RoutBody// //BlueIdent//
+  |  |  **|**  | //BlueIdent// ``->`` ``(`` //[Type]// ``)`` //RoutBody// //BlueIdent//
+  | //ProcD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` //RoutBody// //BlueIdent//
+  |  |  **|**  | //BlueIdent// //RoutBody// //BlueIdent//
   | //Param// | -> | //Mode// //BlueIdent// ``:`` //Type//
   | //[Type]// | -> | **eps**
   |  |  **|**  | //Type//
@@ -105,7 +105,7 @@ All other symbols are terminals.
   | //[Param]// | -> | **eps**
   |  |  **|**  | //Param//
   |  |  **|**  | //Param// ``,`` //[Param]//
-  | //RoutBody// | -> | ``is`` //ConstB// //VarB// ``do`` //[Statement]// ``end`` //BlueIdent//
+  | //RoutBody// | -> | ``is`` //ConstB// //VarB// ``do`` //[Statement]// ``end``
   | //[Statement]// | -> | **eps**
   |  |  **|**  | //Statement// //[Statement]//
   | //Mode// | -> | ``val``

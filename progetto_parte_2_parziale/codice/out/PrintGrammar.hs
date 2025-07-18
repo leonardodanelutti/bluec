@@ -210,13 +210,13 @@ instance Print AbsGrammar.Type where
 
 instance Print AbsGrammar.FunD where
   prt i = \case
-    AbsGrammar.Fun blueident params types routbody -> prPrec i 0 (concatD [prt 0 blueident, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "->"), doc (showString "("), prt 0 types, doc (showString ")"), prt 0 routbody])
-    AbsGrammar.FunEmpty blueident types routbody -> prPrec i 0 (concatD [prt 0 blueident, doc (showString "->"), doc (showString "("), prt 0 types, doc (showString ")"), prt 0 routbody])
+    AbsGrammar.Fun blueident1 params types routbody blueident2 -> prPrec i 0 (concatD [prt 0 blueident1, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "->"), doc (showString "("), prt 0 types, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
+    AbsGrammar.FunEmpty blueident1 types routbody blueident2 -> prPrec i 0 (concatD [prt 0 blueident1, doc (showString "->"), doc (showString "("), prt 0 types, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
 
 instance Print AbsGrammar.ProcD where
   prt i = \case
-    AbsGrammar.Proc blueident params routbody -> prPrec i 0 (concatD [prt 0 blueident, doc (showString "("), prt 0 params, doc (showString ")"), prt 0 routbody])
-    AbsGrammar.ProcEmpty blueident routbody -> prPrec i 0 (concatD [prt 0 blueident, prt 0 routbody])
+    AbsGrammar.Proc blueident1 params routbody blueident2 -> prPrec i 0 (concatD [prt 0 blueident1, doc (showString "("), prt 0 params, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
+    AbsGrammar.ProcEmpty blueident1 routbody blueident2 -> prPrec i 0 (concatD [prt 0 blueident1, prt 0 routbody, prt 0 blueident2])
 
 instance Print AbsGrammar.Param where
   prt i = \case
@@ -234,7 +234,7 @@ instance Print [AbsGrammar.Param] where
 
 instance Print AbsGrammar.RoutBody where
   prt i = \case
-    AbsGrammar.RoutineBody constb varb statements blueident -> prPrec i 0 (concatD [doc (showString "is"), prt 0 constb, prt 0 varb, doc (showString "do"), prt 0 statements, doc (showString "end"), prt 0 blueident])
+    AbsGrammar.RoutineBody constb varb statements -> prPrec i 0 (concatD [doc (showString "is"), prt 0 constb, prt 0 varb, doc (showString "do"), prt 0 statements, doc (showString "end")])
 
 instance Print [AbsGrammar.Statement] where
   prt _ [] = concatD []

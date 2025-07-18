@@ -46,18 +46,19 @@ data Type = TypePType PType | TypeCType CType
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data FunD
-    = Fun BlueIdent [Param] [Type] RoutBody
-    | FunEmpty BlueIdent [Type] RoutBody
+    = Fun BlueIdent [Param] [Type] RoutBody BlueIdent
+    | FunEmpty BlueIdent [Type] RoutBody BlueIdent
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data ProcD
-    = Proc BlueIdent [Param] RoutBody | ProcEmpty BlueIdent RoutBody
+    = Proc BlueIdent [Param] RoutBody BlueIdent
+    | ProcEmpty BlueIdent RoutBody BlueIdent
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Param = RoutParam Mode BlueIdent Type
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data RoutBody = RoutineBody ConstB VarB [Statement] BlueIdent
+data RoutBody = RoutineBody ConstB VarB [Statement]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Mode = Mode_val | Mode_valres | Mode_ref | Mode1

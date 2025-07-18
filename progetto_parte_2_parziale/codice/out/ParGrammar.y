@@ -163,13 +163,13 @@ Type
 
 FunD :: { AbsGrammar.FunD }
 FunD
-  : BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody { AbsGrammar.Fun $1 $3 $7 $9 }
-  | BlueIdent '->' '(' ListType ')' RoutBody { AbsGrammar.FunEmpty $1 $4 $6 }
+  : BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody BlueIdent { AbsGrammar.Fun $1 $3 $7 $9 $10 }
+  | BlueIdent '->' '(' ListType ')' RoutBody BlueIdent { AbsGrammar.FunEmpty $1 $4 $6 $7 }
 
 ProcD :: { AbsGrammar.ProcD }
 ProcD
-  : BlueIdent '(' ListParam ')' RoutBody { AbsGrammar.Proc $1 $3 $5 }
-  | BlueIdent RoutBody { AbsGrammar.ProcEmpty $1 $2 }
+  : BlueIdent '(' ListParam ')' RoutBody BlueIdent { AbsGrammar.Proc $1 $3 $5 $6 }
+  | BlueIdent RoutBody BlueIdent { AbsGrammar.ProcEmpty $1 $2 $3 }
 
 Param :: { AbsGrammar.Param }
 Param : Mode BlueIdent ':' Type { AbsGrammar.RoutParam $1 $2 $4 }
@@ -188,7 +188,7 @@ ListParam
 
 RoutBody :: { AbsGrammar.RoutBody }
 RoutBody
-  : 'is' ConstB VarB 'do' ListStatement 'end' BlueIdent { AbsGrammar.RoutineBody $2 $3 $5 $7 }
+  : 'is' ConstB VarB 'do' ListStatement 'end' { AbsGrammar.RoutineBody $2 $3 $5 }
 
 ListStatement :: { [AbsGrammar.Statement] }
 ListStatement

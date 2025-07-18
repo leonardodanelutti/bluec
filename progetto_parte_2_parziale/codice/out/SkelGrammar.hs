@@ -71,13 +71,13 @@ transType x = case x of
 
 transFunD :: AbsGrammar.FunD -> Result
 transFunD x = case x of
-  AbsGrammar.Fun blueident params types routbody -> failure x
-  AbsGrammar.FunEmpty blueident types routbody -> failure x
+  AbsGrammar.Fun blueident1 params types routbody blueident2 -> failure x
+  AbsGrammar.FunEmpty blueident1 types routbody blueident2 -> failure x
 
 transProcD :: AbsGrammar.ProcD -> Result
 transProcD x = case x of
-  AbsGrammar.Proc blueident params routbody -> failure x
-  AbsGrammar.ProcEmpty blueident routbody -> failure x
+  AbsGrammar.Proc blueident1 params routbody blueident2 -> failure x
+  AbsGrammar.ProcEmpty blueident1 routbody blueident2 -> failure x
 
 transParam :: AbsGrammar.Param -> Result
 transParam x = case x of
@@ -85,7 +85,7 @@ transParam x = case x of
 
 transRoutBody :: AbsGrammar.RoutBody -> Result
 transRoutBody x = case x of
-  AbsGrammar.RoutineBody constb varb statements blueident -> failure x
+  AbsGrammar.RoutineBody constb varb statements -> failure x
 
 transMode :: AbsGrammar.Mode -> Result
 transMode x = case x of
