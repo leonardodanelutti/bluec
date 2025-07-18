@@ -3,7 +3,8 @@ const
     d: Integer := 0;
 var
     _b:Real := 1.0;
-fn main is
+routines
+main is
     var
         a: Integer:=c;
     do

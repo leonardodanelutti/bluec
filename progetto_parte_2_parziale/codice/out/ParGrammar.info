@@ -15,7 +15,7 @@ Grammar
 	BlueIdent -> L_BlueIdent                           (5)
 	Program -> ConstB VarB RoutB                       (6)
 	RoutB ->                                           (7)
-	RoutB -> 'routine' ListP                           (8)
+	RoutB -> 'routines' ListP                          (8)
 	ListP ->                                           (9)
 	ListP -> P ListP                                   (10)
 	P -> FunD                                          (11)
@@ -175,7 +175,7 @@ Terminals
 	'or'           { PT _ (TS _ 43) }
 	'ref'          { PT _ (TS _ 44) }
 	'return'       { PT _ (TS _ 45) }
-	'routine'      { PT _ (TS _ 46) }
+	'routines'     { PT _ (TS _ 46) }
 	'then'         { PT _ (TS _ 47) }
 	'true'         { PT _ (TS _ 48) }
 	'val'          { PT _ (TS _ 49) }
@@ -250,7 +250,7 @@ State 0
 	%start_pProgram -> . Program                        (rule 0)
 
 	'const'        shift, and enter state 5
-	'routine'      reduce using rule 21
+	'routines'     reduce using rule 21
 	'var'          reduce using rule 21
 	%eof           reduce using rule 21
 
@@ -301,7 +301,7 @@ State 4
 
 	Program -> ConstB . VarB RoutB                      (rule 6)
 
-	'routine'      reduce using rule 13
+	'routines'     reduce using rule 13
 	'var'          shift, and enter state 12
 	%eof           reduce using rule 13
 
@@ -348,7 +348,7 @@ State 9
 	ConstB -> 'const' ListConstA .                      (rule 22)
 
 	'do'           reduce using rule 22
-	'routine'      reduce using rule 22
+	'routines'     reduce using rule 22
 	'var'          reduce using rule 22
 	%eof           reduce using rule 22
 
@@ -391,7 +391,7 @@ State 11
 
 	Program -> ConstB VarB . RoutB                      (rule 6)
 
-	'routine'      shift, and enter state 17
+	'routines'     shift, and enter state 17
 	%eof           reduce using rule 7
 
 	RoutB          goto state 16
@@ -421,7 +421,7 @@ State 14
 	VarB -> 'var' ListVarA .                            (rule 14)
 
 	'do'           reduce using rule 14
-	'routine'      reduce using rule 14
+	'routines'     reduce using rule 14
 	%eof           reduce using rule 14
 
 
@@ -441,7 +441,7 @@ State 16
 
 State 17
 
-	RoutB -> 'routine' . ListP                          (rule 8)
+	RoutB -> 'routines' . ListP                         (rule 8)
 
 	L_BlueIdent    shift, and enter state 10
 	%eof           reduce using rule 9
@@ -459,7 +459,7 @@ State 18
 
 	':'            reduce using rule 18
 	'do'           reduce using rule 24
-	'routine'      reduce using rule 24
+	'routines'     reduce using rule 24
 	'var'          reduce using rule 24
 	L_BlueIdent    shift, and enter state 10
 	%eof           reduce using rule 24
@@ -560,7 +560,7 @@ State 28
 	ListConstA -> ConstA ';' ListConstA .               (rule 25)
 
 	'do'           reduce using rule 25
-	'routine'      reduce using rule 25
+	'routines'     reduce using rule 25
 	'var'          reduce using rule 25
 	%eof           reduce using rule 25
 
@@ -580,7 +580,7 @@ State 29
 
 State 30
 
-	RoutB -> 'routine' ListP .                          (rule 8)
+	RoutB -> 'routines' ListP .                         (rule 8)
 
 	%eof           reduce using rule 8
 
@@ -637,7 +637,7 @@ State 35
 
 	':'            reduce using rule 18
 	'do'           reduce using rule 16
-	'routine'      reduce using rule 16
+	'routines'     reduce using rule 16
 	L_BlueIdent    shift, and enter state 10
 	%eof           reduce using rule 16
 
@@ -651,7 +651,7 @@ State 36
 	ListVarA -> VarA ';' ListVarA .                     (rule 17)
 
 	'do'           reduce using rule 17
-	'routine'      reduce using rule 17
+	'routines'     reduce using rule 17
 	%eof           reduce using rule 17
 
 

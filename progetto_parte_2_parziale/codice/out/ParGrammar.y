@@ -68,7 +68,7 @@ import LexGrammar
   'or'        { PT _ (TS _ 43)        }
   'ref'       { PT _ (TS _ 44)        }
   'return'    { PT _ (TS _ 45)        }
-  'routine'   { PT _ (TS _ 46)        }
+  'routines'  { PT _ (TS _ 46)        }
   'then'      { PT _ (TS _ 47)        }
   'true'      { PT _ (TS _ 48)        }
   'val'       { PT _ (TS _ 49)        }
@@ -103,7 +103,7 @@ Program : ConstB VarB RoutB { AbsGrammar.ProgramDecl $1 $2 $3 }
 RoutB :: { AbsGrammar.RoutB }
 RoutB
   : {- empty -} { AbsGrammar.RoutineBlockEmpty }
-  | 'routine' ListP { AbsGrammar.RoutineBlock $2 }
+  | 'routines' ListP { AbsGrammar.RoutineBlock $2 }
 
 ListP :: { [AbsGrammar.P] }
 ListP : {- empty -} { [] } | P ListP { (:) $1 $2 }

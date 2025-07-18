@@ -18,7 +18,7 @@ entrypoints Program;
 ProgramDecl.                    Program ::= ConstB VarB RoutB;
 
 RoutineBlockEmpty.              RoutB ::= {- empty -}; -- Routine block can be empty
-RoutineBlock.                   RoutB ::= "routine" [P];
+RoutineBlock.                   RoutB ::= "routines" [P];
 
 separator P "";
 FunDecl.                        P ::= FunD;

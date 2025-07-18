@@ -192,7 +192,7 @@ resWords =
              (b "do" 32 (b "div" 31 N N) N))
           (b "false" 36
              (b "exit" 35 (b "end" 34 N N) N) (b "is" 38 (b "if" 37 N N) N)))
-       (b "routine" 46
+       (b "routines" 46
           (b "or" 43
              (b "not" 41 (b "mod" 40 N N) (b "on" 42 N N))
              (b "return" 45 (b "ref" 44 N N) N))

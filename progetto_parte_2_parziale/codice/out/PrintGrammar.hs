@@ -146,7 +146,7 @@ instance Print AbsGrammar.Program where
 instance Print AbsGrammar.RoutB where
   prt i = \case
     AbsGrammar.RoutineBlockEmpty -> prPrec i 0 (concatD [])
-    AbsGrammar.RoutineBlock ps -> prPrec i 0 (concatD [doc (showString "routine"), prt 0 ps])
+    AbsGrammar.RoutineBlock ps -> prPrec i 0 (concatD [doc (showString "routines"), prt 0 ps])
 
 instance Print [AbsGrammar.P] where
   prt _ [] = concatD []
