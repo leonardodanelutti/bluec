@@ -98,7 +98,7 @@ All other symbols are terminals.
   |  |  **|**  | //BlueIdent// ``->`` ``(`` //[Type]// ``)`` //RoutBody//
   | //ProcD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` //RoutBody//
   |  |  **|**  | //BlueIdent// //RoutBody//
-  | //Param// | -> | //Mode// //BlueIdent// ``:`` //PType//
+  | //Param// | -> | //Mode// //BlueIdent// ``:`` //Type//
   | //[Type]// | -> | **eps**
   |  |  **|**  | //Type//
   |  |  **|**  | //Type// ``,`` //[Type]//

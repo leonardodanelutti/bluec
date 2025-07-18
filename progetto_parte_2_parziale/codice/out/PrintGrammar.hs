@@ -220,7 +220,7 @@ instance Print AbsGrammar.ProcD where
 
 instance Print AbsGrammar.Param where
   prt i = \case
-    AbsGrammar.RoutParam mode blueident ptype -> prPrec i 0 (concatD [prt 0 mode, prt 0 blueident, doc (showString ":"), prt 0 ptype])
+    AbsGrammar.RoutParam mode blueident type_ -> prPrec i 0 (concatD [prt 0 mode, prt 0 blueident, doc (showString ":"), prt 0 type_])
 
 instance Print [AbsGrammar.Type] where
   prt _ [] = concatD []

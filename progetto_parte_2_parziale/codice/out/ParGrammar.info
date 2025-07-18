@@ -46,7 +46,7 @@ Grammar
 	FunD -> BlueIdent '->' '(' ListType ')' RoutBody   (36)
 	ProcD -> BlueIdent '(' ListParam ')' RoutBody      (37)
 	ProcD -> BlueIdent RoutBody                        (38)
-	Param -> Mode BlueIdent ':' PType                  (39)
+	Param -> Mode BlueIdent ':' Type                   (39)
 	ListType ->                                        (40)
 	ListType -> Type                                   (41)
 	ListType -> Type ',' ListType                      (42)
@@ -1576,7 +1576,7 @@ State 83
 
 State 84
 
-	Param -> Mode . BlueIdent ':' PType                 (rule 39)
+	Param -> Mode . BlueIdent ':' Type                  (rule 39)
 
 	L_BlueIdent    shift, and enter state 10
 
@@ -1685,7 +1685,7 @@ State 92
 
 State 93
 
-	Param -> Mode BlueIdent . ':' PType                 (rule 39)
+	Param -> Mode BlueIdent . ':' Type                  (rule 39)
 
 	':'            shift, and enter state 155
 
@@ -3087,15 +3087,19 @@ State 154
 
 State 155
 
-	Param -> Mode BlueIdent ':' . PType                 (rule 39)
+	Param -> Mode BlueIdent ':' . Type                  (rule 39)
 
+	'&'            shift, and enter state 40
+	'Array'        shift, and enter state 41
 	'Boolean'      shift, and enter state 23
 	'Char'         shift, and enter state 24
 	'Integer'      shift, and enter state 25
 	'Real'         shift, and enter state 26
 	'String'       shift, and enter state 27
 
-	PType          goto state 158
+	PType          goto state 37
+	CType          goto state 38
+	Type           goto state 158
 
 State 156
 
@@ -3114,7 +3118,7 @@ State 157
 
 State 158
 
-	Param -> Mode BlueIdent ':' PType .                 (rule 39)
+	Param -> Mode BlueIdent ':' Type .                  (rule 39)
 
 	')'            reduce using rule 39
 	','            reduce using rule 39

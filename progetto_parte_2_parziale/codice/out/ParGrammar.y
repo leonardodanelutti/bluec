@@ -172,7 +172,7 @@ ProcD
   | BlueIdent RoutBody { AbsGrammar.ProcEmpty $1 $2 }
 
 Param :: { AbsGrammar.Param }
-Param : Mode BlueIdent ':' PType { AbsGrammar.RoutParam $1 $2 $4 }
+Param : Mode BlueIdent ':' Type { AbsGrammar.RoutParam $1 $2 $4 }
 
 ListType :: { [AbsGrammar.Type] }
 ListType

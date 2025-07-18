@@ -81,7 +81,7 @@ transProcD x = case x of
 
 transParam :: AbsGrammar.Param -> Result
 transParam x = case x of
-  AbsGrammar.RoutParam mode blueident ptype -> failure x
+  AbsGrammar.RoutParam mode blueident type_ -> failure x
 
 transRoutBody :: AbsGrammar.RoutBody -> Result
 transRoutBody x = case x of

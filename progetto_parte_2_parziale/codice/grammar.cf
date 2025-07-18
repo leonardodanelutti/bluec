@@ -48,7 +48,7 @@ Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Typ
 FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody;
 Proc.                           ProcD ::= BlueIdent "(" [Param] ")" RoutBody;
 ProcEmpty.                      ProcD ::= BlueIdent RoutBody;
-RoutParam.                      Param ::= Mode BlueIdent ":" PType;
+RoutParam.                      Param ::= Mode BlueIdent ":" Type;
 separator Type ",";
 separator Param ",";
 

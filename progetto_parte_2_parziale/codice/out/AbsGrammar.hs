@@ -54,7 +54,7 @@ data ProcD
     = Proc BlueIdent [Param] RoutBody | ProcEmpty BlueIdent RoutBody
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data Param = RoutParam Mode BlueIdent PType
+data Param = RoutParam Mode BlueIdent Type
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RoutBody = RoutineBody ConstB VarB [Statement] BlueIdent
