@@ -185,17 +185,17 @@ resWords =
           (b "Real" 23
              (b "Integer" 22 (b "Char" 21 N N) N)
              (b "[" 25 (b "String" 24 N N) N))))
-    (b "is" 39
+    (b "loop" 39
        (b "else" 33
           (b "continue" 30
              (b "and" 28 (b "^" 27 N N) (b "const" 29 N N))
              (b "do" 32 (b "div" 31 N N) N))
           (b "false" 36
-             (b "exit" 35 (b "end" 34 N N) N) (b "if" 38 (b "fn" 37 N N) N)))
-       (b "return" 46
-          (b "on" 43
-             (b "mod" 41 (b "loop" 40 N N) (b "not" 42 N N))
-             (b "ref" 45 (b "or" 44 N N) N))
+             (b "exit" 35 (b "end" 34 N N) N) (b "is" 38 (b "if" 37 N N) N)))
+       (b "routines" 46
+          (b "or" 43
+             (b "not" 41 (b "mod" 40 N N) (b "on" 42 N N))
+             (b "return" 45 (b "ref" 44 N N) N))
           (b "val" 49
              (b "true" 48 (b "then" 47 N N) N)
              (b "var" 51 (b "valres" 50 N N) N))))

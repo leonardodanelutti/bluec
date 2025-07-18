@@ -19,9 +19,14 @@ transBlueIdent :: AbsGrammar.BlueIdent -> Result
 transBlueIdent x = case x of
   AbsGrammar.BlueIdent string -> failure x
 
-transProgram :: AbsGrammar.Program -> Result
-transProgram x = case x of
-  AbsGrammar.ProgramDecl constb varb ps -> failure x
+transDeclarations :: AbsGrammar.Declarations -> Result
+transDeclarations x = case x of
+  AbsGrammar.ProgramDecl constb varb routb -> failure x
+
+transRoutB :: AbsGrammar.RoutB -> Result
+transRoutB x = case x of
+  AbsGrammar.RoutineBlockEmpty -> failure x
+  AbsGrammar.RoutineBlock ps -> failure x
 
 transP :: AbsGrammar.P -> Result
 transP x = case x of
@@ -80,7 +85,7 @@ transParam x = case x of
 
 transRoutBody :: AbsGrammar.RoutBody -> Result
 transRoutBody x = case x of
-  AbsGrammar.RoutineBody constb varb statements -> failure x
+  AbsGrammar.RoutineBody declarations statements -> failure x
 
 transMode :: AbsGrammar.Mode -> Result
 transMode x = case x of
@@ -102,7 +107,6 @@ transStatement x = case x of
   AbsGrammar.StatementContinue -> failure x
   AbsGrammar.StatementIf if_ -> failure x
   AbsGrammar.StatementLoop loop -> failure x
-  AbsGrammar.StatementRoutine p -> failure x
 
 transRExpNE :: AbsGrammar.RExpNE -> Result
 transRExpNE x = case x of

@@ -10,7 +10,10 @@ import Prelude (Char, Double, Integer, String)
 import qualified Prelude as C (Eq, Ord, Show, Read)
 import qualified Data.String
 
-data Program = ProgramDecl ConstB VarB [P]
+data Declarations = ProgramDecl ConstB VarB RoutB
+  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+data RoutB = RoutineBlockEmpty | RoutineBlock [P]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data P = FunDecl FunD | ProcDecl ProcD
@@ -55,7 +58,7 @@ data ProcD
 data Param = RoutParam Mode BlueIdent Type
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
-data RoutBody = RoutineBody ConstB VarB [Statement]
+data RoutBody = RoutineBody Declarations [Statement]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Mode = Mode_val | Mode_valres | Mode_ref | Mode1
@@ -72,7 +75,6 @@ data Statement
     | StatementContinue
     | StatementIf If
     | StatementLoop Loop
-    | StatementRoutine P
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RExpNE = NotEmptyRExp RExp

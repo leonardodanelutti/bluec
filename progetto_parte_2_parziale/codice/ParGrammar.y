@@ -8,7 +8,7 @@
 module ParGrammar
   ( happyError
   , myLexer
-  , pProgram
+  , pDeclarations
   ) where
 
 import Prelude
@@ -18,7 +18,7 @@ import LexGrammar
 
 }
 
-%name pProgram Program
+%name pDeclarations Declarations
 -- no lexer declaration
 %monad { Err } { (>>=) } { return }
 %tokentype {Token}
@@ -59,16 +59,16 @@ import LexGrammar
   'end'       { PT _ (TS _ 34)        }
   'exit'      { PT _ (TS _ 35)        }
   'false'     { PT _ (TS _ 36)        }
-  'fn'        { PT _ (TS _ 37)        }
-  'if'        { PT _ (TS _ 38)        }
-  'is'        { PT _ (TS _ 39)        }
-  'loop'      { PT _ (TS _ 40)        }
-  'mod'       { PT _ (TS _ 41)        }
-  'not'       { PT _ (TS _ 42)        }
-  'on'        { PT _ (TS _ 43)        }
-  'or'        { PT _ (TS _ 44)        }
-  'ref'       { PT _ (TS _ 45)        }
-  'return'    { PT _ (TS _ 46)        }
+  'if'        { PT _ (TS _ 37)        }
+  'is'        { PT _ (TS _ 38)        }
+  'loop'      { PT _ (TS _ 39)        }
+  'mod'       { PT _ (TS _ 40)        }
+  'not'       { PT _ (TS _ 41)        }
+  'on'        { PT _ (TS _ 42)        }
+  'or'        { PT _ (TS _ 43)        }
+  'ref'       { PT _ (TS _ 44)        }
+  'return'    { PT _ (TS _ 45)        }
+  'routines'  { PT _ (TS _ 46)        }
   'then'      { PT _ (TS _ 47)        }
   'true'      { PT _ (TS _ 48)        }
   'val'       { PT _ (TS _ 49)        }
@@ -97,8 +97,14 @@ String   : L_quoted { $1 }
 BlueIdent :: { AbsGrammar.BlueIdent }
 BlueIdent  : L_BlueIdent { AbsGrammar.BlueIdent $1 }
 
-Program :: { AbsGrammar.Program }
-Program : ConstB VarB ListP { AbsGrammar.ProgramDecl $1 $2 $3 }
+Declarations :: { AbsGrammar.Declarations }
+Declarations
+  : ConstB VarB RoutB { AbsGrammar.ProgramDecl $1 $2 $3 }
+
+RoutB :: { AbsGrammar.RoutB }
+RoutB
+  : {- empty -} { AbsGrammar.RoutineBlockEmpty }
+  | 'routines' ListP { AbsGrammar.RoutineBlock $2 }
 
 ListP :: { [AbsGrammar.P] }
 ListP : {- empty -} { [] } | P ListP { (:) $1 $2 }
@@ -158,13 +164,13 @@ Type
 
 FunD :: { AbsGrammar.FunD }
 FunD
-  : 'fn' BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody BlueIdent { AbsGrammar.Fun $2 $4 $8 $10 $11 }
-  | 'fn' BlueIdent '->' '(' ListType ')' RoutBody BlueIdent { AbsGrammar.FunEmpty $2 $5 $7 $8 }
+  : BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody BlueIdent { AbsGrammar.Fun $1 $3 $7 $9 $10 }
+  | BlueIdent '->' '(' ListType ')' RoutBody BlueIdent { AbsGrammar.FunEmpty $1 $4 $6 $7 }
 
 ProcD :: { AbsGrammar.ProcD }
 ProcD
-  : 'fn' BlueIdent '(' ListParam ')' RoutBody BlueIdent { AbsGrammar.Proc $2 $4 $6 $7 }
-  | 'fn' BlueIdent RoutBody BlueIdent { AbsGrammar.ProcEmpty $2 $3 $4 }
+  : BlueIdent '(' ListParam ')' RoutBody BlueIdent { AbsGrammar.Proc $1 $3 $5 $6 }
+  | BlueIdent RoutBody BlueIdent { AbsGrammar.ProcEmpty $1 $2 $3 }
 
 Param :: { AbsGrammar.Param }
 Param : Mode BlueIdent ':' Type { AbsGrammar.RoutParam $1 $2 $4 }
@@ -183,7 +189,7 @@ ListParam
 
 RoutBody :: { AbsGrammar.RoutBody }
 RoutBody
-  : 'is' ConstB VarB 'do' ListStatement 'end' { AbsGrammar.RoutineBody $2 $3 $5 }
+  : 'is' Declarations 'do' ListStatement 'end' { AbsGrammar.RoutineBody $2 $4 }
 
 ListStatement :: { [AbsGrammar.Statement] }
 ListStatement
@@ -209,7 +215,6 @@ Statement
   | 'continue' ';' { AbsGrammar.StatementContinue }
   | If 'end' 'if' { AbsGrammar.StatementIf $1 }
   | Loop 'end' 'loop' { AbsGrammar.StatementLoop $1 }
-  | P { AbsGrammar.StatementRoutine $1 }
 
 ListRExp :: { [AbsGrammar.RExp] }
 ListRExp
