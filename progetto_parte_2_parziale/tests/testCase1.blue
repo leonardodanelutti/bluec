@@ -1,0 +1,32 @@
+const
+    a, d: Integer := 0, 1;
+var
+    _b:Real := 1.0;
+
+/***
+MAIN/* FUNCTION
+*/
+routines main is
+    var
+        a: Integer:=c;
+    do
+        if (a > 0)
+        then
+            a:=0;
+            b:=1.0;
+        end if
+        if a > 0 then d:=0; end if
+        -- wrong function call
+        __util__(); end
+main
+
+-- Hello world utility-
+__util__(ref b: Boolean) -> (String) is
+    const
+        const1: String:="Hello world";
+do
+        if b then return const1;
+        else
+    return "";
+        end if end
+    __util__

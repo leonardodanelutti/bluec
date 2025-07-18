@@ -1,0 +1,23 @@
+example 1: generic test
+
+../../tests/testCase1.blue
+
+Parse Successful!
+
+[Abstract Syntax]
+
+ProgramDecl (ConstBlock [ConstDeclAss [BlueIdent "a",BlueIdent "d"] PType_Integer [NotEmptyRExp (RExpInt 0),NotEmptyRExp (RExpInt 1)]]) (VarBlock [VarDeclAss [BlueIdent "_b"] (TypePType PType_Real) [NotEmptyRExp (RExpDouble 1.0)]]) (RoutineBlock [ProcDecl (ProcEmpty (BlueIdent "main") (RoutineBody ConstBlockEmpty (VarBlock [VarDeclAss [BlueIdent "a"] (TypePType PType_Integer) [NotEmptyRExp (RExpLExp (LExpBase (BlueIdent "c")))]]) [StatementIf (CondIf (RExpGt (RExpLExp (LExpBase (BlueIdent "a"))) (RExpInt 0)) [StatementAss [LExpBase (BlueIdent "a")] [NotEmptyRExp (RExpInt 0)],StatementAss [LExpBase (BlueIdent "b")] [NotEmptyRExp (RExpDouble 1.0)]]),StatementIf (CondIf (RExpGt (RExpLExp (LExpBase (BlueIdent "a"))) (RExpInt 0)) [StatementAss [LExpBase (BlueIdent "d")] [NotEmptyRExp (RExpInt 0)]]),StatementProcCall (BlueIdent "__util__") []]) (BlueIdent "main")),FunDecl (Fun (BlueIdent "__util__") [RoutParam Mode_ref (BlueIdent "b") (TypePType PType_Boolean)] [TypePType PType_String] (RoutineBody (ConstBlock [ConstDeclAss [BlueIdent "const1"] PType_String [NotEmptyRExp (RExpString "Hello world")]]) VarBlockEmpty [StatementIf (CondIfElse (RExpLExp (LExpBase (BlueIdent "b"))) [StatementReturn [RExpLExp (LExpBase (BlueIdent "const1"))]] [StatementReturn [RExpString ""]])]) (BlueIdent "__util__"))])
+
+[Linearized tree]
+
+const a, d : Integer := 0, 1;
+var _b : Real := 1.0;
+routines main is var a : Integer := c;
+do if a > 0 then a := 0;
+b := 1.0;
+end if if a > 0 then d := 0;
+end if __util__ ();
+end main __util__ (ref b : Boolean) -> (String) is const const1 : String := "Hello world";
+do if b then return const1;
+else return "";
+end if end __util__

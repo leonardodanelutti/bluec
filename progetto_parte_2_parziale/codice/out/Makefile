@@ -14,7 +14,7 @@ ALEX_OPTS  = --ghc
 
 # Default goal.
 
-all : TestGrammar
+all : bluec
 
 # Rules for building the parser.
 
@@ -24,7 +24,7 @@ all : TestGrammar
 %.hs : %.x
 	${ALEX} ${ALEX_OPTS} $<
 
-TestGrammar : AbsGrammar.hs LexGrammar.hs ParGrammar.hs PrintGrammar.hs TestGrammar.hs
+bluec : AbsGrammar.hs LexGrammar.hs ParGrammar.hs PrintGrammar.hs bluec.hs
 	${GHC} ${GHC_OPTS} $@
 
 # Rules for cleaning generated files.
@@ -32,8 +32,17 @@ TestGrammar : AbsGrammar.hs LexGrammar.hs ParGrammar.hs PrintGrammar.hs TestGram
 clean :
 	-rm -f *.hi *.o *.log *.aux *.dvi
 
-distclean : clean
-	-rm -f AbsGrammar.hs AbsGrammar.hs.bak ComposOp.hs ComposOp.hs.bak DocGrammar.txt DocGrammar.txt.bak ErrM.hs ErrM.hs.bak LayoutGrammar.hs LayoutGrammar.hs.bak LexGrammar.x LexGrammar.x.bak ParGrammar.y ParGrammar.y.bak PrintGrammar.hs PrintGrammar.hs.bak SkelGrammar.hs SkelGrammar.hs.bak TestGrammar.hs TestGrammar.hs.bak XMLGrammar.hs XMLGrammar.hs.bak ASTGrammar.agda ASTGrammar.agda.bak ParserGrammar.agda ParserGrammar.agda.bak IOLib.agda IOLib.agda.bak Main.agda Main.agda.bak grammar.dtd grammar.dtd.bak TestGrammar LexGrammar.hs ParGrammar.hs ParGrammar.info ParDataGrammar.hs Makefile
+# Togliamo distclean?
+# distclean : clean
+# 	-rm -f AbsGrammar.hs AbsGrammar.hs.bak ComposOp.hs ComposOp.hs.bak DocGrammar.txt DocGrammar.txt.bak ErrM.hs ErrM.hs.bak LayoutGrammar.hs LayoutGrammar.hs.bak LexGrammar.x LexGrammar.x.bak ParGrammar.y ParGrammar.y.bak PrintGrammar.hs PrintGrammar.hs.bak SkelGrammar.hs SkelGrammar.hs.bak TestGrammar.hs TestGrammar.hs.bak XMLGrammar.hs XMLGrammar.hs.bak ASTGrammar.agda ASTGrammar.agda.bak ParserGrammar.agda ParserGrammar.agda.bak IOLib.agda IOLib.agda.bak Main.agda Main.agda.bak grammar.dtd grammar.dtd.bak TestGrammar LexGrammar.hs ParGrammar.hs ParGrammar.info ParDataGrammar.hs Makefile
 
+demo: bluec
+	@echo "Running demo..."
+	@{ \
+		echo "example 1: generic test"; \
+		echo ""; \
+		./bluec ../../tests/testCase1.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../../tests/Demo_output.txt
+	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
 # EOF
