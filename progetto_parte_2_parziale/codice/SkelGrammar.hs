@@ -21,12 +21,7 @@ transBlueIdent x = case x of
 
 transProgram :: AbsGrammar.Program -> Result
 transProgram x = case x of
-  AbsGrammar.ProgramDecl constb varb routb -> failure x
-
-transRoutB :: AbsGrammar.RoutB -> Result
-transRoutB x = case x of
-  AbsGrammar.RoutineBlockEmpty -> failure x
-  AbsGrammar.RoutineBlock ps -> failure x
+  AbsGrammar.ProgramDecl constb varb ps -> failure x
 
 transP :: AbsGrammar.P -> Result
 transP x = case x of
@@ -101,12 +96,13 @@ transRoutCall x = case x of
 transStatement :: AbsGrammar.Statement -> Result
 transStatement x = case x of
   AbsGrammar.StatementAss lexps rexpnes -> failure x
-  AbsGrammar.StatementProcCall blueident rexps -> failure x
-  AbsGrammar.StatementProcEmptyCall blueident -> failure x
+  AbsGrammar.StatementRoutCall blueident rexps -> failure x
+  AbsGrammar.StatementRoutEmptyCall blueident -> failure x
   AbsGrammar.StatementReturn rexps -> failure x
   AbsGrammar.StatementContinue -> failure x
   AbsGrammar.StatementIf if_ -> failure x
   AbsGrammar.StatementLoop loop -> failure x
+  AbsGrammar.StatementRoutine p -> failure x
 
 transRExpNE :: AbsGrammar.RExpNE -> Result
 transRExpNE x = case x of

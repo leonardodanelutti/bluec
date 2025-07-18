@@ -41,8 +41,9 @@ par(
   ritorno che avrebbero richiesto di avere dichiarazioni senza assegnamento).
 
 == Risoluzione conflitti
-- Il conflitto state 107 LExp vs RExp non è un problema. Essendo le LExp sottoinsieme
+- Il conflitto state 106 LExp vs RExp non è un problema. Essendo le LExp sottoinsieme
   delle RExp basta scegliere sempre la Shift.
+// TODO: MODIFICARE: Visto che è stata aggiunta la specifica di poter dichiarare funzioini in qualsiasi blocco è stato aggiunto il simbolo "fn" per dichiarare la funzioni cosi da distiguere le chiamate di funzioni dalle dichiarazioni 
 - Le dichiarazioni di funzioni, nell'ambiente più esterno, devono essere precedute dalla
   keyword `routines` similmente a quanto succede in Blue per le dichiarazioni delle
   routines nelle classi. Per evitare ambiguità tipo:

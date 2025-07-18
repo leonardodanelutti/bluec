@@ -141,12 +141,7 @@ instance Print AbsGrammar.BlueIdent where
   prt _ (AbsGrammar.BlueIdent i) = doc $ showString i
 instance Print AbsGrammar.Program where
   prt i = \case
-    AbsGrammar.ProgramDecl constb varb routb -> prPrec i 0 (concatD [prt 0 constb, prt 0 varb, prt 0 routb])
-
-instance Print AbsGrammar.RoutB where
-  prt i = \case
-    AbsGrammar.RoutineBlockEmpty -> prPrec i 0 (concatD [])
-    AbsGrammar.RoutineBlock ps -> prPrec i 0 (concatD [doc (showString "routines"), prt 0 ps])
+    AbsGrammar.ProgramDecl constb varb ps -> prPrec i 0 (concatD [prt 0 constb, prt 0 varb, prt 0 ps])
 
 instance Print [AbsGrammar.P] where
   prt _ [] = concatD []
@@ -210,13 +205,13 @@ instance Print AbsGrammar.Type where
 
 instance Print AbsGrammar.FunD where
   prt i = \case
-    AbsGrammar.Fun blueident1 params types routbody blueident2 -> prPrec i 0 (concatD [prt 0 blueident1, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "->"), doc (showString "("), prt 0 types, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
-    AbsGrammar.FunEmpty blueident1 types routbody blueident2 -> prPrec i 0 (concatD [prt 0 blueident1, doc (showString "->"), doc (showString "("), prt 0 types, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
+    AbsGrammar.Fun blueident1 params types routbody blueident2 -> prPrec i 0 (concatD [doc (showString "fn"), prt 0 blueident1, doc (showString "("), prt 0 params, doc (showString ")"), doc (showString "->"), doc (showString "("), prt 0 types, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
+    AbsGrammar.FunEmpty blueident1 types routbody blueident2 -> prPrec i 0 (concatD [doc (showString "fn"), prt 0 blueident1, doc (showString "->"), doc (showString "("), prt 0 types, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
 
 instance Print AbsGrammar.ProcD where
   prt i = \case
-    AbsGrammar.Proc blueident1 params routbody blueident2 -> prPrec i 0 (concatD [prt 0 blueident1, doc (showString "("), prt 0 params, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
-    AbsGrammar.ProcEmpty blueident1 routbody blueident2 -> prPrec i 0 (concatD [prt 0 blueident1, prt 0 routbody, prt 0 blueident2])
+    AbsGrammar.Proc blueident1 params routbody blueident2 -> prPrec i 0 (concatD [doc (showString "fn"), prt 0 blueident1, doc (showString "("), prt 0 params, doc (showString ")"), prt 0 routbody, prt 0 blueident2])
+    AbsGrammar.ProcEmpty blueident1 routbody blueident2 -> prPrec i 0 (concatD [doc (showString "fn"), prt 0 blueident1, prt 0 routbody, prt 0 blueident2])
 
 instance Print AbsGrammar.Param where
   prt i = \case
@@ -254,12 +249,13 @@ instance Print AbsGrammar.RoutCall where
 instance Print AbsGrammar.Statement where
   prt i = \case
     AbsGrammar.StatementAss lexps rexpnes -> prPrec i 0 (concatD [prt 0 lexps, doc (showString ":="), prt 0 rexpnes, doc (showString ";")])
-    AbsGrammar.StatementProcCall blueident rexps -> prPrec i 0 (concatD [prt 0 blueident, doc (showString "("), prt 0 rexps, doc (showString ")"), doc (showString ";")])
-    AbsGrammar.StatementProcEmptyCall blueident -> prPrec i 0 (concatD [prt 0 blueident, doc (showString ";")])
+    AbsGrammar.StatementRoutCall blueident rexps -> prPrec i 0 (concatD [prt 0 blueident, doc (showString "("), prt 0 rexps, doc (showString ")"), doc (showString ";")])
+    AbsGrammar.StatementRoutEmptyCall blueident -> prPrec i 0 (concatD [prt 0 blueident, doc (showString ";")])
     AbsGrammar.StatementReturn rexps -> prPrec i 0 (concatD [doc (showString "return"), prt 0 rexps, doc (showString ";")])
     AbsGrammar.StatementContinue -> prPrec i 0 (concatD [doc (showString "continue"), doc (showString ";")])
     AbsGrammar.StatementIf if_ -> prPrec i 0 (concatD [prt 0 if_, doc (showString "end"), doc (showString "if")])
     AbsGrammar.StatementLoop loop -> prPrec i 0 (concatD [prt 0 loop, doc (showString "end"), doc (showString "loop")])
+    AbsGrammar.StatementRoutine p -> prPrec i 0 (concatD [prt 0 p])
 
 instance Print [AbsGrammar.RExp] where
   prt _ [] = concatD []

@@ -15,10 +15,7 @@ token BlueIdent ((letter | '_') (letter | digit | '_')*);
 entrypoints Program;
 
 -- PROGRAM
-ProgramDecl.                    Program ::= ConstB VarB RoutB;
-
-RoutineBlockEmpty.              RoutB ::= {- empty -}; -- Routine block can be empty
-RoutineBlock.                   RoutB ::= "routines" [P];
+ProgramDecl.                    Program ::= ConstB VarB [P];
 
 separator P "";
 FunDecl.                        P ::= FunD;
@@ -44,10 +41,10 @@ rules CType ::= "Array" "<" Type ";" Integer ">" | "&" Type;
 rules Type ::= PType | CType;
 
 -- ROUTINES
-Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody BlueIdent;
-FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody BlueIdent;
-Proc.                           ProcD ::= BlueIdent "(" [Param] ")" RoutBody BlueIdent;
-ProcEmpty.                      ProcD ::= BlueIdent RoutBody BlueIdent;
+Fun.                            FunD ::= "fn" BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody BlueIdent;
+FunEmpty.                       FunD ::= "fn" BlueIdent "->" "(" [Type] ")" RoutBody BlueIdent;
+Proc.                           ProcD ::= "fn" BlueIdent "(" [Param] ")" RoutBody BlueIdent;
+ProcEmpty.                      ProcD ::= "fn" BlueIdent RoutBody BlueIdent;
 RoutParam.                      Param ::= Mode BlueIdent ":" Type;
 separator Type ",";
 separator Param ",";
@@ -62,12 +59,13 @@ RoutineCall.                    RoutCall ::= BlueIdent "(" [RExp] ")";
 
 -- STATEMENTS
 StatementAss.                   Statement ::= [LExp] ":=" [RExpNE] ";";
-StatementProcCall.              Statement ::= BlueIdent "(" [RExp] ")" ";";
-StatementProcEmptyCall.         Statement ::= BlueIdent ";";
+StatementRoutCall.              Statement ::= BlueIdent "(" [RExp] ")" ";";
+StatementRoutEmptyCall.         Statement ::= BlueIdent ";";
 StatementReturn.                Statement ::= "return" [RExp] ";";
 StatementContinue.              Statement ::= "continue" ";";
 StatementIf.                    Statement ::= If "end" "if";
 StatementLoop.                  Statement ::= Loop "end" "loop";
+StatementRoutine.               Statement ::= P;
 -- TODO: Case
 separator RExp ",";
 separator LExp ",";

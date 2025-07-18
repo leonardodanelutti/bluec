@@ -42,10 +42,10 @@ The reserved words used in grammar are the following:
   | ``Array`` | ``Boolean`` | ``Char`` | ``Integer``
   | ``Real`` | ``String`` | ``and`` | ``const``
   | ``continue`` | ``div`` | ``do`` | ``else``
-  | ``end`` | ``exit`` | ``false`` | ``if``
-  | ``is`` | ``loop`` | ``mod`` | ``not``
-  | ``on`` | ``or`` | ``ref`` | ``return``
-  | ``routines`` | ``then`` | ``true`` | ``val``
+  | ``end`` | ``exit`` | ``false`` | ``fn``
+  | ``if`` | ``is`` | ``loop`` | ``mod``
+  | ``not`` | ``on`` | ``or`` | ``ref``
+  | ``return`` | ``then`` | ``true`` | ``val``
   | ``valres`` | ``var`` |  |
 
 The symbols used in grammar are the following:
@@ -65,9 +65,7 @@ The symbols -> (production),  **|**  (union)
 and **eps** (empty rule) belong to the BNF notation.
 All other symbols are terminals.
 
-  | //Program// | -> | //ConstB// //VarB// //RoutB//
-  | //RoutB// | -> | **eps**
-  |  |  **|**  | ``routines`` //[P]//
+  | //Program// | -> | //ConstB// //VarB// //[P]//
   | //[P]// | -> | **eps**
   |  |  **|**  | //P// //[P]//
   | //P// | -> | //FunD//
@@ -94,10 +92,10 @@ All other symbols are terminals.
   |  |  **|**  | ``&`` //Type//
   | //Type// | -> | //PType//
   |  |  **|**  | //CType//
-  | //FunD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` ``->`` ``(`` //[Type]// ``)`` //RoutBody// //BlueIdent//
-  |  |  **|**  | //BlueIdent// ``->`` ``(`` //[Type]// ``)`` //RoutBody// //BlueIdent//
-  | //ProcD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` //RoutBody// //BlueIdent//
-  |  |  **|**  | //BlueIdent// //RoutBody// //BlueIdent//
+  | //FunD// | -> | ``fn`` //BlueIdent// ``(`` //[Param]// ``)`` ``->`` ``(`` //[Type]// ``)`` //RoutBody// //BlueIdent//
+  |  |  **|**  | ``fn`` //BlueIdent// ``->`` ``(`` //[Type]// ``)`` //RoutBody// //BlueIdent//
+  | //ProcD// | -> | ``fn`` //BlueIdent// ``(`` //[Param]// ``)`` //RoutBody// //BlueIdent//
+  |  |  **|**  | ``fn`` //BlueIdent// //RoutBody// //BlueIdent//
   | //Param// | -> | //Mode// //BlueIdent// ``:`` //Type//
   | //[Type]// | -> | **eps**
   |  |  **|**  | //Type//
@@ -120,6 +118,7 @@ All other symbols are terminals.
   |  |  **|**  | ``continue`` ``;``
   |  |  **|**  | //If// ``end`` ``if``
   |  |  **|**  | //Loop// ``end`` ``loop``
+  |  |  **|**  | //P//
   | //[RExp]// | -> | **eps**
   |  |  **|**  | //RExp//
   |  |  **|**  | //RExp// ``,`` //[RExp]//

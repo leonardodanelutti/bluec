@@ -10,10 +10,7 @@ import Prelude (Char, Double, Integer, String)
 import qualified Prelude as C (Eq, Ord, Show, Read)
 import qualified Data.String
 
-data Program = ProgramDecl ConstB VarB RoutB
-  deriving (C.Eq, C.Ord, C.Show, C.Read)
-
-data RoutB = RoutineBlockEmpty | RoutineBlock [P]
+data Program = ProgramDecl ConstB VarB [P]
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data P = FunDecl FunD | ProcDecl ProcD
@@ -69,12 +66,13 @@ data RoutCall = RoutineCall BlueIdent [RExp]
 
 data Statement
     = StatementAss [LExp] [RExpNE]
-    | StatementProcCall BlueIdent [RExp]
-    | StatementProcEmptyCall BlueIdent
+    | StatementRoutCall BlueIdent [RExp]
+    | StatementRoutEmptyCall BlueIdent
     | StatementReturn [RExp]
     | StatementContinue
     | StatementIf If
     | StatementLoop Loop
+    | StatementRoutine P
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RExpNE = NotEmptyRExp RExp
