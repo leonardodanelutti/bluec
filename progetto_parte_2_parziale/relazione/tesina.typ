@@ -79,3 +79,44 @@ par(
 - Il numero di argomenti della funzione deve essere giusto
 - Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale
 - sostituire le costanti (da fare nel TAC?)
+
+
+
+= Definizione del linguaggio
+Il linguaggio definito per questo progetto è un linguaggio di programmazione imperativo con scoping statico. La sua grammatica si basa sulla sintassi concreta del linguaggio Blue.
+
+Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzionalità richieste dalla consegna, come per esempio il dereferenziamento, sono stati introdotti alcuni elementi. Tuttavia, non sono presenti né classi né interfacce.
+
+== Tipi
+Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String` e `Char`.
+Sono inoltre supportati gli arrayche sono dichiarati utilizzando nel modo seguente: `Array< Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array.
+
+== Variabili
+Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo o di tipo array. Non è consentito dichiarare variabili senza assegnamento.
+== Costanti
+Le costanti sono dichiarate con la keyword `const` e possono essere di tipo primitivo (non devono allocare spazio in memoria). Anche in questo caso non è consentito dichiarare costanti senza assegnamento.
+
+== Loop
+Per il nostro linguaggio sono previste le forme di iterazione non determinata `while-do` e `do-while`. Entrambe le strutture sono naturalmente implementate dall'elemento `loop-exit on` della sintassi concreta di Blue.
+
+== Condizionali
+Il linguaggio immplementa le strutture condizionali semplici `if-then` e `if-then-else`, che permettono di eseguire blocchi di codice in base a condizioni specifiche.
+
+== Routine
+Le routine comprendono sia funzioni che procedure. Una funzione priva di parametri in ingresso può essere invocata in entrambe le forme `function()` o `function`. Rispetto alla sintassi concreta del linguaggio Blue, sono rimosse pre e post-condizioni; inoltre i parametri di ritorno non vengono nominati esplicitamente nella dichiarazione: si specificano soltanto i tipi restituiti mediante la notazione `-> (<Type>)`. Per gestire il ritorno esplicito dei valori, è stato introdotto il costrutto `return`.
+Quando si dichiara una funzione nell'ambiente più esterno, è necessario utilizzare la keyword `routines`, in modo simile a quanto avviene in Blue per le dichiarazioni delle routine nelle classi.
+
+Quando si invoca una funzione è possibile specificare la modalità di passaggio dei parametri in ingresso (`val` , `valres` e `ref`).
+Infine, poiché il linguaggio non prevede il concetto di classi, le funzioni non possono essere invocate con la notazione a punto, come `.function()`.
+
+== Commenti
+I commenti supportati sono i commenti a riga singola, che iniziano con il simbolo `--`, e i commenti a blocco, che iniziano con `/*` e terminano con `*/`.
+
+= TODO
+== separatori
+L'introduzione della dereferenziazione (deref) ha portato alla necessità di separatori per distinguere chiaramente tra le diverse parti delle espressioni. Infatti senza i separatori il parser LALR(1) non sarebbe in grado di distinguere un deref da una moltiplicazione, oppure una chiamata di funzione da un deref
+
+``` Blue
+
+
+```
