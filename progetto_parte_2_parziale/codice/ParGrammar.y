@@ -292,13 +292,7 @@ RExp6
   | '&' LExp { AbsGrammar.RExpRef $2 }
 
 RExp7 :: { AbsGrammar.RExp }
-RExp7 : RExp8 { $1 }
-
-RExp8 :: { AbsGrammar.RExp }
-RExp8 : RExp9 { $1 }
-
-RExp9 :: { AbsGrammar.RExp }
-RExp9
+RExp7
   : '(' RExp ')' { $2 }
   | Integer { AbsGrammar.RExpInt $1 }
   | Char { AbsGrammar.RExpChar $1 }

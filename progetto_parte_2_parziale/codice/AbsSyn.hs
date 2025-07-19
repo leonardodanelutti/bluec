@@ -109,7 +109,7 @@ data Exp a
   | Array { elements :: [Exp a], expAnnot :: a, expLoc :: Pos }
 
 data BinOp
-    = Add | Sub | Mul | Div
+    = Add | Sub | Mul | Div | DivInt | Mod | Pow
   deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RelOp

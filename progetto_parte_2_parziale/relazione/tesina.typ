@@ -41,7 +41,7 @@ par(
   ritorno che avrebbero richiesto di avere dichiarazioni senza assegnamento).
 
 == Risoluzione conflitti
-- Il conflitto state 107 LExp vs RExp non è un problema. Essendo le LExp sottoinsieme
+- Il conflitto state 105 LExp vs RExp non è un problema. Essendo le LExp sottoinsieme
   delle RExp basta scegliere sempre la Shift.
 // TODO: MODIFICARE: anche in quelli più interni
 - Le dichiarazioni di funzioni, nell'ambiente più esterno, devono essere precedute dalla
@@ -78,3 +78,4 @@ par(
 - durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso (Si può fare anche nel parser)
 - Il numero di argomenti della funzione deve essere giusto
 - Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale
+- sostituire le costanti (da fare nel TAC?)

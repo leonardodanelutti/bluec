@@ -87,7 +87,7 @@ separator Exit "";
 -- TODO:
 
 -- EXPRESSIONS
-coercions RExp 9;
+coercions RExp 7;
 RExpOr.                         RExp ::= RExp "or" RExp1;
 RExpAnd.                        RExp1 ::= RExp1 "and" RExp2;
 
@@ -112,14 +112,14 @@ RExpSign.                       RExp6 ::= "-" RExp7;
 RExpNeg.                        RExp6 ::= "not" RExp7;
 RExpRef.                        RExp6 ::= "&" LExp;
 
-RExpInt.                        RExp9 ::= Integer;
-RExpChar.                       RExp9 ::= Char;
-RExpString.                     RExp9 ::= String;
-RExpBool.                       RExp9 ::= Bool;
-RExpDouble.                     RExp9 ::= Double;
-RExpCall.                       RExp9 ::= RoutCall;
-RExpLExp.                       RExp9 ::= LExp;
-RExpArray.                      RExp9 ::= "Array" "[" [RExp] "]";
+RExpInt.                        RExp7 ::= Integer;
+RExpChar.                       RExp7 ::= Char;
+RExpString.                     RExp7 ::= String;
+RExpBool.                       RExp7 ::= Bool;
+RExpDouble.                     RExp7 ::= Double;
+RExpCall.                       RExp7 ::= RoutCall;
+RExpLExp.                       RExp7 ::= LExp;
+RExpArray.                      RExp7 ::= "Array" "[" [RExp] "]";
 
 rules Bool ::= "true" | "false";
 

@@ -160,9 +160,7 @@ All other symbols are terminals.
   |  |  **|**  | ``-`` //RExp7//
   |  |  **|**  | ``not`` //RExp7//
   |  |  **|**  | ``&`` //LExp//
-  | //RExp7// | -> | //RExp8//
-  | //RExp8// | -> | //RExp9//
-  | //RExp9// | -> | ``(`` //RExp// ``)``
+  | //RExp7// | -> | ``(`` //RExp// ``)``
   |  |  **|**  | //Integer//
   |  |  **|**  | //Char//
   |  |  **|**  | //String//

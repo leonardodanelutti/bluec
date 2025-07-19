@@ -317,14 +317,14 @@ instance Print AbsGrammar.RExp where
     AbsGrammar.RExpSign rexp -> prPrec i 6 (concatD [doc (showString "-"), prt 7 rexp])
     AbsGrammar.RExpNeg rexp -> prPrec i 6 (concatD [doc (showString "not"), prt 7 rexp])
     AbsGrammar.RExpRef lexp -> prPrec i 6 (concatD [doc (showString "&"), prt 0 lexp])
-    AbsGrammar.RExpInt n -> prPrec i 9 (concatD [prt 0 n])
-    AbsGrammar.RExpChar c -> prPrec i 9 (concatD [prt 0 c])
-    AbsGrammar.RExpString str -> prPrec i 9 (concatD [printString str])
-    AbsGrammar.RExpBool bool -> prPrec i 9 (concatD [prt 0 bool])
-    AbsGrammar.RExpDouble d -> prPrec i 9 (concatD [prt 0 d])
-    AbsGrammar.RExpCall routcall -> prPrec i 9 (concatD [prt 0 routcall])
-    AbsGrammar.RExpLExp lexp -> prPrec i 9 (concatD [prt 0 lexp])
-    AbsGrammar.RExpArray rexps -> prPrec i 9 (concatD [doc (showString "Array"), doc (showString "["), prt 0 rexps, doc (showString "]")])
+    AbsGrammar.RExpInt n -> prPrec i 7 (concatD [prt 0 n])
+    AbsGrammar.RExpChar c -> prPrec i 7 (concatD [prt 0 c])
+    AbsGrammar.RExpString str -> prPrec i 7 (concatD [printString str])
+    AbsGrammar.RExpBool bool -> prPrec i 7 (concatD [prt 0 bool])
+    AbsGrammar.RExpDouble d -> prPrec i 7 (concatD [prt 0 d])
+    AbsGrammar.RExpCall routcall -> prPrec i 7 (concatD [prt 0 routcall])
+    AbsGrammar.RExpLExp lexp -> prPrec i 7 (concatD [prt 0 lexp])
+    AbsGrammar.RExpArray rexps -> prPrec i 7 (concatD [doc (showString "Array"), doc (showString "["), prt 0 rexps, doc (showString "]")])
 
 instance Print AbsGrammar.Bool where
   prt i = \case
