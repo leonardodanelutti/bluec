@@ -70,3 +70,11 @@ par(
   ```
   dove "*" potrebbe essere sia un deref che una moltiplicazione.
   Per lo stesso motivo è stato aggiunto un ";" anche nell'exit dei loop.
+
+
+= Cose da controllare durante l'analisi semantica statica
+
+- Controllo tipi
+- durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso (Si può fare anche nel parser)
+- Il numero di argomenti della funzione deve essere giusto
+- Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale

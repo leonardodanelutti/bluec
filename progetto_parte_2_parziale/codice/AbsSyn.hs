@@ -10,6 +10,8 @@ data Pos = Pos {
     fstLine, lstLine, fstCol, lstCol :: Integer
 }
 
+def = Pos 0 0 0 0
+
 data Declarations a = ProgramDecl {
     consts :: [ConstA a],
     vars :: [VarA a],
@@ -18,16 +20,16 @@ data Declarations a = ProgramDecl {
 
 data ConstA a = ConstAss {
     constIdents :: [Ident], 
-    constType :: TypeLoc, 
-    constValues :: [RExp a],
+    constType :: TypePos, 
+    constValues :: [Exp a],
     constAnnot :: a,
     constLoc :: Pos
 }
 
 data VarA a = VarAss {
     varIdents :: [Ident], 
-    varType :: TypeLoc,
-    varValues :: [RExp a],
+    varType :: TypePos,
+    varValues :: [Exp a],
     varAnnot :: a,
     varLoc :: Pos
 }
@@ -35,7 +37,7 @@ data VarA a = VarAss {
 data Routine a = Routine {
     routName :: Ident,
     params :: [Param], 
-    returnTypes :: [TypeLoc],
+    returnTypes :: [TypePos],
     routBody :: RoutBody a,
     routAnnot :: a,
     routLoc :: Pos
@@ -56,15 +58,15 @@ data Type
 }
 
 -- TODO: Cosi non possiamo sapere la posizione dei tipi più interni
-data TypeLoc = TypeLoc {
+data TypePos = TypePos {
     type_ :: Type,
-    typeLoc :: Pos
+    typePos :: Pos
 }
 
 data Param = Param {
   mode :: Mode,
   paramName :: Ident,
-  paramType :: TypeLoc,
+  paramType :: TypePos,
   paramLoc :: Pos
 }
 
@@ -77,34 +79,34 @@ data RoutBody a = RoutBody {
 
 data RoutineCall a = RoutineCall {
   routCallName :: Ident,
-  args :: [RExp a],
-  routCallAnnot :: a,
-  routCallLoc :: Pos
+  args :: [Exp a]
 }
 
 data Statement a
-    = StmtAss {left :: [LExp a], right :: [RExp a], annot :: a, loc :: Pos}
+    = StmtAss {left :: [Exp a], right :: [Exp a], annot :: a, loc :: Pos}
     | StmtRoutCall {call :: RoutineCall a, annot :: a, loc :: Pos}
-    | StmtReturn {vals :: [RExp a], annot :: a, loc :: Pos}
+    | StmtReturn {vals :: [Exp a], annot :: a, loc :: Pos}
     | StmtContinue {annot :: a, loc :: Pos}
-    | StmtIf {cond :: RExp a, body :: [Statement a], annot :: a, loc :: Pos}
-    | StmrIfElse {cond :: RExp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, loc :: Pos}
+    | StmtIf {cond :: Exp a, body :: [Statement a], annot :: a, loc :: Pos}
+    | StmrIfElse {cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, loc :: Pos}
     | StmtLoop {body :: [Statement a], exit :: [Exit a], annot :: a, loc :: Pos}
 
-data Exit a = LoopExit {loopCond :: RExp a, loopBody :: [Statement a], loopExitAnnot :: a, loopExitLoc :: Pos}
+data Exit a = LoopExit {loopCond :: Exp a, loopBody :: [Statement a], loopExitAnnot :: a, loopExitLoc :: Pos}
 
-data RExp a
-  = BoolAnd {e1 :: RExp a, e2 :: RExp a, rexpAnnot :: a, rexLoc :: Pos}
-  | BoolOr {e1 :: RExp a, e2 :: RExp a, rexpAnnot :: a, rexLoc :: Pos}
-  | BoolNeg {e :: RExp a, rexpAnnot :: a, rexLoc :: Pos}
-  | Sign {e :: RExp a, rexpAnnot :: a, rexLoc :: Pos}
-  | BinOp {binOp :: BinOp, e1 :: RExp a, e2 :: RExp a, rexpAnnot :: a, rexLoc :: Pos}
-  | RelOp {relOp :: RelOp, e1 :: RExp a, e2 :: RExp a, rexpAnnot :: a, rexLoc :: Pos}
-  | Ref {eL :: LExp a, rexpAnnot :: a, rexLoc :: Pos}
-  | Literal { val :: Literal , rexpAnnot :: a, rexLoc :: Pos}
-  | RoutCall { exprCall :: RoutineCall a, rexpAnnot :: a, rexLoc :: Pos} 
-  | LExp { eL :: LExp a }
-  | Array { elements :: [RExp a] }
+data Exp a
+  = BoolAnd {e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Pos}
+  | BoolOr {e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Pos}
+  | BoolNeg {e :: Exp a, expAnnot :: a, expLoc :: Pos}
+  | Sign {e :: Exp a, expAnnot :: a, expLoc :: Pos}
+  | BinOp {binOp :: BinOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Pos}
+  | RelOp {relOp :: RelOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Pos}
+  | Ref {e :: Exp a, expAnnot :: a, expLoc :: Pos}
+  | Literal { val :: Literal , expAnnot :: a, expLoc :: Pos}
+  | RoutCall { exprCall :: RoutineCall a, expAnnot :: a, expLoc :: Pos} 
+  | Deref {e :: Exp a, expAnnot :: a, expLoc :: Pos}  
+  | ArrayIndex {e :: Exp a, index :: Exp a, expAnnot :: a, expLoc :: Pos}
+  | Var {name :: Ident, expAnnot :: a, expLoc :: Pos}
+  | Array { elements :: [Exp a], expAnnot :: a, expLoc :: Pos }
 
 data BinOp
     = Add | Sub | Mul | Div
@@ -121,11 +123,6 @@ data Literal
     | LitBool Bool
     | LitDouble Double
   deriving (C.Eq, C.Ord, C.Show, C.Read)
-
-data LExp a
-    = Deref {expr :: LExp a}
-    | ArrayIndex {expr :: LExp a, index :: RExp a}
-    | Var {name :: Ident}
 
 newtype Ident = Ident String
   deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
