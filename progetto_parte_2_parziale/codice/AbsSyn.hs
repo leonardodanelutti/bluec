@@ -6,7 +6,9 @@ import Prelude (Char, Double, Integer, String, Bool)
 import qualified Prelude as C (Eq, Ord, Show, Read)
 import qualified Data.String
 
-data Pos = Pos --TODO: 
+data Pos = Pos {
+    fstLine, lstLine, fstCol, lstCol :: Integer
+}
 
 data Declarations a = ProgramDecl {
     consts :: [ConstA a],
@@ -66,12 +68,12 @@ data Param = Param {
   paramLoc :: Pos
 }
 
+data Mode = Mval | Mvalres | Mref
+
 data RoutBody a = RoutBody {
   declarations :: Declarations a,
   statements :: [Statement a]
 }
-
-data Mode = Mval | Mvalres | Mref
 
 data RoutineCall a = RoutineCall {
   routCallName :: Ident,
@@ -90,7 +92,6 @@ data Statement a
     | StmtLoop {body :: [Statement a], exit :: [Exit a], annot :: a, loc :: Pos}
 
 data Exit a = LoopExit {loopCond :: RExp a, loopBody :: [Statement a], loopExitAnnot :: a, loopExitLoc :: Pos}
-
 
 data RExp a
   = BoolAnd {e1 :: RExp a, e2 :: RExp a, rexpAnnot :: a, rexLoc :: Pos}
