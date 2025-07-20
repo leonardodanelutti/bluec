@@ -2,9 +2,10 @@
 
 module AbsSyn where
 
-import Prelude (Char, Double, Integer, String, Bool)
-import qualified Prelude as C (Eq, Ord, Show, Read)
+import Prelude (Char, Double, Integer, String, Bool, Show)
 import qualified Data.String
+import GHC.Err (error)
+import qualified GHC.Internal.Show
 
 data Pos = Pos {
     fstLine, lstLine, fstCol, lstCol :: Integer
@@ -18,6 +19,13 @@ data Declarations a = ProgramDecl {
     routines :: [Routine a]
 }
 
+-- TODO: pretty printer
+instance (Show a) => Show (Declarations a) where
+  show = prettyPrinter
+
+prettyPrinter :: (Show a) => Declarations a -> String
+prettyPrinter _ = "TODO:"
+    
 data ConstA a = ConstAss {
     constIdents :: [Ident], 
     constType :: TypePos, 
@@ -110,11 +118,9 @@ data Exp a
 
 data BinOp
     = Add | Sub | Mul | Div | DivInt | Mod | Pow
-  deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data RelOp
     = Eq | Neq | Lt | Le | Gt | Ge
-  deriving (C.Eq, C.Ord, C.Show, C.Read)
 
 data Literal
     = LitInt Integer
@@ -122,7 +128,10 @@ data Literal
     | LitString String
     | LitBool Bool
     | LitDouble Double
-  deriving (C.Eq, C.Ord, C.Show, C.Read)
+
+getInt :: Literal -> Integer
+getInt (LitInt i) = i
+getInt _ = error "Expected an integer literal"
 
 newtype Ident = Ident String
-  deriving (C.Eq, C.Ord, C.Show, C.Read, Data.String.IsString)
+  deriving (Data.String.IsString)

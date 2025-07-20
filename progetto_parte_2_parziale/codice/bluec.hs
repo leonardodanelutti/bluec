@@ -20,7 +20,7 @@ import Control.Monad      ( when )
 
 import AbsGrammar   ()
 import LexGrammar   ( Token, mkPosToken )
-import ParGrammar   ( pProgram, myLexer )
+import ParGrammar   ( pDeclarations, myLexer )
 import PrintGrammar ( Print, printTree )
 import SkelGrammar  ()
 
@@ -70,7 +70,7 @@ main = do
   args <- getArgs
   case args of
     ["--help"] -> usage
-    []         -> getContents >>= run 2 pProgram
-    "-s":fs    -> mapM_ (runFile 0 pProgram) fs
-    fs         -> mapM_ (runFile 2 pProgram) fs
+    []         -> getContents >>= run 2 pDeclarations
+    "-s":fs    -> mapM_ (runFile 0 pDeclarations) fs
+    fs         -> mapM_ (runFile 2 pDeclarations) fs
 
