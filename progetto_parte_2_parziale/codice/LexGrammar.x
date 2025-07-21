@@ -111,7 +111,9 @@ data Token
 
 -- | Pretty print a position.
 printPosn :: Posn -> String
-printPosn (Pn _ l c) = "line " ++ show l ++ ", column " ++ show c
+printPosn (Pn (PnS _ fL fC) (PnS _ lL lC)) 
+  = "line " ++ show fL ++ ", column " ++ show fC
+    ++ " to line " ++ show lL ++ ", column " ++ show lC
 
 -- | Pretty print the position of the first token in the list.
 tokenPos :: [Token] -> String
@@ -124,15 +126,15 @@ tokenPosn (PT p _) = p
 tokenPosn (Err p)  = p
 
 -- | Get line and column of a token.
-tokenLineCol :: Token -> (Int, Int)
+tokenLineCol :: Token -> (Int, Int, Int, Int)
 tokenLineCol = posLineCol . tokenPosn
 
 -- | Get line and column of a position.
-posLineCol :: Posn -> (Int, Int)
-posLineCol (Pn _ l c) = (l,c)
+posLineCol :: Posn -> (Int, Int, Int, Int)
+posLineCol (Pn (PnS _ fL fC) (PnS _ lL lC)) = (fL, fC, lL, lC)
 
 -- | Convert a token into "position token" form.
-mkPosToken :: Token -> ((Int, Int), String)
+mkPosToken :: Token -> ((Int, Int, Int, Int), String)
 mkPosToken t = (tokenLineCol t, tokenText t)
 
 -- | Convert a token to its text.
@@ -223,20 +225,25 @@ unescapeInitTail = id . unesc . tail . id
 -- A modified "posn" wrapper.
 -------------------------------------------------------------------
 
-data Posn = Pn !Int !Int !Int
+-- | Single position of a token in the source file.
+data PosnS = PnS !Int !Int !Int
   deriving (Eq, Show, Ord)
 
-alexStartPos :: Posn
-alexStartPos = Pn 0 1 1
+-- | First and last position of a token in the source file.
+data Posn = Pn PosnS PosnS
+  deriving (Eq, Show, Ord)
 
-alexMove :: Posn -> Char -> Posn
-alexMove (Pn a l c) '\t' = Pn (a+1)  l     (((c+7) `div` 8)*8+1)
-alexMove (Pn a l c) '\n' = Pn (a+1) (l+1)   1
-alexMove (Pn a l c) _    = Pn (a+1)  l     (c+1)
+alexStartPos :: PosnS
+alexStartPos = PnS 0 1 1
+
+alexMove :: PosnS -> Char -> PosnS
+alexMove (PnS a l c) '\t' = PnS (a+1)  l     (((c+7) `div` 8)*8+1)
+alexMove (PnS a l c) '\n' = PnS (a+1) (l+1)   1
+alexMove (PnS a l c) _    = PnS (a+1)  l     (c+1)
 
 type Byte = Word8
 
-type AlexInput = (Posn,     -- current position,
+type AlexInput = (PosnS,     -- current position,
                   Char,     -- previous char
                   [Byte],   -- pending bytes on the current char
                   String)   -- current input string
@@ -247,10 +254,10 @@ tokens str = go (alexStartPos, '\n', [], str)
       go :: AlexInput -> [Token]
       go inp@(pos, _, _, str) =
                case alexScan inp 0 of
-                AlexEOF                   -> []
-                AlexError (pos, _, _, _)  -> [Err pos]
-                AlexSkip  inp' len        -> go inp'
-                AlexToken inp' len act    -> act pos (take len str) : (go inp')
+                AlexEOF                                 -> []
+                AlexError (pos', _, _, _)                -> [Err (Pn pos pos')]
+                AlexSkip  inp' len                      -> go inp'
+                AlexToken inp'@(pos', _, _, _) len act  -> act (Pn pos pos') (take len str) : (go inp')
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (p, c, (b:bs), s) = Just (b, (p, c, bs, s))

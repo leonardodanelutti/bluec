@@ -13,7 +13,7 @@ module ParGrammar
 
 import Prelude
 
-import qualified AbsGrammar
+import qualified AbsSyn as A
 import LexGrammar
 
 }
@@ -82,244 +82,301 @@ import LexGrammar
 
 %%
 
-Char    :: { Char }
-Char     : L_charac { (read $1) :: Char }
+Char    :: { A.Literal }
+Char     : L_charac { A.LitChar (read $1) }
 
-Double  :: { Double }
-Double   : L_doubl  { (read $1) :: Double }
+Double  :: { A.Literal }
+Double   : L_doubl  { A.LitDouble (read $1) }
 
-Integer :: { Integer }
-Integer  : L_integ  { (read $1) :: Integer }
+Integer :: { A.Literal }
+Integer  : L_integ  { A.LitInt (read $1) }
 
-String  :: { String }
-String   : L_quoted { $1 }
+String  :: { A.Literal }
+String   : L_quoted { A.LitString $1 }
 
-BlueIdent :: { AbsGrammar.BlueIdent }
-BlueIdent  : L_BlueIdent { AbsGrammar.BlueIdent $1 }
+BlueIdent :: { A.Ident }
+BlueIdent  : L_BlueIdent { A.Ident $1 }
 
-Declarations :: { AbsGrammar.Declarations }
+Declarations :: { A.Declarations () }
 Declarations
-  : ConstB VarB RoutB { AbsGrammar.ProgramDecl $1 $2 $3 }
+  : ConstB VarB RoutB { A.ProgramDecl $1 $2 $3 }
 
-RoutB :: { AbsGrammar.RoutB }
+RoutB :: { [A.Routine ()] }
 RoutB
-  : {- empty -} { AbsGrammar.RoutineBlockEmpty }
-  | 'routines' ListP { AbsGrammar.RoutineBlock $2 }
+  : {- empty -} { [] }
+  | 'routines' ListP { $2 }
 
-ListP :: { [AbsGrammar.P] }
-ListP : {- empty -} { [] } | P ListP { (:) $1 $2 }
+ListP :: { [A.Routine ()] }
+ListP : {- empty -} { [] } | P ListP { $1 : $2 }
 
-P :: { AbsGrammar.P }
-P : FunD { AbsGrammar.FunDecl $1 }
-  | ProcD { AbsGrammar.ProcDecl $1 }
+P :: { A.Routine () }
+P : FunD { $1 }
+  | ProcD { $1 }
 
-VarB :: { AbsGrammar.VarB }
+VarB :: { [A.VarA ()] }
 VarB
-  : {- empty -} { AbsGrammar.VarBlockEmpty }
-  | 'var' ListVarA { AbsGrammar.VarBlock $2 }
+  : {- empty -} { [] }
+  | 'var' ListVarA { $2 }
 
-VarA :: { AbsGrammar.VarA }
+VarA :: { A.VarA () }
 VarA
-  : ListBlueIdent ':' Type ':=' ListRExpNE { AbsGrammar.VarDeclAss $1 $3 $5 }
+  : ListBlueIdent ':' Type ':=' ListRExpNE { 
+    A.VarAss {
+      A.varIdents = $1, 
+      A.varType = $3,
+      A.varValues = $5,
+      A.varAnnot = (),
+      A.varLoc = def
+    } 
+  }
 
-ListVarA :: { [AbsGrammar.VarA] }
-ListVarA : VarA ';' { (:[]) $1 } | VarA ';' ListVarA { (:) $1 $3 }
+ListVarA :: { [A.VarA ()] }
+ListVarA : VarA ';' { [ $1 ] } | VarA ';' ListVarA { $1 : $3 }
 
-ListBlueIdent :: { [AbsGrammar.BlueIdent] }
+ListBlueIdent :: { [A.Ident] }
 ListBlueIdent
   : {- empty -} { [] }
-  | BlueIdent { (:[]) $1 }
-  | BlueIdent ',' ListBlueIdent { (:) $1 $3 }
+  | BlueIdent { [ $1 ] }
+  | BlueIdent ',' ListBlueIdent { $1 : $3 }
 
-ConstB :: { AbsGrammar.ConstB }
+ConstB :: { [A.ConstA ()] }
 ConstB
-  : {- empty -} { AbsGrammar.ConstBlockEmpty }
-  | 'const' ListConstA { AbsGrammar.ConstBlock $2 }
+  : {- empty -} { [] }
+  | 'const' ListConstA { $2 }
 
-ConstA :: { AbsGrammar.ConstA }
+ConstA :: { A.ConstA () }
 ConstA
-  : ListBlueIdent ':' PType ':=' ListRExpNE { AbsGrammar.ConstDeclAss $1 $3 $5 }
+  : ListBlueIdent ':' PType ':=' ListRExpNE { 
+    A.ConstAss {
+      A.constIdents = $1,
+      A.constType = $3,
+      A.constValues = $5,
+      A.constAnnot = (),
+      A.constLoc = def
+    } 
+  }
 
-ListConstA :: { [AbsGrammar.ConstA] }
+ListConstA :: { [A.ConstA ()] }
 ListConstA
-  : ConstA ';' { (:[]) $1 } | ConstA ';' ListConstA { (:) $1 $3 }
+  : ConstA ';' { [ $1 ] } | ConstA ';' ListConstA { $1 : $3 }
 
-PType :: { AbsGrammar.PType }
+PType :: { A.TypePos }
 PType
-  : 'Boolean' { AbsGrammar.PType_Boolean }
-  | 'Integer' { AbsGrammar.PType_Integer }
-  | 'Real' { AbsGrammar.PType_Real }
-  | 'String' { AbsGrammar.PType_String }
-  | 'Char' { AbsGrammar.PType_Char }
+  : 'Boolean' { A.TypePos A.TBoolean def }
+  | 'Integer' { A.TypePos A.TInteger def }
+  | 'Real' { A.TypePos A.TReal def }
+  | 'String' { A.TypePos A.TString def }
+  | 'Char' { A.TypePos A.TChar def }
 
-CType :: { AbsGrammar.CType }
+CType :: { A.TypePos }
 CType
-  : 'Array' '<' Type ';' Integer '>' { AbsGrammar.CType1 $3 $5 }
-  | '&' Type { AbsGrammar.CType2 $2 }
+  : 'Array' '<' Type ';' Integer '>' { A.TypePos (A.TArray (A.type_ $3) (A.getInt $5)) def }
+  | '&' Type { A.TypePos (A.TReference (A.type_ $2)) def }
 
-Type :: { AbsGrammar.Type }
+Type :: { A.TypePos }
 Type
-  : PType { AbsGrammar.TypePType $1 }
-  | CType { AbsGrammar.TypeCType $1 }
+  : PType { $1 }
+  | CType { $1 }
 
-FunD :: { AbsGrammar.FunD }
+FunD :: { A.Routine () }
 FunD
-  : BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody BlueIdent { AbsGrammar.Fun $1 $3 $7 $9 $10 }
-  | BlueIdent '->' '(' ListType ')' RoutBody BlueIdent { AbsGrammar.FunEmpty $1 $4 $6 $7 }
+  : BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody BlueIdent {
+    {- TODO: return an error if the two idents differ -}
+    A.Routine {
+      A.routName = $1,
+      A.params = $3,
+      A.returnTypes = $7,
+      A.routBody = $9,
+      A.routAnnot = (),
+      A.routLoc = def
+    }
+  }
+  | BlueIdent '->' '(' ListType ')' RoutBody BlueIdent {
+    A.Routine {
+      A.routName = $1,
+      A.params = [],
+      A.returnTypes = $4,
+      A.routBody = $6,
+      A.routAnnot = (),
+      A.routLoc = def
+    }
+  }
 
-ProcD :: { AbsGrammar.ProcD }
+ProcD :: { A.Routine () }
 ProcD
-  : BlueIdent '(' ListParam ')' RoutBody BlueIdent { AbsGrammar.Proc $1 $3 $5 $6 }
-  | BlueIdent RoutBody BlueIdent { AbsGrammar.ProcEmpty $1 $2 $3 }
+  : BlueIdent '(' ListParam ')' RoutBody BlueIdent {
+    A.Routine {
+      A.routName = $1,
+      A.params = $3,
+      A.returnTypes = [],
+      A.routBody = $5,
+      A.routAnnot = (),
+      A.routLoc = def
+    }
+  }
+  | BlueIdent RoutBody BlueIdent {
+    A.Routine {
+      A.routName = $1,
+      A.params = [],
+      A.returnTypes = [],
+      A.routBody = $2,
+      A.routAnnot = (),
+      A.routLoc = def
+    }
+  }
 
-Param :: { AbsGrammar.Param }
-Param : Mode BlueIdent ':' Type { AbsGrammar.RoutParam $1 $2 $4 }
+Param :: { A.Param }
+Param : Mode BlueIdent ':' Type { A.Param $1 $2 $4 def }
 
-ListType :: { [AbsGrammar.Type] }
+ListType :: { [A.TypePos] }
 ListType
   : {- empty -} { [] }
-  | Type { (:[]) $1 }
-  | Type ',' ListType { (:) $1 $3 }
+  | Type { [ $1 ] }
+  | Type ',' ListType { $1 : $3 }
 
-ListParam :: { [AbsGrammar.Param] }
+ListParam :: { [A.Param] }
 ListParam
   : {- empty -} { [] }
-  | Param { (:[]) $1 }
-  | Param ',' ListParam { (:) $1 $3 }
+  | Param { [ $1 ] }
+  | Param ',' ListParam { $1 : $3 }
 
-RoutBody :: { AbsGrammar.RoutBody }
+RoutBody :: { A.RoutBody () }
 RoutBody
-  : 'is' Declarations 'do' ListStatement 'end' { AbsGrammar.RoutineBody $2 $4 }
+  : 'is' Declarations 'do' ListStatement 'end' { A.RoutBody $2 $4 }
 
-ListStatement :: { [AbsGrammar.Statement] }
+ListStatement :: { [A.Statement ()] }
 ListStatement
-  : {- empty -} { [] } | Statement ListStatement { (:) $1 $2 }
+  : {- empty -} { [] } | Statement ListStatement { $1 : $2 }
 
-Mode :: { AbsGrammar.Mode }
+Mode :: { A.Mode }
 Mode
-  : 'val' { AbsGrammar.Mode_val }
-  | 'valres' { AbsGrammar.Mode_valres }
-  | 'ref' { AbsGrammar.Mode_ref }
-  | {- empty -} { AbsGrammar.Mode1 }
+  : 'val' { A.Mval }
+  | 'valres' { A.Mvalres }
+  | 'ref' { A.Mref }
+  | {- empty -} { A.Mval }
 
-RoutCall :: { AbsGrammar.RoutCall }
+RoutCall :: { A.RoutineCall () }
 RoutCall
-  : BlueIdent '(' ListRExp ')' { AbsGrammar.RoutineCall $1 $3 }
+  : BlueIdent '(' ListRExp ')' {
+    A.RoutineCall $1 $3
+  }
 
-Statement :: { AbsGrammar.Statement }
+Statement :: { A.Statement () }
 Statement
-  : ListLExp ':=' ListRExpNE ';' { AbsGrammar.StatementAss $1 $3 }
-  | BlueIdent '(' ListRExp ')' ';' { AbsGrammar.StatementRoutCall $1 $3 }
-  | BlueIdent ';' { AbsGrammar.StatementRoutEmptyCall $1 }
-  | 'return' ListRExp ';' { AbsGrammar.StatementReturn $2 }
-  | 'continue' ';' { AbsGrammar.StatementContinue }
-  | If 'end' 'if' { AbsGrammar.StatementIf $1 }
-  | Loop 'end' 'loop' { AbsGrammar.StatementLoop $1 }
+  : ListLExp ':=' ListRExpNE ';' { A.StmtAss $1 $3 () def }
+  | BlueIdent '(' ListRExp ')' ';' { A.StmtRoutCall (A.RoutineCall $1 $3) () def }
+  | BlueIdent ';' { A.StmtRoutCall (A.RoutineCall $1 []) () def }
+  | 'return' ListRExp ';' { A.StmtReturn $2 () def }
+  | 'continue' ';' { A.StmtContinue () def }
+  | If 'end' 'if' { $1 }
+  | Loop 'end' 'loop' { $1 }
 
-ListRExp :: { [AbsGrammar.RExp] }
+ListRExp :: { [A.Exp ()] }
 ListRExp
   : {- empty -} { [] }
-  | RExp { (:[]) $1 }
-  | RExp ',' ListRExp { (:) $1 $3 }
+  | RExp { [ $1 ] }
+  | RExp ',' ListRExp { $1 : $3 }
 
-ListLExp :: { [AbsGrammar.LExp] }
+ListLExp :: { [A.Exp ()] }
 ListLExp
   : {- empty -} { [] }
-  | LExp { (:[]) $1 }
-  | LExp ',' ListLExp { (:) $1 $3 }
+  | LExp { [ $1 ] }
+  | LExp ',' ListLExp { $1 : $3 }
 
-RExpNE :: { AbsGrammar.RExpNE }
-RExpNE : RExp { AbsGrammar.NotEmptyRExp $1 }
+RExpNE :: { A.Exp () }
+RExpNE : RExp { $1 }
 
-ListRExpNE :: { [AbsGrammar.RExpNE] }
+ListRExpNE :: { [A.Exp ()] }
 ListRExpNE
-  : RExpNE { (:[]) $1 } | RExpNE ',' ListRExpNE { (:) $1 $3 }
+  : RExpNE { [ $1 ] } | RExpNE ',' ListRExpNE { $1 : $3 }
 
-If :: { AbsGrammar.If }
+If :: { A.Statement () }
 If
-  : 'if' RExp 'then' ListStatement { AbsGrammar.CondIf $2 $4 }
-  | 'if' RExp 'then' ListStatement 'else' ListStatement { AbsGrammar.CondIfElse $2 $4 $6 }
+  : 'if' RExp 'then' ListStatement { A.StmtIf $2 $4 () def }
+  | 'if' RExp 'then' ListStatement 'else' ListStatement { A.StmrIfElse $2 $4 $6 () def }
 
-Loop :: { AbsGrammar.Loop }
-Loop : 'loop' ListStatement ListExit { AbsGrammar.LoopEntry $2 $3 }
+Loop :: { A.Statement () }
+Loop : 'loop' ListStatement ListExit { A.StmtLoop $2 $3 () def }
 
-Exit :: { AbsGrammar.Exit }
+Exit :: { A.Exit () }
 Exit
-  : 'exit' 'on' RExp ';' ListStatement { AbsGrammar.LoopExit $3 $5 }
+  : 'exit' 'on' RExp ';' ListStatement { A.LoopExit $3 $5 () def }
 
-ListExit :: { [AbsGrammar.Exit] }
-ListExit : {- empty -} { [] } | Exit ListExit { (:) $1 $2 }
+ListExit :: { [A.Exit ()] }
+ListExit : {- empty -} { [] } | Exit ListExit { $1 : $2 }
 
-RExp :: { AbsGrammar.RExp }
-RExp : RExp1 { $1 } | RExp 'or' RExp1 { AbsGrammar.RExpOr $1 $3 }
+RExp :: { A.Exp () }
+RExp : RExp1 { $1 } | RExp 'or' RExp1 { A.BoolOr $1 $3 () def }
 
-RExp1 :: { AbsGrammar.RExp }
+RExp1 :: { A.Exp () }
 RExp1
-  : RExp2 { $1 } | RExp1 'and' RExp2 { AbsGrammar.RExpAnd $1 $3 }
+  : RExp2 { $1 } | RExp1 'and' RExp2 { A.BoolAnd $1 $3 () def }
 
-RExp2 :: { AbsGrammar.RExp }
+RExp2 :: { A.Exp () }
 RExp2
   : RExp3 { $1 }
-  | RExp3 '>' RExp3 { AbsGrammar.RExpGt $1 $3 }
-  | RExp3 '<' RExp3 { AbsGrammar.RExpLs $1 $3 }
-  | RExp3 '>=' RExp3 { AbsGrammar.RExpGe $1 $3 }
-  | RExp3 '<=' RExp3 { AbsGrammar.RExpLe $1 $3 }
-  | RExp3 '=' RExp3 { AbsGrammar.RExpEq $1 $3 }
-  | RExp3 '<>' RExp3 { AbsGrammar.RExpNe $1 $3 }
+  | RExp3 '>' RExp3 { A.RelOp A.Gt $1 $3 () def }
+  | RExp3 '<' RExp3 { A.RelOp A.Lt $1 $3 () def }
+  | RExp3 '>=' RExp3 { A.RelOp A.Ge $1 $3 () def }
+  | RExp3 '<=' RExp3 { A.RelOp A.Le $1 $3 () def }
+  | RExp3 '=' RExp3 { A.RelOp A.Eq $1 $3 () def }
+  | RExp3 '<>' RExp3 { A.RelOp A.Neq $1 $3 () def }
 
-RExp3 :: { AbsGrammar.RExp }
+RExp3 :: { A.Exp () }
 RExp3
   : RExp4 { $1 }
-  | RExp3 '+' RExp4 { AbsGrammar.RExpPlus $1 $3 }
-  | RExp3 '-' RExp4 { AbsGrammar.RExpMinus $1 $3 }
+  | RExp3 '+' RExp4 { A.BinOp A.Add $1 $3 () def }
+  | RExp3 '-' RExp4 { A.BinOp A.Sub $1 $3 () def }
 
-RExp4 :: { AbsGrammar.RExp }
+RExp4 :: { A.Exp () }
 RExp4
   : RExp5 { $1 }
-  | RExp4 '*' RExp5 { AbsGrammar.RExpMult $1 $3 }
-  | RExp4 '/' RExp5 { AbsGrammar.RExpDivReal $1 $3 }
-  | RExp4 'div' RExp5 { AbsGrammar.RExpDivInt $1 $3 }
-  | RExp4 'mod' RExp5 { AbsGrammar.RExpMod $1 $3 }
+  | RExp4 '*' RExp5 { A.BinOp A.Mul $1 $3 () def }
+  | RExp4 '/' RExp5 { A.BinOp A.Div $1 $3 () def }
+  | RExp4 'div' RExp5 { A.BinOp A.DivInt $1 $3 () def }
+  | RExp4 'mod' RExp5 { A.BinOp A.Mod $1 $3 () def }
 
-RExp5 :: { AbsGrammar.RExp }
-RExp5 : RExp6 { $1 } | RExp5 '^' RExp6 { AbsGrammar.RExpPow $1 $3 }
+RExp5 :: { A.Exp () }
+RExp5 : RExp6 { $1 } | RExp5 '^' RExp6 { A.BinOp A.Pow $1 $3 () def }
 
-RExp6 :: { AbsGrammar.RExp }
+RExp6 :: { A.Exp () }
 RExp6
   : RExp7 { $1 }
-  | '-' RExp7 { AbsGrammar.RExpSign $2 }
-  | 'not' RExp7 { AbsGrammar.RExpNeg $2 }
-  | '&' LExp { AbsGrammar.RExpRef $2 }
+  | '-' RExp7 { A.Sign $2 () def }
+  | 'not' RExp7 { A.BoolNeg $2 () def }
+  | '&' LExp { A.Ref $2 () def }
 
-RExp7 :: { AbsGrammar.RExp }
+RExp7 :: { A.Exp () }
 RExp7
   : '(' RExp ')' { $2 }
-  | Integer { AbsGrammar.RExpInt $1 }
-  | Char { AbsGrammar.RExpChar $1 }
-  | String { AbsGrammar.RExpString $1 }
-  | Bool { AbsGrammar.RExpBool $1 }
-  | Double { AbsGrammar.RExpDouble $1 }
-  | RoutCall { AbsGrammar.RExpCall $1 }
-  | LExp { AbsGrammar.RExpLExp $1 }
-  | 'Array' '[' ListRExp ']' { AbsGrammar.RExpArray $3 }
+  | Integer { A.Literal $1 () def }
+  | Char { A.Literal $1 () def }
+  | String { A.Literal $1 () def }
+  | Bool { A.Literal $1 () def }
+  | Double { A.Literal $1 () def }
+  | RoutCall { A.RoutCall $1 () def }
+  | LExp { $1 }
+  | 'Array' '[' ListRExp ']' { A.Array $3 () def }
 
-Bool :: { AbsGrammar.Bool }
+Bool :: { A.Literal }
 Bool
-  : 'true' { AbsGrammar.Bool_true }
-  | 'false' { AbsGrammar.Bool_false }
+  : 'true' { A.LitBool True }
+  | 'false' { A.LitBool False }
 
-LExp :: { AbsGrammar.LExp }
-LExp : LExp1 { $1 } | '*' LExp { AbsGrammar.LExpDeref $2 }
+LExp :: { A.Exp () }
+LExp : LExp1 { $1 } | '*' LExp { A.Deref $2 () def }
 
-LExp1 :: { AbsGrammar.LExp }
+LExp1 :: { A.Exp () }
 LExp1
   : '(' LExp ')' { $2 }
-  | LExp1 '[' RExp ']' { AbsGrammar.LExpArrayDeref $1 $3 }
-  | BlueIdent { AbsGrammar.LExpBase $1 }
+  | LExp1 '[' RExp ']' { A.ArrayIndex $1 $3 () def }
+  | BlueIdent { A.Var $1 () def}
 
 {
 
 type Err = Either String
+
+def = A.Pos 0 0 0 0
 
 happyError :: [Token] -> Err a
 happyError ts = Left $

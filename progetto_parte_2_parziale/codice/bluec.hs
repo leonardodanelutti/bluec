@@ -18,11 +18,9 @@ import System.Environment ( getArgs )
 import System.Exit        ( exitFailure )
 import Control.Monad      ( when )
 
-import AbsGrammar   ()
 import LexGrammar   ( Token, mkPosToken )
 import ParGrammar   ( pDeclarations, myLexer )
-import PrintGrammar ( Print, printTree )
-import SkelGrammar  ()
+import AbsSyn       ( Print(..) )
 
 type Err        = Either String
 type ParseFun a = [Token] -> Err a
@@ -48,12 +46,12 @@ run v p s =
       showTree v tree
   where
   ts = myLexer s
-  showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
+  showPosToken ((l,c, _, _),t) = concat [ show l, ":", show c, "\t", show t ]
 
 showTree :: (Show a, Print a) => Int -> a -> IO ()
 showTree v tree = do
   putStrV v $ "\n[Abstract Syntax]\n\n" ++ show tree
-  putStrV v $ "\n[Linearized tree]\n\n" ++ printTree tree
+  putStrV v $ "\n[Linearized tree]\n\n" ++ prt tree
 
 usage :: IO ()
 usage = do
