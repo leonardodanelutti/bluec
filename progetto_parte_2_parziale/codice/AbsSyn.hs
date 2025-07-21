@@ -42,6 +42,12 @@ data Routine a = Routine
   }
   deriving (Show)
 
+data Ident = Ident
+  { identName :: String,
+    identPos :: Posn
+  }
+  deriving (Show)
+
 data Type
   = TBoolean
   | TInteger
@@ -64,6 +70,28 @@ data TypePos = TypePos
   }
   deriving (Show)
 
+data Exp a
+  = BoolAnd    { e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
+  | BoolOr     { e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
+  | BoolNeg    { e :: Exp a, expAnnot :: a, expPos :: Posn }
+  | Sign       { e :: Exp a, expAnnot :: a, expPos :: Posn }
+  | BinOp      { binOp :: BinOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
+  | RelOp      { relOp :: RelOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
+  | Ref        { e :: Exp a, expAnnot :: a, expPos :: Posn }
+  | Literal    { val :: Literal, expAnnot :: a, expPos :: Posn }
+  | RoutCall   { exprCall :: RoutineCall a, expAnnot :: a, expPos :: Posn }
+  | Deref      { e :: Exp a, expAnnot :: a, expPos :: Posn }
+  | ArrayIndex { e :: Exp a, index :: Exp a, expAnnot :: a, expPos :: Posn }
+  | Var        { name :: Ident, expAnnot :: a, expPos :: Posn }
+  | Array      { elements :: [Exp a], expAnnot :: a, expPos :: Posn }
+  deriving (Show)
+
+data BinOp = Add | Sub | Mul | Div | DivInt | Mod | Pow
+  deriving (Show)
+
+data RelOp = Eq | Neq | Lt | Le | Gt | Ge
+  deriving (Show)
+
 data Param = Param
   { mode :: Mode,
     paramName :: Ident,
@@ -81,6 +109,16 @@ data RoutBody a = RoutBody
   }
   deriving (Show)
 
+data Statement a
+  = StmtAss      { left :: [Exp a], right :: [Exp a], annot :: a, pos :: Posn }
+  | StmtRoutCall { call :: RoutineCall a, annot :: a }
+  | StmtReturn   { vals :: [Exp a], annot :: a, pos :: Posn }
+  | StmtContinue { annot :: a, pos :: Posn }
+  | StmtIf       { cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
+  | StmrIfElse   { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }
+  | StmtLoop     { body :: [Statement a], exit :: [Exit a], annot :: a, pos :: Posn }
+  deriving (Show)
+
 data RoutineCall a = RoutineCall
   { routCallName :: Ident,
     args :: [Exp a],
@@ -88,71 +126,25 @@ data RoutineCall a = RoutineCall
   }
   deriving (Show)
 
-data Statement a
-  = StmtAss {left :: [Exp a], right :: [Exp a], annot :: a, pos :: Posn}
-  | StmtRoutCall {call :: RoutineCall a, annot :: a}
-  | StmtReturn {vals :: [Exp a], annot :: a, pos :: Posn}
-  | StmtContinue {annot :: a, pos :: Posn}
-  | StmtIf {cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn}
-  | StmrIfElse {cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn}
-  | StmtLoop {body :: [Statement a], exit :: [Exit a], annot :: a, pos :: Posn}
-  deriving (Show)
-
-data Exit a = LoopExit {loopCond :: Exp a, loopBody :: [Statement a], loopExitAnnot :: a, loopExitPos :: Posn}
-  deriving (Show)
-
-data Exp a
-  = BoolAnd {e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn}
-  | BoolOr {e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn}
-  | BoolNeg {e :: Exp a, expAnnot :: a, expPos :: Posn}
-  | Sign {e :: Exp a, expAnnot :: a, expPos :: Posn}
-  | BinOp {binOp :: BinOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn}
-  | RelOp {relOp :: RelOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn}
-  | Ref {e :: Exp a, expAnnot :: a, expPos :: Posn}
-  | Literal {val :: Literal, expAnnot :: a, expPos :: Posn}
-  | RoutCall {exprCall :: RoutineCall a, expAnnot :: a, expPos :: Posn}
-  | Deref {e :: Exp a, expAnnot :: a, expPos :: Posn}
-  | ArrayIndex {e :: Exp a, index :: Exp a, expAnnot :: a, expPos :: Posn}
-  | Var {name :: Ident, expAnnot :: a, expPos :: Posn}
-  | Array {elements :: [Exp a], expAnnot :: a, expPos :: Posn}
-  deriving (Show)
-
-data BinOp
-  = Add
-  | Sub
-  | Mul
-  | Div
-  | DivInt
-  | Mod
-  | Pow
-  deriving (Show)
-
-data RelOp
-  = Eq
-  | Neq
-  | Lt
-  | Le
-  | Gt
-  | Ge
+data Exit a = LoopExit
+  { loopCond :: Exp a,
+    loopBody :: [Statement a],
+    loopExitAnnot :: a,
+    loopExitPos :: Posn
+  }
   deriving (Show)
 
 data Literal
-  = LitInt {intVal :: Integer, litPos :: Posn}
-  | LitChar {charVal :: Char, litPos :: Posn}
-  | LitString {stringVal :: String, litPos :: Posn}
-  | LitBool {boolVal :: Bool, litPos :: Posn}
-  | LitDouble {doubleVal :: Double, litPos :: Posn}
+  = LitInt    { intVal    :: Integer, litPos :: Posn }
+  | LitChar   { charVal   :: Char,    litPos :: Posn }
+  | LitString { stringVal :: String,  litPos :: Posn }
+  | LitBool   { boolVal   :: Bool,    litPos :: Posn }
+  | LitDouble { doubleVal :: Double,  litPos :: Posn }
   deriving (Show)
 
 getInt :: Literal -> Integer
 getInt (LitInt i _) = i
 getInt _ = error "Expected an integer literal"
-
-data Ident = Ident
-  { identName :: String,
-    identPos :: Posn
-  }
-  deriving (Show)
 
 class Print a where
   prt :: a -> String
