@@ -5,13 +5,7 @@ import Data.String qualified
 import GHC.Err (error)
 import GHC.Internal.Show qualified
 import Prelude (Bool, Char, Double, Integer, Show, String)
-
-data Pos = Pos
-  { fstLine, lstLine, fstCol, lstCol :: Integer
-  }
-  deriving (Show)
-
-def = Pos 0 0 0 0
+import LexGrammar (Posn)
 
 data Declarations a = ProgramDecl
   { consts :: [ConstA a],
@@ -25,7 +19,7 @@ data ConstA a = ConstAss
     constType :: TypePos,
     constValues :: [Exp a],
     constAnnot :: a,
-    constLoc :: Pos
+    constLoc :: Posn
   }
   deriving (Show)
 
@@ -34,7 +28,7 @@ data VarA a = VarAss
     varType :: TypePos,
     varValues :: [Exp a],
     varAnnot :: a,
-    varLoc :: Pos
+    varLoc :: Posn
   }
   deriving (Show)
 
@@ -44,7 +38,7 @@ data Routine a = Routine
     returnTypes :: [TypePos],
     routBody :: RoutBody a,
     routAnnot :: a,
-    routLoc :: Pos
+    routLoc :: Posn
   }
   deriving (Show)
 
@@ -66,7 +60,7 @@ data Type
 -- TODO: Cosi non possiamo sapere la posizione dei tipi più interni
 data TypePos = TypePos
   { type_ :: Type,
-    typePos :: Pos
+    typePosn :: Posn
   }
   deriving (Show)
 
@@ -74,7 +68,7 @@ data Param = Param
   { mode :: Mode,
     paramName :: Ident,
     paramType :: TypePos,
-    paramLoc :: Pos
+    paramLoc :: Posn
   }
   deriving (Show)
 
@@ -94,32 +88,32 @@ data RoutineCall a = RoutineCall
   deriving (Show)
 
 data Statement a
-  = StmtAss {left :: [Exp a], right :: [Exp a], annot :: a, loc :: Pos}
-  | StmtRoutCall {call :: RoutineCall a, annot :: a, loc :: Pos}
-  | StmtReturn {vals :: [Exp a], annot :: a, loc :: Pos}
-  | StmtContinue {annot :: a, loc :: Pos}
-  | StmtIf {cond :: Exp a, body :: [Statement a], annot :: a, loc :: Pos}
-  | StmrIfElse {cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, loc :: Pos}
-  | StmtLoop {body :: [Statement a], exit :: [Exit a], annot :: a, loc :: Pos}
+  = StmtAss {left :: [Exp a], right :: [Exp a], annot :: a, loc :: Posn}
+  | StmtRoutCall {call :: RoutineCall a, annot :: a, loc :: Posn}
+  | StmtReturn {vals :: [Exp a], annot :: a, loc :: Posn}
+  | StmtContinue {annot :: a, loc :: Posn}
+  | StmtIf {cond :: Exp a, body :: [Statement a], annot :: a, loc :: Posn}
+  | StmrIfElse {cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, loc :: Posn}
+  | StmtLoop {body :: [Statement a], exit :: [Exit a], annot :: a, loc :: Posn}
   deriving (Show)
 
-data Exit a = LoopExit {loopCond :: Exp a, loopBody :: [Statement a], loopExitAnnot :: a, loopExitLoc :: Pos}
+data Exit a = LoopExit {loopCond :: Exp a, loopBody :: [Statement a], loopExitAnnot :: a, loopExitLoc :: Posn}
   deriving (Show)
 
 data Exp a
-  = BoolAnd {e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | BoolOr {e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | BoolNeg {e :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | Sign {e :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | BinOp {binOp :: BinOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | RelOp {relOp :: RelOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | Ref {e :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | Literal {val :: Literal, expAnnot :: a, expLoc :: Pos}
-  | RoutCall {exprCall :: RoutineCall a, expAnnot :: a, expLoc :: Pos}
-  | Deref {e :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | ArrayIndex {e :: Exp a, index :: Exp a, expAnnot :: a, expLoc :: Pos}
-  | Var {name :: Ident, expAnnot :: a, expLoc :: Pos}
-  | Array {elements :: [Exp a], expAnnot :: a, expLoc :: Pos}
+  = BoolAnd {e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | BoolOr {e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | BoolNeg {e :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | Sign {e :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | BinOp {binOp :: BinOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | RelOp {relOp :: RelOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | Ref {e :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | Literal {val :: Literal, expAnnot :: a, expLoc :: Posn}
+  | RoutCall {exprCall :: RoutineCall a, expAnnot :: a, expLoc :: Posn}
+  | Deref {e :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | ArrayIndex {e :: Exp a, index :: Exp a, expAnnot :: a, expLoc :: Posn}
+  | Var {name :: Ident, expAnnot :: a, expLoc :: Posn}
+  | Array {elements :: [Exp a], expAnnot :: a, expLoc :: Posn}
   deriving (Show)
 
 data BinOp

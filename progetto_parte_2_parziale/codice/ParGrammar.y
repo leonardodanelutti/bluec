@@ -376,7 +376,11 @@ LExp1
 
 type Err = Either String
 
-def = A.Pos 0 0 0 0
+def = Pn (PnS 0 0 0) (PnS 0 0 0)
+
+nonTermPos :: Token -> Posn
+nonTermPos ts = def
+  
 
 happyError :: [Token] -> Err a
 happyError ts = Left $

@@ -1,6 +1,7 @@
 *.o
 *.hi
 build
+bluec
 TestModify
 grammar.aux
 grammar.log
