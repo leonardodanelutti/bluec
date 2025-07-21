@@ -82,20 +82,20 @@ import LexGrammar
 
 %%
 
-Char    :: { A.Literal }
-Char     : L_charac { A.LitChar (read (tokenText $1)) (tokenPosn $1) }
+Char       :: { A.Literal }
+Char       : L_charac    { A.LitChar   (read (tokenText $1)) (tokenPosn $1) }
 
-Double  :: { A.Literal }
-Double   : L_doubl  { A.LitDouble (read (tokenText $1)) (tokenPosn $1) }
+Double     :: { A.Literal }
+Double     : L_doubl     { A.LitDouble (read (tokenText $1)) (tokenPosn $1) }
 
-Integer :: { A.Literal }
-Integer  : L_integ  { A.LitInt (read (tokenText $1)) (tokenPosn $1) }
+Integer    :: { A.Literal }
+Integer    : L_integ     { A.LitInt    (read (tokenText $1)) (tokenPosn $1) }
 
-String  :: { A.Literal }
-String   : L_quoted { A.LitString (tokenText $1) (tokenPosn $1) }
+String     :: { A.Literal }
+String     : L_quoted    { A.LitString (tokenText $1)        (tokenPosn $1) }
 
-BlueIdent :: { A.Ident }
-BlueIdent  : L_BlueIdent { A.Ident (tokenText $1) (tokenPosn $1) }
+BlueIdent  :: { A.Ident }
+BlueIdent  : L_BlueIdent { A.Ident     (tokenText $1)        (tokenPosn $1) }
 
 Declarations :: { A.Declarations () }
 Declarations
@@ -120,8 +120,7 @@ VarB
 
 VarA :: { A.VarA () }
 VarA
-  : ListBlueIdent ':' Type ':=' ListRExpNE { 
-    A.VarAss {
+  : ListBlueIdent ':' Type ':=' ListRExpNE { A.VarAss {
       A.varIdents = $1, 
       A.varType = $3,
       A.varValues = $5,
@@ -146,8 +145,7 @@ ConstB
 
 ConstA :: { A.ConstA () }
 ConstA
-  : ListBlueIdent ':' PType ':=' ListRExpNE { 
-    A.ConstAss {
+  : ListBlueIdent ':' PType ':=' ListRExpNE { A.ConstAss {
       A.constIdents = $1,
       A.constType = $3,
       A.constValues = $5,
@@ -164,14 +162,20 @@ PType :: { A.TypePos }
 PType
   : 'Boolean' { A.TypePos A.TBoolean (tokenPosn $1) }
   | 'Integer' { A.TypePos A.TInteger (tokenPosn $1) }
-  | 'Real' { A.TypePos A.TReal (tokenPosn $1) }
-  | 'String' { A.TypePos A.TString (tokenPosn $1) }
-  | 'Char' { A.TypePos A.TChar (tokenPosn $1) }
+  | 'Real'    { A.TypePos A.TReal    (tokenPosn $1) }
+  | 'String'  { A.TypePos A.TString  (tokenPosn $1) }
+  | 'Char'    { A.TypePos A.TChar    (tokenPosn $1) }
 
 CType :: { A.TypePos }
 CType
-  : 'Array' '<' Type ';' Integer '>' { A.TypePos (A.TArray (A.type_ $3) (A.getInt $5)) (mergeTokenPos $1 $6)  }
-  | '&' Type { A.TypePos (A.TReference (A.type_ $2)) (mergePos (tokenPosn $1) (A.typePosn $2)) }
+  : 'Array' '<' Type ';' Integer '>' {
+    let arrayType = A.TArray (A.type_ $3) (A.getInt $5)
+    in A.TypePos arrayType (mergeTokenPos $1 $6)
+  }
+  | '&' Type {
+    let refType = A.TReference (A.type_ $2)
+    in A.TypePos refType (mergePos (tokenPosn $1) (A.typePosn $2))
+  }
 
 Type :: { A.TypePos }
 Type
@@ -180,9 +184,8 @@ Type
 
 FunD :: { A.Routine () }
 FunD
-  : BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody BlueIdent {
+  : BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody BlueIdent { A.Routine {
     {- TODO: return an error if the two idents differ -}
-    A.Routine {
       A.routName = $1,
       A.params = $3,
       A.returnTypes = $7,
@@ -192,8 +195,7 @@ FunD
       A.routPos = mergePos (A.identPos $1) (A.identPos $10)
     }
   }
-  | BlueIdent '->' '(' ListType ')' RoutBody BlueIdent {
-    A.Routine {
+  | BlueIdent '->' '(' ListType ')' RoutBody BlueIdent { A.Routine {
       A.routName = $1,
       A.params = [],
       A.returnTypes = $4,
@@ -205,8 +207,7 @@ FunD
 
 ProcD :: { A.Routine () }
 ProcD
-  : BlueIdent '(' ListParam ')' RoutBody BlueIdent {
-    A.Routine {
+  : BlueIdent '(' ListParam ')' RoutBody BlueIdent { A.Routine {
       A.routName = $1,
       A.params = $3,
       A.returnTypes = [],
@@ -215,8 +216,7 @@ ProcD
       A.routPos = mergePos (A.identPos $1) (A.identPos $6)
     }
   }
-  | BlueIdent RoutBody BlueIdent {
-    A.Routine {
+  | BlueIdent RoutBody BlueIdent { A.Routine {
       A.routName = $1,
       A.params = [],
       A.returnTypes = [],
@@ -264,13 +264,44 @@ RoutCall
 
 Statement :: { A.Statement () }
 Statement
-  : ListLExp ':=' ListRExpNE ';' { A.StmtAss $1 $3 () (mergePos (A.expPos(head $1)) (tokenPosn $4)) }
-  | BlueIdent '(' ListRExp ')' ';' { A.StmtRoutCall (A.RoutineCall $1 $3 (mergePos (A.identPos $1) (tokenPosn $4))) ()  }
-  | BlueIdent ';' { A.StmtRoutCall (A.RoutineCall $1 [] (mergePos (A.identPos $1) (tokenPosn $2))) () }
-  | 'return' ListRExp ';' { A.StmtReturn $2 () (mergeTokenPos $1 $3) }
-  | 'continue' ';' { A.StmtContinue () (mergeTokenPos $1 $2) }
-  | If 'end' 'if' { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
-  | Loop 'end' 'loop' { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
+  : ListLExp ':=' ListRExpNE ';'   { A.StmtAss {
+    A.left = $1,
+    A.right = $3,
+    A.annot = (),
+    A.pos = mergePos (A.expPos (head $1)) (tokenPosn $4)
+    }
+  }
+  | BlueIdent '(' ListRExp ')' ';' { A.StmtRoutCall {
+      A.call = A.RoutineCall { 
+        A.routCallName = $1,
+        A.args = $3,
+        A.routCallPos = (mergePos (A.identPos $1) (tokenPosn $4)) 
+      },
+      A.annot = ()
+    }
+  }
+  | BlueIdent ';'                  { A.StmtRoutCall { 
+      A.call = A.RoutineCall { 
+        A.routCallName = $1, 
+        A.args = [],
+        A.routCallPos = (mergePos (A.identPos $1) (tokenPosn $2))
+      },
+      A.annot = ()
+    }
+  }
+  | 'return' ListRExp ';'          { A.StmtReturn { 
+      A.vals = $2,
+      A.annot = (),
+      A.pos = (mergeTokenPos $1 $3)
+    }
+  }
+  | 'continue' ';'                 { A.StmtContinue { 
+      A.annot = (),
+      A.pos = (mergeTokenPos $1 $2) 
+    }
+  }
+  | If 'end' 'if'                  { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
+  | Loop 'end' 'loop'              { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
 
 ListRExp :: { [A.Exp ()] }
 ListRExp
@@ -293,98 +324,133 @@ ListRExpNE
 
 If :: { A.Statement () }
 If
-  : 'if' RExp 'then' ListStatement { A.StmtIf $2 $4 () (mergePos (tokenPosn $1) (A.pos (last $4))) }
-  | 'if' RExp 'then' ListStatement 'else' ListStatement { A.StmrIfElse $2 $4 $6 () (mergePos (tokenPosn $1) (A.pos (last $6))) }
+  : 'if' RExp 'then' ListStatement { A.StmtIf {
+      A.cond = $2,
+      A.body = $4,
+      A.annot = (),
+      A.pos = (mergePos (tokenPosn $1) (A.pos (last $4))) 
+    }
+  }
+  | 'if' RExp 'then' ListStatement 'else' ListStatement { A.StmrIfElse {
+      A.cond = $2,
+      A.bodyT = $4,
+      A.bodyF = $6,
+      A.annot = (),
+      A.pos = (mergePos (tokenPosn $1) (A.pos (last $6))) 
+    }
+  }
 
 Loop :: { A.Statement () }
-Loop : 'loop' ListStatement ListExit { A.StmtLoop $2 $3 () (mergePos (tokenPosn $1) (A.loopExitPos (last $3))) }
+Loop : 'loop' ListStatement ListExit { A.StmtLoop { 
+    A.body = $2,
+    A.exit = $3,
+    A.annot = (),
+    A.pos = (mergePos (tokenPosn $1) (A.loopExitPos (last $3))) 
+  }
+}
 
 Exit :: { A.Exit () }
 Exit
-  : 'exit' 'on' RExp ';' ListStatement { A.LoopExit $3 $5 () (mergeTokenPos $1 $4) }
+  : 'exit' 'on' RExp ';' ListStatement { A.LoopExit {
+      A.loopCond = $3, 
+      A.loopBody = $5,
+      A.loopExitAnnot = (),
+      A.loopExitPos = (mergeTokenPos $1 $4) 
+    }
+  }
 
 ListExit :: { [A.Exit ()] }
 ListExit : {- empty -} { [] } | Exit ListExit { $1 : $2 }
 
 RExp :: { A.Exp () }
-RExp : RExp1 { $1 } | RExp 'or' RExp1 { A.BoolOr $1 $3 () (mergeExpPos $1 $3) }
+RExp 
+  : RExp1             { $1 } 
+  | RExp 'or' RExp1   { A.BoolOr $1 $3 () (mergeExpPos $1 $3) }
 
 RExp1 :: { A.Exp () }
 RExp1
-  : RExp2 { $1 } | RExp1 'and' RExp2 { A.BoolAnd $1 $3 () (mergeExpPos $1 $3) }
+  : RExp2 { $1 } 
+  | RExp1 'and' RExp2 { A.BoolAnd $1 $3 () (mergeExpPos $1 $3) }
 
 RExp2 :: { A.Exp () }
 RExp2
   : RExp3 { $1 }
-  | RExp3 '>' RExp3 { A.RelOp A.Gt $1 $3 () (mergeExpPos $1 $3) }
-  | RExp3 '<' RExp3 { A.RelOp A.Lt $1 $3 () (mergeExpPos $1 $3) }
-  | RExp3 '>=' RExp3 { A.RelOp A.Ge $1 $3 () (mergeExpPos $1 $3) }
-  | RExp3 '<=' RExp3 { A.RelOp A.Le $1 $3 () (mergeExpPos $1 $3) }
-  | RExp3 '=' RExp3 { A.RelOp A.Eq $1 $3 () (mergeExpPos $1 $3) }
-  | RExp3 '<>' RExp3 { A.RelOp A.Neq $1 $3 () (mergeExpPos $1 $3) }
+  | RExp3 '>' RExp3   { A.RelOp A.Gt  $1 $3 () (mergeExpPos $1 $3) }
+  | RExp3 '<' RExp3   { A.RelOp A.Lt  $1 $3 () (mergeExpPos $1 $3) }
+  | RExp3 '>=' RExp3  { A.RelOp A.Ge  $1 $3 () (mergeExpPos $1 $3) }
+  | RExp3 '<=' RExp3  { A.RelOp A.Le  $1 $3 () (mergeExpPos $1 $3) }
+  | RExp3 '=' RExp3   { A.RelOp A.Eq  $1 $3 () (mergeExpPos $1 $3) }
+  | RExp3 '<>' RExp3  { A.RelOp A.Neq $1 $3 () (mergeExpPos $1 $3) }
 
 RExp3 :: { A.Exp () }
 RExp3
   : RExp4 { $1 }
-  | RExp3 '+' RExp4 { A.BinOp A.Add $1 $3 () (mergeExpPos $1 $3) }
-  | RExp3 '-' RExp4 { A.BinOp A.Sub $1 $3 () (mergeExpPos $1 $3) }
+  | RExp3 '+' RExp4   { A.BinOp A.Add $1 $3 () (mergeExpPos $1 $3) }
+  | RExp3 '-' RExp4   { A.BinOp A.Sub $1 $3 () (mergeExpPos $1 $3) }
 
 RExp4 :: { A.Exp () }
 RExp4
   : RExp5 { $1 }
-  | RExp4 '*' RExp5 { A.BinOp A.Mul $1 $3 () (mergeExpPos $1 $3) }
-  | RExp4 '/' RExp5 { A.BinOp A.Div $1 $3 () (mergeExpPos $1 $3) }
+  | RExp4 '*' RExp5   { A.BinOp A.Mul    $1 $3 () (mergeExpPos $1 $3) }
+  | RExp4 '/' RExp5   { A.BinOp A.Div    $1 $3 () (mergeExpPos $1 $3) }
   | RExp4 'div' RExp5 { A.BinOp A.DivInt $1 $3 () (mergeExpPos $1 $3) }
-  | RExp4 'mod' RExp5 { A.BinOp A.Mod $1 $3 () (mergeExpPos $1 $3) }
+  | RExp4 'mod' RExp5 { A.BinOp A.Mod    $1 $3 () (mergeExpPos $1 $3) }
 
 RExp5 :: { A.Exp () }
-RExp5 : RExp6 { $1 } | RExp5 '^' RExp6 { A.BinOp A.Pow $1 $3 () (mergeExpPos $1 $3) }
+RExp5 
+  : RExp6             { $1 } 
+  | RExp5 '^' RExp6   { A.BinOp A.Pow $1 $3 () (mergeExpPos $1 $3) }
 
 RExp6 :: { A.Exp () }
 RExp6
-  : RExp7 { $1 }
-  | '-' RExp7 { A.Sign $2 () (mergePos (tokenPosn $1) (A.expPos $2)) }
-  | 'not' RExp7 { A.BoolNeg $2 () (mergePos (tokenPosn $1) (A.expPos $2)) }
-  | '&' LExp { A.Ref $2 () (mergePos (tokenPosn $1) (A.expPos $2)) }
+  : RExp7        { $1 }
+  | '-' RExp7    { A.Sign    $2 () (mergePos (tokenPosn $1) (A.expPos $2)) }
+  | 'not' RExp7  { A.BoolNeg $2 () (mergePos (tokenPosn $1) (A.expPos $2)) }
+  | '&' LExp     { A.Ref     $2 () (mergePos (tokenPosn $1) (A.expPos $2)) }
 
 RExp7 :: { A.Exp () }
 RExp7
   : '(' RExp ')' { $2 }
-  | Integer { A.Literal $1 () (A.litPos $1) }
-  | Char { A.Literal $1 () (A.litPos $1) }
-  | String { A.Literal $1 () (A.litPos $1) }
-  | Bool { A.Literal $1 () (A.litPos $1) }
-  | Double { A.Literal $1 () (A.litPos $1) }
-  | RoutCall { A.RoutCall $1 () (A.routCallPos $1) }
-  | LExp { $1 }
+  | Integer                  { A.Literal  $1 () (A.litPos $1) }
+  | Char                     { A.Literal  $1 () (A.litPos $1) }
+  | String                   { A.Literal  $1 () (A.litPos $1) }
+  | Bool                     { A.Literal  $1 () (A.litPos $1) }
+  | Double                   { A.Literal  $1 () (A.litPos $1) }
+  | RoutCall                 { A.RoutCall $1 () (A.routCallPos $1) }
+  | LExp                     { $1 }
   | 'Array' '[' ListRExp ']' { A.Array $3 () (mergeTokenPos $1 $4) }
 
 Bool :: { A.Literal }
 Bool
-  : 'true' { A.LitBool True (tokenPosn $1) }
+  : 'true'  { A.LitBool True  (tokenPosn $1) }
   | 'false' { A.LitBool False (tokenPosn $1) }
 
 LExp :: { A.Exp () }
-LExp : LExp1 { $1 } | '*' LExp { A.Deref $2 () (mergePos (tokenPosn $1) (A.expPos $2)) }
+LExp 
+  : LExp1    { $1 } 
+  | '*' LExp { A.Deref $2 () (mergePos (tokenPosn $1) (A.expPos $2)) }
 
 LExp1 :: { A.Exp () }
 LExp1
-  : '(' LExp ')' { $2 }
+  : '(' LExp ')'       { $2 }
   | LExp1 '[' RExp ']' { A.ArrayIndex $1 $3 () (mergePos (A.expPos $1) (tokenPosn $4)) }
-  | BlueIdent { A.Var $1 () (A.identPos $1)}
+  | BlueIdent          { A.Var $1 () (A.identPos $1) }
 
 {
 
 type Err = Either String
 
+-- Merge two positions, keeping the first's start and the second's end
 mergePos :: Posn -> Posn -> Posn
 mergePos p1 p2 = let (Pn (PnS firstA firstL firstC) _) = p1
                      (Pn _ (PnS lastA lastL lastC))    = p2
                  in Pn (PnS firstA firstL firstC) (PnS lastA lastL lastC)
 
+-- Merge two positions form two tokens
 mergeTokenPos :: Token -> Token -> Posn
 mergeTokenPos t1 t2 = mergePos (tokenPosn t1) (tokenPosn t2)
 
+-- Merge two positions from expressions
 mergeExpPos :: A.Exp a -> A.Exp a -> Posn
 mergeExpPos e1 e2 = mergePos (A.expPos e1) (A.expPos e2)
   
