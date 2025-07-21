@@ -179,11 +179,11 @@ Terminals
 	'val'          { PT _ (TS _ 49) }
 	'valres'       { PT _ (TS _ 50) }
 	'var'          { PT _ (TS _ 51) }
-	L_charac       { PT _ (TC $$) }
-	L_doubl        { PT _ (TD $$) }
-	L_integ        { PT _ (TI $$) }
-	L_quoted       { PT _ (TL $$) }
-	L_BlueIdent    { PT _ (T_BlueIdent $$) }
+	L_charac       { PT _ (TC _) }
+	L_doubl        { PT _ (TD _) }
+	L_integ        { PT _ (TI _) }
+	L_quoted       { PT _ (TL _) }
+	L_BlueIdent    { PT _ (T_BlueIdent _) }
 
 -----------------------------------------------------------------------------
 Non-terminals
