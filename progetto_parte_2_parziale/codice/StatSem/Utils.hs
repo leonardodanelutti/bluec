@@ -1,0 +1,41 @@
+-- Utilities for static semantics analysis.
+module StatSem.Utils where
+
+import qualified Data.Map.Lazy  as Map
+import qualified AbsSyn         as AS
+import qualified LexGrammar     as LG
+
+-- Environment with different namespaces for variables, functions, and constants.
+--
+-- Routine calls without parameters and variables can be indistinguishable if have the
+-- same name and same type. In those cases it will be necessary to use the parentheses
+-- to disambiguate between a variable and a function call.
+data Env = Env {
+    symbols :: Map.Map AS.Ident SymbolEntry,
+    routines :: Map.Map AS.Ident (LG.Posn, [AS.Param], AS.TypePos)
+}
+
+data SymbolEntry
+    = Var LG.Posn AS.TypePos
+    | Const AS.Literal
+
+-- Datatype for static semantics analysis module annotations (on the AST).
+data Ann
+    = ExpAnn {
+        expType :: AS.Type,
+        expVal :: CTValue
+        -- TODO: other fileds
+    }
+    | IdentAnn {
+        identType :: AS.Type,
+        identVal :: CTValue
+    }
+
+-- Values known at compile time.
+data CTValue
+    = CTVInteger Integer
+    | CTVChar Char
+    | CTVString String
+    | CTVBoolean Bool
+    | CTVReal Double
+    | CTVUnknown -- Represents a value that is not known at compile time.

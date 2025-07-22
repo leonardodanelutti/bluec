@@ -21,7 +21,7 @@ import Control.Monad      ( when )
 import LexGrammar   ( Token, mkPosToken )
 import ParGrammar   ( pDeclarations, myLexer )
 import AbsSyn       ( Print(..) )
-import qualified StatSem as SS
+import qualified StatSem.Mod as SS
 
 type Err        = Either String
 type ParseFun a = [Token] -> Err a

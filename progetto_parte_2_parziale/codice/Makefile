@@ -24,13 +24,14 @@ all : bluec
 %.hs : %.x
 	${ALEX} ${ALEX_OPTS} $<
 
-bluec : LexGrammar.hs ParGrammar.hs StatSem.hs bluec.hs
+bluec : LexGrammar.hs ParGrammar.hs StatSem/Mod.hs StatSem/Exp.hs StatSem/Utils.hs bluec.hs
 	${GHC} ${GHC_OPTS} $@
 
 # Rules for cleaning generated files.
 
-clean :
-	-rm -f *.hi *.o *.log *.aux *.dvi
+clean:
+	find . -type f \( -name "*.hi" -o -name "*.o" -o -name "*.log" -o -name "*.aux" -o -name "*.dvi" \) -delete
+
 
 # Togliamo distclean?
 # distclean : clean
