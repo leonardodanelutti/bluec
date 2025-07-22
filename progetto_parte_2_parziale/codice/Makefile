@@ -24,7 +24,7 @@ all : bluec
 %.hs : %.x
 	${ALEX} ${ALEX_OPTS} $<
 
-bluec : LexGrammar.hs ParGrammar.hs bluec.hs
+bluec : LexGrammar.hs ParGrammar.hs StatSem.hs bluec.hs
 	${GHC} ${GHC_OPTS} $@
 
 # Rules for cleaning generated files.

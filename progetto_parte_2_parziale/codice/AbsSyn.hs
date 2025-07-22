@@ -5,7 +5,7 @@ import Data.String qualified
 import GHC.Err (error)
 import GHC.Internal.Show qualified
 import LexGrammar (Posn)
-import Prelude (Bool, Char, Double, Integer, Show, String)
+import Prelude (Bool, Char, Double, Integer, Show, String, Eq, Ord)
 
 data Declarations a = ProgramDecl
   { consts :: [ConstA a],
@@ -46,7 +46,7 @@ data Ident = Ident
   { identName :: String,
     identPos :: Posn
   }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 data Type
   = TBoolean
@@ -61,6 +61,7 @@ data Type
   | TReference
       { refType :: Type
       }
+  | TError { msgs :: [String] }
   deriving (Show)
 
 -- TODO: Cosi non possiamo sapere la posizione dei tipi più interni
@@ -79,7 +80,7 @@ data Exp a
   | RelOp      { relOp :: RelOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
   | Ref        { e :: Exp a, expAnnot :: a, expPos :: Posn }
   | Literal    { val :: Literal, expAnnot :: a, expPos :: Posn }
-  | RoutCall   { exprCall :: RoutineCall a, expAnnot :: a, expPos :: Posn }
+  | RoutCall   { expCall :: RoutineCall a, expAnnot :: a, expPos :: Posn }
   | Deref      { e :: Exp a, expAnnot :: a, expPos :: Posn }
   | ArrayIndex { e :: Exp a, index :: Exp a, expAnnot :: a, expPos :: Posn }
   | Var        { name :: Ident, expAnnot :: a, expPos :: Posn }
