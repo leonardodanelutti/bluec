@@ -12,7 +12,7 @@ import qualified LexGrammar     as LG
 -- to disambiguate between a variable and a function call.
 data Env = Env {
     symbols :: Map.Map AS.Ident SymbolEntry,
-    routines :: Map.Map AS.Ident (LG.Posn, [AS.Param], AS.TypePos)
+    routines :: Map.Map AS.Ident (LG.Posn, [AS.Param], [AS.TypePos])
 }
 
 data SymbolEntry
@@ -22,14 +22,27 @@ data SymbolEntry
 -- Datatype for static semantics analysis module annotations (on the AST).
 data Ann
     = ExpAnn {
-        expType :: AS.Type,
+        expType :: [AS.Type],
         expVal :: CTValue
         -- TODO: other fileds
     }
     | IdentAnn {
-        identType :: AS.Type,
-        identVal :: CTValue
+        identType :: [AS.Type],
+        identVal :: CTValue,
+        identCategory :: IdentCategory
     }
+
+data IdentCategory
+    = VarCategory
+    | ConstCategory
+    | RoutineCategory
+    | ErrorCategory
+
+-- data DownwardAnn
+--     = ExpAnn
+--     | DownwardIdentAnn {
+--         expectedType :: AS.Type
+--     }
 
 -- Values known at compile time.
 data CTValue

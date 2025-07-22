@@ -62,7 +62,7 @@ data Type
       { refType :: Type
       }
   | TError { msgs :: [String] }
-  deriving (Show)
+  deriving (Show, Eq)
 
 -- TODO: Cosi non possiamo sapere la posizione dei tipi più interni
 data TypePos = TypePos
