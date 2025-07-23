@@ -4,6 +4,7 @@ module StatSem.Utils where
 import qualified Data.Map.Lazy  as Map
 import qualified AbsSyn         as AS
 import qualified LexGrammar     as LG
+import qualified Types          as T
 
 -- Environment with different namespaces for variables, functions, and constants.
 --
@@ -12,22 +13,22 @@ import qualified LexGrammar     as LG
 -- to disambiguate between a variable and a function call.
 data Env = Env {
     symbols :: Map.Map AS.Ident SymbolEntry,
-    routines :: Map.Map AS.Ident (LG.Posn, [AS.Param], [AS.TypePos])
+    routines :: Map.Map AS.Ident (LG.Posn, [AS.Param], [T.TypePos])
 }
 
 data SymbolEntry
-    = Var LG.Posn AS.TypePos
+    = Var LG.Posn T.TypePos
     | Const AS.Literal
 
 -- Datatype for static semantics analysis module annotations (on the AST).
 data Ann
     = ExpAnn {
-        expType :: [AS.Type],
+        expType :: [T.Type],
         expVal :: CTValue
         -- TODO: other fileds
     }
     | IdentAnn {
-        identType :: [AS.Type],
+        identType :: [T.Type],
         identVal :: CTValue,
         identCategory :: IdentCategory
     }

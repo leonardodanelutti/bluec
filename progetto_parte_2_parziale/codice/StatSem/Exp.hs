@@ -5,6 +5,7 @@ import StatSem.Utils
 import qualified Data.Map.Lazy  as Map
 import qualified AbsSyn         as AS
 import qualified Errors         as E
+import qualified Types          as T
 
 -- TYPES
 -- Void annotations after parsing.
@@ -25,12 +26,12 @@ annExp env exp@AS.Sign{} = annExpSign env exp
 -----------
 
 -- Get type and value from a literal expression.
-getTypeAndValue :: AS.Literal -> (AS.Type, CTValue)
-getTypeAndValue (AS.LitInt v _) = (AS.TInteger, CTVInteger v)
-getTypeAndValue (AS.LitChar v _) = (AS.TChar, CTVChar v)
-getTypeAndValue (AS.LitString v _) = (AS.TString, CTVString v)
-getTypeAndValue (AS.LitBool v _) = (AS.TBoolean, CTVBoolean v)
-getTypeAndValue (AS.LitDouble v _) = (AS.TReal, CTVReal v)
+getTypeAndValue :: AS.Literal -> (T.Type, CTValue)
+getTypeAndValue (AS.LitInt v _) = (T.TInteger, CTVInteger v)
+getTypeAndValue (AS.LitChar v _) = (T.TChar, CTVChar v)
+getTypeAndValue (AS.LitString v _) = (T.TString, CTVString v)
+getTypeAndValue (AS.LitBool v _) = (T.TBoolean, CTVBoolean v)
+getTypeAndValue (AS.LitDouble v _) = (T.TReal, CTVReal v)
 
 -- Check if the expected parameter types match the argument types.
 checkParamTypes :: [AS.Param] -> [AS.Exp Ann] -> Bool
@@ -47,9 +48,9 @@ checkParamTypes params args = checkParamTypesBuffered params [] args
 -- ...
 -- bar(foo())
 -- ...
-checkParamTypesBuffered :: [AS.Param] -> [AS.Type] -> [AS.Exp Ann] -> Bool
+checkParamTypesBuffered :: [AS.Param] -> [T.Type] -> [AS.Exp Ann] -> Bool
 checkParamTypesBuffered [] [] [] = True
-checkParamTypesBuffered (AS.Param { AS.paramType = AS.TypePos { AS.type_ = paramType } } : ps) (argType : argTypes) args =
+checkParamTypesBuffered (AS.Param { AS.paramType = T.TypePos { T.type_ = paramType } } : ps) (argType : argTypes) args =
     paramType == argType && checkParamTypesBuffered ps argTypes args
 checkParamTypesBuffered ps [] (arg : args) =
     case AS.expAnnot arg of
@@ -103,12 +104,12 @@ annExpIdent env
     symbolType = Map.lookup ident (symbols env)
     routineType = Map.lookup ident (routines env)
     (identType, identVal, identCategory) = case (symbolType, routineType) of
-        (Nothing, Nothing) -> ([AS.TError { AS.msgs = [E.err pos "Unbound identifier: " ++ show ident] }], CTVUnknown, ErrorCategory)
-        (Just (Var pos ty), Nothing) -> ([AS.type_ ty], CTVUnknown, VarCategory) -- Variable case
+        (Nothing, Nothing) -> ([T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ show ident] }], CTVUnknown, ErrorCategory)
+        (Just (Var pos ty), Nothing) -> ([T.type_ ty], CTVUnknown, VarCategory) -- Variable case
         (Just (Const val), Nothing) -> ([identType], identVal, ConstCategory) where (identType, identVal) = getTypeAndValue val -- Constant case
-        (Nothing, Just (pos, params, ty)) -> (map AS.type_ ty, CTVUnknown, RoutineCategory) -- Routine case
+        (Nothing, Just (pos, params, ty)) -> (map T.type_ ty, CTVUnknown, RoutineCategory) -- Routine case
         -- TODO: the case in which the ambiguity can be resolved by the type
-        _ -> ([AS.TError { AS.msgs = [E.err pos "Ambiguous identifier: " ++ show ident] }], CTVUnknown, ErrorCategory) -- Ambiguous case
+        _ -> ([T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ show ident] }], CTVUnknown, ErrorCategory) -- Ambiguous case
 
 --------------------
 -- INTERNAL NODES --
@@ -142,12 +143,12 @@ annExpRoutCall env
     annArgs = map (annExp env) args
     routType = case Map.lookup ident (routines env) of
         Just (pos, params, ty) -> case checkParamTypes params annArgs of
-            True  -> map AS.type_ ty
-            False -> [AS.TError {
-                AS.msgs = [E.err expPos "Wrong argument types in routine call: " ++ show ident]
+            True  -> map T.type_ ty
+            False -> [T.TError {
+                T.msgs = [E.err expPos "Wrong argument types in routine call: " ++ show ident]
             }]
-        Nothing       -> [AS.TError {
-            AS.msgs = [E.err expPos "Unbound routine: " ++ show ident]
+        Nothing       -> [T.TError {
+            T.msgs = [E.err expPos "Unbound routine: " ++ show ident]
         }]
 
 -- Sign expressions.
@@ -170,13 +171,55 @@ annExpSign env
     typeE = expType $ AS.expAnnot annE
     valE = expVal $ AS.expAnnot annE
     ty = case typeE of
-        t@[AS.TInteger] -> t
-        t@[AS.TReal]    -> t
+        t@[T.TInteger] -> t
+        t@[T.TReal]    -> t
         -- TODO: add types that can be casted to Integer or Real
-        t@[AS.TError { AS.msgs = msgs }] -> t
-        _ -> [AS.TError { AS.msgs = [E.err pos $ "Sign operation not applicable to type: " ++ show typeE] }]-- TODO: error handling with loc
+        t@[T.TError { T.msgs = msgs }] -> t
+        _ -> [T.TError { T.msgs = [E.err pos $ "Sign operation not applicable to type: " ++ show typeE] }]-- TODO: error handling with loc
     val = case valE of
         CTVInteger v -> CTVInteger (-v)
         CTVReal v    -> CTVReal (-v)
         CTVUnknown   -> CTVUnknown
         _            -> CTVUnknown -- Sign operation not applicable to other types
+
+-- Bool AND expressions.
+-- Rule: RExpAnd.
+annExpAnd :: Env -> Exp -> AnnExp
+annExpAnd env
+            AS.BoolAnd {
+                AS.e1 = e1,
+                AS.e2 = e2,
+                AS.expPos = pos
+            } = AS.BoolAnd {
+    AS.e1 = annE1,
+    AS.e2 = annE2,
+    AS.expAnnot = ann,
+    AS.expPos = pos
+} where
+    ann = ExpAnn {
+            expType = mergedTypes,
+            expVal = val
+        }
+    annE1 = annExp env e1
+    annE2 = annExp env e2
+    typeE1 = expType $ AS.expAnnot annE1
+    typeE2 = expType $ AS.expAnnot annE2
+    valE1 = expVal $ AS.expAnnot annE1
+    valE2 = expVal $ AS.expAnnot annE2
+    val = case (valE1, valE2) of
+        (CTVBoolean v1, CTVBoolean v2) -> CTVBoolean (v1 && v2)
+        _ -> CTVUnknown
+    -- Check if both expressions can be casted to Boolean.
+    -- If not, annotate an error.
+    typesCompatibility1 = T.supL pos [T.TBoolean] typeE1
+    typesCompatibility2 = T.supL pos [T.TBoolean] typeE2
+    mergedTypes = case (typesCompatibility1, typesCompatibility2) of
+        ([T.TBoolean], [T.TBoolean]) -> [T.TBoolean]
+        ([t1], [t2]) -> [T.mergeErrs [t1, t2]]
+
+
+-- Bool OR expressions.
+-- Rule: RExpOr.
+
+-- Bool NOT expressions.
+-- Rule: RExpNeg.

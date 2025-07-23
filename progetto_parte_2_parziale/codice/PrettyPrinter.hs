@@ -2,6 +2,7 @@ module PrettyPrinter where
 
 import Data.List (intercalate)
 import AbsSyn
+import Types
 
 class Print a where
   prt :: a -> String

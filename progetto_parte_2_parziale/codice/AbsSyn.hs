@@ -6,6 +6,7 @@ import GHC.Err (error)
 import GHC.Internal.Show qualified
 import LexGrammar (Posn)
 import Prelude (Bool, Char, Double, Integer, Show, String, Eq, Ord)
+import Types (Type, TypePos)
 
 data Declarations a = ProgramDecl
   { consts :: [ConstA a],
@@ -47,29 +48,6 @@ data Ident = Ident
     identPos :: Posn
   }
   deriving (Show, Eq, Ord)
-
-data Type
-  = TBoolean
-  | TInteger
-  | TReal
-  | TString
-  | TChar
-  | TArray
-      { elementsType :: Type,
-        size :: Integer
-      }
-  | TReference
-      { refType :: Type
-      }
-  | TError { msgs :: [String] }
-  deriving (Show, Eq)
-
--- TODO: Cosi non possiamo sapere la posizione dei tipi più interni
-data TypePos = TypePos
-  { type_ :: Type,
-    typePosn :: Posn
-  }
-  deriving (Show)
 
 data Exp a
   = BoolAnd    { e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
