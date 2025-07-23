@@ -20,7 +20,7 @@ import Control.Monad      ( when )
 
 import LexGrammar   ( Token, mkPosToken )
 import ParGrammar   ( pDeclarations, myLexer )
-import AbsSyn       ( Print(..) )
+import PrettyPrinter  ( Print(..) )
 import qualified StatSem.Mod as SS
 
 type Err        = Either String

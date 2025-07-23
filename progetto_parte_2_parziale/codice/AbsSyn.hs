@@ -146,13 +146,3 @@ data Literal
 getInt :: Literal -> Integer
 getInt (LitInt i _) = i
 getInt _ = error "Expected an integer literal"
-
-class Print a where
-  prt :: a -> String
-
--- TODO: pretty printer
-instance (Show a) => Print (Declarations a) where
-  prt = prettyPrinter
-
-prettyPrinter :: (Show a) => Declarations a -> String
-prettyPrinter _ = "TODO:"

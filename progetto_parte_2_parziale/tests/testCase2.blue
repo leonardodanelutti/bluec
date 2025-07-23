@@ -1,0 +1,35 @@
+const
+	a, d : Integer := 0, 1;
+    e : Integer := 0;
+var
+	_b : Real := 1.0;
+routines
+	main() is
+	var
+		a : Integer := c;
+	do
+		if (a > 0) then
+			a := 0;
+		b := 1.0;
+		end if
+		if (a > 0) then
+			d := 0;
+		end if
+		if (a = 1) then
+			a := 2;
+		end if
+		__util__();
+	end
+	main
+
+	__util__(ref b : Boolean) -> (String) is
+	const
+		const1 : String := "\"Hello world\"";
+	do
+		if b then
+			return const1;
+		else
+			return "\"\"";
+		end if
+	end
+	__util__

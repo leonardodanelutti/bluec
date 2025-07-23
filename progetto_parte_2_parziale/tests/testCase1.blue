@@ -16,6 +16,9 @@ routines main is
             b:=1.0;
         end if
         if a > 0 then d:=0; end if
+        if a = 1 then 
+            a:=2;
+        end if
         -- wrong function call
         __util__(); end
 main
