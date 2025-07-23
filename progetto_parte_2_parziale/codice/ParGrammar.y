@@ -434,7 +434,7 @@ LExp1 :: { A.Exp () }
 LExp1
   : '(' LExp ')'       { $2 }
   | LExp1 '[' RExp ']' { A.ArrayIndex $1 $3 () (mergePos (A.expPos $1) (tokenPosn $4)) }
-  | BlueIdent          { A.Var $1 () (A.identPos $1) }
+  | BlueIdent          { A.ExpIdent $1 () (A.identPos $1) }
 
 {
 
