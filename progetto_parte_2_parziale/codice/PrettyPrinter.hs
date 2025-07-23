@@ -64,10 +64,10 @@ expPrinter exp =
         Sign e _ _ -> "-" ++ expPrinter e
         BinOp op e1 e2 _ _ -> "(" ++ expPrinter e1 ++ " " ++ binOpPrinter op ++ " " ++ expPrinter e2 ++ ")"
         RelOp op e1 e2 _ _ -> "(" ++ expPrinter e1 ++ " " ++ relOpPrinter op ++ " " ++ expPrinter e2 ++ ")"
-        Ref e _ _ -> "ref " ++ expPrinter e
+        Ref e _ _ -> "&" ++ expPrinter e
 
         --TODO vedere deref
-        Deref e _ _ -> "*" ++ expPrinter e
+        Deref e _ _ -> "*(" ++ expPrinter e ++ ")"
 
         ArrayIndex e index _ _ -> expPrinter e ++ "[" ++ expPrinter index ++ "]"
         Array e _ _ -> "[" ++ expsPrinter e ++ "]"
@@ -138,6 +138,21 @@ statementPrinter stm = "\t" ++
 
 
 -- Tipi
+-- data Type
+--  = TBoolean
+--  | TInteger
+--  | TReal
+--  | TString
+--  | TChar
+--  | TArray
+--      { elementsType :: Type,
+--        size :: Integer
+--      }
+--  | TReference
+--      { refType :: Type
+--      }
+--  | TError { msgs :: [String] }
+--  deriving (Show, Eq)
 typePrinter :: TypePos -> String
 typePrinter (TypePos typ _) =
     case typ of
@@ -146,7 +161,11 @@ typePrinter (TypePos typ _) =
         TReal    -> "Real"
         TString  -> "String"
         TChar    -> "Char"
-
+        TArray elemType size ->
+            "Array(" ++ typePrinter (TypePos elemType undefined) ++ ", " ++ show size ++ ")"
+        TReference refType ->
+            "&" ++ typePrinter (TypePos refType undefined)
+        TError msgs -> "Error: " ++ intercalate ", " msgs
 typesPrinter :: [TypePos] -> String
 typesPrinter ts = intercalate ", " (map typePrinter ts)
 
@@ -157,8 +176,8 @@ literalPrinter l =
         LitBool b _  -> show b
         LitInt i _   -> show i
         LitDouble r _-> show r
-        LitString s _-> show s
-        LitChar c _  -> show c
+        LitString s _ -> s
+        LitChar c _   -> [c]
 
 -- Operatori
 binOpPrinter :: BinOp -> String

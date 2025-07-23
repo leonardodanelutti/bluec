@@ -1,8 +1,10 @@
 const
 	a, d : Integer := 0, 1;
-    e : Integer := 0;
 var
 	_b : Real := 1.0;
+	x : Integer := 42;
+	p : &Integer := &x;
+	y : Integer := *(p);
 routines
 	main() is
 	var
@@ -22,14 +24,14 @@ routines
 	end
 	main
 
-	__util__(ref b : Boolean) -> (String) is
-	const
-		const1 : String := "\"Hello world\"";
-	do
-		if b then
-			return const1;
-		else
-			return "\"\"";
-		end if
-	end
-	__util__
+-- Hello world utility-
+__util__(ref b: Boolean) -> (String) is
+    const
+        const1: String:="Hello world";
+do
+        if b then return const1;
+        else
+    return "";
+        end if
+    end
+    __util__

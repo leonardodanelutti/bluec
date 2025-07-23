@@ -35,12 +35,12 @@ routines
 
 	__util__(ref b : Boolean) -> (String) is
 	const
-		const1 : String := "\"Hello world\"";
+		const1 : String := "Hello world";
 	do
 		if b then
 			return const1;
 		else
-			return "\"\"";
+			return "";
 		end if
 	end
 	__util__
