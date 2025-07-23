@@ -52,3 +52,8 @@ data CTValue
     | CTVBoolean Bool
     | CTVReal Double
     | CTVUnknown -- Represents a value that is not known at compile time.
+
+-- -- Get the number of types of an annotation.
+-- getAnnTypeCount :: Ann -> Int
+-- getAnnTypeCount (ExpAnn { expType = types }) = length types
+-- getAnnTypeCount (IdentAnn { identType = types }) = length types
