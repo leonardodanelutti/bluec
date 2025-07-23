@@ -22,6 +22,7 @@ import LexGrammar   ( Token, mkPosToken )
 import ParGrammar   ( pDeclarations, myLexer )
 import PrettyPrinter  ( Print(..) )
 import qualified StatSem.Mod as SS
+import qualified TAC.Gen as TAC
 
 type Err        = Either String
 type ParseFun a = [Token] -> Err a
