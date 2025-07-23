@@ -11,7 +11,7 @@ data Type
   | TChar
   | TArray
       { elementsType :: Type,
-        size :: Integer
+        size :: Int
       }
   | TReference
       { refType :: Type

@@ -5,8 +5,8 @@ import Data.String qualified
 import GHC.Err (error)
 import GHC.Internal.Show qualified
 import LexGrammar (Posn)
-import Prelude (Bool, Char, Double, Integer, Show, String, Eq, Ord)
-import Types (Type, TypePos)
+import Prelude (Bool, Char, Double, Int, Show, String, Eq, Ord)
+import qualified Types as Ty
 
 data Declarations a = ProgramDecl
   { consts :: [ConstA a],
@@ -17,7 +17,7 @@ data Declarations a = ProgramDecl
 
 data ConstA a = ConstAss
   { constIdents :: [Ident],
-    constType :: TypePos,
+    constType :: Ty.TypePos,
     constValues :: [Exp a],
     constAnnot :: a,
     constPos :: Posn
@@ -26,7 +26,7 @@ data ConstA a = ConstAss
 
 data VarA a = VarAss
   { varIdents :: [Ident],
-    varType :: TypePos,
+    varType :: Ty.TypePos,
     varValues :: [Exp a],
     varAnnot :: a,
     varPos :: Posn
@@ -36,7 +36,7 @@ data VarA a = VarAss
 data Routine a = Routine
   { routName :: Ident,
     params :: [Param],
-    returnTypes :: [TypePos],
+    returnTypes :: [Ty.TypePos],
     routBody :: RoutBody a,
     routAnnot :: a,
     routPos :: Posn
@@ -74,7 +74,7 @@ data RelOp = Eq | Neq | Lt | Le | Gt | Ge
 data Param = Param
   { mode :: Mode,
     paramName :: Ident,
-    paramType :: TypePos,
+    paramType :: Ty.TypePos,
     paramPos :: Posn
   }
   deriving (Show)
@@ -114,13 +114,13 @@ data Exit a = LoopExit
   deriving (Show)
 
 data Literal
-  = LitInt    { intVal    :: Integer, litPos :: Posn }
+  = LitInt    { intVal    :: Int,     litPos :: Posn }
   | LitChar   { charVal   :: Char,    litPos :: Posn }
   | LitString { stringVal :: String,  litPos :: Posn }
   | LitBool   { boolVal   :: Bool,    litPos :: Posn }
   | LitDouble { doubleVal :: Double,  litPos :: Posn }
   deriving (Show)
 
-getInt :: Literal -> Integer
+getInt :: Literal -> Int
 getInt (LitInt i _) = i
 getInt _ = error "Expected an integer literal"

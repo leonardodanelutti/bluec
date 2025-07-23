@@ -47,7 +47,7 @@ data IdentCategory
 
 -- Values known at compile time.
 data CTValue
-    = CTVInteger Integer
+    = CTVInteger Int
     | CTVChar Char
     | CTVString String
     | CTVBoolean Bool

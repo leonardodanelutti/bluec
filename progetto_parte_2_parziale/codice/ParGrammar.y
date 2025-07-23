@@ -161,20 +161,20 @@ ListConstA
 
 PType :: { T.TypePos }
 PType
-  : 'Boolean' { T.TypePos A.TBoolean (tokenPosn $1) }
-  | 'Integer' { T.TypePos A.TInteger (tokenPosn $1) }
-  | 'Real'    { T.TypePos A.TReal    (tokenPosn $1) }
-  | 'String'  { T.TypePos A.TString  (tokenPosn $1) }
-  | 'Char'    { T.TypePos A.TChar    (tokenPosn $1) }
+  : 'Boolean' { T.TypePos T.TBoolean (tokenPosn $1) }
+  | 'Integer' { T.TypePos T.TInteger (tokenPosn $1) }
+  | 'Real'    { T.TypePos T.TReal    (tokenPosn $1) }
+  | 'String'  { T.TypePos T.TString  (tokenPosn $1) }
+  | 'Char'    { T.TypePos T.TChar    (tokenPosn $1) }
 
 CType :: { T.TypePos }
 CType
   : 'Array' '<' Type ';' Integer '>' {
-    let arrayType = A.TArray (A.type_ $3) (A.getInt $5)
+    let arrayType = T.TArray (T.type_ $3) (A.getInt $5)
     in T.TypePos arrayType (mergeTokenPos $1 $6)
   }
   | '&' Type {
-    let refType = A.TReference (A.type_ $2)
+    let refType = T.TReference (T.type_ $2)
     in T.TypePos refType (mergePos (tokenPosn $1) (T.typePosn $2))
   }
 
@@ -228,7 +228,7 @@ ProcD
   }
 
 Param :: { A.Param }
-Param : Mode BlueIdent ':' Type { A.Param $1 $2 $4 (mergePos (A.identPos $2) (A.typePosn $4)) }
+Param : Mode BlueIdent ':' Type { A.Param $1 $2 $4 (mergePos (A.identPos $2) (T.typePosn $4)) }
 
 ListType :: { [T.TypePos] }
 ListType
