@@ -59,8 +59,6 @@ expPrinter exp =
     case exp of
         Literal val _ _ -> literalPrinter val
         ExpIdent (Ident name _) _ _ -> name
-        BoolAnd e1 e2 _ _ -> "(" ++ expPrinter e1 ++ " and " ++ expPrinter e2 ++ ")"
-        BoolOr e1 e2 _ _ -> "(" ++ expPrinter e1 ++ " or " ++ expPrinter e2 ++ ")"
         BoolNeg e _ _ -> "not " ++ expPrinter e
         Sign e _ _ -> "-" ++ expPrinter e
         BinOp op e1 e2 _ _ -> "(" ++ expPrinter e1 ++ " " ++ binOpPrinter op ++ " " ++ expPrinter e2 ++ ")"
@@ -190,13 +188,15 @@ binOpPrinter op =
         Div    -> "/"
         DivInt -> "div"
         Mod    -> "mod"
-        Pow    -> "**"
+        Pow    -> "^"
+        And    -> "and"
+        Or     -> "or"
 
 relOpPrinter :: RelOp -> String
 relOpPrinter op =
     case op of
         Eq  -> "="
-        Neq -> "/="
+        Neq -> "<>"
         Lt  -> "<"
         Le  -> "<="
         Gt  -> ">"
