@@ -1,9 +1,7 @@
 -- | The abstract syntax of language grammar.
 module AbsSyn where
 
-import Data.String qualified
 import GHC.Err (error)
-import GHC.Internal.Show qualified
 import LexGrammar (Posn)
 import Prelude (Bool, Char, Double, Int, Show, String, Eq, Ord)
 import qualified Types as Ty
