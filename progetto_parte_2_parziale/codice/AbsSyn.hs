@@ -59,6 +59,7 @@ data Exp a
   | ArrayIndex { e :: Exp a, index :: Exp a, expAnnot :: a, expPos :: Posn }
   | ExpIdent   { name :: Ident, expAnnot :: a, expPos :: Posn }
   | Array      { elements :: [Exp a], expAnnot :: a, expPos :: Posn }
+  | Cast       { e :: Exp a, expAnnot :: a, expPos :: Posn }
   deriving (Show)
 
 data BinOp = And | Or | Add | Sub | Mul | Div | DivInt | Mod | Pow
