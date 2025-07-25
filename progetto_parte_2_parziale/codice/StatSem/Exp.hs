@@ -186,11 +186,13 @@ annExpSign env
 -- Rule: RExpAnd.
 annExpAnd :: Env -> Exp -> AnnExp
 annExpAnd env
-            AS.BoolAnd {
+            AS.BinOp {
+                AS.binOp = AS.And,
                 AS.e1 = e1,
                 AS.e2 = e2,
                 AS.expPos = pos
-            } = AS.BoolAnd {
+            } = AS.BinOp {
+    AS.binOp = AS.And,
     AS.e1 = annE1,
     AS.e2 = annE2,
     AS.expAnnot = ann,

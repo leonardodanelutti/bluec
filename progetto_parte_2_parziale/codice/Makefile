@@ -3,6 +3,7 @@
 # Makefile for building the parser and test program.
 
 GHC        = ghc
+GHC_OPTS   = -W
 HAPPY      = happy
 HAPPY_OPTS = --array --info --ghc --coerce
 ALEX       = alex
@@ -30,7 +31,7 @@ bluec : LexGrammar.hs ParGrammar.hs StatSem/Mod.hs StatSem/Exp.hs StatSem/Utils.
 # Rules for cleaning generated files.
 
 clean:
-	find . -type f \( -name "*.hi" -o -name "*.o" -o -name "*.log" -o -name "*.aux" -o -name "*.dvi" \) -delete
+	find . -type f \( -name "*.hi" -o -name "*.o" -o -name "*.log" -o -name "*.aux" -o -name "*.dvi" -o -name "bluec" \) -delete
 
 
 # Togliamo distclean?

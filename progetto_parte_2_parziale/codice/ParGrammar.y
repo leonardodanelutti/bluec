@@ -366,12 +366,12 @@ ListExit : {- empty -} { [] } | Exit ListExit { $1 : $2 }
 RExp :: { A.Exp () }
 RExp 
   : RExp1             { $1 } 
-  | RExp 'or' RExp1   { A.BoolOr $1 $3 () (mergeExpPos $1 $3) }
+  | RExp 'or' RExp1   { A.BinOp A.Or  $1 $3 () (mergeExpPos $1 $3) }
 
 RExp1 :: { A.Exp () }
 RExp1
   : RExp2 { $1 } 
-  | RExp1 'and' RExp2 { A.BoolAnd $1 $3 () (mergeExpPos $1 $3) }
+  | RExp1 'and' RExp2 { A.BinOp A.And $1 $3 () (mergeExpPos $1 $3) }
 
 RExp2 :: { A.Exp () }
 RExp2

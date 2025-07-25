@@ -1,9 +1,7 @@
 -- | The abstract syntax of language grammar.
 module AbsSyn where
 
-import Data.String qualified
 import GHC.Err (error)
-import GHC.Internal.Show qualified
 import LexGrammar (Posn)
 import Prelude (Bool, Char, Double, Int, Show, String, Eq, Ord)
 import qualified Types as Ty
@@ -50,9 +48,7 @@ data Ident = Ident
   deriving (Show, Eq, Ord)
 
 data Exp a
-  = BoolAnd    { e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
-  | BoolOr     { e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
-  | BoolNeg    { e :: Exp a, expAnnot :: a, expPos :: Posn }
+  = BoolNeg    { e :: Exp a, expAnnot :: a, expPos :: Posn }
   | Sign       { e :: Exp a, expAnnot :: a, expPos :: Posn }
   | BinOp      { binOp :: BinOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
   | RelOp      { relOp :: RelOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
@@ -65,7 +61,7 @@ data Exp a
   | Array      { elements :: [Exp a], expAnnot :: a, expPos :: Posn }
   deriving (Show)
 
-data BinOp = Add | Sub | Mul | Div | DivInt | Mod | Pow
+data BinOp = And | Or | Add | Sub | Mul | Div | DivInt | Mod | Pow
   deriving (Show)
 
 data RelOp = Eq | Neq | Lt | Le | Gt | Ge
