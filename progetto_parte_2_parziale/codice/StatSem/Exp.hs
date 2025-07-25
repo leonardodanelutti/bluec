@@ -54,8 +54,9 @@ checkParamTypesBuffered (AS.Param { AS.paramType = T.TypePos { T.type_ = paramTy
     paramType == argType && checkParamTypesBuffered ps argTypes args
 checkParamTypesBuffered ps [] (arg : args) =
     case AS.expAnnot arg of
-        ExpAnn { expType = argTypes } -> checkParamTypesBuffered ps argTypes args
-        _ -> False
+        ExpAnn { expType = argType } -> checkParamTypesBuffered ps [argType] args
+        IdentAnn { expType = argType } -> checkParamTypesBuffered ps [argType] args
+        RoutAnn { expTypes = argTypes } -> checkParamTypesBuffered ps argTypes args
 checkParamTypesBuffered _ _ _ = False
 
 -- -- Get the number of types of an annotated expression.
@@ -65,6 +66,26 @@ checkParamTypesBuffered _ _ _ = False
 -- -- Check if an annotated expression has one and only one type.
 -- isSingleType :: AnnExp -> Bool
 -- isSingleType exp = getExpTypeCount exp == 1
+
+-- Cast an annotated expression to a specific type.
+cast :: AnnExp -> T.Type -> AnnExp
+cast exp newType = case getType ann of
+    SingleType T.TError {} -> exp
+    SingleType oldType | oldType == newType -> exp
+    SingleType oldType -> case T.sup pos oldType newType of
+        err@T.TError {} -> AS.Cast { AS.e = exp, AS.expAnnot = ExpAnn { expType = err, ctVal = Nothing }, AS.expPos = pos }
+        _ -> case (exp, valCast) of
+            (AS.Cast {}, _) -> exp { AS.expAnnot = castAnn } -- Simplify cast chains. (FIXME: è giusto fare sta cosa?)
+            _ -> AS.Cast { AS.e = exp, AS.expAnnot = castAnn, AS.expPos = pos }
+    where
+        pos = AS.expPos exp
+        ann = AS.expAnnot exp
+        valCast = ctCast (getCTValue ann) newType -- Compile-time cast.
+        castAnn = ExpAnn {
+            expType = newType,
+            ctVal   = valCast
+        }
+-- TODO: casting for multiple types.
 
 -----------
 -- LEAFS --
@@ -79,10 +100,10 @@ annExpLit env AS.Literal { AS.val = exp, AS.expPos = expPos } = AS.Literal {
     AS.expPos   = expPos
 } where
     ann = ExpAnn {
-            expType     = [expType],
-            expVal      = expVal
+            expType = expType,
+            ctVal   = Just ctVal
         }
-    (expType, expVal) = getTypeAndValue exp
+    (expType, ctVal) = getTypeAndValue exp
 
 -- Identifier expressions.
 -- Rule: LExpBase.
@@ -96,20 +117,38 @@ annExpIdent env
     AS.expAnnot = ann,
     AS.expPos = pos
 } where
-    ann = IdentAnn {
-            identType = identType,
-            identVal = identVal,
-            identCategory = identCategory
-        }
     symbolType = Map.lookup ident (symbols env)
     routineType = Map.lookup ident (routines env)
-    (identType, identVal, identCategory) = case (symbolType, routineType) of
-        (Nothing, Nothing) -> ([T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ show ident] }], CTVUnknown, ErrorCategory)
-        (Just (Var pos ty), Nothing) -> ([T.type_ ty], CTVUnknown, VarCategory) -- Variable case
-        (Just (Const val), Nothing) -> ([identType], identVal, ConstCategory) where (identType, identVal) = getTypeAndValue val -- Constant case
-        (Nothing, Just (pos, params, ty)) -> (map T.type_ ty, CTVUnknown, RoutineCategory) -- Routine case
+    ann = case (symbolType, routineType) of
+        -- Identifier not found.
+        (Nothing, Nothing) -> IdentAnn {
+            expType = T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ show ident] },
+            ctVal = Nothing,
+            identCategory = ErrorCategory
+        }
+        -- Var identifier.
+        (Just (Var pos ty), Nothing) -> IdentAnn {
+            expType = T.type_ ty,
+            ctVal = Nothing,
+            identCategory = VarCategory
+        }
+        -- Const identifier.
+        (Just (Const val), Nothing) -> IdentAnn {
+            expType = identType,
+            ctVal = Just identVal,
+            identCategory = ConstCategory
+        } where (identType, identVal) = getTypeAndValue val
+        -- Routine identifier.
+        (Nothing, Just (pos, params, ty)) -> RoutAnn {
+            expTypes = map T.type_ ty
+        }
         -- TODO: the case in which the ambiguity can be resolved by the type
-        _ -> ([T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ show ident] }], CTVUnknown, ErrorCategory) -- Ambiguous case
+        -- Ambiguous case.
+        _ -> IdentAnn {
+            expType = T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ show ident] },
+            ctVal = Nothing,
+            identCategory = ErrorCategory
+        }
 
 --------------------
 -- INTERNAL NODES --
@@ -135,19 +174,18 @@ annExpRoutCall env
     AS.expAnnot = ann,
     AS.expPos = expPos
 } where
-    ann = ExpAnn {
-            expType = routType,
-            expVal = CTVUnknown -- TODO: do we need to compute the value at compile time if possible?
+    ann = RoutAnn {
+            expTypes = routType
         }
     
     annArgs = map (annExp env) args
     routType = case Map.lookup ident (routines env) of
-        Just (pos, params, ty) -> case checkParamTypes params annArgs of
+        Just (_, params, ty) -> case checkParamTypes params annArgs of
             True  -> map T.type_ ty
             False -> [T.TError {
                 T.msgs = [E.err expPos "Wrong argument types in routine call: " ++ show ident]
             }]
-        Nothing       -> [T.TError {
+        Nothing -> [T.TError {
             T.msgs = [E.err expPos "Unbound routine: " ++ show ident]
         }]
 
@@ -164,23 +202,25 @@ annExpSign env
     AS.expPos = pos
 } where
     ann = ExpAnn {
-            expType = ty,
-            expVal = val
-        }
+        expType = ty,
+        ctVal = val
+    }
     annE = annExp env e
-    typeE = expType $ AS.expAnnot annE
-    valE = expVal $ AS.expAnnot annE
+    typeE = getType $ AS.expAnnot annE
+    valE = ctVal $ AS.expAnnot annE
     ty = case typeE of
-        t@[T.TInteger] -> t
-        t@[T.TReal]    -> t
+        SingleType t@T.TInteger -> t
+        SingleType t@T.TReal    -> t
         -- TODO: add types that can be casted to Integer or Real
-        t@[T.TError { T.msgs = msgs }] -> t
-        _ -> [T.TError { T.msgs = [E.err pos $ "Sign operation not applicable to type: " ++ show typeE] }]-- TODO: error handling with loc
+        SingleType t@T.TError {} -> t
+        MultipleTypes ts -> case T.getErrs ts of
+            [] -> T.TError { T.msgs = [E.err pos "Sign operation not applicable to multiple types: " ++ show ts ++ "."] }
+            errs -> T.TError { T.msgs = errs }
+        _ -> T.TError { T.msgs = [E.err pos $ "Sign operation not applicable to type: " ++ show typeE ++ "."] }-- TODO: error handling with loc
     val = case valE of
-        CTVInteger v -> CTVInteger (-v)
-        CTVReal v    -> CTVReal (-v)
-        CTVUnknown   -> CTVUnknown
-        _            -> CTVUnknown -- Sign operation not applicable to other types
+        Just (CTVInteger v) -> Just (CTVInteger (-v))
+        Just (CTVReal v)    -> Just (CTVReal (-v))
+        _                   -> Nothing
 
 -- Bool AND expressions.
 -- Rule: RExpAnd.
@@ -193,32 +233,34 @@ annExpAnd env
                 AS.expPos = pos
             } = AS.BinOp {
     AS.binOp = AS.And,
-    AS.e1 = annE1,
-    AS.e2 = annE2,
+    AS.e1 = castedE1,
+    AS.e2 = castedE2,
     AS.expAnnot = ann,
     AS.expPos = pos
 } where
     ann = ExpAnn {
-            expType = mergedTypes,
-            expVal = val
-        }
+        expType = newType,
+        ctVal = newVal
+    }
+    -- Call recursive annotation for both expressions.
     annE1 = annExp env e1
     annE2 = annExp env e2
-    typeE1 = expType $ AS.expAnnot annE1
-    typeE2 = expType $ AS.expAnnot annE2
-    valE1 = expVal $ AS.expAnnot annE1
-    valE2 = expVal $ AS.expAnnot annE2
-    val = case (valE1, valE2) of
-        (CTVBoolean v1, CTVBoolean v2) -> CTVBoolean (v1 && v2)
-        _ -> CTVUnknown
-    -- Check if both expressions can be casted to Boolean.
-    -- If not, annotate an error.
-    typesCompatibility1 = T.supL pos [T.TBoolean] typeE1
-    typesCompatibility2 = T.supL pos [T.TBoolean] typeE2
-    mergedTypes = case (typesCompatibility1, typesCompatibility2) of
-        ([T.TBoolean], [T.TBoolean]) -> [T.TBoolean]
-        ([t1], [t2]) -> [T.mergeErrs [t1, t2]]
-
+    -- Get types.
+    typeE1 = getType $ AS.expAnnot annE1
+    typeE2 = getType $ AS.expAnnot annE2
+    -- Cast both expressions to Boolean if possible.
+    castedE1 = cast annE1 T.TBoolean
+    castedE2 = cast annE2 T.TBoolean
+    castedTypeE1 = expType $ AS.expAnnot castedE1
+    castedTypeE2 = expType $ AS.expAnnot castedE2
+    castedValE1 = ctVal $ AS.expAnnot castedE1
+    castedValE2 = ctVal $ AS.expAnnot castedE2
+    castedType = T.sup pos castedTypeE1 castedTypeE2
+    (newType, newVal) = case (castedType, castedValE1, castedValE2) of
+        (T.TBoolean, Just (CTVBoolean v1), Just (CTVBoolean v2)) -> (T.TBoolean, Just (CTVBoolean (v1 && v2)))
+        (T.TBoolean, _, _) -> (T.TBoolean, Nothing)
+        (T.TError { T.msgs = msgs }, _, _) -> (T.TError { T.msgs = msgs }, Nothing)
+        _ -> (T.TError { T.msgs = [E.err pos $ "Type mismatch: AND operation expects two types compatible with Boolean, but got " ++ show typeE1 ++ " and " ++ show typeE2 ++ " instead."] }, Nothing)
 
 -- Bool OR expressions.
 -- Rule: RExpOr.

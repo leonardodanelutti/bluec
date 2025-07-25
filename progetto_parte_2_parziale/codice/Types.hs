@@ -33,8 +33,8 @@ sup :: LG.Posn -> Type -> Type -> Type
 -- Error cases.
 sup _ TError { msgs = msgs1 } TError { msgs = msgs2 } = 
     TError { msgs = msgs1 ++ msgs2 }
-sup pos TError { msgs = msgs } _ = TError { msgs = msgs }
-sup pos _ TError { msgs = msgs } = TError { msgs = msgs }
+sup _ TError { msgs = msgs } _ = TError { msgs = msgs }
+sup _ _ TError { msgs = msgs } = TError { msgs = msgs }
 sup pos t1 t2 = TError { msgs = [E.err pos $ show t1 ++ " is not compatible with " ++ show t2] }
 
 -- In Blue, routines can output lists of types. Thus expressions can have multiple types.
@@ -44,8 +44,8 @@ sup pos t1 t2 = TError { msgs = [E.err pos $ show t1 ++ " is not compatible with
 supL :: LG.Posn -> [Type] -> [Type] -> [Type]
 supL pos (t1:ts1) (t2:ts2) = sup pos t1 t2 : supL pos ts1 ts2
 supL _ [] [] = []
-supL pos ts1 [] = [TError { msgs = [E.err pos "Incompatible type number in supertype relation"] }]
-supL pos [] ts2 = [TError { msgs = [E.err pos "Incompatible type number in supertype relation"] }]
+supL pos _ [] = [TError { msgs = [E.err pos "Incompatible type number in supertype relation"] }]
+supL pos [] _ = [TError { msgs = [E.err pos "Incompatible type number in supertype relation"] }]
 
 -- Function that retrieves all error messages from a list of types. It recursively
 -- traverses the list and collects messages from TError types.

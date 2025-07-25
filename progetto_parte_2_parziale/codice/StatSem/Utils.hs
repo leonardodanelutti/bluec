@@ -34,16 +34,20 @@ data Ann
     }
     | RoutAnn {
         expTypes :: [T.Type]
+        -- TODO: do we need to compute the value at compile time if possible?
     }
+    deriving (Show)
 
 data IdentCategory
     = VarCategory
     | ConstCategory
     | ErrorCategory
+    deriving (Show)
 
 data CountedType
-    = SingleType
-    | MultipleTypes
+    = SingleType T.Type
+    | MultipleTypes [T.Type]
+    deriving (Show)
 
 -- Type getter.
 getType :: Ann -> CountedType
@@ -54,12 +58,15 @@ getType (RoutAnn { expTypes = ts }) | length ts == 1 = SingleType (head ts)
 
 -- Type setter.
 setType :: Ann -> CountedType -> Ann
-setType e@(ExpAnn {}) (SingleType t) = e { expType = t }
 -- Multiple types are not supported for ExpAnn.
-setType e@(IdentAnn {}) (SingleType t) = e { expType = t }
+setType e@(ExpAnn {}) (SingleType t) = e { expType = t }
 -- Multiple types are not supported for IdentAnn.
-setType e@(RoutAnn {}) (MultipleTypes ts) = e { expTypes = ts }
+setType e@(IdentAnn {}) (SingleType t) = e { expType = t }
 -- Single type is not supported for RoutAnn.
+setType e@(RoutAnn {}) (MultipleTypes ts) = e { expTypes = ts }
+-- This should never happen during static semantics analysis. This function relies on the
+-- fact that the requested type is compatible with the current annotation.
+setType ann ty = error $ "Cannot set type " ++ show ty ++ " on annotation " ++ show ann
 
 -- Get the compile-time value from an annotation.
 getCTValue :: Ann -> Maybe CTValue
@@ -80,6 +87,7 @@ data CTValue
     | CTVString String
     | CTVBoolean Bool
     | CTVReal Double
+    deriving (Show)
 
 -- Compile time casting.
 ctCast :: Maybe CTValue -> T.Type -> Maybe CTValue
