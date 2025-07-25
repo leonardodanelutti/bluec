@@ -28,47 +28,40 @@ data Ann
         -- TODO: other fileds
     }
     | IdentAnn {
+        expType :: T.Type,
         ctVal :: Maybe CTValue,
-        identCategoryWT :: IdentCategory
+        identCategory :: IdentCategory
     }
     | RoutAnn {
         expTypes :: [T.Type]
     }
 
 data IdentCategory
-    = VarCategory T.Type
-    | ConstCategory T.Type
-    | RoutineCategory [T.Type]
-    | ErrorCategory T.Type
+    = VarCategory
+    | ConstCategory
+    | ErrorCategory
 
 data CountedType
-    = SingleType T.Type
-    | MultipleTypes [T.Type]
+    = SingleType
+    | MultipleTypes
 
+-- Type getter.
 getType :: Ann -> CountedType
 getType (ExpAnn { expType = t }) = SingleType t
-getType (IdentAnn { identCategoryWT = VarCategory t }) = SingleType t
-getType (IdentAnn { identCategoryWT = ConstCategory t }) = SingleType t
-getType (IdentAnn { identCategoryWT = RoutineCategory ts }) | length ts == 1 = SingleType (head ts)
-                                                            | otherwise = MultipleTypes ts
-getType (IdentAnn { identCategoryWT = ErrorCategory t }) = SingleType t
+getType (IdentAnn { expType = t }) = SingleType t
 getType (RoutAnn { expTypes = ts }) | length ts == 1 = SingleType (head ts)
                                     | otherwise = MultipleTypes ts
 
+-- Type setter.
 setType :: Ann -> CountedType -> Ann
-setType e@(ExpAnn { expType = _ }) (SingleType t) = e { expType = t }
+setType e@(ExpAnn {}) (SingleType t) = e { expType = t }
 -- Multiple types are not supported for ExpAnn.
-setType e@(IdentAnn { identCategoryWT = VarCategory _ }) (SingleType t) =
-    e { identCategoryWT = VarCategory t }
-setType e@(IdentAnn { identCategoryWT = ConstCategory _ }) (SingleType t) =
-    e { identCategoryWT = ConstCategory t }
-setType e@(IdentAnn { identCategoryWT = RoutineCategory _ }) (MultipleTypes ts) =
-    e { identCategoryWT = RoutineCategory ts }
-setType e@(IdentAnn { identCategoryWT = ErrorCategory _ }) (SingleType t) =
-    e { identCategoryWT = ErrorCategory t }
-setType e@(RoutAnn { expTypes = _ }) (MultipleTypes ts) =
-    e { expTypes = ts }
+setType e@(IdentAnn {}) (SingleType t) = e { expType = t }
+-- Multiple types are not supported for IdentAnn.
+setType e@(RoutAnn {}) (MultipleTypes ts) = e { expTypes = ts }
+-- Single type is not supported for RoutAnn.
 
+-- Get the compile-time value from an annotation.
 getCTValue :: Ann -> Maybe CTValue
 getCTValue (ExpAnn { ctVal = val }) = val
 getCTValue (IdentAnn { ctVal = val }) = val
@@ -106,8 +99,3 @@ ctCast (Just (CTVString v)) T.TString = Just (CTVString v)
 ctCast (Just (CTVBoolean v)) T.TBoolean = Just (CTVBoolean v)
 ctCast (Just (CTVReal v)) T.TReal = Just (CTVReal v)
 ctCast _ _ = Nothing
-
--- -- Get the number of types of an annotation.
--- getAnnTypeCount :: Ann -> Int
--- getAnnTypeCount (ExpAnn { expType = types }) = length types
--- getAnnTypeCount (IdentAnn { identType = types }) = length types
