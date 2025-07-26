@@ -32,6 +32,10 @@ data Ann
         ctVal :: Maybe CTValue,
         identCategory :: IdentCategory
     }
+    -- TODO: Is it true that this annotation, when there are multiple types, if found only in this cases:
+    -- 1. to the right of an assignment
+    -- 2. inside a routine call
+    -- 3. equating to routine calls
     | RoutAnn {
         expTypes :: [T.Type]
         -- TODO: do we need to compute the value at compile time if possible?

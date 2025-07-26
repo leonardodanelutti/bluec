@@ -102,6 +102,13 @@ data RoutineCall a = RoutineCall
   }
   deriving (Show)
 
+callFromIdent :: Ident -> RoutineCall a
+callFromIdent ident = RoutineCall 
+  { routCallName = ident,
+    args = [],
+    routCallPos = identPos ident
+  }
+
 data Exit a = LoopExit
   { loopCond :: Exp a,
     loopBody :: [Statement a],

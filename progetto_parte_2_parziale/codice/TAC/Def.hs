@@ -2,6 +2,9 @@
 
 module TAC.Def where
 
+import qualified Types as T
+import qualified AbsSyn as AS
+
 -- A program name
 newtype ProgramName = ProgramName String
 
@@ -11,7 +14,7 @@ newtype Temporary = Temporary Int
 -- Known values
 data Literal 
     = LitInt   Int
-    | LitFloat Float
+    | LitReal  Double
     | LitChar  Char
     | LitBool  Bool
 
@@ -21,14 +24,26 @@ data Address
     | Temp Temporary
     | Lit Literal
 
+castAddressToProgramName :: Address -> ProgramName
+castAddressToProgramName (PName name) = name
+castAddressToProgramName _ = error "Expected a ProgramName address"
+
 -- Possible kinds of coercions
 data Coercion
     = BoolToInt
-    | IntToFloat
+    | IntToDouble
     | CharToInt
 
 -- Types used in TAC
 data TACType = TInteger | TReal | TChar | TBoolean
+
+castTypeToTACType :: T.Type-> TACType
+castTypeToTACType T.TInteger = TInteger
+castTypeToTACType T.TReal    = TReal
+castTypeToTACType T.TChar    = TChar
+castTypeToTACType T.TBoolean = TBoolean
+castTypeToTACType _ = error "Unsupported type for TAC"
+
 
 -- Unary operations
 data UnaryOp
@@ -57,12 +72,28 @@ data RelOp
     | RelGt TACType
     | RelGe TACType
 
+castBinOpToTACOp :: AS.BinOp -> T.Type -> BinOp
+castBinOpToTACOp AS.Add T.TInteger    = Add TInteger
+castBinOpToTACOp AS.Add T.TReal       = Add TReal
+castBinOpToTACOp AS.Sub T.TInteger    = Sub TInteger
+castBinOpToTACOp AS.Sub T.TReal       = Sub TReal
+castBinOpToTACOp AS.Mul T.TInteger    = Mul TInteger
+castBinOpToTACOp AS.Mul T.TReal       = Mul TReal
+castBinOpToTACOp AS.Div T.TReal       = Div
+castBinOpToTACOp AS.DivInt T.TInteger = DivInt
+castBinOpToTACOp AS.Mod T.TInteger    = Mod
+castBinOpToTACOp AS.Pow T.TInteger    = Pow TInteger
+castBinOpToTACOp AS.Pow T.TReal       = Pow TReal
+castBinOpToTACOp AS.And T.TBoolean    = And
+castBinOpToTACOp AS.Or  T.TBoolean    = Or
+castBinOpToTACOp _ _                  = error "Unreachable: static checks should prevent this"
+
 -- A label
 newtype Label = Label Int
 
 data Instruction 
     = BOp { l :: Address, binOp :: BinOp,   r1, r2 :: Address }
-    | UOp { l :: Address, relOp :: UnaryOp, r :: Address }
+    | UOp { l :: Address, unOp :: UnaryOp, r :: Address }
     | NOp { l :: Address, r  :: Address }
     | UnJump { to :: Label }
     | BoolJumpT { cond :: Address, to :: Label }
@@ -80,7 +111,7 @@ data Instruction
     | Return { r :: Address }
 
 data LabeledInstruction = LabeledInstruction
-  { label :: Label,
+  { label :: Maybe Label,
     instruction :: Instruction
   }
 
