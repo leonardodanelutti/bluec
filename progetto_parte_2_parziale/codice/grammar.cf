@@ -44,12 +44,11 @@ rules CType ::= "Array" "<" Type ";" Integer ">" | "&" Type;
 rules Type ::= PType | CType;
 
 -- ROUTINES
-Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" "(" [Type] ")" RoutBody BlueIdent;
-FunEmpty.                       FunD ::= BlueIdent "->" "(" [Type] ")" RoutBody BlueIdent;
+Fun.                            FunD ::= BlueIdent "(" [Param] ")" "->" Type RoutBody BlueIdent;
+FunEmpty.                       FunD ::= BlueIdent "->" Type RoutBody BlueIdent;
 Proc.                           ProcD ::= BlueIdent "(" [Param] ")" RoutBody BlueIdent;
 ProcEmpty.                      ProcD ::= BlueIdent RoutBody BlueIdent;
 RoutParam.                      Param ::= Mode BlueIdent ":" Type;
-separator Type ",";
 separator Param ",";
 
 RoutineBody.                    RoutBody ::=  "is" Declarations "do" [Statement] "end";
@@ -64,7 +63,7 @@ RoutineCall.                    RoutCall ::= BlueIdent "(" [RExp] ")";
 StatementAss.                   Statement ::= [LExp] ":=" [RExpNE] ";";
 StatementRoutCall.              Statement ::= BlueIdent "(" [RExp] ")" ";";
 StatementRoutEmptyCall.         Statement ::= BlueIdent ";";
-StatementReturn.                Statement ::= "return" [RExp] ";";
+StatementReturn.                Statement ::= "return" RExp ";";
 StatementContinue.              Statement ::= "continue" ";";
 StatementIf.                    Statement ::= If "end" "if";
 StatementLoop.                  Statement ::= Loop "end" "loop";

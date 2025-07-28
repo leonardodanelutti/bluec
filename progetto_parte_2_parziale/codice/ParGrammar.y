@@ -185,24 +185,24 @@ Type
 
 FunD :: { A.Routine () }
 FunD
-  : BlueIdent '(' ListParam ')' '->' '(' ListType ')' RoutBody BlueIdent { A.Routine {
+  : BlueIdent '(' ListParam ')' '->' Type RoutBody BlueIdent { A.Routine {
     {- TODO: return an error if the two idents differ -}
       A.routName = $1,
       A.params = $3,
-      A.returnTypes = $7,
-      A.routBody = $9,
+      A.returnType = Just $6,
+      A.routBody = $7,
       A.routAnnot = (),
       {- TODO: posizione di tutta la funzione o solo della dichiarazione? (vedi anche le regole dopo) -}
-      A.routPos = mergePos (A.identPos $1) (A.identPos $10)
+      A.routPos = mergePos (A.identPos $1) (A.identPos $8)
     }
   }
-  | BlueIdent '->' '(' ListType ')' RoutBody BlueIdent { A.Routine {
+  | BlueIdent '->' Type RoutBody BlueIdent { A.Routine {
       A.routName = $1,
       A.params = [],
-      A.returnTypes = $4,
-      A.routBody = $6,
+      A.returnType = Just $3,
+      A.routBody = $4,
       A.routAnnot = (),
-      A.routPos = mergePos (A.identPos $1) (A.identPos $7)
+      A.routPos = mergePos (A.identPos $1) (A.identPos $5)
     }
   }
 
@@ -211,7 +211,7 @@ ProcD
   : BlueIdent '(' ListParam ')' RoutBody BlueIdent { A.Routine {
       A.routName = $1,
       A.params = $3,
-      A.returnTypes = [],
+      A.returnType = Nothing,
       A.routBody = $5,
       A.routAnnot = (),
       A.routPos = mergePos (A.identPos $1) (A.identPos $6)
@@ -220,7 +220,7 @@ ProcD
   | BlueIdent RoutBody BlueIdent { A.Routine {
       A.routName = $1,
       A.params = [],
-      A.returnTypes = [],
+      A.returnType = Nothing,
       A.routBody = $2,
       A.routAnnot = (),
       A.routPos = mergePos (A.identPos $1) (A.identPos $3)
@@ -229,12 +229,6 @@ ProcD
 
 Param :: { A.Param }
 Param : Mode BlueIdent ':' Type { A.Param $1 $2 $4 (mergePos (A.identPos $2) (T.typePosn $4)) }
-
-ListType :: { [T.TypePos] }
-ListType
-  : {- empty -} { [] }
-  | Type { [ $1 ] }
-  | Type ',' ListType { $1 : $3 }
 
 ListParam :: { [A.Param] }
 ListParam
@@ -290,7 +284,7 @@ Statement
       A.annot = ()
     }
   }
-  | 'return' ListRExp ';'          { A.StmtReturn { 
+  | 'return' RExp ';'          { A.StmtReturn { 
       A.vals = $2,
       A.annot = (),
       A.pos = (mergeTokenPos $1 $3)

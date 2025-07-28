@@ -3,7 +3,7 @@ module AbsSyn where
 
 import GHC.Err (error)
 import LexGrammar (Posn)
-import Prelude (Bool, Char, Double, Int, Show, String, Eq, Ord)
+import Prelude (Bool, Char, Double, Int, Maybe, Show, String, Eq, Ord)
 import qualified Types as Ty
 
 data Declarations a = ProgramDecl
@@ -34,7 +34,7 @@ data VarA a = VarAss
 data Routine a = Routine
   { routName :: Ident,
     params :: [Param],
-    returnTypes :: [Ty.TypePos],
+    returnType :: Maybe Ty.TypePos,
     routBody :: RoutBody a,
     routAnnot :: a,
     routPos :: Posn
@@ -88,7 +88,7 @@ data RoutBody a = RoutBody
 data Statement a
   = StmtAss      { left :: [Exp a], right :: [Exp a], annot :: a, pos :: Posn }
   | StmtRoutCall { call :: RoutineCall a, annot :: a }
-  | StmtReturn   { vals :: [Exp a], annot :: a, pos :: Posn }
+  | StmtReturn   { vals :: Exp a, annot :: a, pos :: Posn }
   | StmtContinue { annot :: a, pos :: Posn }
   | StmtIf       { cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
   | StmrIfElse   { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }

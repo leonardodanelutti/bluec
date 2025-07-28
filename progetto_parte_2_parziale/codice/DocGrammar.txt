@@ -94,14 +94,11 @@ All other symbols are terminals.
   |  |  **|**  | ``&`` //Type//
   | //Type// | -> | //PType//
   |  |  **|**  | //CType//
-  | //FunD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` ``->`` ``(`` //[Type]// ``)`` //RoutBody// //BlueIdent//
-  |  |  **|**  | //BlueIdent// ``->`` ``(`` //[Type]// ``)`` //RoutBody// //BlueIdent//
+  | //FunD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` ``->`` //Type// //RoutBody// //BlueIdent//
+  |  |  **|**  | //BlueIdent// ``->`` //Type// //RoutBody// //BlueIdent//
   | //ProcD// | -> | //BlueIdent// ``(`` //[Param]// ``)`` //RoutBody// //BlueIdent//
   |  |  **|**  | //BlueIdent// //RoutBody// //BlueIdent//
   | //Param// | -> | //Mode// //BlueIdent// ``:`` //Type//
-  | //[Type]// | -> | **eps**
-  |  |  **|**  | //Type//
-  |  |  **|**  | //Type// ``,`` //[Type]//
   | //[Param]// | -> | **eps**
   |  |  **|**  | //Param//
   |  |  **|**  | //Param// ``,`` //[Param]//
@@ -116,7 +113,7 @@ All other symbols are terminals.
   | //Statement// | -> | //[LExp]// ``:=`` //[RExpNE]// ``;``
   |  |  **|**  | //BlueIdent// ``(`` //[RExp]// ``)`` ``;``
   |  |  **|**  | //BlueIdent// ``;``
-  |  |  **|**  | ``return`` //[RExp]// ``;``
+  |  |  **|**  | ``return`` //RExp// ``;``
   |  |  **|**  | ``continue`` ``;``
   |  |  **|**  | //If// ``end`` ``if``
   |  |  **|**  | //Loop// ``end`` ``loop``

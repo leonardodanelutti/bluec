@@ -38,14 +38,14 @@ genUnknownExpr :: AS.Exp SS.Ann -> StateMonad Address
 genUnknownExpr exp = do
     case exp of
         AS.BoolNeg e _ _ -> do
-            addr <- genExpr e
             k <- newTmp
+            addr <- genExpr e
             out $ LabeledInstruction Nothing (UOp k BoolNeg addr)
             return addr
 
         AS.Sign e ann _ -> do
-            addr <- genExpr e
             k <- newTmp
+            addr <- genExpr e
             let ty = castTypeToTACType $ SS.expType ann
             out $ LabeledInstruction Nothing (UOp k (Sign ty) addr)
             return addr
@@ -55,10 +55,10 @@ genUnknownExpr exp = do
         AS.BinOp AS.And e1 e2 ann _ -> error "TODO: handle And operation separately, as it may short-circuit"
 
         AS.BinOp binOp e1 e2 ann _ -> do
+            k <- newTmp
             -- Left to right evaluation
             addr1 <- genExpr e1
             addr2 <- genExpr e2
-            k <- newTmp
             let tacOp = castBinOpToTACOp binOp (SS.expType ann)
             out $ LabeledInstruction Nothing (BOp k tacOp addr1 addr2)
             return k
@@ -66,8 +66,8 @@ genUnknownExpr exp = do
         AS.RelOp relOp e1 e2 _ _ -> genRelOp relOp e1 e2
 
         AS.Ref e _ _ -> do
-            addr <- genExpr e
             k <- newTmp
+            addr <- genExpr e
             let progName = castAddressToProgramName addr
             out $ LabeledInstruction Nothing (Ref k progName)
             return k
@@ -85,15 +85,15 @@ genUnknownExpr exp = do
         AS.RoutCall {} -> error "Unreachable"
 
         AS.Deref e _ _ -> do
-            addr <- genExpr e
             k <- newTmp
+            addr <- genExpr e
             out $ LabeledInstruction Nothing (DerefGet k addr)
             return k
 
         AS.ArrayIndex e index _ _ -> do
+            k <- newTmp
             addr <- genExpr e
             indexAddr <- genExpr index
-            k <- newTmp
             let progName = castAddressToProgramName addr
             out $ LabeledInstruction Nothing (IndexGet k progName indexAddr)
             return k
@@ -114,6 +114,7 @@ genUnknownExpr exp = do
         AS.Array elements ann _ -> error "TODO: How can we initialize an array in TAC?"
 
         AS.Cast e ann _ -> do
+            k <- newTmp
             addr <- genExpr e
             let oldType = SS.expType $ AS.expAnnot e
                 newType = SS.expType ann
@@ -123,7 +124,6 @@ genUnknownExpr exp = do
                     (T.TChar, T.TInteger)    -> CharToInt
                     -- TODO: Char to String?
                     _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
-            k <- newTmp
             out $ LabeledInstruction Nothing (UOp k (Coer cast) addr)
             return k
 
