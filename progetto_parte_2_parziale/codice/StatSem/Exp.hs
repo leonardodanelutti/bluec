@@ -69,10 +69,10 @@ checkParamTypesBuffered _ _ _ = False
 
 -- Cast an annotated expression to a specific type.
 cast :: AnnExp -> T.Type -> AnnExp
-cast exp newType = case getType ann of
-    SingleType T.TError {} -> exp
-    SingleType oldType | oldType == newType -> exp
-    SingleType oldType -> case T.sup pos oldType newType of
+cast exp newType = case expType ann of
+    T.TError {} -> exp
+    oldType | oldType == newType -> exp
+    oldType -> case T.sup pos oldType newType of
         err@T.TError {} -> AS.Cast { AS.e = exp, AS.expAnnot = ExpAnn { expType = err, ctVal = Nothing }, AS.expPos = pos }
         _ -> case (exp, valCast) of
             (AS.Cast {}, _) -> exp { AS.expAnnot = castAnn } -- Simplify cast chains. (FIXME: è giusto fare sta cosa?)
@@ -85,7 +85,6 @@ cast exp newType = case getType ann of
             expType = newType,
             ctVal   = valCast
         }
--- TODO: casting for multiple types.
 
 -----------
 -- LEAFS --

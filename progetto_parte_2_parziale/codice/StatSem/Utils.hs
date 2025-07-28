@@ -32,14 +32,14 @@ data Ann
         ctVal :: Maybe CTValue,
         identCategory :: IdentCategory
     }
-    -- TODO: Is it true that this annotation, when there are multiple types, if found only in this cases:
-    -- 1. to the right of an assignment
-    -- 2. inside a routine call
-    -- 3. equating to routine calls
-    | RoutAnn {
-        expTypes :: [T.Type]
-        -- TODO: do we need to compute the value at compile time if possible?
-    }
+    -- -- TODO: Is it true that this annotation, when there are multiple types, if found only in this cases:
+    -- -- 1. to the right of an assignment
+    -- -- 2. inside a routine call
+    -- -- 3. equating to routine calls
+    -- | RoutAnn {
+    --     expTypes :: [T.Type]
+    --     -- TODO: do we need to compute the value at compile time if possible?
+    -- }
     deriving (Show)
 
 data IdentCategory
@@ -48,35 +48,10 @@ data IdentCategory
     | ErrorCategory
     deriving (Show)
 
-data CountedType
-    = SingleType T.Type
-    | MultipleTypes [T.Type]
-    deriving (Show)
-
--- Type getter.
-getType :: Ann -> CountedType
-getType (ExpAnn { expType = t }) = SingleType t
-getType (IdentAnn { expType = t }) = SingleType t
-getType (RoutAnn { expTypes = ts }) | length ts == 1 = SingleType (head ts)
-                                    | otherwise = MultipleTypes ts
-
--- Type setter.
-setType :: Ann -> CountedType -> Ann
--- Multiple types are not supported for ExpAnn.
-setType e@(ExpAnn {}) (SingleType t) = e { expType = t }
--- Multiple types are not supported for IdentAnn.
-setType e@(IdentAnn {}) (SingleType t) = e { expType = t }
--- Single type is not supported for RoutAnn.
-setType e@(RoutAnn {}) (MultipleTypes ts) = e { expTypes = ts }
--- This should never happen during static semantics analysis. This function relies on the
--- fact that the requested type is compatible with the current annotation.
-setType ann ty = error $ "Cannot set type " ++ show ty ++ " on annotation " ++ show ann
-
 -- Get the compile-time value from an annotation.
 getCTValue :: Ann -> Maybe CTValue
 getCTValue (ExpAnn { ctVal = val }) = val
 getCTValue (IdentAnn { ctVal = val }) = val
-getCTValue _ = Nothing
 
 -- data DownwardAnn
 --     = ExpAnn
