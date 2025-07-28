@@ -63,7 +63,11 @@ genUnknownExpr exp = do
             out $ LabeledInstruction Nothing (BOp k tacOp addr1 addr2)
             return k
 
-        AS.RelOp relOp e1 e2 _ _ -> genRelOp relOp e1 e2
+        AS.RelOp relOp e1 e2 _ _ -> do
+            addr1 <- genExpr e1
+            addr2 <- genExpr e2
+            let ty = SS.expType $ AS.expAnnot e1
+            genRelOp relOp ty addr1 addr2
 
         AS.Ref e _ _ -> do
             k <- newTmp
@@ -76,7 +80,7 @@ genUnknownExpr exp = do
         AS.Literal {} -> error "Literal should not be passed to genUnknownExpr"
 
         -- Routine calls with multiple return values are handled only where they can appear
-        AS.RoutCall call (SS.RoutAnn [_]) _ -> do
+        AS.RoutCall call (SS.ExpAnn {}) _ -> do
             addrs <- genRoutCall call
             -- TODO: In this case we always have a single address ?
             let addr = head addrs
@@ -103,7 +107,7 @@ genUnknownExpr exp = do
                 return $ PName (ProgramName $ AS.identName ident)
 
         -- Routine calls with multiple return values are handled only where they can appear
-        AS.ExpIdent ident (SS.RoutAnn [_]) _ -> do
+        AS.ExpIdent ident (SS.ExpAnn {}) _ -> do
             addrs <- genRoutCall (AS.callFromIdent ident)
             -- TODO: In this case we always have a single address ?
             let addr = head addrs
@@ -131,41 +135,8 @@ genRoutCall :: AS.RoutineCall SS.Ann -> StateMonad [Address]
 genRoutCall = error "TODO: implement genRoutCall"
 
 -- TODO: pay ATTENTION to relations between complex types
-genRelOp :: AS.RelOp -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
-genRelOp op e1 e2 = let ann1 = AS.expAnnot e1
-                        ann2 = AS.expAnnot e2
-                    in
-    case (ann1, ann2) of
-    -- TODO: Other combinations are ruled out by static checks
-    (SS.RoutAnn types, SS.RoutAnn _) -> genRelRout types e1 e2
-
-    (SS.RoutAnn {}, _) -> do
-        addrs <- genRoutCall (getRoutineCall e1)
-        -- TODO: In this case we always have a single address ?
-        let addr1 = head addrs
-        addr2 <- genExpr e2
-        genRelOp' op (SS.expType ann2) addr1 addr2
-
-    (_, SS.RoutAnn {}) -> do
-        addr1 <- genExpr e1
-        addrs <- genRoutCall (getRoutineCall e2)
-        -- TODO: In this case we always have a single address ?
-        let addr2 = head addrs
-        genRelOp' op (SS.expType ann1) addr1 addr2
-
-    (_, _) -> do
-        addr1 <- genExpr e1
-        addr2 <- genExpr e2
-        genRelOp' op (SS.expType ann1) addr1 addr2
-
-    where
-        getRoutineCall :: AS.Exp SS.Ann -> AS.RoutineCall SS.Ann
-        getRoutineCall (AS.ExpIdent ident (SS.RoutAnn _) _) = AS.callFromIdent ident
-        getRoutineCall (AS.RoutCall call _ _) = call
-        getRoutineCall _ = error "Expected a routine call expression"
-
-        genRelOp' :: AS.RelOp -> T.Type -> Address -> Address -> StateMonad Address
-        genRelOp' = error "TODO: implement genRelOp'"
+genRelOp :: AS.RelOp -> T.Type -> Address -> Address -> StateMonad Address
+genRelOp = error "TODO: implement genRelOp"
 
 genRelRout :: [T.Type] -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genRelRout = error "TODO: implement genRelRout"
