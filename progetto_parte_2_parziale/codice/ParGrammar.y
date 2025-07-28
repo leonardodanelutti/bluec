@@ -185,21 +185,21 @@ Type
 
 FunD :: { A.Routine () }
 FunD
-  : BlueIdent '(' ListParam ')' '->' Type RoutBody BlueIdent { A.Routine {
+  : BlueIdent '(' ListParam ')' '->' Type RoutBody BlueIdent { A.Function {
     {- TODO: return an error if the two idents differ -}
       A.routName = $1,
       A.params = $3,
-      A.returnType = Just $6,
+      A.returnType = $6,
       A.routBody = $7,
       A.routAnnot = (),
       {- TODO: posizione di tutta la funzione o solo della dichiarazione? (vedi anche le regole dopo) -}
       A.routPos = mergePos (A.identPos $1) (A.identPos $8)
     }
   }
-  | BlueIdent '->' Type RoutBody BlueIdent { A.Routine {
+  | BlueIdent '->' Type RoutBody BlueIdent { A.Function {
       A.routName = $1,
       A.params = [],
-      A.returnType = Just $3,
+      A.returnType = $3,
       A.routBody = $4,
       A.routAnnot = (),
       A.routPos = mergePos (A.identPos $1) (A.identPos $5)
@@ -208,19 +208,17 @@ FunD
 
 ProcD :: { A.Routine () }
 ProcD
-  : BlueIdent '(' ListParam ')' RoutBody BlueIdent { A.Routine {
+  : BlueIdent '(' ListParam ')' RoutBody BlueIdent { A.Procedure {
       A.routName = $1,
       A.params = $3,
-      A.returnType = Nothing,
       A.routBody = $5,
       A.routAnnot = (),
       A.routPos = mergePos (A.identPos $1) (A.identPos $6)
     }
   }
-  | BlueIdent RoutBody BlueIdent { A.Routine {
+  | BlueIdent RoutBody BlueIdent { A.Procedure {
       A.routName = $1,
       A.params = [],
-      A.returnType = Nothing,
       A.routBody = $2,
       A.routAnnot = (),
       A.routPos = mergePos (A.identPos $1) (A.identPos $3)

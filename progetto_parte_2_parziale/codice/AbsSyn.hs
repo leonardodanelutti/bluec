@@ -31,10 +31,17 @@ data VarA a = VarAss
   }
   deriving (Show)
 
-data Routine a = Routine
+data Routine a = Function
   { routName :: Ident,
     params :: [Param],
-    returnType :: Maybe Ty.TypePos,
+    returnType :: Ty.TypePos,
+    routBody :: RoutBody a,
+    routAnnot :: a,
+    routPos :: Posn
+  }
+  | Procedure
+  { routName :: Ident,
+    params :: [Param],
     routBody :: RoutBody a,
     routAnnot :: a,
     routPos :: Posn

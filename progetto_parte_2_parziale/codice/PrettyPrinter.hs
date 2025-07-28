@@ -43,14 +43,14 @@ varPrinter (VarAss idents typ values _ _) =
 
 -- Pretty print di una routine (funzione o procedura)
 routinePrinter :: (Show a) => Routine a -> String
-routinePrinter (Routine ident params returnTypes body _ _) =
-      unlines $
-            [ "\t" ++ identPrinter ident ++ "(" ++ paramsPrint params ++ ")" ++ returnStr ++ " is" ] ++ map ("\t" ++) (lines $ routineBodyPrinter body) ++ ["\tend\n\t" ++ identPrinter ident]
-                where
-                    returnStr = case returnTypes of
-                        Nothing -> ""
-                        Just ty -> " -> " ++ typePrinter ty
-
+routinePrinter (Function ident params returnType body _ _) =
+    unlines $
+        [ "\t" ++ identPrinter ident ++ "(" ++ paramsPrint params ++ ")" ++ typePrinter returnType ++ " is" ] ++ 
+        map ("\t" ++) (lines $ routineBodyPrinter body) ++ ["\tend\n\t" ++ identPrinter ident]
+routinePrinter (Procedure ident params body _ _) =
+    unlines $
+        [ "\t" ++ identPrinter ident ++ "(" ++ paramsPrint params ++ ") is" ] ++ 
+        map ("\t" ++) (lines $ routineBodyPrinter body) ++ ["\tend\n\t" ++ identPrinter ident]
 
 
 -- Espressioni
