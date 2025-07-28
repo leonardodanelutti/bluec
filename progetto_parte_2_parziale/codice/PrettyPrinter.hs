@@ -48,8 +48,8 @@ routinePrinter (Routine ident params returnTypes body _ _) =
             [ "\t" ++ identPrinter ident ++ "(" ++ paramsPrint params ++ ")" ++ returnStr ++ " is" ] ++ map ("\t" ++) (lines $ routineBodyPrinter body) ++ ["\tend\n\t" ++ identPrinter ident]
                 where
                     returnStr = case returnTypes of
-                        [] -> ""
-                        ts -> " -> (" ++ typesPrinter ts ++ ")"
+                        Nothing -> ""
+                        Just ty -> " -> " ++ typePrinter ty
 
 
 
@@ -126,7 +126,7 @@ statementPrinter stm = "\t" ++
     case stm of
         StmtAss l r _ _ -> expsPrinter l ++ " := " ++ expsPrinter r ++ ";"
         StmtRoutCall call _ -> routineCallPrinter call ++ ";" -- inserisci routinePrinter che prende solo la RoutineCall
-        StmtReturn vals _ _ -> "return " ++ expsPrinter vals ++ ";"
+        StmtReturn vals _ _ -> "return " ++ expPrinter vals ++ ";"
         StmtContinue _ _ -> "continue;"
         StmtIf cond body _ _ -> "if " ++ expPrinter cond ++ " then\n\t" ++ statementsPrinter body ++ "\n\tend if"
         StmrIfElse cond bodyT bodyF _ _ ->
@@ -165,8 +165,6 @@ typePrinter (TypePos typ _) =
         TReference refType ->
             "&" ++ typePrinter (TypePos refType undefined)
         TError msgs -> "Error: " ++ intercalate ", " msgs
-typesPrinter :: [TypePos] -> String
-typesPrinter ts = intercalate ", " (map typePrinter ts)
 
 -- Letterali
 literalPrinter :: Literal -> String
