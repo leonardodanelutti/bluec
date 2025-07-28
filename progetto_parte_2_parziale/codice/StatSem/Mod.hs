@@ -4,6 +4,9 @@ module StatSem.Mod where
 
 import qualified AbsSyn         as AS
 import StatSem.Utils
+-- The line below gives a warning because unused for the moment, but it is needed to
+-- compile the Exp module.
+import StatSem.Exp
 
 -- TYPES
 -- Void annotations after parsing.

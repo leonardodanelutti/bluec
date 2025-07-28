@@ -13,12 +13,16 @@ import qualified Types          as T
 -- to disambiguate between a variable and a function call.
 data Env = Env {
     symbols :: Map.Map AS.Ident SymbolEntry,
-    routines :: Map.Map AS.Ident (LG.Posn, [AS.Param], [T.TypePos])
+    routines :: Map.Map AS.Ident RoutEntry
 }
 
 data SymbolEntry
     = Var LG.Posn T.TypePos
     | Const AS.Literal
+
+data RoutEntry
+    = Fun LG.Posn [AS.Param] T.TypePos
+    | Proc LG.Posn [AS.Param]
 
 -- Datatype for static semantics analysis module annotations (on the AST).
 data Ann
@@ -42,6 +46,10 @@ data Ann
     -- }
     deriving (Show)
 
+-- Category of an identifier.
+--
+-- An ident that is found to be a routine is annotated with the ExpAnn type instead (so it
+-- does not appear in this enum).
 data IdentCategory
     = VarCategory
     | ConstCategory
