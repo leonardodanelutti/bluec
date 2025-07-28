@@ -409,7 +409,7 @@ RExp7
   | String                   { A.Literal  $1 () (A.litPos $1) }
   | Bool                     { A.Literal  $1 () (A.litPos $1) }
   | Double                   { A.Literal  $1 () (A.litPos $1) }
-  | RoutCall                 { A.RoutCall $1 () (A.routCallPos $1) }
+  | RoutCall                 { A.FunCall  $1 () (A.routCallPos $1) }
   | LExp                     { $1 }
   | 'Array' '[' ListRExp ']' { A.Array $3 () (mergeTokenPos $1 $4) }
 

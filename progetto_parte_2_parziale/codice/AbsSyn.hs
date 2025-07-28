@@ -61,7 +61,7 @@ data Exp a
   | RelOp      { relOp :: RelOp, e1 :: Exp a, e2 :: Exp a, expAnnot :: a, expPos :: Posn }
   | Ref        { e :: Exp a, expAnnot :: a, expPos :: Posn }
   | Literal    { val :: Literal, expAnnot :: a, expPos :: Posn }
-  | RoutCall   { expCall :: RoutineCall a, expAnnot :: a, expPos :: Posn }
+  | FunCall    { expCall :: RoutineCall a, expAnnot :: a, expPos :: Posn }
   | Deref      { e :: Exp a, expAnnot :: a, expPos :: Posn }
   | ArrayIndex { e :: Exp a, index :: Exp a, expAnnot :: a, expPos :: Posn }
   | ExpIdent   { name :: Ident, expAnnot :: a, expPos :: Posn }

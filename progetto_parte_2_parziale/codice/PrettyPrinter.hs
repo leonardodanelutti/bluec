@@ -70,7 +70,7 @@ expPrinter exp =
 
         ArrayIndex e index _ _ -> expPrinter e ++ "[" ++ expPrinter index ++ "]"
         Array e _ _ -> "[" ++ expsPrinter e ++ "]"
-        RoutCall call _ _ -> routineCallPrinter call
+        FunCall call _ _ -> routineCallPrinter call
         Cast e _ _ -> expPrinter e
 
 expsPrinter :: Show a => [Exp a] -> String
