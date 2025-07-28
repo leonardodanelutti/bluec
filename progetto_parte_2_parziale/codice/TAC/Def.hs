@@ -64,14 +64,6 @@ data BinOp
     | Or
     | Rel RelOp
 
-data RelOp
-    = RelEq TACType
-    | RelNeq TACType
-    | RelLt TACType
-    | RelLe TACType
-    | RelGt TACType
-    | RelGe TACType
-
 castBinOpToTACOp :: AS.BinOp -> T.Type -> BinOp
 castBinOpToTACOp AS.Add T.TInteger    = Add TInteger
 castBinOpToTACOp AS.Add T.TReal       = Add TReal
@@ -88,6 +80,23 @@ castBinOpToTACOp AS.And T.TBoolean    = And
 castBinOpToTACOp AS.Or  T.TBoolean    = Or
 castBinOpToTACOp _ _                  = error "Unreachable: static checks should prevent this"
 
+data RelOp
+    = RelEq TACType
+    | RelNeq TACType
+    | RelLt TACType
+    | RelLe TACType
+    | RelGt TACType
+    | RelGe TACType
+
+castRelOpToTACOp :: AS.RelOp -> T.Type -> BinOp
+castRelOpToTACOp AS.Eq ty     = Rel $ RelEq  (castTypeToTACType ty)
+castRelOpToTACOp AS.Neq ty    = Rel $ RelNeq (castTypeToTACType ty)
+castRelOpToTACOp AS.Lt ty     = Rel $ RelLt  (castTypeToTACType ty)
+castRelOpToTACOp AS.Le ty     = Rel $ RelLe  (castTypeToTACType ty)
+castRelOpToTACOp AS.Gt ty     = Rel $ RelGt  (castTypeToTACType ty)
+castRelOpToTACOp AS.Ge ty     = Rel $ RelGe  (castTypeToTACType ty)
+
+
 -- A label
 newtype Label = Label Int
 
@@ -99,9 +108,9 @@ data Instruction
     | BoolJumpT { cond :: Address, to :: Label }
     | BoolJumpF { cond :: Address, to :: Label }
     | RelJump { rel :: RelOp, r1, r2 :: Address, to :: Label }
-    | IndexGet { l :: Address, id :: ProgramName, idx :: Address }
-    | IndexSet { id :: ProgramName, idx, r :: Address }
-    | Ref { l :: Address, id :: ProgramName }
+    | IndexGet { l :: Address, id :: Address, idx :: Address }
+    | IndexSet { id :: Address, idx, r :: Address }
+    | Ref { l :: Address, id :: Address }
     | DerefGet { l1, l2 :: Address }
     | DerefSet { l :: Address, r :: Address }
     | Param {r :: Address}
@@ -109,6 +118,7 @@ data Instruction
     | FunCall { l :: Address, rout :: Label, n :: Int }
     | ReturnEmpty
     | Return { r :: Address }
+    | ArrayGen { id :: Address, size :: Int }
 
 data LabeledInstruction = LabeledInstruction
   { label :: Maybe Label,

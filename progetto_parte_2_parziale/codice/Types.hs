@@ -53,3 +53,14 @@ getErrs :: [Type] -> [String]
 getErrs [] = []
 getErrs (TError { msgs = msgs } : ts) = msgs ++ getErrs ts
 getErrs (_ : ts) = getErrs ts
+
+-- Get type size
+getTypeSize :: Type -> Int
+getTypeSize TBoolean = 1
+getTypeSize TInteger = 4
+getTypeSize TReal    = 8
+getTypeSize TChar    = 1
+getTypeSize TString  = error "TString size is not defined"
+getTypeSize (TArray { size = s, elementsType = ty }) = s * getTypeSize ty
+getTypeSize TReference {} = 4
+getTypeSize TError {} = error "TError size is not defined"
