@@ -3,7 +3,7 @@ module AbsSyn where
 
 import GHC.Err (error)
 import LexGrammar (Posn)
-import Prelude (Bool, Char, Double, Int, Maybe, Show, String, Eq, Ord)
+import Prelude (Bool, Char, Double, Int, Show, String, Eq, Ord)
 import qualified Types as Ty
 
 data Declarations a = ProgramDecl

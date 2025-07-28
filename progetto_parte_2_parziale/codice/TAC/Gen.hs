@@ -10,7 +10,8 @@ type StateMonad = St.State TACState
 
 data TACState = TACState {
     tempCount, labelCount :: Int,
-    stream :: TAC
+    stream :: TAC,
+    nextLabel :: Maybe Label
 }
 
 -- genDeclarations :: AS.Declarations SS.Ann -> StateMonad ()
@@ -50,9 +51,28 @@ genUnknownExpr exp = do
             out $ LabeledInstruction Nothing (UOp k (Sign ty) addr)
             return addr
 
-        AS.BinOp AS.Or e1 e2 ann _ -> error "TODO: handle Or operation separately, as it may short-circuit"
+        -- TODO: This can be optimized (unnecessary temporary variables and consecutive OR and AND)
+        AS.BinOp AS.Or e1 e2 _ _ -> do
+            k <- newTmp
+            addr1 <- genExpr e1
+            out $ LabeledInstruction Nothing (NOp k addr1)
+            label <- newLabel
+            out $ LabeledInstruction Nothing (BoolJumpT k label)
+            addr2 <- genExpr e2
+            out $ LabeledInstruction Nothing (NOp k addr2)
+            attachToNext label
+            return k
 
-        AS.BinOp AS.And e1 e2 ann _ -> error "TODO: handle And operation separately, as it may short-circuit"
+        AS.BinOp AS.And e1 e2 _ _ -> do
+            k <- newTmp
+            addr1 <- genExpr e1
+            out $ LabeledInstruction Nothing (NOp k addr1)
+            label <- newLabel
+            out $ LabeledInstruction Nothing (BoolJumpF k label)
+            addr2 <- genExpr e2
+            out $ LabeledInstruction Nothing (NOp k addr2)
+            attachToNext label
+            return k
 
         AS.BinOp binOp e1 e2 ann _ -> do
             k <- newTmp
@@ -80,13 +100,10 @@ genUnknownExpr exp = do
         AS.Literal {} -> error "Literal should not be passed to genUnknownExpr"
 
         -- Routine calls with multiple return values are handled only where they can appear
-        AS.RoutCall call (SS.ExpAnn {}) _ -> do
-            addrs <- genRoutCall call
-            -- TODO: In this case we always have a single address ?
-            let addr = head addrs
-            return addr
+        AS.FunCall call (SS.ExpAnn {}) _ -> do
+            genFunCall call
 
-        AS.RoutCall {} -> error "Unreachable"
+        AS.FunCall {} -> error "Unreachable"
 
         AS.Deref e _ _ -> do
             k <- newTmp
@@ -108,10 +125,7 @@ genUnknownExpr exp = do
 
         -- Routine calls with multiple return values are handled only where they can appear
         AS.ExpIdent ident (SS.ExpAnn {}) _ -> do
-            addrs <- genRoutCall (AS.callFromIdent ident)
-            -- TODO: In this case we always have a single address ?
-            let addr = head addrs
-            return addr
+            genFunCall (AS.callFromIdent ident)
 
         AS.ExpIdent {} -> error "Unreachable"
 
@@ -131,22 +145,22 @@ genUnknownExpr exp = do
             out $ LabeledInstruction Nothing (UOp k (Coer cast) addr)
             return k
 
-genRoutCall :: AS.RoutineCall SS.Ann -> StateMonad [Address]
-genRoutCall = error "TODO: implement genRoutCall"
+genFunCall :: AS.RoutineCall SS.Ann -> StateMonad Address
+genFunCall = error "TODO: implement genRoutCall"
 
 -- TODO: pay ATTENTION to relations between complex types
 genRelOp :: AS.RelOp -> T.Type -> Address -> Address -> StateMonad Address
 genRelOp = error "TODO: implement genRelOp"
 
-genRelRout :: [T.Type] -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
-genRelRout = error "TODO: implement genRelRout"
-
 
 out :: LabeledInstruction -> StateMonad ()
 out instr = do
     state <- St.get
-    let newStream = instr : stream state
-    St.put $ state { stream = newStream }
+    let instr' = case nextLabel state of
+            Just label -> instr { label = Just label }
+            Nothing    -> instr
+        newStream = instr' : stream state
+    St.put $ state { stream = newStream, nextLabel = Nothing }
 
 newTmp :: StateMonad Address
 newTmp = do
@@ -162,4 +176,9 @@ newLabel = do
     St.put $ state { labelCount = k + 1 }
     return $ Label k
 
+attachToNext :: Label -> StateMonad ()
+attachToNext label = do
+    state <- St.get
+    let newNext = Just label
+    St.put $ state { nextLabel = newNext }
 
