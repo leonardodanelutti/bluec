@@ -54,13 +54,14 @@ genDeclarations (AS.ProgramDecl _ vars routines) = do
     mapM_ genRoutine routines
 
 genVar :: AS.VarA SS.Ann -> StateMonad ()
-genVar (AS.VarAss idents _ values _ _) =
+genVar (AS.VarAss idents ty values _ _) =
     mapM_ genAssignment (zip idents values)
     where
     genAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
     genAssignment (ident, exp) = do
         addr <- genExpr exp
-        out $ LabeledInstruction Nothing (NOp (PName $ ProgramName $ AS.identName ident) addr)
+        let tyTAC = castTypeToTACType $ T.type_ ty
+        out $ LabeledInstruction Nothing (NOp (PName $ ProgramName $ AS.identName ident) addr tyTAC)
 
 genExpr :: AS.Exp SS.Ann -> StateMonad Address
 genExpr exp = do
@@ -79,6 +80,7 @@ genExpr exp = do
         genLit (SS.CTVString v)  = genString v
 
 genString :: String -> StateMonad Address
+-- TODO: Strings are array of chars
 genString _ = error "genString not implemented yet"
 
 genUnknownExpr :: AS.Exp SS.Ann -> StateMonad Address
@@ -87,17 +89,16 @@ genUnknownExpr exp = do
         AS.BoolNeg e _ _ -> do
             k <- newTmp
             addr <- genExpr e
-            out $ LabeledInstruction Nothing (UOp k BoolNeg addr)
+            out $ LabeledInstruction Nothing (UOp k BoolNeg addr TBoolean)
             return addr
 
         AS.Sign e ann _ -> do
             k <- newTmp
             addr <- genExpr e
             let ty = castTypeToTACType $ SS.expType ann
-            out $ LabeledInstruction Nothing (UOp k (Sign ty) addr)
+            out $ LabeledInstruction Nothing (UOp k (Sign ty) addr ty)
             return addr
 
-        -- TODO: This can be optimized (unnecessary temporary variables and consecutive OR and AND)
         AS.BinOp AS.Or e1 e2 _ _ -> do
             k <- newTmp
             genBinExp AS.Or k e1 e2
@@ -112,7 +113,8 @@ genUnknownExpr exp = do
             addr1 <- genExpr e1
             addr2 <- genExpr e2
             let tacOp = castBinOpToTACOp binOp (SS.expType ann)
-            out $ LabeledInstruction Nothing (BOp k tacOp addr1 addr2)
+                ty = castTypeToTACType $ SS.expType ann
+            out $ LabeledInstruction Nothing (BOp k tacOp addr1 addr2 ty)
             return k
 
         AS.RelOp relOp e1 e2 _ _ -> genRepOp relOp e1 e2
@@ -132,23 +134,25 @@ genUnknownExpr exp = do
 
         AS.FunCall {} -> error "Unreachable"
 
-        AS.Deref e _ _ -> do
+        AS.Deref e ann _ -> do
             k <- newTmp
             addr <- genExpr e
-            out $ LabeledInstruction Nothing (DerefGet k addr)
+            let ty = castTypeToTACType $ SS.expType ann
+            out $ LabeledInstruction Nothing (DerefGet k addr ty)
             return k
 
-        AS.ArrayIndex e index _ _ -> do
+        AS.ArrayIndex e index ann _ -> do
             k <- newTmp
             addr <- genExpr e
             indexAddr <- genExpr index
             let elemSize = T.getTypeSize $ SS.expType $ AS.expAnnot e
+                ty = castTypeToTACType $ SS.expType ann
             if elemSize == 1 then do
-                out $ LabeledInstruction Nothing (IndexGet k addr indexAddr)
+                out $ LabeledInstruction Nothing (IndexGet k addr indexAddr ty)
             else do
                 -- If the element size is not 1, we need to multiply the index by the element size
-                out $ LabeledInstruction Nothing (BOp indexAddr (Mul TInteger) indexAddr (Lit $ LitInt elemSize))
-                out $ LabeledInstruction Nothing (IndexGet k addr indexAddr)
+                out $ LabeledInstruction Nothing (BOp indexAddr (Mul TInteger) indexAddr (Lit $ LitInt elemSize) TInteger)
+                out $ LabeledInstruction Nothing (IndexGet k addr indexAddr ty)
             
             return k
 
@@ -165,15 +169,24 @@ genUnknownExpr exp = do
         AS.Array elements ann _ -> do
             k <- newTmp
             let arrSize  = T.getTypeSize $ SS.expType ann
-                elemSize = T.getTypeSize $ T.elementsType $ SS.expType ann
             out $ LabeledInstruction Nothing (ArrayGen k arrSize)
-            mapM_ 
-                (\(i, e) -> do
-                    addr <- genExpr e
-                    out $ LabeledInstruction Nothing (IndexSet k (Lit $ LitInt (i * elemSize)) addr)) 
-                (zip [0..] elements)
+            genArray elements k
 
-            return k
+            where
+                genArray :: [AS.Exp SS.Ann] -> Address -> StateMonad Address
+                genArray elements k = do 
+                    let elemSize = T.getTypeSize  $ T.elementsType $ SS.expType ann
+                        tyTAC = castTypeToTACType $ T.elementsType $ SS.expType ann
+                    mapM_ 
+                        (\(i, e) -> do
+                            addr <- genExpArray e k
+                            out $ LabeledInstruction Nothing (IndexSet k (Lit $ LitInt (i * elemSize)) addr tyTAC)) 
+                        (zip [0..] elements)
+                    return k
+
+                genExpArray :: AS.Exp SS.Ann -> Address -> StateMonad Address
+                genExpArray (AS.Array elements _ _) k = genArray elements k
+                genExpArray e _ = genExpr e
 
         AS.Cast e ann _ -> do
             k <- newTmp
@@ -186,13 +199,15 @@ genUnknownExpr exp = do
                     (T.TChar, T.TInteger)    -> CharToInt
                     -- TODO: Char to String?
                     _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
-            out $ LabeledInstruction Nothing (UOp k (Coer cast) addr)
+                newTypeTAC = castTypeToTACType newType
+            out $ LabeledInstruction Nothing (UOp k (Coer cast) addr newTypeTAC)
             return k
 
 genBinExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genBinExp op tmp e1 e2 = do
+    -- left to right evaluation
     addr1 <- genExpr' e1
-    out $ LabeledInstruction Nothing (NOp tmp addr1)
+    out $ LabeledInstruction Nothing (NOp tmp addr1 TBoolean)
     label <- newLabel
     let instr = case op of
             AS.Or -> BoolJumpF tmp label
@@ -200,7 +215,7 @@ genBinExp op tmp e1 e2 = do
             _ -> error "Only Or and And operations should be passed to genBinExp"
     out $ LabeledInstruction Nothing instr
     addr2 <- genExpr' e2
-    out $ LabeledInstruction Nothing (NOp tmp addr2)
+    out $ LabeledInstruction Nothing (NOp tmp addr2 TBoolean)
     attachToNext label
     return tmp
     where
@@ -213,6 +228,7 @@ genBinExp op tmp e1 e2 = do
 genRepOp :: AS.RelOp -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genRepOp relOp e1 e2 = do
     k <- newTmp
+    -- Left to right evaluation
     addr1 <- genExpr e1
     addr2 <- genExpr e2
     let ty = SS.expType $ AS.expAnnot e1
@@ -223,11 +239,27 @@ genRepOp relOp e1 e2 = do
         T.TError {} -> error "Unreachable"
         _ -> let tacRelOp = castRelOpToTACOp relOp ty
              in do
-                out $ LabeledInstruction Nothing (BOp k tacRelOp addr1 addr2)
+                out $ LabeledInstruction Nothing (BOp k tacRelOp addr1 addr2 TBoolean)
     return k
 
+
+-- copiare tutte le variabili con i nomi dei parametri locali
+-- modalità di passaggio: se ref o valres crea una reference
+-- se il tipo di ritorno è un array (o una stringa) devi crearlo prima e passarlo come riferimento
 genFunCall :: AS.RoutineCall SS.Ann -> StateMonad Address
 genFunCall = error "TODO: implement genFunCall"
+
+copy :: AS.Ident -> Address -> T.Type -> StateMonad ()
+copy ident addr ty = case ty of
+    T.TString -> error "TODO: implement copy for strings"
+    T.TArray {} -> do
+        out $ LabeledInstruction Nothing (ArrayGen addr (T.getTypeSize ty))
+        -- TODO: 
+
+    _ -> do
+        let name = PName $ ProgramName $ AS.identName ident
+            typeTAC = castTypeToTACType ty
+        out $ LabeledInstruction Nothing (NOp name addr typeTAC)
 
 
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()

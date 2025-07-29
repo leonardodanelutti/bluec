@@ -35,15 +35,17 @@ data Coercion
     | CharToInt
 
 -- Types used in TAC
-data TACType = TInteger | TReal | TChar | TBoolean
+data TACType = TInteger | TReal | TChar | TBoolean | Addr
 
 castTypeToTACType :: T.Type-> TACType
 castTypeToTACType T.TInteger = TInteger
 castTypeToTACType T.TReal    = TReal
 castTypeToTACType T.TChar    = TChar
 castTypeToTACType T.TBoolean = TBoolean
-castTypeToTACType _ = error "Unsupported type for TAC"
-
+castTypeToTACType T.TReference { } = Addr
+castTypeToTACType T.TArray { } = Addr
+castTypeToTACType T.TString = Addr
+castTypeToTACType T.TError {} = error "Error type should not be passed to TAC module"
 
 -- Unary operations
 data UnaryOp
@@ -101,21 +103,21 @@ castRelOpToTACOp AS.Ge ty     = Rel $ RelGe  (castTypeToTACType ty)
 newtype Label = Label Int
 
 data Instruction 
-    = BOp { l :: Address, binOp :: BinOp,   r1, r2 :: Address }
-    | UOp { l :: Address, unOp :: UnaryOp, r :: Address }
-    | NOp { l :: Address, r  :: Address }
+    = BOp { l :: Address, binOp :: BinOp,  r1, r2 :: Address, assignType :: TACType }
+    | UOp { l :: Address, unOp :: UnaryOp, r :: Address, assignType :: TACType }
+    | NOp { l :: Address, r  :: Address, assignType :: TACType }
     | UnJump { to :: Label }
     | BoolJumpT { cond :: Address, to :: Label }
     | BoolJumpF { cond :: Address, to :: Label }
     | RelJump { rel :: RelOp, r1, r2 :: Address, to :: Label }
-    | IndexGet { l :: Address, id :: Address, idx :: Address }
-    | IndexSet { id :: Address, idx, r :: Address }
-    | Ref { l :: Address, id :: Address }
-    | DerefGet { l1, l2 :: Address }
-    | DerefSet { l :: Address, r :: Address }
-    | Param {r :: Address}
+    | IndexGet { l :: Address, id :: Address, idx :: Address, assignType :: TACType }
+    | IndexSet { id :: Address, idx, r :: Address, assignType :: TACType }
+    | Ref { l :: Address, id :: Address}
+    | DerefGet { l1, l2 :: Address, assignType :: TACType }
+    | DerefSet { l :: Address, r :: Address, assignType :: TACType }
+    | Param { r :: Address, assignType :: TACType }
     | ProcCall { rout :: Label, n :: Int }
-    | FunCall { l :: Address, rout :: Label, n :: Int }
+    | FunCall { l :: Address, rout :: Label, n :: Int, assignType :: TACType }
     | ReturnEmpty
     | Return { r :: Address }
     | ArrayGen { id :: Address, size :: Int }
