@@ -9,7 +9,8 @@ import qualified Types as Ty
 data Declarations a = ProgramDecl
   { consts :: [ConstA a],
     vars :: [VarA a],
-    routines :: [Routine a]
+    routines :: [Routine a],
+    declsAnnot :: a
   }
   deriving (Show)
 

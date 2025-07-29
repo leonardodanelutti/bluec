@@ -100,7 +100,7 @@ BlueIdent  : L_BlueIdent { A.Ident     (tokenText $1)        (tokenPosn $1) }
 
 Declarations :: { A.Declarations () }
 Declarations
-  : ConstB VarB RoutB { A.ProgramDecl $1 $2 $3 }
+  : ConstB VarB RoutB { A.ProgramDecl $1 $2 $3 () }
 
 RoutB :: { [A.Routine ()] }
 RoutB

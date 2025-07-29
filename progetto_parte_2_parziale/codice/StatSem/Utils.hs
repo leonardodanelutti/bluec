@@ -5,6 +5,7 @@ import qualified Data.Map.Lazy  as Map
 import qualified AbsSyn         as AS
 import qualified LexGrammar     as LG
 import qualified Types          as T
+import qualified Errors         as E
 
 -- Environment with different namespaces for variables, functions, and constants.
 --
@@ -12,17 +13,33 @@ import qualified Types          as T
 -- same name and same type. In those cases it will be necessary to use the parentheses
 -- to disambiguate between a variable and a function call.
 data Env = Env {
-    symbols :: Map.Map AS.Ident SymbolEntry,
-    routines :: Map.Map AS.Ident RoutEntry
-}
+        symbols :: Map.Map AS.Ident SymbolEntry,
+        routines :: Map.Map AS.Ident RoutEntry
+    }
+    deriving (Show)
 
 data SymbolEntry
     = Var LG.Posn T.TypePos
     | Const AS.Literal
+    deriving (Show)
 
 data RoutEntry
     = Fun LG.Posn [AS.Param] T.TypePos
     | Proc LG.Posn [AS.Param]
+    deriving (Show)
+
+emptyEnv :: Env
+emptyEnv = Env Map.empty Map.empty
+
+-- Merge two environments. In case of clashes, the second environment overrides the first.
+mergeEnv :: Env -> Env -> Env
+mergeEnv (Env s1 r1) (Env s2 r2) = Env (Map.union s2 s1) (Map.union r2 r1)
+
+envFromSymbolBindings :: [(AS.Ident, SymbolEntry)] -> Env
+envFromSymbolBindings bindings = Env (Map.fromList bindings) Map.empty
+
+envFromRoutBindings :: [(AS.Ident, RoutEntry)] -> Env
+envFromRoutBindings bindings = Env Map.empty (Map.fromList bindings)
 
 -- Datatype for static semantics analysis module annotations (on the AST).
 data Ann
@@ -36,14 +53,10 @@ data Ann
         ctVal :: Maybe CTValue,
         identCategory :: IdentCategory
     }
-    -- -- TODO: Is it true that this annotation, when there are multiple types, if found only in this cases:
-    -- -- 1. to the right of an assignment
-    -- -- 2. inside a routine call
-    -- -- 3. equating to routine calls
-    -- | RoutAnn {
-    --     expTypes :: [T.Type]
-    --     -- TODO: do we need to compute the value at compile time if possible?
-    -- }
+    | DeclAnn {
+        bindings :: Env, -- Local environment
+        errs :: [String]
+    }
     deriving (Show)
 
 -- Category of an identifier.
@@ -60,6 +73,7 @@ data IdentCategory
 getCTValue :: Ann -> Maybe CTValue
 getCTValue (ExpAnn { ctVal = val }) = val
 getCTValue (IdentAnn { ctVal = val }) = val
+getCTValue _ = Nothing
 
 -- data DownwardAnn
 --     = ExpAnn
@@ -75,6 +89,17 @@ data CTValue
     | CTVBoolean Bool
     | CTVReal Double
     deriving (Show)
+
+ctvToLiteral :: AS.Exp Ann -> Either AS.Literal String
+ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
+    Just (CTVInteger v) -> Left $ AS.LitInt v pos
+    Just (CTVChar v)    -> Left $ AS.LitChar v pos
+    Just (CTVString v)  -> Left $ AS.LitString v pos
+    Just (CTVBoolean v) -> Left $ AS.LitBool v pos
+    Just (CTVReal v)    -> Left $ AS.LitDouble v pos
+    Nothing             -> Right $ E.err pos $ show exp ++ " is not a constant expression."
+    where
+        pos = AS.expPos exp
 
 -- Compile time casting.
 ctCast :: Maybe CTValue -> T.Type -> Maybe CTValue

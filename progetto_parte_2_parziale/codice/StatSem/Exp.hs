@@ -114,7 +114,7 @@ annExpIdent env AS.ExpIdent {
             identCategory = ConstCategory
         } where (identType, identVal) = getTypeAndValue val
         -- Routine identifier.
-        (Nothing, Just _) -> annRoutine env ident [] pos
+        (Nothing, Just _) -> annRoutineCall env ident [] pos
         -- TODO: the case in which the ambiguity can be resolved by the type
         -- Ambiguous case.
         _ -> IdentAnn {
@@ -139,13 +139,14 @@ annExpRoutCall env fc@AS.FunCall {
     AS.expPos = pos
 } = fc {
     AS.expCall = rc { AS.args = annArgs },
-    AS.expAnnot = annRoutine env ident annArgs pos
+    AS.expAnnot = annRoutineCall env ident annArgs pos
 } where
     annArgs = map (annExp env) args
 annExpRoutCall _ _ = error "Unreachable: `annExpRoutCall` called with non-`FunCall` expression."
 
-annRoutine :: Env -> AS.Ident -> [AnnExp] -> LG.Posn -> Ann
-annRoutine env ident annArgs pos = ExpAnn {
+-- Helper function that creates an annotation for a routine call.
+annRoutineCall :: Env -> AS.Ident -> [AnnExp] -> LG.Posn -> Ann
+annRoutineCall env ident annArgs pos = ExpAnn {
     expType = routType,
     ctVal = Nothing
 } where

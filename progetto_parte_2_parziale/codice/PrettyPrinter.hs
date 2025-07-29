@@ -16,7 +16,7 @@ printer = declarationsPrinter
 
 -- Pretty print delle dichiarazioni
 declarationsPrinter :: (Show a) => Declarations a -> String
-declarationsPrinter (ProgramDecl consts vars routines) =
+declarationsPrinter (ProgramDecl consts vars routines _) =
     unlines $
         (if not (null consts)
             then "const" : map constPrinter consts

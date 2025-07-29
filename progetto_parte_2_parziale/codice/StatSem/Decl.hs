@@ -1,0 +1,164 @@
+-- Implementation of the annotation rules for DECLARATIONS.
+module StatSem.Decl where
+
+import Data.Either (partitionEithers)
+import qualified AbsSyn as AS
+import StatSem.Utils
+import StatSem.Exp
+import StatSem.Stmt
+
+-- TYPES
+-- Void annotations after parsing.
+type Decls = AS.Declarations ()
+-- Annotated expressions after static semantics analysis.
+type AnnDecls = AS.Declarations Ann
+
+-- Annotate a declarations node.
+annDecls :: Env -> Decls -> AnnDecls
+annDecls env AS.ProgramDecl {
+    AS.consts = consts,
+    AS.vars = vars,
+    AS.routines = routines
+} = AS.ProgramDecl {
+    AS.consts = constsAnn,
+    AS.vars = varsAnn,
+    AS.routines = routinesAnn,
+    AS.declsAnnot = ann
+} where
+    constsAnn = annConstAs env consts
+    varsAnn = annVarAs inEnvVars vars
+    routinesAnn = annRoutines outEnvVars routines
+    inEnvVars = mergeEnv outEnvConsts outEnvRoutines
+    outEnvConsts = constAsEnv constsAnn -- Local environment of constants.
+    outEnvVars = varAsEnv varsAnn -- Local environment of variables.
+    outEnvRoutines = routinesEnv routinesAnn -- Local environment of routines.
+    errsConsts = concatMap (errs . AS.constAnnot) constsAnn
+    errsVars = concatMap (errs . AS.varAnnot) varsAnn
+    errsRoutines = concatMap (errs . AS.routAnnot) routinesAnn
+    ann = DeclAnn {
+        bindings = mergeEnv inEnvVars outEnvVars,
+        errs = errsConsts ++ errsVars ++ errsRoutines
+    }
+
+-- Annotate a list of constant declarations.
+annConstAs :: Env -> [AS.ConstA ()] -> [AS.ConstA Ann]
+annConstAs _ [] = []
+annConstAs env (c : cs) = annConstA env c : annConstAs env cs
+
+-- Get the environment of a list of constant declarations.
+constAsEnv :: [AS.ConstA Ann] -> Env
+constAsEnv [] = emptyEnv
+constAsEnv (c : cs) = mergeEnv (bindings $ AS.constAnnot c) (constAsEnv cs)
+
+-- Annotate a constant declaration.
+annConstA :: Env -> AS.ConstA () -> AS.ConstA Ann
+annConstA env AS.ConstAss {
+    AS.constIdents = idents,
+    AS.constType = ty,
+    AS.constValues = values,
+    AS.constPos = pos
+} = AS.ConstAss {
+    AS.constIdents = idents,
+    AS.constType = ty,
+    AS.constValues = valuesAnn,
+    AS.constAnnot = ann,
+    AS.constPos = pos
+} where
+    valuesAnn = map (annExp env) values
+    tryLiterals = map ctvToLiteral valuesAnn
+    (literals, errs) = partitionEithers tryLiterals
+    ann = DeclAnn {
+        bindings = envFromSymbolBindings (zip idents (map Const literals)),
+        errs = errs
+    }
+
+-- Annotate a list of variable declarations.
+annVarAs :: Env -> [AS.VarA ()] -> [AS.VarA Ann]
+annVarAs env [] = []
+annVarAs env (v : vs) = annVarA env v : annVarAs env vs
+
+-- Get the environment of a list of variable declarations.
+varAsEnv :: [AS.VarA Ann] -> Env
+varAsEnv [] = emptyEnv
+varAsEnv (v : vs) = mergeEnv (bindings $ AS.varAnnot v) (varAsEnv vs)
+
+-- Annotate a variable declaration.
+annVarA :: Env -> AS.VarA () -> AS.VarA Ann
+annVarA env AS.VarAss {
+    AS.varIdents = idents,
+    AS.varType = ty,
+    AS.varValues = values,
+    AS.varPos = pos
+} = AS.VarAss {
+    AS.varIdents = idents,
+    AS.varType = ty,
+    AS.varValues = valuesAnn,
+    AS.varAnnot = ann,
+    AS.varPos = pos
+} where
+    valuesAnn = map (annExp env) values
+    ann = DeclAnn {
+        bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty))),
+        errs = []
+    }
+
+-- Annotate a list of routine declarations.
+annRoutines :: Env -> [AS.Routine ()] -> [AS.Routine Ann]
+annRoutines env [] = []
+annRoutines env (r : rs) = annRoutine env r : annRoutines env rs
+
+-- Get the environment of a list of routine declarations.
+routinesEnv :: [AS.Routine Ann] -> Env
+routinesEnv [] = emptyEnv
+routinesEnv (r : rs) = mergeEnv (bindings $ AS.routAnnot r) (routinesEnv rs)
+
+-- Annotate a routine declaration.
+annRoutine :: Env -> AS.Routine () -> AS.Routine Ann
+annRoutine env AS.Function {
+    AS.routName = ident,
+    AS.params = params,
+    AS.returnType = ty,
+    AS.routBody = body,
+    AS.routPos = pos
+} = AS.Function {
+    AS.routName = ident,
+    AS.params = params,
+    AS.returnType = ty,
+    AS.routBody = bodyAnn,
+    AS.routAnnot = ann,
+    AS.routPos = pos
+} where
+    bodyAnn = annRoutBody env body
+    ann = DeclAnn {
+        bindings = envFromRoutBindings [(ident, Fun pos params ty)],
+        errs = []
+    }
+annRoutine env AS.Procedure {
+    AS.routName = ident,
+    AS.params = params,
+    AS.routBody = body,
+    AS.routPos = pos
+} = AS.Procedure {
+    AS.routName = ident,
+    AS.params = params,
+    AS.routBody = bodyAnn,
+    AS.routAnnot = ann,
+    AS.routPos = pos
+} where
+    bodyAnn = annRoutBody env body
+    ann = DeclAnn {
+        bindings = envFromRoutBindings [(ident, Proc pos params)],
+        errs = []
+    }
+
+-- Annotate a routine body.
+annRoutBody :: Env -> AS.RoutBody () -> AS.RoutBody Ann
+annRoutBody env AS.RoutBody {
+    AS.declarations = decls,
+    AS.statements = stmts
+} = AS.RoutBody {
+    AS.declarations = annDecls env decls,
+    AS.statements = map (annStmt declEnv) stmts
+} where
+    declsAnn = annDecls env decls
+    declEnv = bindings $ AS.declsAnnot declsAnn
