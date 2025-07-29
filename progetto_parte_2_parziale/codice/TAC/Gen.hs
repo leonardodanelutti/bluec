@@ -13,18 +13,22 @@ type StateMonad = St.State TACState
 
 data TACState = TACState {
     tempCount, labelCount :: Int,
-    stream :: TAC,
+    routineStack :: [(TAC, String)],
+    currentStream :: TAC,
+    currentRoutName :: String,
     nextLabel :: Maybe Label
 }
 
 out :: LabeledInstruction -> StateMonad ()
 out instr = do
     state <- St.get
-    let instr' = case nextLabel state of
+    --
+    let -- Add pending label
+        instr' = case nextLabel state of
             Just label -> instr { label = Just label }
             Nothing    -> instr
-        newStream = instr' : stream state
-    St.put $ state { stream = newStream, nextLabel = Nothing }
+        newStream = instr' : currentStream state
+    St.put $ state { currentStream = newStream, nextLabel = Nothing }
 
 newTmp :: StateMonad Address
 newTmp = do
@@ -46,6 +50,29 @@ attachToNext label = do
     let newNext = Just label
     St.put $ state { nextLabel = newNext }
 
+newRoutine :: String -> StateMonad ()
+newRoutine name = do
+    state <- St.get
+    let currentRoutine = (currentStream state, currentRoutName state)
+    St.put $ state { routineStack = currentRoutine : routineStack state,
+                     currentRoutName = name,
+                     currentStream = [] }
+
+endRoutine :: StateMonad ()
+endRoutine = do
+    state <- St.get
+    let currentRoutine = currentStream state
+    case routineStack state of
+        [] -> St.put state
+        ((code, name):rs) -> do
+            St.put $ state { routineStack = rs,
+                             currentRoutName = name,
+                             currentStream = code ++ currentRoutine }
+
+getRoutName :: StateMonad String
+getRoutName = do
+    currentRoutName <$> St.get
+
 -- TAC generation functions
 
 genDeclarations :: AS.Declarations SS.Ann -> StateMonad ()
@@ -60,8 +87,10 @@ genVar (AS.VarAss idents ty values _ _) =
     genAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
     genAssignment (ident, exp) = do
         addr <- genExpr exp
+        routName <- getRoutName
         let tyTAC = castTypeToTACType $ T.type_ ty
-        out $ LabeledInstruction Nothing (NOp (PName $ ProgramName $ AS.identName ident) addr tyTAC)
+            name = PName $ ProgramName (AS.identName ident) routName
+        out $ LabeledInstruction Nothing (NOp name addr tyTAC)
 
 genExpr :: AS.Exp SS.Ann -> StateMonad Address
 genExpr exp = do
@@ -153,12 +182,13 @@ genUnknownExpr exp = do
                 -- If the element size is not 1, we need to multiply the index by the element size
                 out $ simpleInstruction (BOp indexAddr (Mul TInteger) indexAddr (Lit $ LitInt elemSize) TInteger)
                 out $ simpleInstruction (IndexGet k addr indexAddr ty)
-            
+
             return k
 
         -- ConstCategory is handled by genExpr
         AS.ExpIdent ident (SS.IdentAnn _ _ SS.VarCategory) _ -> do
-                return $ PName (ProgramName $ AS.identName ident)
+                routName <- getRoutName
+                return $ PName $ ProgramName (AS.identName ident) routName
 
         -- TODO: Quando DG mette le modalità di passaggio devo cambiare annotazione?
         AS.ExpIdent ident ann@(SS.ExpAnn {}) _ -> do
@@ -174,13 +204,13 @@ genUnknownExpr exp = do
 
             where
                 genArray :: [AS.Exp SS.Ann] -> Address -> StateMonad Address
-                genArray elements k = do 
+                genArray elements k = do
                     let elemSize = T.getTypeSize  $ T.elementsType $ SS.expType ann
                         tyTAC = castTypeToTACType $ T.elementsType $ SS.expType ann
-                    mapM_ 
+                    mapM_
                         (\(i, e) -> do
                             addr <- genExpArray e k
-                            out $ simpleInstruction (IndexSet k (Lit $ LitInt (i * elemSize)) addr tyTAC)) 
+                            out $ simpleInstruction (IndexSet k (Lit $ LitInt (i * elemSize)) addr tyTAC))
                         (zip [0..] elements)
                     return k
 
@@ -235,7 +265,6 @@ genRepOp relOp e1 e2 = do
         T.TString -> error "TODO:"
         T.TArray {} -> error "TODO:"
         T.TReference {} -> error "TODO:"
-        T.TError {} -> error "Unreachable"
         _ -> let tacRelOp = castRelOpToTACOp relOp ty
              in do
                 out $ simpleInstruction (BOp k tacRelOp addr1 addr2 TBoolean)
@@ -244,35 +273,34 @@ genRepOp relOp e1 e2 = do
 genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad Address
 genFunCall (AS.RoutineCall routName args _) ann = do
     k <- newTmp
-    genParams args ann
+    genActualParams args ann (AS.identName routName)
     let returnType = SS.expType ann
         routLab = Function $ AS.identName routName
         numArgs = length args
         ty = castTypeToTACType returnType
     case returnType of
         T.TArray {} -> error "TODO: handle array return types"
+        T.TString -> error "TODO: handle string return types"
         -- Ref cannot be returned by a function
         _ -> out $ simpleInstruction (FunCall k routLab numArgs ty)
     return k
 
 genProcCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad ()
 genProcCall (AS.RoutineCall routName args _) ann = do
-    genParams args ann
+    genActualParams args ann (AS.identName routName)
     let routLab = Function $ AS.identName routName
         numArgs = length args
     out $ simpleInstruction (ProcCall routLab numArgs)
 
--- copiare tutte le variabili con i nomi dei parametri locali
--- modalità di passaggio: se ref o valres crea una reference
--- se il tipo di ritorno è un array (o una stringa) devi crearlo prima e passarlo come riferimento
-genParams ::  [AS.Exp SS.Ann] -> SS.Ann -> StateMonad ()
-genParams args ann = 
+genActualParams ::  [AS.Exp SS.Ann] -> SS.Ann -> String -> StateMonad ()
+genActualParams args ann procName =
     let params = getParams ann
         exprs = zip args params
     in
         mapM_ (\(expr, param) -> do
+            routName <- getRoutName
             let paramName = AS.identName $ AS.paramName param
-                paramAddr = PName $ ProgramName paramName
+                paramAddr = PName $ ProgramName paramName procName
                 paramType = T.type_ $ AS.paramType param
                 paramTACType = castTypeToTACType paramType
 
@@ -299,8 +327,8 @@ copy newAddr prevAddr ty = case ty of
         copyArray newAddr prevAddr elemType len
         where
             copyArray :: Address -> Address -> T.Type -> Int -> StateMonad ()
-            copyArray newAddr prevAddr elemType len = 
-                let elemSize = T.getTypeSize ty 
+            copyArray newAddr prevAddr elemType len =
+                let elemSize = T.getTypeSize ty
                     elemTACTy = castTypeToTACType elemType
                 in
                 mapM_ (\i -> do
@@ -308,8 +336,8 @@ copy newAddr prevAddr ty = case ty of
                     out $ simpleInstruction (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
                     copy' newAddr k elemType
                 )
-                [0..len] 
-            
+                [0..len]
+
             copy' :: Address -> Address -> T.Type -> StateMonad ()
             copy' newAddr prevAddr (T.TArray elemType len) = copyArray newAddr prevAddr elemType len
             copy' a b c = copy a b c
@@ -319,5 +347,25 @@ copy newAddr prevAddr ty = case ty of
 
 
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()
-genRoutine = error "TODO: implement genRoutine"
+genRoutine rout = let
+    name = AS.identName $ AS.routName rout
+    valResParams = filter (\p -> AS.mode p == AS.Mvalres) (AS.params rout)
+    body = AS.routBody rout
+    ann = AS.routAnnot rout
+    in do
+        newRoutine name
+        attachToNext $ Function name
+        genParamsPre valResParams ann
+        let paramPost = genParamsPost valResParams
+        genRoutineBody body paramPost
+        endRoutine
 
+genParamsPre :: [AS.Param] -> SS.Ann -> StateMonad ()
+genParamsPre = error "TODO: implement genActualParams for routines"
+
+genParamsPost :: [AS.Param] -> TAC
+genParamsPost = error "TODO: implement genParamsPost for routines"
+
+-- TODO: before returns add the post amble for the parameters
+genRoutineBody :: AS.RoutBody SS.Ann -> TAC -> StateMonad ()
+genRoutineBody = error "TODO: implement genRoutineBody"

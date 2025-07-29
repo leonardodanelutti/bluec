@@ -6,7 +6,7 @@ import qualified Types as T
 import qualified AbsSyn as AS
 
 -- A program name
-newtype ProgramName = ProgramName String
+data ProgramName = ProgramName String String
 
 -- A temporary variable
 newtype Temporary = Temporary Int
@@ -20,7 +20,7 @@ data Literal
 
 -- An address can be a program name, a temporary variable, or a Literal
 data Address
-    = PName ProgramName
+    = PName ProgramName 
     | Temp Temporary
     | Lit Literal
 
@@ -100,7 +100,7 @@ castRelOpToTACOp AS.Ge ty     = Rel $ RelGe  (castTypeToTACType ty)
 
 
 -- A label
-data Label 
+data Label
     = Loc Int
     | Function String
 

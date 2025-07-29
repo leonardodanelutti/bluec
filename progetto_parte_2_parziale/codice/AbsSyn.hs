@@ -85,7 +85,7 @@ data Param = Param
   deriving (Show)
 
 data Mode = Mval | Mvalres | Mref
-  deriving (Show)
+  deriving (Show, Eq)
 
 data RoutBody a = RoutBody
   { declarations :: Declarations a,

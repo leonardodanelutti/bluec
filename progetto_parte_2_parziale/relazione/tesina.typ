@@ -68,7 +68,7 @@ par(
     a: Integer := b
   * ...
   ```
-  dove "*" potrebbe essere sia un deref che una moltiplicazione.
+  dove "\*" potrebbe essere sia un deref che una moltiplicazione.
   Per lo stesso motivo è stato aggiunto un ";" anche nell'exit dei loop.
 
 
@@ -113,6 +113,7 @@ Infine, poiché il linguaggio non prevede il concetto di classi, le funzioni non
 I commenti supportati sono i commenti a riga singola, che iniziano con il simbolo `--`, e i commenti a blocco, che iniziano con `/*` e terminano con `*/`.
 
 = TODO
+
 == separatori
 L'introduzione della dereferenziazione (deref) ha portato alla necessità di separatori per distinguere chiaramente tra le diverse parti delle espressioni. Infatti senza i separatori il parser LALR(1) non sarebbe in grado di distinguere un deref da una moltiplicazione, oppure una chiamata di funzione da un deref
 
@@ -120,3 +121,7 @@ L'introduzione della dereferenziazione (deref) ha portato alla necessità di sep
 
 
 ```
+
+
+= TODO:
+- [ ] disambiguare funzioni con lo stesso nome nel tac
