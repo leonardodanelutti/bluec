@@ -45,7 +45,7 @@ varPrinter (VarAss idents typ values _ _) =
 routinePrinter :: (Show a) => Routine a -> String
 routinePrinter (Function ident params returnType body _ _) =
     unlines $
-        [ "\t" ++ identPrinter ident ++ "(" ++ paramsPrint params ++ ")" ++ typePrinter returnType ++ " is" ] ++ 
+        [ "\t" ++ identPrinter ident ++ "(" ++ paramsPrint params ++ ") -> " ++ typePrinter returnType ++ " is" ] ++ 
         map ("\t" ++) (lines $ routineBodyPrinter body) ++ ["\tend\n\t" ++ identPrinter ident]
 routinePrinter (Procedure ident params body _ _) =
     unlines $
@@ -66,10 +66,10 @@ expPrinter exp =
         Ref e _ _ -> "&" ++ expPrinter e
 
         --TODO vedere deref
-        Deref e _ _ -> "*(" ++ expPrinter e ++ ")"
+        Deref e _ _ -> "(*" ++ expPrinter e ++ ")"
 
         ArrayIndex e index _ _ -> expPrinter e ++ "[" ++ expPrinter index ++ "]"
-        Array e _ _ -> "[" ++ expsPrinter e ++ "]"
+        Array e _ _ -> "Array[" ++ expsPrinter e ++ "]"
         FunCall call _ _ -> routineCallPrinter call
         Cast e _ _ -> expPrinter e
 
@@ -162,7 +162,7 @@ typePrinter (TypePos typ _) =
         TString  -> "String"
         TChar    -> "Char"
         TArray elemType size ->
-            "Array(" ++ typePrinter (TypePos elemType undefined) ++ ", " ++ show size ++ ")"
+            "Array<" ++ typePrinter (TypePos elemType undefined) ++ " ; " ++ show size ++ ">"
         TReference refType ->
             "&" ++ typePrinter (TypePos refType undefined)
         TError msgs -> "Error: " ++ intercalate ", " msgs

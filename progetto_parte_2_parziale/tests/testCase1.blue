@@ -24,7 +24,7 @@ routines main is
 main
 
 -- Hello world utility-
-__util__(ref b: Boolean) -> (String) is
+__util__(ref b: Boolean) -> String is
     const
         const1: String:="Hello world";
 do

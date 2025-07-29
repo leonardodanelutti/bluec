@@ -1,0 +1,17 @@
+var
+    A: Array<Integer; 3> := Array[1, 2, 3];
+    B: Array<Array<Integer; 2>; 2> := Array[Array[10, 20], Array[30, 40]];
+    p: &Array<Integer; 3> := &A;
+    r: &Integer := &(B[1][1]);        -- riferimento al valore 40
+    q: &&Integer := &r;               -- doppio riferimento a Integer (cioè: pointer to pointer)
+
+routines
+    test -> Integer
+    is
+    var
+        x: Integer := (*p)[1];        -- A[1] = 2
+        y: Integer := **q;            -- doppia dereferenziazione: **q = *(&r) = *r = 40
+    do
+        return x + y;                 -- 2 + 40 = 42
+    end
+    test
