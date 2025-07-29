@@ -49,7 +49,7 @@ attachToNext label = do
 -- TAC generation functions
 
 genDeclarations :: AS.Declarations SS.Ann -> StateMonad ()
-genDeclarations (AS.ProgramDecl _ vars routines) = do
+genDeclarations (AS.ProgramDecl _ vars routines _) = do
     mapM_ genVar vars
     mapM_ genRoutine routines
 
@@ -249,17 +249,31 @@ genRepOp relOp e1 e2 = do
 genFunCall :: AS.RoutineCall SS.Ann -> StateMonad Address
 genFunCall = error "TODO: implement genFunCall"
 
-copy :: AS.Ident -> Address -> T.Type -> StateMonad ()
-copy ident addr ty = case ty of
+copy :: Address -> Address -> T.Type -> StateMonad ()
+copy newAddr prevAddr ty = case ty of
     T.TString -> error "TODO: implement copy for strings"
-    T.TArray {} -> do
-        out $ LabeledInstruction Nothing (ArrayGen addr (T.getTypeSize ty))
-        -- TODO: 
+    T.TArray elemType len -> do
+        out $ LabeledInstruction Nothing (ArrayGen newAddr (T.getTypeSize ty))
+        copyArray newAddr prevAddr elemType len
+        where
+            copyArray :: Address -> Address -> T.Type -> Int -> StateMonad ()
+            copyArray newAddr prevAddr elemType len = 
+                let elemSize = T.getTypeSize ty 
+                    elemTACTy = castTypeToTACType elemType
+                in
+                mapM_ (\i -> do
+                    k <- newTmp
+                    out $ LabeledInstruction Nothing (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
+                    copy' newAddr k elemType
+                )
+                [0..len] 
+            
+            copy' :: Address -> Address -> T.Type -> StateMonad ()
+            copy' newAddr prevAddr (T.TArray elemType len) = copyArray newAddr prevAddr elemType len
+            copy' a b c = copy a b c
 
     _ -> do
-        let name = PName $ ProgramName $ AS.identName ident
-            typeTAC = castTypeToTACType ty
-        out $ LabeledInstruction Nothing (NOp name addr typeTAC)
+        out $ LabeledInstruction Nothing (NOp newAddr prevAddr (castTypeToTACType ty))
 
 
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()
