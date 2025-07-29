@@ -12,7 +12,7 @@ newtype ProgramName = ProgramName String
 newtype Temporary = Temporary Int
 
 -- Known values
-data Literal 
+data Literal
     = LitInt   Int
     | LitReal  Double
     | LitChar  Char
@@ -100,9 +100,11 @@ castRelOpToTACOp AS.Ge ty     = Rel $ RelGe  (castTypeToTACType ty)
 
 
 -- A label
-newtype Label = Label Int
+data Label 
+    = Loc Int
+    | Function String
 
-data Instruction 
+data Instruction
     = BOp { l :: Address, binOp :: BinOp,  r1, r2 :: Address, assignType :: TACType }
     | UOp { l :: Address, unOp :: UnaryOp, r :: Address, assignType :: TACType }
     | NOp { l :: Address, r  :: Address, assignType :: TACType }
@@ -126,5 +128,8 @@ data LabeledInstruction = LabeledInstruction
   { label :: Maybe Label,
     instruction :: Instruction
   }
+
+simpleInstruction :: Instruction -> LabeledInstruction
+simpleInstruction = LabeledInstruction Nothing
 
 type TAC = [LabeledInstruction]

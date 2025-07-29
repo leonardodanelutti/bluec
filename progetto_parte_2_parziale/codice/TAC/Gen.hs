@@ -38,7 +38,7 @@ newLabel = do
     state <- St.get
     let k = labelCount state
     St.put $ state { labelCount = k + 1 }
-    return $ Label k
+    return $ Loc k
 
 attachToNext :: Label -> StateMonad ()
 attachToNext label = do
@@ -89,14 +89,14 @@ genUnknownExpr exp = do
         AS.BoolNeg e _ _ -> do
             k <- newTmp
             addr <- genExpr e
-            out $ LabeledInstruction Nothing (UOp k BoolNeg addr TBoolean)
+            out $ simpleInstruction (UOp k BoolNeg addr TBoolean)
             return addr
 
         AS.Sign e ann _ -> do
             k <- newTmp
             addr <- genExpr e
             let ty = castTypeToTACType $ SS.expType ann
-            out $ LabeledInstruction Nothing (UOp k (Sign ty) addr ty)
+            out $ simpleInstruction (UOp k (Sign ty) addr ty)
             return addr
 
         AS.BinOp AS.Or e1 e2 _ _ -> do
@@ -114,7 +114,7 @@ genUnknownExpr exp = do
             addr2 <- genExpr e2
             let tacOp = castBinOpToTACOp binOp (SS.expType ann)
                 ty = castTypeToTACType $ SS.expType ann
-            out $ LabeledInstruction Nothing (BOp k tacOp addr1 addr2 ty)
+            out $ simpleInstruction (BOp k tacOp addr1 addr2 ty)
             return k
 
         AS.RelOp relOp e1 e2 _ _ -> genRepOp relOp e1 e2
@@ -122,15 +122,15 @@ genUnknownExpr exp = do
         AS.Ref e _ _ -> do
             k <- newTmp
             addr <- genExpr e
-            out $ LabeledInstruction Nothing (Ref k addr)
+            out $ simpleInstruction (Ref k addr)
             return k
 
         -- Already handled by genExpr
         AS.Literal {} -> error "Literal should not be passed to genUnknownExpr"
 
-        -- Routine calls with multiple return values are handled only where they can appear
-        AS.FunCall call (SS.ExpAnn {}) _ -> do
-            genFunCall call
+        -- TODO: Quando DG mette le modalità di passaggio devo cambiare annotazione?
+        AS.FunCall call ann@(SS.ExpAnn {}) _ -> do
+            genFunCall call ann
 
         AS.FunCall {} -> error "Unreachable"
 
@@ -138,7 +138,7 @@ genUnknownExpr exp = do
             k <- newTmp
             addr <- genExpr e
             let ty = castTypeToTACType $ SS.expType ann
-            out $ LabeledInstruction Nothing (DerefGet k addr ty)
+            out $ simpleInstruction (DerefGet k addr ty)
             return k
 
         AS.ArrayIndex e index ann _ -> do
@@ -148,11 +148,11 @@ genUnknownExpr exp = do
             let elemSize = T.getTypeSize $ SS.expType $ AS.expAnnot e
                 ty = castTypeToTACType $ SS.expType ann
             if elemSize == 1 then do
-                out $ LabeledInstruction Nothing (IndexGet k addr indexAddr ty)
+                out $ simpleInstruction (IndexGet k addr indexAddr ty)
             else do
                 -- If the element size is not 1, we need to multiply the index by the element size
-                out $ LabeledInstruction Nothing (BOp indexAddr (Mul TInteger) indexAddr (Lit $ LitInt elemSize) TInteger)
-                out $ LabeledInstruction Nothing (IndexGet k addr indexAddr ty)
+                out $ simpleInstruction (BOp indexAddr (Mul TInteger) indexAddr (Lit $ LitInt elemSize) TInteger)
+                out $ simpleInstruction (IndexGet k addr indexAddr ty)
             
             return k
 
@@ -160,16 +160,16 @@ genUnknownExpr exp = do
         AS.ExpIdent ident (SS.IdentAnn _ _ SS.VarCategory) _ -> do
                 return $ PName (ProgramName $ AS.identName ident)
 
-        -- Routine calls with multiple return values are handled only where they can appear
-        AS.ExpIdent ident (SS.ExpAnn {}) _ -> do
-            genFunCall (AS.callFromIdent ident)
+        -- TODO: Quando DG mette le modalità di passaggio devo cambiare annotazione?
+        AS.ExpIdent ident ann@(SS.ExpAnn {}) _ -> do
+            genFunCall (AS.callFromIdent ident) ann
 
         AS.ExpIdent {} -> error "Unreachable"
 
         AS.Array elements ann _ -> do
             k <- newTmp
             let arrSize  = T.getTypeSize $ SS.expType ann
-            out $ LabeledInstruction Nothing (ArrayGen k arrSize)
+            out $ simpleInstruction (ArrayGen k arrSize)
             genArray elements k
 
             where
@@ -180,7 +180,7 @@ genUnknownExpr exp = do
                     mapM_ 
                         (\(i, e) -> do
                             addr <- genExpArray e k
-                            out $ LabeledInstruction Nothing (IndexSet k (Lit $ LitInt (i * elemSize)) addr tyTAC)) 
+                            out $ simpleInstruction (IndexSet k (Lit $ LitInt (i * elemSize)) addr tyTAC)) 
                         (zip [0..] elements)
                     return k
 
@@ -200,22 +200,22 @@ genUnknownExpr exp = do
                     -- TODO: Char to String?
                     _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
                 newTypeTAC = castTypeToTACType newType
-            out $ LabeledInstruction Nothing (UOp k (Coer cast) addr newTypeTAC)
+            out $ simpleInstruction (UOp k (Coer cast) addr newTypeTAC)
             return k
 
 genBinExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genBinExp op tmp e1 e2 = do
     -- left to right evaluation
     addr1 <- genExpr' e1
-    out $ LabeledInstruction Nothing (NOp tmp addr1 TBoolean)
+    out $ simpleInstruction (NOp tmp addr1 TBoolean)
     label <- newLabel
     let instr = case op of
             AS.Or -> BoolJumpF tmp label
             AS.And -> BoolJumpT tmp label
             _ -> error "Only Or and And operations should be passed to genBinExp"
-    out $ LabeledInstruction Nothing instr
+    out $ simpleInstruction instr
     addr2 <- genExpr' e2
-    out $ LabeledInstruction Nothing (NOp tmp addr2 TBoolean)
+    out $ simpleInstruction (NOp tmp addr2 TBoolean)
     attachToNext label
     return tmp
     where
@@ -223,7 +223,6 @@ genBinExp op tmp e1 e2 = do
         genExpr' (AS.BinOp AS.Or e1 e2 _ _)  = genBinExp AS.Or tmp e1 e2
         genExpr' (AS.BinOp AS.And e1 e2 _ _) = genBinExp AS.And tmp e1 e2
         genExpr' e = genExpr e
-
 
 genRepOp :: AS.RelOp -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genRepOp relOp e1 e2 = do
@@ -239,21 +238,64 @@ genRepOp relOp e1 e2 = do
         T.TError {} -> error "Unreachable"
         _ -> let tacRelOp = castRelOpToTACOp relOp ty
              in do
-                out $ LabeledInstruction Nothing (BOp k tacRelOp addr1 addr2 TBoolean)
+                out $ simpleInstruction (BOp k tacRelOp addr1 addr2 TBoolean)
     return k
 
+genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad Address
+genFunCall (AS.RoutineCall routName args _) ann = do
+    k <- newTmp
+    genParams args ann
+    let returnType = SS.expType ann
+        routLab = Function $ AS.identName routName
+        numArgs = length args
+        ty = castTypeToTACType returnType
+    case returnType of
+        T.TArray {} -> error "TODO: handle array return types"
+        -- Ref cannot be returned by a function
+        _ -> out $ simpleInstruction (FunCall k routLab numArgs ty)
+    return k
+
+genProcCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad ()
+genProcCall (AS.RoutineCall routName args _) ann = do
+    genParams args ann
+    let routLab = Function $ AS.identName routName
+        numArgs = length args
+    out $ simpleInstruction (ProcCall routLab numArgs)
 
 -- copiare tutte le variabili con i nomi dei parametri locali
 -- modalità di passaggio: se ref o valres crea una reference
 -- se il tipo di ritorno è un array (o una stringa) devi crearlo prima e passarlo come riferimento
-genFunCall :: AS.RoutineCall SS.Ann -> StateMonad Address
-genFunCall = error "TODO: implement genFunCall"
+genParams ::  [AS.Exp SS.Ann] -> SS.Ann -> StateMonad ()
+genParams args ann = 
+    let params = getParams ann
+        exprs = zip args params
+    in
+        mapM_ (\(expr, param) -> do
+            let paramName = AS.identName $ AS.paramName param
+                paramAddr = PName $ ProgramName paramName
+                paramType = T.type_ $ AS.paramType param
+                paramTACType = castTypeToTACType paramType
+
+            addr <- genExpr expr
+
+            case AS.mode param of
+                AS.Mval -> do
+                    copy paramAddr addr paramType
+                    out $ simpleInstruction (Param paramAddr paramTACType)
+                -- Create a reference for value-result and reference
+                _ -> do
+                    out $ simpleInstruction (Ref paramAddr addr)
+                    out $ simpleInstruction (Param paramAddr paramTACType)
+        ) exprs
+
+getParams :: SS.Ann -> [AS.Param]
+getParams = error "TODO: replace this when params are added to the annotation of RoutineCall"
 
 copy :: Address -> Address -> T.Type -> StateMonad ()
 copy newAddr prevAddr ty = case ty of
     T.TString -> error "TODO: implement copy for strings"
     T.TArray elemType len -> do
-        out $ LabeledInstruction Nothing (ArrayGen newAddr (T.getTypeSize ty))
+        out $ simpleInstruction (ArrayGen newAddr (T.getTypeSize ty))
         copyArray newAddr prevAddr elemType len
         where
             copyArray :: Address -> Address -> T.Type -> Int -> StateMonad ()
@@ -263,7 +305,7 @@ copy newAddr prevAddr ty = case ty of
                 in
                 mapM_ (\i -> do
                     k <- newTmp
-                    out $ LabeledInstruction Nothing (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
+                    out $ simpleInstruction (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
                     copy' newAddr k elemType
                 )
                 [0..len] 
@@ -273,7 +315,7 @@ copy newAddr prevAddr ty = case ty of
             copy' a b c = copy a b c
 
     _ -> do
-        out $ LabeledInstruction Nothing (NOp newAddr prevAddr (castTypeToTACType ty))
+        out $ simpleInstruction (NOp newAddr prevAddr (castTypeToTACType ty))
 
 
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()
