@@ -50,9 +50,15 @@ cast exp newType = case expType ann of
     oldType | oldType == newType -> exp
     oldType -> case T.sup pos oldType newType of
         err@T.TError {} -> AS.Cast { AS.e = exp, AS.expAnnot = ExpAnn { expType = err, ctVal = Nothing }, AS.expPos = pos }
-        _ -> case (exp, valCast) of
+        ty | ty == newType -> case (exp, valCast) of
             (AS.Cast {}, _) -> exp { AS.expAnnot = castAnn } -- Simplify cast chains. (FIXME: è giusto fare sta cosa?)
             _ -> AS.Cast { AS.e = exp, AS.expAnnot = castAnn, AS.expPos = pos }
+        _ -> AS.Cast {
+            AS.e = exp,
+            AS.expAnnot = ExpAnn {
+                expType = T.TError { T.msgs = [E.err pos $ "Cannot cast expression of type " ++ show oldType ++ " to " ++ show newType ++ "."] },
+                ctVal = Nothing },
+            AS.expPos = pos }
     where
         pos = AS.expPos exp
         ann = AS.expAnnot exp

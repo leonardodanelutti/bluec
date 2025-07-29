@@ -23,6 +23,7 @@ import ParGrammar   ( pDeclarations, myLexer )
 import PrettyPrinter  ( Print(..) )
 import qualified StatSem.Mod as SS
 import qualified TAC.Gen     as TAC
+import qualified AbsSyn      as AS
 
 type Err        = Either String
 type ParseFun a = [Token] -> Err a
@@ -31,10 +32,10 @@ type Verbosity  = Int
 putStrV :: Verbosity -> String -> IO ()
 putStrV v s = when (v > 1) $ putStrLn s
 
-runFile :: (Print a, Show a) => Verbosity -> ParseFun a -> FilePath -> IO ()
+runFile :: Verbosity -> ParseFun (AS.Declarations ()) -> FilePath -> IO ()
 runFile v p f = putStrLn f >> readFile f >>= run v p
 
-run :: (Print a, Show a) => Verbosity -> ParseFun a -> String -> IO ()
+run :: Verbosity -> ParseFun (AS.Declarations ()) -> String -> IO ()
 run v p s =
   case p ts of
     Left err -> do
@@ -45,7 +46,7 @@ run v p s =
       exitFailure
     Right tree -> do
       putStrLn "\nParse Successful!"
-      showTree v tree
+      showTree v (SS.annotate tree)
   where
   ts = myLexer s
   showPosToken ((l,c, _, _),t) = concat [ show l, ":", show c, "\t", show t ]

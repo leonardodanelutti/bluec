@@ -3,6 +3,8 @@ module StatSem.Decl where
 
 import Data.Either (partitionEithers)
 import qualified AbsSyn as AS
+import qualified Types  as T
+import qualified Errors as E
 import StatSem.Utils
 import StatSem.Exp
 import StatSem.Stmt
@@ -60,16 +62,20 @@ annConstA env AS.ConstAss {
 } = AS.ConstAss {
     AS.constIdents = idents,
     AS.constType = ty,
-    AS.constValues = valuesAnn,
+    AS.constValues = castedValuesAnn,
     AS.constAnnot = ann,
     AS.constPos = pos
 } where
+    numberErr = if length idents /= length values
+                then [E.err pos "The number of identifiers does not match number of values."]
+                else []
     valuesAnn = map (annExp env) values
-    tryLiterals = map ctvToLiteral valuesAnn
+    castedValuesAnn = map (\x -> (cast x (T.type_ ty))) valuesAnn
+    tryLiterals = map ctvToLiteral castedValuesAnn
     (literals, errs) = partitionEithers tryLiterals
     ann = DeclAnn {
         bindings = envFromSymbolBindings (zip idents (map Const literals)),
-        errs = errs
+        errs = (concat errs) ++ numberErr
     }
 
 -- Annotate a list of variable declarations.
@@ -96,10 +102,14 @@ annVarA env AS.VarAss {
     AS.varAnnot = ann,
     AS.varPos = pos
 } where
+    numberErr = if length idents /= length values
+                then [E.err pos "The number of identifiers does not match number of values."]
+                else []
     valuesAnn = map (annExp env) values
+    castedValuesAnn = map (\x -> (cast x (T.type_ ty))) valuesAnn
     ann = DeclAnn {
         bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty))),
-        errs = []
+        errs = numberErr
     }
 
 -- Annotate a list of routine declarations.

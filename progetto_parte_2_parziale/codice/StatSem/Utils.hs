@@ -90,14 +90,16 @@ data CTValue
     | CTVReal Double
     deriving (Show)
 
-ctvToLiteral :: AS.Exp Ann -> Either AS.Literal String
+ctvToLiteral :: AS.Exp Ann -> Either AS.Literal [String]
 ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
     Just (CTVInteger v) -> Left $ AS.LitInt v pos
     Just (CTVChar v)    -> Left $ AS.LitChar v pos
     Just (CTVString v)  -> Left $ AS.LitString v pos
     Just (CTVBoolean v) -> Left $ AS.LitBool v pos
     Just (CTVReal v)    -> Left $ AS.LitDouble v pos
-    Nothing             -> Right $ E.err pos $ show exp ++ " is not a constant expression."
+    Nothing             -> case AS.expAnnot exp of
+        ExpAnn { expType = T.TError { T.msgs = msgs } } -> Right $ msgs
+        _ -> Right [E.err pos $ show exp ++ " is not a constant expression."]
     where
         pos = AS.expPos exp
 
