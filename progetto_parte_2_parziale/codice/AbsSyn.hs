@@ -3,7 +3,7 @@ module AbsSyn where
 
 import GHC.Err (error)
 import LexGrammar (Posn)
-import Prelude (Bool, Char, Double, Int, Show, String, Eq, Ord)
+import Prelude (Bool, Char, Double, Int, Show, String, Eq, Ord, (==), compare)
 import qualified Types as Ty
 
 data Declarations a = ProgramDecl
@@ -53,7 +53,13 @@ data Ident = Ident
   { identName :: String,
     identPos :: Posn
   }
-  deriving (Show, Eq, Ord)
+  deriving (Show)
+
+instance Eq Ident where
+  Ident name1 _ == Ident name2 _ = name1 == name2
+
+instance Ord Ident where
+  compare (Ident name1 _) (Ident name2 _) = compare name1 name2
 
 data Exp a
   = BoolNeg    { e :: Exp a, expAnnot :: a, expPos :: Posn }

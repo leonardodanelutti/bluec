@@ -98,7 +98,8 @@ ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
     Just (CTVBoolean v) -> Left $ AS.LitBool v pos
     Just (CTVReal v)    -> Left $ AS.LitDouble v pos
     Nothing             -> case AS.expAnnot exp of
-        ExpAnn { expType = T.TError { T.msgs = msgs } } -> Right $ msgs
+        ExpAnn { expType = T.TError {} } -> Right []
+        IdentAnn { expType = T.TError {} } -> Right []
         _ -> Right [E.err pos $ show exp ++ " is not a constant expression."]
     where
         pos = AS.expPos exp
