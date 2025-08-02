@@ -73,6 +73,23 @@ getRoutName :: StateMonad String
 getRoutName = do
     currentRoutName <$> St.get
 
+-- Entrypoint for TAC generation
+genProgram :: AS.Declarations SS.Ann -> TAC
+genProgram ast = 
+    let finalState = St.execState (genDeclarations ast) initState
+        -- Reverse the stream to have the instructions in the correct order
+    in reverse (currentStream finalState)
+
+initState :: TACState
+initState = TACState {
+    tempCount = 0,
+    labelCount = 0,
+    routineStack = [],
+    currentStream = [],
+    currentRoutName = "outer",
+    nextLabel = Nothing
+}
+
 -- TAC generation functions
 
 genDeclarations :: AS.Declarations SS.Ann -> StateMonad ()
@@ -298,7 +315,6 @@ genActualParams args ann procName =
         exprs = zip args params
     in
         mapM_ (\(expr, param) -> do
-            routName <- getRoutName
             let paramName = AS.identName $ AS.paramName param
                 paramAddr = PName $ ProgramName paramName procName
                 paramType = T.type_ $ AS.paramType param
@@ -349,22 +365,26 @@ copy newAddr prevAddr ty = case ty of
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()
 genRoutine rout = let
     name = AS.identName $ AS.routName rout
-    valResParams = filter (\p -> AS.mode p == AS.Mvalres) (AS.params rout)
+    params = filter (\p -> AS.mode p == AS.Mvalres) (AS.params rout)
     body = AS.routBody rout
     ann = AS.routAnnot rout
     in do
         newRoutine name
         attachToNext $ Function name
-        genParamsPre valResParams ann
-        let paramPost = genParamsPost valResParams
+        genParamsPre params ann
+        let paramPost = genParamsPost params
         genRoutineBody body paramPost
         endRoutine
 
+
 genParamsPre :: [AS.Param] -> SS.Ann -> StateMonad ()
-genParamsPre = error "TODO: implement genActualParams for routines"
+genParamsPre params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
+    error "TODO: implement genActualParams for routines"
 
 genParamsPost :: [AS.Param] -> TAC
-genParamsPost = error "TODO: implement genParamsPost for routines"
+genParamsPost params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
+    error "TODO: implement genParamsPost for routines"
+        
 
 -- TODO: before returns add the post amble for the parameters
 genRoutineBody :: AS.RoutBody SS.Ann -> TAC -> StateMonad ()

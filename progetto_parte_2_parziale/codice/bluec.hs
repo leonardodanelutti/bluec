@@ -23,6 +23,7 @@ import ParGrammar   ( pDeclarations, myLexer )
 import PrettyPrinter  ( Print(..) )
 import qualified StatSem.Mod as SS
 import qualified TAC.Gen     as TAC
+import qualified TAC.Printer as TPrinter
 import qualified AbsSyn      as AS
 
 type Err        = Either String
@@ -47,6 +48,8 @@ run v p s =
     Right tree -> do
       putStrLn "\nParse Successful!"
       showTree v (SS.annotate tree)
+      putStrV v $ "\n[Generated TAC]\n"
+      putStrLn $ TPrinter.printProgram $ TAC.genProgram $ SS.annotate tree
   where
   ts = myLexer s
   showPosToken ((l,c, _, _),t) = concat [ show l, ":", show c, "\t", show t ]
