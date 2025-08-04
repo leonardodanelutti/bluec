@@ -153,22 +153,22 @@ annExpRoutCall _ _ = error "Unreachable: `annExpRoutCall` called with non-`FunCa
 
 -- Helper function that creates an annotation for a routine call.
 annRoutineCall :: Env -> AS.Ident -> [AnnExp] -> LG.Posn -> Ann
-annRoutineCall env ident annArgs pos = ExpAnn {
+annRoutineCall env ident annArgs pos = RoutCallAnn {
     expType = routType,
-    ctVal = Nothing
+    params = params
 } where
-    routType = case Map.lookup ident (routines env) of
+    (routType, params) = case Map.lookup ident (routines env) of
         Just (Fun _ params ty) -> case checkParamTypes params annArgs of
-            True  -> T.type_ ty
-            False -> T.TError {
+            True  -> (T.type_ ty, params)
+            False -> (T.TError {
                 T.msgs = [E.err pos "Wrong argument types in routine call: " ++ show ident]
-            }
-        Just (Proc _ _) -> T.TError {
+            }, [])
+        Just (Proc _ params) -> (T.TError {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ show ident ++ "."]
-        }
-        Nothing -> T.TError {
+        }, [])
+        Nothing -> (T.TError {
             T.msgs = [E.err pos "Unbound routine: " ++ show ident ++ "."]
-        }
+        }, [])
 
 -- Sign expressions.
 -- Rule: RExpSign.

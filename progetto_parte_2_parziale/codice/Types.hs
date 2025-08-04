@@ -30,8 +30,8 @@ data TypePos = TypePos
 -- Supertype relation for automatic type casting.
 sup :: LG.Posn -> Type -> Type -> Type
 sup _ t1 t2 | t1 == t2 = t1
-sup pos TInteger TReal = TReal
-sup pos TReal TInteger = TReal
+sup _ TInteger TReal = TReal
+sup _ TReal TInteger = TReal
 -- TODO: implement the supertype relation
 -- Error cases.
 sup _ TError { msgs = msgs1 } TError { msgs = msgs2 } = 

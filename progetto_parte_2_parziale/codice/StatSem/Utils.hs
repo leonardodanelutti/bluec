@@ -48,10 +48,15 @@ data Ann
         ctVal :: Maybe CTValue
         -- TODO: other fileds
     }
+    | RoutCallAnn {
+        expType :: T.Type,
+        params :: [AS.Param] -- Parameters passed to the routine call
+    }
     | IdentAnn {
         expType :: T.Type,
         ctVal :: Maybe CTValue,
-        identCategory :: IdentCategory
+        identCategory :: IdentCategory,
+        mode :: Maybe AS.Mode
     }
     | DeclAnn {
         bindings :: Env, -- Local environment

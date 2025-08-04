@@ -203,7 +203,7 @@ genUnknownExpr exp = do
             return k
 
         -- ConstCategory is handled by genExpr
-        AS.ExpIdent ident ann@(SS.IdentAnn ty _ SS.VarCategory) _ -> do
+        AS.ExpIdent ident ann@(SS.IdentAnn ty _ SS.VarCategory _) _ -> do
             routName <- getRoutName
             let mode = getMode ann
                 identName = PName $ ProgramName (AS.identName ident) routName
