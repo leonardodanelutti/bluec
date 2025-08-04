@@ -113,13 +113,14 @@ data RoutBody a = RoutBody
   deriving (Show)
 
 data Statement a
-  = StmtAss      { left :: [Exp a], right :: [Exp a], annot :: a, pos :: Posn }
-  | StmtRoutCall { call :: RoutineCall a, annot :: a }
-  | StmtReturn   { vals :: Exp a, annot :: a, pos :: Posn }
-  | StmtContinue { annot :: a, pos :: Posn }
-  | StmtIf       { cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
-  | StmtIfElse   { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }
-  | StmtLoop     { body :: [Statement a], exit :: [Exit a], annot :: a, pos :: Posn }
+  = StmtAss         { left :: [Exp a], right :: [Exp a], annot :: a, pos :: Posn }
+  | StmtRoutCall    { call :: RoutineCall a, annot :: a }
+  | StmtReturn      { valReturn :: Exp a, annot :: a, pos :: Posn }
+  | StmtReturnEmpty { annot :: a, pos :: Posn }
+  | StmtContinue    { annot :: a, pos :: Posn }
+  | StmtIf          { cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
+  | StmtIfElse      { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }
+  | StmtLoop        { body :: [Statement a], exit :: [Exit a], annot :: a, pos :: Posn }
   deriving (Show)
 
 data RoutineCall a = RoutineCall

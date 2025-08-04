@@ -114,6 +114,7 @@ All other symbols are terminals.
   |  |  **|**  | //BlueIdent// ``(`` //[RExp]// ``)`` ``;``
   |  |  **|**  | //BlueIdent// ``;``
   |  |  **|**  | ``return`` //RExp// ``;``
+  |  |  **|**  | ``return`` ``;``
   |  |  **|**  | ``continue`` ``;``
   |  |  **|**  | //If// ``end`` ``if``
   |  |  **|**  | //Loop// ``end`` ``loop``

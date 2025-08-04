@@ -282,10 +282,15 @@ Statement
       A.annot = ()
     }
   }
-  | 'return' RExp ';'          { A.StmtReturn { 
-      A.vals = $2,
+  | 'return' RExp ';'              { A.StmtReturn { 
+      A.valReturn = $2,
       A.annot = (),
       A.pos = (mergeTokenPos $1 $3)
+    }
+  }
+  | 'return' ';'                   { A.StmtReturnEmpty {
+      A.annot = (),
+      A.pos = (mergeTokenPos $1 $2)
     }
   }
   | 'continue' ';'                 { A.StmtContinue { 

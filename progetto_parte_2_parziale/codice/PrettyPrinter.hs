@@ -128,6 +128,7 @@ statementPrinter stm = "\t" ++
         StmtAss l r _ _ -> expsPrinter l ++ " := " ++ expsPrinter r ++ ";"
         StmtRoutCall call _ -> routineCallPrinter call ++ ";" -- inserisci routinePrinter che prende solo la RoutineCall
         StmtReturn vals _ _ -> "return " ++ expPrinter vals ++ ";"
+        StmtReturnEmpty _ _ -> "return;"
         StmtContinue _ _ -> "continue;"
         StmtIf cond body _ _ -> "if " ++ expPrinter cond ++ " then\n\t" ++ statementsPrinter body ++ "\n\tend if"
         StmtIfElse cond bodyT bodyF _ _ ->

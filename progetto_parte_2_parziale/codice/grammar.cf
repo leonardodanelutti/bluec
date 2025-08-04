@@ -64,6 +64,7 @@ StatementAss.                   Statement ::= [LExp] ":=" [RExpNE] ";";
 StatementRoutCall.              Statement ::= BlueIdent "(" [RExp] ")" ";";
 StatementRoutEmptyCall.         Statement ::= BlueIdent ";";
 StatementReturn.                Statement ::= "return" RExp ";";
+StatementReturnEmpty.           Statement ::= "return" ";";
 StatementContinue.              Statement ::= "continue" ";";
 StatementIf.                    Statement ::= If "end" "if";
 StatementLoop.                  Statement ::= Loop "end" "loop";
