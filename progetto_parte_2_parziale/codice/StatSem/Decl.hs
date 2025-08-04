@@ -118,7 +118,7 @@ annVarA env AS.VarAss {
     valuesAnn = map (annExp env) values
     castedValuesAnn = map (\x -> (cast x (T.type_ ty))) valuesAnn
     ann = DeclAnn {
-        bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty))),
+        bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty Nothing))),
         errs = numberErr
     }
 
@@ -148,7 +148,10 @@ annRoutine env AS.Function {
     AS.routAnnot = ann,
     AS.routPos = pos
 } where
-    bodyAnn = annRoutBody env body
+    paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
+    paramEnv = envFromSymbolBindings paramBindings
+    newEnv = mergeEnv env paramEnv
+    bodyAnn = annRoutBody newEnv body
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Fun pos params ty)],
         errs = []
@@ -165,13 +168,14 @@ annRoutine env AS.Procedure {
     AS.routAnnot = ann,
     AS.routPos = pos
 } where
+    paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
+    paramEnv = envFromSymbolBindings paramBindings
+    newEnv = mergeEnv env paramEnv
     bodyAnn = annRoutBody newEnv body
     ann = DeclAnn {
-        bindings = bindings,
+        bindings = envFromRoutBindings [(ident, Proc pos params)],
         errs = []
     }
-    bindings = envFromRoutBindings [(ident, Proc pos params)]
-    newEnv = mergeEnv env bindings
 
 -- Annotate a routine body.
 annRoutBody :: Env -> AS.RoutBody () -> AS.RoutBody Ann
@@ -179,7 +183,7 @@ annRoutBody env AS.RoutBody {
     AS.declarations = decls,
     AS.statements = stmts
 } = AS.RoutBody {
-    AS.declarations = annDecls env decls,
+    AS.declarations = declsAnn,
     AS.statements = map (annStmt declEnv) stmts
 } where
     declsAnn = annDecls env decls

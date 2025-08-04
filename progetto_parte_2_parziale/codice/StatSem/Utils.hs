@@ -19,7 +19,7 @@ data Env = Env {
     deriving (Show)
 
 data SymbolEntry
-    = Var LG.Posn T.TypePos
+    = Var LG.Posn T.TypePos (Maybe AS.Mode)
     | Const AS.Literal
     deriving (Show)
 

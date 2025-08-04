@@ -106,19 +106,22 @@ annExpIdent env AS.ExpIdent {
         (Nothing, Nothing) -> IdentAnn {
             expType = T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ show ident ++ "."] },
             ctVal = Nothing,
-            identCategory = ErrorCategory
+            identCategory = ErrorCategory,
+            mode = Nothing
         }
         -- Var identifier.
-        (Just (Var _ ty), Nothing) -> IdentAnn {
+        (Just (Var _ ty mode), Nothing) -> IdentAnn {
             expType = T.type_ ty,
             ctVal = Nothing,
-            identCategory = VarCategory
+            identCategory = VarCategory,
+            mode = mode
         }
         -- Const identifier.
         (Just (Const val), Nothing) -> IdentAnn {
             expType = identType,
             ctVal = Just identVal,
-            identCategory = ConstCategory
+            identCategory = ConstCategory,
+            mode = Nothing
         } where (identType, identVal) = getTypeAndValue val
         -- Routine identifier.
         (Nothing, Just _) -> annRoutineCall env ident [] pos
@@ -127,7 +130,8 @@ annExpIdent env AS.ExpIdent {
         _ -> IdentAnn {
             expType = T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ show ident] },
             ctVal = Nothing,
-            identCategory = ErrorCategory
+            identCategory = ErrorCategory,
+            mode = Nothing
         }
 annExpIdent _ _ = error "Unreachable: `annExpIdent` called with non-`ExpIdent` expression."
 
@@ -158,14 +162,14 @@ annRoutineCall env ident annArgs pos = RoutCallAnn {
     params = params
 } where
     (routType, params) = case Map.lookup ident (routines env) of
-        Just (Fun _ params ty) -> case checkParamTypes params annArgs of
+        Just (Fun pos params ty) -> case checkParamTypes params annArgs of
             True  -> (T.type_ ty, params)
             False -> (T.TError {
                 T.msgs = [E.err pos "Wrong argument types in routine call: " ++ show ident]
             }, [])
-        Just (Proc _ params) -> (T.TError {
+        Just (Proc pos params) -> (T.TError {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ show ident ++ "."]
-        }, [])
+        }, params)
         Nothing -> (T.TError {
             T.msgs = [E.err pos "Unbound routine: " ++ show ident ++ "."]
         }, [])
@@ -258,12 +262,43 @@ annExpBinOp env AS.BinOp {
     getTypeAndVal :: [T.Type] -> [Maybe CTValue] -> [Maybe CTValue] -> [AnnExp] -> [AnnExp] -> (T.Type, Maybe CTValue, AnnExp, AnnExp)
     getTypeAndVal [] [] [] [] [] = (T.TError { T.msgs = [E.err pos "Type mismatch: the binary operation " ++ show binOp ++ " expects operands to be compatible with one of the following types: " ++ show expectedTypes ++ ", but got " ++ show typeE1 ++ " and " ++ show typeE2 ++ " instead."] }, Nothing, last castedsE1, last castedsE2)
     getTypeAndVal (at:ats) (v1:vs1) (v2:vs2) (c1:cs1) (c2:cs2) = case (at, v1, v2) of
-        (T.TError { T.msgs = msgs }, _, _) -> getTypeAndVal ats vs1 vs2 cs1 cs2
+        (T.TError {}, _, _) -> getTypeAndVal ats vs1 vs2 cs1 cs2
         (_, Just v1, Just v2) -> (at, Just $ applyBinOp binOp v1 v2, c1, c2)
         _ -> (at, Nothing, c1, c2)
     getTypeAndVal _ _ _ _ _ = error "Unreachable: `getTypeAndVal` called with lists of different lengths."
     (newType, newVal, castedE1, castedE2) = getTypeAndVal castedTypes castedValsE1 castedValsE2 castedsE1 castedsE2
-annExpAnd _ _ = error "Unreachable: `annExpAnd` called with non-`BinOp` expression."
+annExpBinOp _ _ = error "Unreachable: `annExpBinOp` called with non-`BinOp` expression."
 
 -- Bool NOT expressions.
 -- Rule: RExpNeg.
+annExpNot :: Env -> Exp -> AnnExp
+annExpNot env AS.BoolNeg {
+    AS.e = e,
+    AS.expPos = pos
+} = AS.BoolNeg {
+    AS.e = castedE,
+    AS.expAnnot = ann,
+    AS.expPos = pos
+} where
+    -- Call recursive annotation.
+    annE = annExp env e
+    -- Cast both expressions to the expected type (TBoolean).
+    castedE = cast annE T.TBoolean
+    castedTypeE = expType $ AS.expAnnot castedE
+    castedValE = ctVal $ AS.expAnnot castedE
+    -- Create annotation.
+    ann = ExpAnn {
+        expType = castedTypeE,
+        ctVal = case castedValE of
+            Just (CTVBoolean v) -> Just (CTVBoolean (not v))
+            _ -> Nothing
+    }
+annExpNot _ _ = error "Unreachable: `annExpNot` called with non-`BoolNeg` expression."
+
+-- annExpRelOp :: Env -> Exp -> AnnExp
+-- annExpRelOp env AS.RelOp {
+--     AS.relOp = relOp,
+--     AS.e1 = e1,
+--     AS.e2 = e2,
+--     AS.expPos = pos
+-- } = AS.RelOp {
