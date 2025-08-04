@@ -13,9 +13,8 @@ type StateMonad = St.State TACState
 
 data TACState = TACState {
     tempCount, labelCount :: Int,
-    routineStack :: [(TAC, String)],
+    routineStack :: [TAC],
     currentStream :: TAC,
-    currentRoutName :: String,
     nextLabel :: Maybe Label
 }
 
@@ -50,12 +49,10 @@ attachToNext label = do
     let newNext = Just label
     St.put $ state { nextLabel = newNext }
 
-newRoutine :: String -> StateMonad ()
-newRoutine name = do
+newRoutine :: StateMonad ()
+newRoutine = do
     state <- St.get
-    let currentRoutine = (currentStream state, currentRoutName state)
-    St.put $ state { routineStack = currentRoutine : routineStack state,
-                     currentRoutName = name,
+    St.put $ state { routineStack = currentStream state : routineStack state,
                      currentStream = [] }
 
 endRoutine :: StateMonad ()
@@ -64,14 +61,9 @@ endRoutine = do
     let currentRoutine = currentStream state
     case routineStack state of
         [] -> St.put state
-        ((code, name):rs) -> do
+        (r:rs) -> do
             St.put $ state { routineStack = rs,
-                             currentRoutName = name,
-                             currentStream = code ++ currentRoutine }
-
-getRoutName :: StateMonad String
-getRoutName = do
-    currentRoutName <$> St.get
+                             currentStream = r ++ currentRoutine }
 
 -- Entrypoint for TAC generation
 genProgram :: AS.Declarations SS.Ann -> TAC
@@ -86,7 +78,6 @@ initState = TACState {
     labelCount = 0,
     routineStack = [],
     currentStream = [],
-    currentRoutName = "outer",
     nextLabel = Nothing
 }
 
@@ -104,9 +95,8 @@ genVar (AS.VarAss idents ty values _ _) =
     genAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
     genAssignment (ident, exp) = do
         addr <- genExpr exp
-        routName <- getRoutName
         let tyTAC = castTypeToTACType $ T.type_ ty
-            name = PName $ ProgramName (AS.identName ident) routName
+            name = PName $ ProgramName (AS.identName ident) "TODO: add routine name to variable"
         out $ LabeledInstruction Nothing (NOp name addr tyTAC)
 
 genExpr :: AS.Exp SS.Ann -> StateMonad Address
@@ -174,8 +164,7 @@ genUnknownExpr exp = do
         -- Already handled by genExpr
         AS.Literal {} -> error "Literal should not be passed to genUnknownExpr"
 
-        -- TODO: Quando DG mette le modalità di passaggio devo cambiare annotazione?
-        AS.FunCall call ann@(SS.ExpAnn {}) _ -> do
+        AS.FunCall call ann@(SS.RoutCallAnn {}) _ -> do
             genFunCall call ann
 
         AS.FunCall {} -> error "Unreachable"
@@ -203,11 +192,9 @@ genUnknownExpr exp = do
             return k
 
         -- ConstCategory is handled by genExpr
-        AS.ExpIdent ident ann@(SS.IdentAnn ty _ SS.VarCategory _) _ -> do
-            routName <- getRoutName
-            let mode = getMode ann
-                identName = PName $ ProgramName (AS.identName ident) routName
-                identName' = PName $ ProgramName (AS.identName ident ++ "'") routName
+        AS.ExpIdent ident (SS.IdentAnn ty _ SS.VarCategory mode) _ -> do
+            let identName = PName $ ProgramName (AS.identName ident) "TODO: add routine name to variable"
+                identName' = PName $ ProgramName (AS.identName ident ++ "'") "TODO: add routine name to variable"
                 tyTAC = castTypeToTACType $ T.elementsType ty
             case mode of
                 -- Identifiers that are passed by value-result are appended with
@@ -226,8 +213,7 @@ genUnknownExpr exp = do
 
                 Nothing -> return identName
 
-        -- TODO: Quando DG mette le modalità di passaggio devo cambiare annotazione?
-        AS.ExpIdent ident ann@(SS.ExpAnn {}) _ -> do
+        AS.ExpIdent ident ann@(SS.RoutCallAnn {}) _ -> do
             genFunCall (AS.callFromIdent ident) ann
 
         AS.ExpIdent {} -> error "Unreachable"
@@ -330,7 +316,7 @@ genProcCall (AS.RoutineCall routName args _) ann = do
 
 genActualParams ::  [AS.Exp SS.Ann] -> SS.Ann -> String -> StateMonad ()
 genActualParams args ann procName =
-    let params = getParams ann
+    let params = SS.params ann
         exprs = zip args params
     in
         mapM_ (\(expr, param) -> do
@@ -350,9 +336,6 @@ genActualParams args ann procName =
                     out $ simpleInstruction (Ref paramAddr addr)
                     out $ simpleInstruction (Param paramAddr paramTACType)
         ) exprs
-
-getParams :: SS.Ann -> [AS.Param]
-getParams = error "TODO: replace this when params are added to the annotation of RoutineCall"
 
 getMode :: SS.Ann -> Maybe AS.Mode
 getMode = error "TODO: replace this when mode is added to the annotation of Ident"
@@ -389,9 +372,8 @@ genRoutine rout = let
     name = AS.identName $ AS.routName rout
     params = filter (\p -> AS.mode p == AS.Mvalres) (AS.params rout)
     body = AS.routBody rout
-    ann = AS.routAnnot rout
     in do
-        newRoutine name
+        newRoutine
         attachToNext $ Function name
         genParamsPre params name
         let paramPost = genParamsPost params name
