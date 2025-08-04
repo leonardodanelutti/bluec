@@ -105,7 +105,7 @@ data Statement a
   | StmtReturn   { vals :: Exp a, annot :: a, pos :: Posn }
   | StmtContinue { annot :: a, pos :: Posn }
   | StmtIf       { cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
-  | StmrIfElse   { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }
+  | StmtIfElse   { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }
   | StmtLoop     { body :: [Statement a], exit :: [Exit a], annot :: a, pos :: Posn }
   deriving (Show)
 

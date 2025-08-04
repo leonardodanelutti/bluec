@@ -324,7 +324,7 @@ If
       A.pos = (mergePos (tokenPosn $1) (A.pos (last $4))) 
     }
   }
-  | 'if' RExp 'then' ListStatement 'else' ListStatement { A.StmrIfElse {
+  | 'if' RExp 'then' ListStatement 'else' ListStatement { A.StmtIfElse {
       A.cond = $2,
       A.bodyT = $4,
       A.bodyF = $6,
