@@ -20,6 +20,7 @@ annExp env exp@AS.Literal{} = annExpLit env exp
 annExp env exp@AS.ExpIdent{} = annExpIdent env exp
 annExp env exp@AS.FunCall{} = annExpRoutCall env exp
 annExp env exp@AS.Sign{} = annExpSign env exp
+annExp env exp@AS.BinOp{} = annExpBinOp env exp
 -- ...
 
 -----------
@@ -103,7 +104,7 @@ annExpIdent env AS.ExpIdent {
     ann = case (symbolType, routineType) of
         -- Identifier not found.
         (Nothing, Nothing) -> IdentAnn {
-            expType = T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ show ident] },
+            expType = T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ show ident ++ "."] },
             ctVal = Nothing,
             identCategory = ErrorCategory
         }
@@ -166,7 +167,7 @@ annRoutineCall env ident annArgs pos = ExpAnn {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ show ident ++ "."]
         }
         Nothing -> T.TError {
-            T.msgs = [E.err pos "Unbound routine: " ++ show ident]
+            T.msgs = [E.err pos "Unbound routine: " ++ show ident ++ "."]
         }
 
 -- Sign expressions.
@@ -206,16 +207,17 @@ annExpSign env AS.Sign {
         }
 annExpSign _ _ = error "Unreachable: `annExpSign` called with non-`Sign` expression."
 
--- Bool AND expressions.
--- Rule: RExpAnd.
-annExpAnd :: Env -> Exp -> AnnExp
-annExpAnd env AS.BinOp {
-    AS.binOp = AS.And,
+-- Binary Operation expressions.
+-- Rule: RExpOr, RExpAnd, RExpPlus, RExpMinus, RExpMult, RExpDivReal, RExpDivInt, RExpMod,
+-- RExpPow.
+annExpBinOp :: Env -> Exp -> AnnExp
+annExpBinOp env AS.BinOp {
+    AS.binOp = binOp,
     AS.e1 = e1,
     AS.e2 = e2,
     AS.expPos = pos
 } = AS.BinOp {
-    AS.binOp = AS.And,
+    AS.binOp = binOp,
     AS.e1 = castedE1,
     AS.e2 = castedE2,
     AS.expAnnot = ann,
@@ -231,23 +233,37 @@ annExpAnd env AS.BinOp {
     -- Get types.
     typeE1 = expType $ AS.expAnnot annE1
     typeE2 = expType $ AS.expAnnot annE2
-    -- Cast both expressions to Boolean if possible.
-    castedE1 = cast annE1 T.TBoolean
-    castedE2 = cast annE2 T.TBoolean
-    castedTypeE1 = expType $ AS.expAnnot castedE1
-    castedTypeE2 = expType $ AS.expAnnot castedE2
-    castedValE1 = ctVal $ AS.expAnnot castedE1
-    castedValE2 = ctVal $ AS.expAnnot castedE2
-    castedType = T.sup pos castedTypeE1 castedTypeE2
-    (newType, newVal) = case (castedType, castedValE1, castedValE2) of
-        (T.TBoolean, Just (CTVBoolean v1), Just (CTVBoolean v2)) -> (T.TBoolean, Just (CTVBoolean (v1 && v2)))
-        (T.TBoolean, _, _) -> (T.TBoolean, Nothing)
-        (T.TError { T.msgs = msgs }, _, _) -> (T.TError { T.msgs = msgs }, Nothing)
-        _ -> (T.TError { T.msgs = [E.err pos $ "Type mismatch: AND operation expects two types compatible with Boolean, but got " ++ show typeE1 ++ " and " ++ show typeE2 ++ " instead."] }, Nothing)
+    -- Get expected types.
+    expectedTypes = AS.typeOfBinOpArgs binOp
+    -- Cast both expressions to the expected types (try for each type).
+    castedsE1 = map (cast annE1) expectedTypes
+    castedsE2 = map (cast annE2) expectedTypes
+    castedTypesE1 = map (expType . AS.expAnnot) castedsE1
+    castedTypesE2 = map (expType . AS.expAnnot) castedsE2
+    castedValsE1 = map (ctVal . AS.expAnnot) castedsE1
+    castedValsE2 = map (ctVal . AS.expAnnot) castedsE2
+    castedTypes = zipWith (T.sup pos) castedTypesE1 castedTypesE2
+    -- Input:
+    -- - list of types to which the expressions are tried to be casted (in order of
+    --   precedence).
+    -- - 2 lists of compile-time values of the casted expressions (one for each
+    --   expression; in the same order above).
+    -- - 2 lists of casted expressions (one for each expression; in the same order above).
+    -- Output:
+    -- - the first type to which the cast is successful, or an error type if no cast is
+    --   successful.
+    -- - the compile-time value of the binary operation, if both operands are compile-time
+    --   values and the operation is successful.
+    -- - the 2 casted expressions.
+    getTypeAndVal :: [T.Type] -> [Maybe CTValue] -> [Maybe CTValue] -> [AnnExp] -> [AnnExp] -> (T.Type, Maybe CTValue, AnnExp, AnnExp)
+    getTypeAndVal [] [] [] [] [] = (T.TError { T.msgs = [E.err pos "Type mismatch: the binary operation " ++ show binOp ++ " expects operands to be compatible with one of the following types: " ++ show expectedTypes ++ ", but got " ++ show typeE1 ++ " and " ++ show typeE2 ++ " instead."] }, Nothing, last castedsE1, last castedsE2)
+    getTypeAndVal (at:ats) (v1:vs1) (v2:vs2) (c1:cs1) (c2:cs2) = case (at, v1, v2) of
+        (T.TError { T.msgs = msgs }, _, _) -> getTypeAndVal ats vs1 vs2 cs1 cs2
+        (_, Just v1, Just v2) -> (at, Just $ applyBinOp binOp v1 v2, c1, c2)
+        _ -> (at, Nothing, c1, c2)
+    getTypeAndVal _ _ _ _ _ = error "Unreachable: `getTypeAndVal` called with lists of different lengths."
+    (newType, newVal, castedE1, castedE2) = getTypeAndVal castedTypes castedValsE1 castedValsE2 castedsE1 castedsE2
 annExpAnd _ _ = error "Unreachable: `annExpAnd` called with non-`BinOp` expression."
-
--- Bool OR expressions.
--- Rule: RExpOr.
 
 -- Bool NOT expressions.
 -- Rule: RExpNeg.

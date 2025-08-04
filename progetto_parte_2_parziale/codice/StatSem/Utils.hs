@@ -122,3 +122,22 @@ ctCast (Just (CTVString v)) T.TString = Just (CTVString v)
 ctCast (Just (CTVBoolean v)) T.TBoolean = Just (CTVBoolean v)
 ctCast (Just (CTVReal v)) T.TReal = Just (CTVReal v)
 ctCast _ _ = Nothing
+
+
+-- Apply a binary operation to two compile-time values.
+-- It assumes that values are already casted to the correct types.
+applyBinOp :: AS.BinOp -> CTValue -> CTValue -> CTValue
+applyBinOp AS.And (CTVBoolean v1) (CTVBoolean v2) = CTVBoolean (v1 && v2)
+applyBinOp AS.Or (CTVBoolean v1) (CTVBoolean v2) = CTVBoolean (v1 || v2)
+applyBinOp AS.Add (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 + v2)
+applyBinOp AS.Add (CTVReal v1) (CTVReal v2) = CTVReal (v1 + v2)
+applyBinOp AS.Sub (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 - v2)
+applyBinOp AS.Sub (CTVReal v1) (CTVReal v2) = CTVReal (v1 - v2)
+applyBinOp AS.Mul (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 * v2)
+applyBinOp AS.Mul (CTVReal v1) (CTVReal v2) = CTVReal (v1 * v2)
+applyBinOp AS.Div (CTVReal v1) (CTVReal v2) = CTVReal (v1 / v2)
+applyBinOp AS.DivInt (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 `div` v2)
+applyBinOp AS.Mod (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 `mod` v2)
+applyBinOp AS.Pow (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 ^ v2)
+applyBinOp AS.Pow (CTVReal v1) (CTVReal v2) = CTVReal (v1 ** v2)
+applyBinOp _ _ _ = error "Invalid arguments for binary operation"

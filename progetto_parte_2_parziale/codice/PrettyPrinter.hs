@@ -130,7 +130,7 @@ statementPrinter stm = "\t" ++
         StmtReturn vals _ _ -> "return " ++ expPrinter vals ++ ";"
         StmtContinue _ _ -> "continue;"
         StmtIf cond body _ _ -> "if " ++ expPrinter cond ++ " then\n\t" ++ statementsPrinter body ++ "\n\tend if"
-        StmrIfElse cond bodyT bodyF _ _ ->
+        StmtIfElse cond bodyT bodyF _ _ ->
             "if " ++ expPrinter cond ++ " then\n\t" ++ statementsPrinter bodyT ++
             "\n\telse\n\t" ++ statementsPrinter bodyF ++ "\n\tend if"
         StmtLoop body exit _ _ ->

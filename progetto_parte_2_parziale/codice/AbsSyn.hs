@@ -79,6 +79,19 @@ data Exp a
 data BinOp = And | Or | Add | Sub | Mul | Div | DivInt | Mod | Pow
   deriving (Show)
 
+-- Type of the arguments of binary operations. In order of precedence.
+-- For example `2+2` returns a `TInteger`, while `2.0+2` returns a `TReal`.
+typeOfBinOpArgs :: BinOp -> [Ty.Type]
+typeOfBinOpArgs And = [Ty.TBoolean]
+typeOfBinOpArgs Or = [Ty.TBoolean]
+typeOfBinOpArgs Add = [Ty.TInteger, Ty.TReal]
+typeOfBinOpArgs Sub = [Ty.TInteger, Ty.TReal]
+typeOfBinOpArgs Mul = [Ty.TInteger, Ty.TReal]
+typeOfBinOpArgs Div = [Ty.TReal]
+typeOfBinOpArgs DivInt = [Ty.TInteger]
+typeOfBinOpArgs Mod = [Ty.TInteger]
+typeOfBinOpArgs Pow = [Ty.TInteger, Ty.TReal]
+
 data RelOp = Eq | Neq | Lt | Le | Gt | Ge
   deriving (Show)
 

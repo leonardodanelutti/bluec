@@ -86,7 +86,7 @@ annConstA env AS.ConstAss {
 
 -- Annotate a list of variable declarations.
 annVarAs :: Env -> [AS.VarA ()] -> [AS.VarA Ann]
-annVarAs env [] = []
+annVarAs _ [] = []
 annVarAs env (v : vs) = vAnn : annVarAs newEnv vs
     where
         vAnn = annVarA env v
@@ -124,7 +124,7 @@ annVarA env AS.VarAss {
 
 -- Annotate a list of routine declarations.
 annRoutines :: Env -> [AS.Routine ()] -> [AS.Routine Ann]
-annRoutines env [] = []
+annRoutines _ [] = []
 annRoutines env (r : rs) = annRoutine env r : annRoutines env rs
 
 -- Get the environment of a list of routine declarations.
