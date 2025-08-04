@@ -75,7 +75,7 @@ getRoutName = do
 
 -- Entrypoint for TAC generation
 genProgram :: AS.Declarations SS.Ann -> TAC
-genProgram ast = 
+genProgram ast =
     let finalState = St.execState (genDeclarations ast) initState
         -- Reverse the stream to have the instructions in the correct order
     in reverse (currentStream finalState)
@@ -203,9 +203,28 @@ genUnknownExpr exp = do
             return k
 
         -- ConstCategory is handled by genExpr
-        AS.ExpIdent ident (SS.IdentAnn _ _ SS.VarCategory) _ -> do
-                routName <- getRoutName
-                return $ PName $ ProgramName (AS.identName ident) routName
+        AS.ExpIdent ident ann@(SS.IdentAnn ty _ SS.VarCategory) _ -> do
+            routName <- getRoutName
+            let mode = getMode ann
+                identName = PName $ ProgramName (AS.identName ident) routName
+                identName' = PName $ ProgramName (AS.identName ident ++ "'") routName
+                tyTAC = castTypeToTACType $ T.elementsType ty
+            case mode of
+                -- Identifiers that are passed by value-result are appended with
+                -- the "'" and a dereference is made
+                Just AS.Mvalres -> do
+                    k <- newTmp
+                    out $ simpleInstruction (DerefGet k identName' tyTAC)
+                    return k
+                -- Identifiers that are passes by reference are dereferenced before being used
+                Just AS.Mref -> do
+                    k <- newTmp
+                    out $ simpleInstruction (DerefGet k identName tyTAC)
+                    return k
+
+                Just AS.Mval -> return identName
+
+                Nothing -> return identName
 
         -- TODO: Quando DG mette le modalità di passaggio devo cambiare annotazione?
         AS.ExpIdent ident ann@(SS.ExpAnn {}) _ -> do
@@ -335,6 +354,9 @@ genActualParams args ann procName =
 getParams :: SS.Ann -> [AS.Param]
 getParams = error "TODO: replace this when params are added to the annotation of RoutineCall"
 
+getMode :: SS.Ann -> Maybe AS.Mode
+getMode = error "TODO: replace this when mode is added to the annotation of Ident"
+
 copy :: Address -> Address -> T.Type -> StateMonad ()
 copy newAddr prevAddr ty = case ty of
     T.TString -> error "TODO: implement copy for strings"
@@ -371,21 +393,36 @@ genRoutine rout = let
     in do
         newRoutine name
         attachToNext $ Function name
-        genParamsPre params ann
-        let paramPost = genParamsPost params
+        genParamsPre params name
+        let paramPost = genParamsPost params name
         genRoutineBody body paramPost
         endRoutine
 
 
-genParamsPre :: [AS.Param] -> SS.Ann -> StateMonad ()
-genParamsPre params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
-    error "TODO: implement genActualParams for routines"
+genParamsPre :: [AS.Param] -> String -> StateMonad ()
+genParamsPre params routName = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
+    mapM_ (
+        \ AS.Param {AS.paramName = ident, AS.paramType = ty} -> do
+            let name = PName $ ProgramName (AS.identName ident) routName
+                name' = PName $ ProgramName (AS.identName ident ++ "'") routName
+                tyTAC = castTypeToTACType $ T.type_ ty
+            out $ simpleInstruction (DerefGet name' name tyTAC)
+    ) paramsValRes
 
-genParamsPost :: [AS.Param] -> TAC
-genParamsPost params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
-    error "TODO: implement genParamsPost for routines"
-        
+genParamsPost :: [AS.Param] -> String -> TAC
+genParamsPost params routName = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
+    map (
+        \ AS.Param {AS.paramName = ident, AS.paramType = ty} ->
+            let name = PName $ ProgramName (AS.identName ident) routName
+                name' = PName $ ProgramName (AS.identName ident ++ "'") routName
+                tyTAC = castTypeToTACType $ T.type_ ty in
+            simpleInstruction (DerefSet name name' tyTAC)
+    ) paramsValRes
 
--- TODO: before returns add the post amble for the parameters
 genRoutineBody :: AS.RoutBody SS.Ann -> TAC -> StateMonad ()
-genRoutineBody = error "TODO: implement genRoutineBody"
+genRoutineBody (AS.RoutBody decls stmts) post = do
+    genDeclarations decls
+    mapM_ (`genStmt` post) stmts
+
+genStmt :: AS.Statement SS.Ann -> TAC -> StateMonad ()
+genStmt = error "TODO: implement genStmt for all statements"
