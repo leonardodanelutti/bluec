@@ -79,6 +79,7 @@ par(
 - Il numero di argomenti della funzione deve essere giusto
 - Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale
 - sostituire le costanti (da fare nel TAC?)
+- nelle call delle routine annotare la lista dei parametri coi tipi, modalità e nomi.
 
 
 
@@ -90,6 +91,33 @@ Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzional
 == Tipi
 Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String`#footnote[#cite( <implementazione-compilatori-imperativi>, form:"full" ), p. 3.3] e `Char`.
 Sono inoltre supportati gli arrayche sono dichiarati utilizzando nel modo seguente: `Array< Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array.
+
+=== Type system
+
+==== Expression
+
+===== Literal
+
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitInt" {"intVal" = e} } : "INT")
+$
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitChar" {"charVal" = e} } : "CHAR")
+$
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitString" {"stringVal" = e} } : "STRING")
+$
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitBool" {"boolVal" = e} } : "BOOL")
+$
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitDouble" {"doubleVal" = e} } : "REAL")
+$
+
+===== Ident
+$
+space/ ("env" ⊢ "ExpIdent" { "name" = id } : "env"(id))
+$
 
 == Variabili
 Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo o di tipo array. Non è consentito dichiarare variabili senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].

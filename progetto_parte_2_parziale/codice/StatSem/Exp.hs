@@ -21,7 +21,13 @@ annExp env exp@AS.ExpIdent{} = annExpIdent env exp
 annExp env exp@AS.FunCall{} = annExpRoutCall env exp
 annExp env exp@AS.Sign{} = annExpSign env exp
 annExp env exp@AS.BinOp{} = annExpBinOp env exp
--- ...
+annExp env exp@AS.BoolNeg{} = annExpNot env exp
+annExp env exp@AS.RelOp{} = annExpRelOp env exp
+annExp env exp@AS.Ref{} = annExpRef env exp
+annExp env exp@AS.Deref{} = annExpDeref env exp
+annExp env exp@AS.ArrayIndex {} = annExpArrayIndex env exp
+annExp env exp@AS.Array {} = annExpArray env exp
+annExp _ AS.Cast {} = error "Unreachable: `annExp` called with `Cast` expression, which can only be create by the Semantic Analyzer itself."
 
 -----------
 -- UTILS --
@@ -212,8 +218,8 @@ annExpSign env AS.Sign {
 annExpSign _ _ = error "Unreachable: `annExpSign` called with non-`Sign` expression."
 
 -- Binary Operation expressions.
--- Rule: RExpOr, RExpAnd, RExpPlus, RExpMinus, RExpMult, RExpDivReal, RExpDivInt, RExpMod,
--- RExpPow.
+-- Rules: RExpOr, RExpAnd, RExpPlus, RExpMinus, RExpMult, RExpDivReal, RExpDivInt,
+-- RExpMod, RExpPow.
 annExpBinOp :: Env -> Exp -> AnnExp
 annExpBinOp env AS.BinOp {
     AS.binOp = binOp,
@@ -266,7 +272,15 @@ annExpBinOp env AS.BinOp {
         (_, Just v1, Just v2) -> (at, Just $ applyBinOp binOp v1 v2, c1, c2)
         _ -> (at, Nothing, c1, c2)
     getTypeAndVal _ _ _ _ _ = error "Unreachable: `getTypeAndVal` called with lists of different lengths."
-    (newType, newVal, castedE1, castedE2) = getTypeAndVal castedTypes castedValsE1 castedValsE2 castedsE1 castedsE2
+    (newType, newVal, castedE1, castedE2) = case (typeE1, typeE2) of
+        (T.TError { T.msgs = msgs1 }, T.TError { T.msgs = msgs2 }) -> (
+            T.TError { T.msgs = msgs1 ++ msgs2 },
+            Nothing,
+            annE1,
+            annE2)
+        (e@T.TError {}, _) -> (e, Nothing, annE1, annE2)
+        (_, e@T.TError {}) -> (e, Nothing, annE1, annE2)
+        _ -> getTypeAndVal castedTypes castedValsE1 castedValsE2 castedsE1 castedsE2
 annExpBinOp _ _ = error "Unreachable: `annExpBinOp` called with non-`BinOp` expression."
 
 -- Bool NOT expressions.
@@ -295,10 +309,152 @@ annExpNot env AS.BoolNeg {
     }
 annExpNot _ _ = error "Unreachable: `annExpNot` called with non-`BoolNeg` expression."
 
--- annExpRelOp :: Env -> Exp -> AnnExp
--- annExpRelOp env AS.RelOp {
---     AS.relOp = relOp,
---     AS.e1 = e1,
---     AS.e2 = e2,
---     AS.expPos = pos
--- } = AS.RelOp {
+-- Relational Operation expressions.
+-- Rules: RExpGt, RExpLs, RExpGe, RExpLe, RExpEq, RExpNe.
+annExpRelOp :: Env -> Exp -> AnnExp
+annExpRelOp env AS.RelOp {
+    AS.relOp = relOp,
+    AS.e1 = e1,
+    AS.e2 = e2,
+    AS.expPos = pos
+} = AS.RelOp {
+    AS.relOp = relOp,
+    AS.e1 = castedE1,
+    AS.e2 = castedE2,
+    AS.expAnnot = ann,
+    AS.expPos = pos
+} where
+    ann = ExpAnn {
+        expType = newType,
+        ctVal = newVal
+    }
+    -- Call recursive annotation for both expressions.
+    annE1 = annExp env e1
+    annE2 = annExp env e2
+    -- Get types.
+    typeE1 = expType $ AS.expAnnot annE1
+    typeE2 = expType $ AS.expAnnot annE2
+    -- Get super type.
+    ty = T.sup pos typeE1 typeE2 -- TODO: every type supports relational operations?
+    -- Cast both expressions to the sup type.
+    castedE1 = cast annE1 ty
+    castedE2 = cast annE2 ty
+    castedTypeE1 = expType $ AS.expAnnot castedE1
+    castedTypeE2 = expType $ AS.expAnnot castedE2
+    castedValE1 = ctVal $ AS.expAnnot castedE1
+    castedValE2 = ctVal $ AS.expAnnot castedE2
+    newType = case T.sup pos castedTypeE1 castedTypeE2 of
+        e@T.TError {} -> e
+        _ -> T.TBoolean -- Relational operations always return a boolean value.
+    -- If both expressions are compile-time values, apply the relational operation.
+    newVal = case (castedValE1, castedValE2) of
+        (Just v1, Just v2) -> Just (CTVBoolean (applyRelOp relOp v1 v2))
+        _ -> Nothing
+annExpRelOp _ _ = error "Unreachable: `annExpRelOp` called with non-`RelOp` expression."
+
+-- Reference expressions.
+-- Rule: RExpRef.
+annExpRef :: Env -> Exp -> AnnExp
+annExpRef env AS.Ref {
+    AS.e = e,
+    AS.expPos = pos
+} = AS.Ref {
+    AS.e = annE,
+    AS.expAnnot = ann,
+    AS.expPos = pos
+} where
+    annE = annExp env e -- TODO: anything can be referenced?
+    ann = ExpAnn {
+        expType = T.TReference (expType $ AS.expAnnot annE),
+        ctVal = case getCTValue $ AS.expAnnot annE of
+            Just ctv -> Just (CTVRef ctv)
+            Nothing -> Nothing
+    }
+annExpRef _ _ = error "Unreachable: `annExpRef` called with non-`Ref` expression."
+
+-- Dereference expressions.
+-- Rule: RExpDeref.
+annExpDeref :: Env -> Exp -> AnnExp
+annExpDeref env AS.Deref {
+    AS.e = e,
+    AS.expPos = pos
+} = AS.Deref {
+    AS.e = annE,
+    AS.expAnnot = ann,
+    AS.expPos = pos
+} where
+    annE = annExp env e
+    ann = ExpAnn {
+        expType = case expType $ AS.expAnnot annE of
+            T.TReference ty -> ty
+            e@T.TError {} -> e
+            _ -> T.TError {
+                T.msgs = [E.err pos "Cannot dereference expression of type " ++ show (expType $ AS.expAnnot annE) ++ "."]
+            },
+        ctVal = case getCTValue $ AS.expAnnot annE of
+            Just (CTVRef v) -> Just v
+            _ -> Nothing
+    }
+annExpDeref _ _ = error "Unreachable: `annExpDeref` called with non-`Deref` expression."
+
+-- Array dereference expressions. (e[index])
+-- Rule: LExpArrayDeref.
+annExpArrayIndex :: Env -> Exp -> AnnExp
+annExpArrayIndex env AS.ArrayIndex {
+    AS.e = e,
+    AS.index = index,
+    AS.expPos = pos
+} = AS.ArrayIndex {
+    AS.e = annE,
+    AS.index = castedIndex,
+    AS.expAnnot = ann,
+    AS.expPos = pos
+} where
+    annE = annExp env e
+    annIndex = annExp env index
+    castedIndex = cast annIndex T.TInteger
+    typeE = expType $ AS.expAnnot annE
+    ty = case typeE of
+        T.TArray { T.elementsType = ty } -> ty
+        T.TError {} -> typeE
+        _ -> T.TError {
+            T.msgs = [E.err pos "Cannot index expression of type " ++ show typeE ++ "."]
+        }
+    ann = ExpAnn {
+        expType = ty,
+        ctVal = Nothing -- Constants cannot be arrays. TODO: potremmo permettere che lo siano sostituendo i valori a compile time.
+    }
+annExpArrayIndex _ _ = error "Unreachable: `annExpArrayIndex` called with non-`ArrayIndex` expression."
+
+-- Array expressions.
+-- Rule: RExpArray.
+annExpArray :: Env -> Exp -> AnnExp
+annExpArray env AS.Array {
+    AS.elements = elements,
+    AS.expPos = pos
+} = AS.Array {
+    AS.elements = case supType of
+        T.TError {} -> annElements -- If the super type is an error, keep the original annotations without casting.
+        _ -> castedElements, -- Otherwise, cast all elements to the super type.
+    AS.expAnnot = ann,
+    AS.expPos = pos
+} where
+    annElements = map (annExp env) elements
+    -- Get the type of all the elements.
+    elementTypes = map (expType . AS.expAnnot) annElements
+    -- Get the super type of all the elements.
+    supType = case elementTypes of
+        [] -> T.TError { T.msgs = [E.err pos "Cannot create an empty array."] } -- TODO: forse è meglio mettere non-empty direttamente nella grammatica?
+        t:ts -> foldr (T.sup pos) t ts
+    castedElements = map (\e -> cast e supType) annElements -- Cast all elements to the super type.
+    -- Create the annotation.
+    ann = ExpAnn {
+        expType = case supType of
+            T.TError {} -> supType
+            _ -> T.TArray {
+                T.elementsType = supType,
+                T.size = length elements
+            },
+        ctVal = Nothing -- Constants cannot be arrays. TODO: potremmo permettere che lo siano sostituendo i valori a compile time.
+    }
+annExpArray _ _ = error "Unreachable: `annExpArray` called with non-`Array` expression."

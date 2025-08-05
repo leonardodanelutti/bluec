@@ -93,6 +93,8 @@ data CTValue
     | CTVString String
     | CTVBoolean Bool
     | CTVReal Double
+    | CTVRef CTValue
+    -- | CTVArray [CTValue]
     deriving (Show)
 
 ctvToLiteral :: AS.Exp Ann -> Either AS.Literal [String]
@@ -102,6 +104,7 @@ ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
     Just (CTVString v)  -> Left $ AS.LitString v pos
     Just (CTVBoolean v) -> Left $ AS.LitBool v pos
     Just (CTVReal v)    -> Left $ AS.LitDouble v pos
+    Just (CTVRef v)     -> Right [E.err pos $ "constants cannot be references: " ++ show v ++ "."]
     Nothing             -> case AS.expAnnot exp of
         ExpAnn { expType = T.TError {} } -> Right []
         IdentAnn { expType = T.TError {} } -> Right []
@@ -145,4 +148,22 @@ applyBinOp AS.DivInt (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 `div` v2)
 applyBinOp AS.Mod (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 `mod` v2)
 applyBinOp AS.Pow (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 ^ v2)
 applyBinOp AS.Pow (CTVReal v1) (CTVReal v2) = CTVReal (v1 ** v2)
-applyBinOp _ _ _ = error "Invalid arguments for binary operation"
+applyBinOp _ _ _ = error "Invalid arguments for compile-time binary operation"
+
+-- Apply a relational operation to two compile-time values.
+-- It assumes that values are already casted to the correct types.
+applyRelOp :: AS.RelOp -> CTValue -> CTValue -> Bool
+applyRelOp f (CTVInteger v1) (CTVInteger v2) = funRelOp f v1 v2
+applyRelOp f (CTVReal v1) (CTVReal v2) = funRelOp f v1 v2
+applyRelOp f (CTVChar v1) (CTVChar v2) = funRelOp f v1 v2
+applyRelOp f (CTVString v1) (CTVString v2) = funRelOp f v1 v2
+applyRelOp f (CTVBoolean v1) (CTVBoolean v2) = funRelOp f v1 v2
+applyRelOp f (CTVRef v1) (CTVRef v2) = applyRelOp f v1 v2
+applyRelOp _ _ _ = error "Invalid arguments for compile-time relational operation"
+
+funRelOp AS.Eq = (==)
+funRelOp AS.Neq = (/=)
+funRelOp AS.Lt = (<)
+funRelOp AS.Le = (<=)
+funRelOp AS.Gt = (>)
+funRelOp AS.Ge = (>=)
