@@ -68,6 +68,11 @@ demo: bluec
 	@{ \
 		echo "example 1: generic test"; \
 		echo ""; \
+		./bluec ../tests/testWithoutStatements.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/DemoWithoutStatements_output.txt
+	@{ \
+		echo "example 1: generic test"; \
+		echo ""; \
 		./bluec ../tests/testOnTest.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/DemoTOT_output.txt
 

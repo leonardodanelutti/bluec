@@ -18,7 +18,7 @@ par(
 }
 #set strike(stroke: 1.5pt + red)
 
-= Scelte di design
+= Scelte di design (Integrate nella definizione del linguaggio)
 - Le dichiarazioni di variabili contengono obbligatoriamente l'assegnamento (motivazione:
   vedi pagina 3 punto 2 `implementazione-compilatori-imperativi.pdf`).
 - Le costanti possono avere solo tipi primitivi (visto che le costanti non devono allocare
@@ -29,8 +29,7 @@ par(
   come previsto dalla sintassi concreta di Blue.
 - `fn` è syntax sugar di `fn()`.
 
-
-== Modifiche alla sintassi concreta
+== Modifiche alla sintassi concreta (Integrate nella definizione del linguaggio)
 - Dalla sintassi concreta sono state tolte classi, pre post condizioni, etc. perchè non
   coerenti con quanto richiesto (FIXME: questa è ovvia la toglierei).
 - Nelle function call no punto (ovviamente perchè non abbiamo le classi).
@@ -48,6 +47,7 @@ par(
   keyword `routines` similmente a quanto succede in Blue per le dichiarazioni delle
   routines nelle classi. Per evitare ambiguità tipo:
   ```
+
   var
     a: Integer := b
   main ...
@@ -88,13 +88,13 @@ Il linguaggio definito per questo progetto è un linguaggio di programmazione im
 Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzionalità richieste dalla consegna, come per esempio il dereferenziamento, sono stati introdotti alcuni elementi. Tuttavia, non sono presenti né classi né interfacce.
 
 == Tipi
-Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String` e `Char`.
+Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String`#footnote[#cite( <implementazione-compilatori-imperativi>, form:"full" ), p. 3.3] e `Char`.
 Sono inoltre supportati gli arrayche sono dichiarati utilizzando nel modo seguente: `Array< Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array.
 
 == Variabili
-Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo o di tipo array. Non è consentito dichiarare variabili senza assegnamento.
+Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo o di tipo array. Non è consentito dichiarare variabili senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
 == Costanti
-Le costanti sono dichiarate con la keyword `const` e possono essere di tipo primitivo (non devono allocare spazio in memoria). Anche in questo caso non è consentito dichiarare costanti senza assegnamento.
+Le costanti sono dichiarate con la keyword `const` e possono essere di tipo primitivo (non devono allocare spazio in memoria). Anche in questo caso non è consentito dichiarare costanti senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
 
 == Loop
 Per il nostro linguaggio sono previste le forme di iterazione non determinata `while-do` e `do-while`. Entrambe le strutture sono naturalmente implementate dall'elemento `loop-exit on` della sintassi concreta di Blue.
@@ -103,25 +103,53 @@ Per il nostro linguaggio sono previste le forme di iterazione non determinata `w
 Il linguaggio immplementa le strutture condizionali semplici `if-then` e `if-then-else`, che permettono di eseguire blocchi di codice in base a condizioni specifiche.
 
 == Routine
-Le routine comprendono sia funzioni che procedure. Una funzione priva di parametri in ingresso può essere invocata in entrambe le forme `function()` o `function`. Rispetto alla sintassi concreta del linguaggio Blue, sono rimosse pre e post-condizioni; inoltre i parametri di ritorno non vengono nominati esplicitamente nella dichiarazione: si specificano soltanto i tipi restituiti mediante la notazione `-> (<Type>)`. Per gestire il ritorno esplicito dei valori, è stato introdotto il costrutto `return`.
-Quando si dichiara una funzione nell'ambiente più esterno, è necessario utilizzare la keyword `routines`, in modo simile a quanto avviene in Blue per le dichiarazioni delle routine nelle classi.
+Le routine comprendono sia funzioni che procedure. Una funzione senza parametri può essere invocata sia con la sintassi completa `function()` sia in forma abbreviata `function`, che è semplicemente zucchero sintattico per la prima. Rispetto alla sintassi concreta del linguaggio Blue, sono rimosse pre e post-condizioni; inoltre i parametri di ritorno non vengono nominati esplicitamente nella dichiarazione: si specificano solamente i tipi restituiti mediante la notazione `-> Type`. Si nota che non è possibile restituire tuple. Per gestire il ritorno esplicito dei valori, è stato introdotto il costrutto `return`.
+Le dichiarazioni di funzioni, in ogni ambiente, devono essere precedute dalla keyword `routines`, in modo simile a quanto avviene in Blue per le dichiarazioni delle routine nelle classi. Questo è necessario per evitare ambiguità, come nel seguente esempio:
+  ``` Blue
+  var
+    a: Integer := b
+  main ...
+  ```
+  dove `main` potrebbe rappresentare sia il nome di una funzione che il nome di una variabile.
 
 Quando si invoca una funzione è possibile specificare la modalità di passaggio dei parametri in ingresso (`val` , `valres` e `ref`).
 Infine, poiché il linguaggio non prevede il concetto di classi, le funzioni non possono essere invocate con la notazione a punto, come `.function()`.
 
 == Commenti
-I commenti supportati sono i commenti a riga singola, che iniziano con il simbolo `--`, e i commenti a blocco, che iniziano con `/*` e terminano con `*/`.
+Il linguaggio supporta due tipi di commenti:
 
-= TODO
+- Commenti a riga singola, introdotti dal simbolo `--`, e
 
-== separatori
-L'introduzione della dereferenziazione (deref) ha portato alla necessità di separatori per distinguere chiaramente tra le diverse parti delle espressioni. Infatti senza i separatori il parser LALR(1) non sarebbe in grado di distinguere un deref da una moltiplicazione, oppure una chiamata di funzione da un deref
+- Commenti a blocco, delimitati da `/*` e `*/`.
 
-``` Blue
+== Separatori
+Al fine di disambiguare la grammatica e evitare conflitti è fondamentale l'introduzione di separatori alla fine degli Statement, salvo If e Loop, e delle dichiarazioni di costanti e variabili.\ Senza i separatori, infatti, il parser LALR(1) non sarebbe in grado di distinguere con certezza la struttura del codice in determinate situazioni.
 
-
+Ad esempio:
 ```
+  var
+    a: Integer := b
+  ( ...
+  ```
+  In questo caso, con un lookahead di 1 token, non è possibile determinare se `b (` rappresenti l'inizio di una chiamata a funzione oppure se `(` sia l'inizio di una Left Expression.
+  
+  Un'altra ambiguità possibile è la seguente:
+  ```
+  var
+    a: Integer := b
+  * ...
+  ```
 
+  dove `*` potrebbe essere sia un deref che una moltiplicazione.
+  Per lo stesso motivo è stato aggiunto un `;` anche nell'exit dei loop.
+
+
+== Risoluzione conflitti rimanenti
+a grammatica definita presenta un solo conflitto, che si verifica nello stato 105, tra le produzioni di `LExp` e `RExp`.
+Questo conflitto non crea problemi per l'analisi sintattica, dal momento che le `LExp` sono un sottoinsieme delle `RExp`. 
+Pertanto, è sufficiente scegliere sempre l'azione di shift.
 
 = TODO:
 - [ ] disambiguare funzioni con lo stesso nome nel tac
+
+#bibliography("bibliografia.bib", title: "Bibliografia" , style: "ieee")

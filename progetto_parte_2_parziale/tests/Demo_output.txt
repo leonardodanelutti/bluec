@@ -6,43 +6,11 @@ Parse Successful!
 
 [Abstract Syntax]
 
-ProgramDecl {consts = [ConstAss {constIdents = [Ident {identName = "a", identPos = Pn (PnS 11 2 5) (PnS 12 2 6)},Ident {identName = "d", identPos = Pn (PnS 14 2 8) (PnS 15 2 9)}], constType = TypePos {type_ = TInteger, typePosn = Pn (PnS 17 2 11) (PnS 24 2 18)}, constValues = [Literal {val = LitInt {intVal = 0, litPos = Pn (PnS 28 2 22) (PnS 29 2 23)}, expAnnot = (), expPos = Pn (PnS 28 2 22) (PnS 29 2 23)},Literal {val = LitInt {intVal = 1, litPos = Pn (PnS 31 2 25) (PnS 32 2 26)}, expAnnot = (), expPos = Pn (PnS 31 2 25) (PnS 32 2 26)}], constAnnot = (), constPos = Pn (PnS 11 2 5) (PnS 32 2 26)}], vars = [VarAss {varIdents = [Ident {identName = "_b", identPos = Pn (PnS 44 4 5) (PnS 46 4 7)}], varType = TypePos {type_ = TReal, typePosn = Pn (PnS 47 4 8) (PnS 51 4 12)}, varValues = [Literal {val = LitDouble {doubleVal = 1.0, litPos = Pn (PnS 55 4 16) (PnS 58 4 19)}, expAnnot = (), expPos = Pn (PnS 55 4 16) (PnS 58 4 19)}], varAnnot = (), varPos = Pn (PnS 44 4 5) (PnS 58 4 19)}], routines = [Procedure {routName = Ident {identName = "main", identPos = Pn (PnS 99 9 10) (PnS 103 9 14)}, params = [], routBody = RoutBody {declarations = ProgramDecl {consts = [], vars = [VarAss {varIdents = [Ident {identName = "a", identPos = Pn (PnS 125 11 9) (PnS 126 11 10)}], varType = TypePos {type_ = TInteger, typePosn = Pn (PnS 128 11 12) (PnS 135 11 19)}, varValues = [ExpIdent {name = Ident {identName = "c", identPos = Pn (PnS 137 11 21) (PnS 138 11 22)}, expAnnot = (), expPos = Pn (PnS 137 11 21) (PnS 138 11 22)}], varAnnot = (), varPos = Pn (PnS 125 11 9) (PnS 138 11 22)}], routines = [], declsAnnot = ()}, statements = [StmtIf {cond = RelOp {relOp = Gt, e1 = ExpIdent {name = Ident {identName = "a", identPos = Pn (PnS 161 13 13) (PnS 162 13 14)}, expAnnot = (), expPos = Pn (PnS 161 13 13) (PnS 162 13 14)}, e2 = Literal {val = LitInt {intVal = 0, litPos = Pn (PnS 165 13 17) (PnS 166 13 18)}, expAnnot = (), expPos = Pn (PnS 165 13 17) (PnS 166 13 18)}, expAnnot = (), expPos = Pn (PnS 161 13 13) (PnS 166 13 18)}, body = [StmtAss {left = [ExpIdent {name = Ident {identName = "a", identPos = Pn (PnS 195 15 13) (PnS 196 15 14)}, expAnnot = (), expPos = Pn (PnS 195 15 13) (PnS 196 15 14)}], right = [Literal {val = LitInt {intVal = 0, litPos = Pn (PnS 198 15 16) (PnS 199 15 17)}, expAnnot = (), expPos = Pn (PnS 198 15 16) (PnS 199 15 17)}], annot = (), pos = Pn (PnS 195 15 13) (PnS 200 15 18)},StmtAss {left = [ExpIdent {name = Ident {identName = "b", identPos = Pn (PnS 214 16 13) (PnS 215 16 14)}, expAnnot = (), expPos = Pn (PnS 214 16 13) (PnS 215 16 14)}], right = [Literal {val = LitDouble {doubleVal = 1.0, litPos = Pn (PnS 217 16 16) (PnS 220 16 19)}, expAnnot = (), expPos = Pn (PnS 217 16 16) (PnS 220 16 19)}], annot = (), pos = Pn (PnS 214 16 13) (PnS 221 16 20)}], annot = (), pos = Pn (PnS 157 13 9) (PnS 237 17 15)},StmtIf {cond = RelOp {relOp = Gt, e1 = ExpIdent {name = Ident {identName = "a", identPos = Pn (PnS 250 18 12) (PnS 251 18 13)}, expAnnot = (), expPos = Pn (PnS 250 18 12) (PnS 251 18 13)}, e2 = Literal {val = LitInt {intVal = 0, litPos = Pn (PnS 254 18 16) (PnS 255 18 17)}, expAnnot = (), expPos = Pn (PnS 254 18 16) (PnS 255 18 17)}, expAnnot = (), expPos = Pn (PnS 250 18 12) (PnS 255 18 17)}, body = [StmtAss {left = [ExpIdent {name = Ident {identName = "d", identPos = Pn (PnS 261 18 23) (PnS 262 18 24)}, expAnnot = (), expPos = Pn (PnS 261 18 23) (PnS 262 18 24)}], right = [Literal {val = LitInt {intVal = 0, litPos = Pn (PnS 264 18 26) (PnS 265 18 27)}, expAnnot = (), expPos = Pn (PnS 264 18 26) (PnS 265 18 27)}], annot = (), pos = Pn (PnS 261 18 23) (PnS 266 18 28)}], annot = (), pos = Pn (PnS 247 18 9) (PnS 273 18 35)},StmtIf {cond = RelOp {relOp = Eq, e1 = ExpIdent {name = Ident {identName = "a", identPos = Pn (PnS 286 19 12) (PnS 287 19 13)}, expAnnot = (), expPos = Pn (PnS 286 19 12) (PnS 287 19 13)}, e2 = Literal {val = LitInt {intVal = 1, litPos = Pn (PnS 290 19 16) (PnS 291 19 17)}, expAnnot = (), expPos = Pn (PnS 290 19 16) (PnS 291 19 17)}, expAnnot = (), expPos = Pn (PnS 286 19 12) (PnS 291 19 17)}, body = [StmtAss {left = [ExpIdent {name = Ident {identName = "a", identPos = Pn (PnS 311 20 13) (PnS 312 20 14)}, expAnnot = (), expPos = Pn (PnS 311 20 13) (PnS 312 20 14)}], right = [Literal {val = LitInt {intVal = 2, litPos = Pn (PnS 314 20 16) (PnS 315 20 17)}, expAnnot = (), expPos = Pn (PnS 314 20 16) (PnS 315 20 17)}], annot = (), pos = Pn (PnS 311 20 13) (PnS 316 20 18)}], annot = (), pos = Pn (PnS 283 19 9) (PnS 332 21 15)},StmtRoutCall {call = RoutineCall {routCallName = Ident {identName = "__util__", identPos = Pn (PnS 374 23 9) (PnS 382 23 17)}, args = [], routCallPos = Pn (PnS 374 23 9) (PnS 384 23 19)}, annot = ()}]}, routAnnot = (), routPos = Pn (PnS 99 9 10) (PnS 395 24 5)},Function {routName = Ident {identName = "__util__", identPos = Pn (PnS 424 27 1) (PnS 432 27 9)}, params = [Param {mode = Mref, paramName = Ident {identName = "b", identPos = Pn (PnS 437 27 14) (PnS 438 27 15)}, paramType = TypePos {type_ = TBoolean, typePosn = Pn (PnS 440 27 17) (PnS 447 27 24)}, paramPos = Pn (PnS 437 27 14) (PnS 447 27 24)}], returnType = TypePos {type_ = TString, typePosn = Pn (PnS 452 27 29) (PnS 458 27 35)}, routBody = RoutBody {declarations = ProgramDecl {consts = [ConstAss {constIdents = [Ident {identName = "const1", identPos = Pn (PnS 482 29 9) (PnS 488 29 15)}], constType = TypePos {type_ = TString, typePosn = Pn (PnS 490 29 17) (PnS 496 29 23)}, constValues = [Literal {val = LitString {stringVal = "\"Hello world\"", litPos = Pn (PnS 498 29 25) (PnS 511 29 38)}, expAnnot = (), expPos = Pn (PnS 498 29 25) (PnS 511 29 38)}], constAnnot = (), constPos = Pn (PnS 482 29 9) (PnS 511 29 38)}], vars = [], routines = [], declsAnnot = ()}, statements = [StmrIfElse {cond = ExpIdent {name = Ident {identName = "b", identPos = Pn (PnS 529 31 12) (PnS 530 31 13)}, expAnnot = (), expPos = Pn (PnS 529 31 12) (PnS 530 31 13)}, bodyT = [StmtReturn {vals = ExpIdent {name = Ident {identName = "const1", identPos = Pn (PnS 543 31 26) (PnS 549 31 32)}, expAnnot = (), expPos = Pn (PnS 543 31 26) (PnS 549 31 32)}, annot = (), pos = Pn (PnS 536 31 19) (PnS 550 31 33)}], bodyF = [StmtReturn {vals = Literal {val = LitString {stringVal = "\"\"", litPos = Pn (PnS 577 33 12) (PnS 579 33 14)}, expAnnot = (), expPos = Pn (PnS 577 33 12) (PnS 579 33 14)}, annot = (), pos = Pn (PnS 570 33 5) (PnS 580 33 15)}], annot = (), pos = Pn (PnS 526 31 9) (PnS 596 34 15)}]}, routAnnot = (), routPos = Pn (PnS 424 27 1) (PnS 614 35 13)}], declsAnnot = ()}
+ProgramDecl {consts = [ConstAss {constIdents = [Ident {identName = "a", identPos = Pn (PnS 11 2 5) (PnS 12 2 6)},Ident {identName = "d", identPos = Pn (PnS 14 2 8) (PnS 15 2 9)}], constType = TypePos {type_ = TInteger, typePosn = Pn (PnS 17 2 11) (PnS 24 2 18)}, constValues = [Literal {val = LitInt {intVal = 0, litPos = Pn (PnS 28 2 22) (PnS 29 2 23)}, expAnnot = ExpAnn {expType = TInteger, ctVal = Just (CTVInteger 0)}, expPos = Pn (PnS 28 2 22) (PnS 29 2 23)},Literal {val = LitInt {intVal = 1, litPos = Pn (PnS 31 2 25) (PnS 32 2 26)}, expAnnot = ExpAnn {expType = TInteger, ctVal = Just (CTVInteger 1)}, expPos = Pn (PnS 31 2 25) (PnS 32 2 26)}], constAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = Pn (PnS 11 2 5) (PnS 12 2 6)},Const (LitInt {intVal = 0, litPos = Pn (PnS 28 2 22) (PnS 29 2 23)})),(Ident {identName = "d", identPos = Pn (PnS 14 2 8) (PnS 15 2 9)},Const (LitInt {intVal = 1, litPos = Pn (PnS 31 2 25) (PnS 32 2 26)}))], routines = fromList []}, errs = []}, constPos = Pn (PnS 11 2 5) (PnS 32 2 26)}], vars = [VarAss {varIdents = [Ident {identName = "_b", identPos = Pn (PnS 44 4 5) (PnS 46 4 7)}], varType = TypePos {type_ = TReal, typePosn = Pn (PnS 47 4 8) (PnS 51 4 12)}, varValues = [Literal {val = LitDouble {doubleVal = 1.0, litPos = Pn (PnS 55 4 16) (PnS 58 4 19)}, expAnnot = ExpAnn {expType = TReal, ctVal = Just (CTVReal 1.0)}, expPos = Pn (PnS 55 4 16) (PnS 58 4 19)}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "_b", identPos = Pn (PnS 44 4 5) (PnS 46 4 7)},Var (Pn (PnS 44 4 5) (PnS 58 4 19)) (TypePos {type_ = TReal, typePosn = Pn (PnS 47 4 8) (PnS 51 4 12)}))], routines = fromList []}, errs = []}, varPos = Pn (PnS 44 4 5) (PnS 58 4 19)}], routines = [Procedure {routName = Ident {identName = "main", identPos = Pn (PnS 99 9 10) (PnS 103 9 14)}, params = [], routBody = RoutBody {declarations = ProgramDecl {consts = [], vars = [VarAss {varIdents = [Ident {identName = "a", identPos = Pn (PnS 125 11 9) (PnS 126bluec: StatSem/Exp.hs:(106,31)-(110,9): Missing field in record construction mode
 
-[Linearized tree]
-
-const
-	a, d : Integer := 0, 1;
-var
-	_b : Real := 1.0;
-routines
-	main() is
-	var
-		a : Integer := c;
-	do
-		if (a > 0) then
-			a := 0;
-		b := 1.0;
-		end if
-		if (a > 0) then
-			d := 0;
-		end if
-		if (a = 1) then
-			a := 2;
-		end if
-		__util__();
-	end
-	main
-
-	__util__(ref b : Boolean) -> String is
-	const
-		const1 : String := "Hello world";
-	do
-		if b then
-			return const1;
-		else
-			return "";
-		end if
-	end
-	__util__
+HasCallStack backtrace:
+  collectBacktraces, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:92:13 in ghc-internal:GHC.Internal.Exception
+  toExceptionWithBacktrace, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:84:32 in ghc-internal:GHC.Internal.Exception
+  throw, called at libraries/ghc-internal/src/GHC/Internal/Control/Exception/Base.hs:420:30 in ghc-internal:GHC.Internal.Control.Exception.Base
 
 

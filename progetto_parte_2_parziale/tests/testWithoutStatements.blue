@@ -1,0 +1,11 @@
+const
+    a, d: Integer := 0, 1;
+var
+    _b:Real := 1.0;
+
+routines
+
+
+/***
+MAIN/* FUNCTION
+*/
