@@ -6,13 +6,13 @@ module Main where
 
 import Prelude
   ( ($), (.)
-  , Either(..)
+  , Either(..), Maybe(..)
   , Int, (>)
   , String, (++), concat, unlines
   , Show, show
   , IO, (>>), (>>=), mapM_, putStrLn
   , FilePath
-  , getContents, readFile
+  , getContents, readFile, not, null, map
   )
 import System.Environment ( getArgs )
 import System.Exit        ( exitFailure )
@@ -34,25 +34,33 @@ putStrV :: Verbosity -> String -> IO ()
 putStrV v s = when (v > 1) $ putStrLn s
 
 runFile :: Verbosity -> ParseFun (AS.Declarations ()) -> FilePath -> IO ()
-runFile v p f = putStrLn f >> readFile f >>= run v p
+runFile v p f = putStrLn f >> readFile f >>= \s -> run v p s (Just f)
 
-run :: Verbosity -> ParseFun (AS.Declarations ()) -> String -> IO ()
-run v p s =
-  case p ts of
-    Left err -> do
-      putStrLn "\nParse              Failed...\n"
-      putStrV v "Tokens:"
-      mapM_ (putStrV v . showPosToken . mkPosToken) ts
-      putStrLn err
-      exitFailure
-    Right tree -> do
-      putStrLn "\nParse Successful!"
-      showTree v (SS.annotate tree)
-      putStrV v $ "\n[Generated TAC]\n"
-      putStrLn $ TPrinter.printProgram $ TAC.genProgram $ SS.annotate tree
-  where
-  ts = myLexer s
-  showPosToken ((l,c, _, _),t) = concat [ show l, ":", show c, "\t", show t ]
+run :: Verbosity -> ParseFun (AS.Declarations ()) -> String -> Maybe FilePath -> IO ()
+run v p s f =
+    case p ts of
+        Left err -> do
+            putStrLn "\nParse              Failed...\n"
+            putStrV v "Tokens:"
+            mapM_ (putStrV v . showPosToken . mkPosToken) ts
+            putStrLn err
+            exitFailure
+        Right tree -> do
+            putStrLn "\nParse Successful!"
+            let annTree = SS.annotate tree
+            let errs = SS.getErrs annTree
+            when (not $ null errs) $ do
+                putStrLn "\nStatic Semantics Analysis Failed:"
+                case f of
+                    Nothing -> mapM_ putStrLn errs
+                    Just f  -> mapM_ putStrLn (map (\err -> f ++ ":" ++ err) errs)
+                exitFailure
+            showTree v annTree
+            putStrV v $ "\n[Generated TAC]\n"
+            putStrLn $ TPrinter.printProgram $ TAC.genProgram annTree
+    where
+        ts = myLexer s
+        showPosToken ((l,c, _, _),t) = concat [ show l, ":", show c, "\t", show t ]
 
 showTree :: (Show a, Print a) => Int -> a -> IO ()
 showTree v tree = do
@@ -74,7 +82,7 @@ main = do
   args <- getArgs
   case args of
     ["--help"] -> usage
-    []         -> getContents >>= run 2 pDeclarations
+    []         -> getContents >>= \s -> run 2 pDeclarations s Nothing
     "-s":fs    -> mapM_ (runFile 0 pDeclarations) fs
     fs         -> mapM_ (runFile 2 pDeclarations) fs
 

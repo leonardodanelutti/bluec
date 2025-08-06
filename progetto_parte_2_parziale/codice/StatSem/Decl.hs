@@ -36,12 +36,12 @@ annDecls env AS.ProgramDecl {
     outEnvConsts = constAsEnv constsAnn -- Local environment of constants.
     outEnvVars = varAsEnv varsAnn -- Local environment of variables.
     outEnvRoutines = routinesEnv routinesAnn -- Local environment of routines.
-    -- errsConsts = concatMap (errs . AS.constAnnot) constsAnn
-    -- errsVars = concatMap (errs . AS.varAnnot) varsAnn
-    -- errsRoutines = concatMap (errs . AS.routAnnot) routinesAnn
+    errsConsts = concatMap (errs . AS.constAnnot) constsAnn
+    errsVars = concatMap (errs . AS.varAnnot) varsAnn
+    errsRoutines = concatMap (errs . AS.routAnnot) routinesAnn
     ann = DeclAnn {
         bindings = mergeEnv inEnvVars outEnvVars,
-        errs = [] -- errsConsts ++ errsVars ++ errsRoutines
+        errs = errsConsts ++ errsVars ++ errsRoutines
     }
 
 -- Annotate a list of constant declarations.
@@ -117,9 +117,10 @@ annVarA env AS.VarAss {
                 else []
     valuesAnn = map (annExp env) values
     castedValuesAnn = map (\x -> (cast x (T.type_ ty))) valuesAnn
+    errs = T.getErrs $ map (expType . AS.expAnnot) castedValuesAnn
     ann = DeclAnn {
         bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty Nothing))),
-        errs = numberErr
+        errs = errs ++ numberErr
     }
 
 -- Annotate a list of routine declarations.
@@ -152,9 +153,11 @@ annRoutine env AS.Function {
     paramEnv = envFromSymbolBindings paramBindings
     newEnv = mergeEnv env paramEnv
     bodyAnn = annRoutBody newEnv body
+    declsErrs = errs $ AS.declsAnnot $ AS.declarations bodyAnn
+    stmtsErrs = [] -- TODO: concatMap errs (map AS.stmtAnnot $ AS.statements bodyAnn)
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Fun pos params ty)],
-        errs = []
+        errs = declsErrs ++ stmtsErrs
     }
 annRoutine env AS.Procedure {
     AS.routName = ident,
@@ -172,9 +175,11 @@ annRoutine env AS.Procedure {
     paramEnv = envFromSymbolBindings paramBindings
     newEnv = mergeEnv env paramEnv
     bodyAnn = annRoutBody newEnv body
+    declsErrs = errs $ AS.declsAnnot $ AS.declarations bodyAnn
+    stmtsErrs = [] -- TODO: concatMap errs (map AS.stmtAnnot $ AS.statements bodyAnn)
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Proc pos params)],
-        errs = []
+        errs = declsErrs ++ stmtsErrs
     }
 
 -- Annotate a routine body.

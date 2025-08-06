@@ -227,11 +227,21 @@ unescapeInitTail = id . unesc . tail . id
 
 -- | Single position of a token in the source file.
 data PosnS = PnS !Int !Int !Int
-  deriving (Eq, Show, Ord)
+  deriving (Eq, Ord)
 
 -- | First and last position of a token in the source file.
 data Posn = Pn PosnS PosnS
-  deriving (Eq, Show, Ord)
+  deriving (Eq, Ord)
+
+-- Custom Show instances for pretty printing positions
+instance Show PosnS where
+  show (PnS _ line col) = show line ++ ":" ++ show col
+
+instance Show Posn where
+  show (Pn start end) = 
+    if start == end 
+    then show start
+    else show start ++ "-" ++ show end
 
 alexStartPos :: PosnS
 alexStartPos = PnS 0 1 1

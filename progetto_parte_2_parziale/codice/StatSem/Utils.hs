@@ -6,6 +6,7 @@ import qualified AbsSyn         as AS
 import qualified LexGrammar     as LG
 import qualified Types          as T
 import qualified Errors         as E
+import qualified PrettyPrinter  as PP
 
 -- Environment with different namespaces for variables, functions, and constants.
 --
@@ -106,9 +107,9 @@ ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
     Just (CTVReal v)    -> Left $ AS.LitDouble v pos
     Just (CTVRef v)     -> Right [E.err pos $ "constants cannot be references: " ++ show v ++ "."]
     Nothing             -> case AS.expAnnot exp of
-        ExpAnn { expType = T.TError {} } -> Right []
-        IdentAnn { expType = T.TError {} } -> Right []
-        _ -> Right [E.err pos $ show exp ++ " is not a constant expression."]
+        ExpAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
+        IdentAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
+        _ -> Right [E.err pos $ PP.expPrinter exp ++ " is not a constant expression."]
     where
         pos = AS.expPos exp
 

@@ -13,6 +13,7 @@ type AnnStmt = AS.Statement Ann
 -- Annotate a statement node.
 annStmt :: Env -> Stmt -> AnnStmt
 annStmt env stmt@AS.StmtAss{} = annStmtAss env stmt
+annStmt _ _ = error "TODO: Implement other statement types"
 -- ...
 
 -- Annotate an assignment statement.
