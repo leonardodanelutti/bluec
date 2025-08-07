@@ -154,7 +154,7 @@ annRoutine env AS.Function {
     newEnv = mergeEnv env paramEnv
     bodyAnn = annRoutBody newEnv body
     declsErrs = errs $ AS.declsAnnot $ AS.declarations bodyAnn
-    stmtsErrs = [] -- TODO: concatMap errs (map AS.stmtAnnot $ AS.statements bodyAnn)
+    stmtsErrs = concatMap (errs . AS.annot) $ AS.statements bodyAnn
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Fun pos params ty)],
         errs = declsErrs ++ stmtsErrs

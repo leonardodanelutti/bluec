@@ -63,6 +63,9 @@ data Ann
         bindings :: Env, -- Local environment
         errs :: [String]
     }
+    | StmtAnn {
+        errs :: [String]
+    }
     deriving (Show)
 
 -- Category of an identifier.

@@ -7,6 +7,7 @@ import qualified AbsSyn         as AS
 import qualified Errors         as E
 import qualified Types          as T
 import qualified LexGrammar     as LG
+import qualified PrettyPrinter  as PP
 
 -- TYPES
 -- Void annotations after parsing.
@@ -41,14 +42,20 @@ getTypeAndValue (AS.LitString v _) = (T.TString, CTVString v)
 getTypeAndValue (AS.LitBool v _) = (T.TBoolean, CTVBoolean v)
 getTypeAndValue (AS.LitDouble v _) = (T.TReal, CTVReal v)
 
--- Check if the expected parameter types match the argument types.
-checkParamTypes :: [AS.Param] -> [AS.Exp Ann] -> Bool
-checkParamTypes [] [] = True
-checkParamTypes (AS.Param { AS.paramType = T.TypePos { T.type_ = paramType } } : ps) (arg : args) =
-    paramType == argType && checkParamTypes ps args
+-- Try to cast the actual parameters (arguments) to the formal parameters types.
+--
+-- Preconditions:
+-- - The number of actual parameters must match the number of formal parameters.
+-- - The `Param`s must have a valid type (not `TError`).
+castParamTypes :: [AS.Param] -> [AS.Exp Ann] -> [AS.Exp Ann]
+castParamTypes [] [] = []
+castParamTypes (AS.Param { AS.paramType = T.TypePos { T.type_ = T.TError {} } } : ps) _ =
+    error "Unreachable: `castParamTypes` called with an error type in the parameter list." -- Unreachable if Param comes from the parser.
+castParamTypes (AS.Param { AS.paramType = T.TypePos { T.type_ = paramType } } : ps) (arg : args) =
+    cast arg paramType : castParamTypes ps args
     where
         argType = expType $ AS.expAnnot arg
-checkParamTypes _ _ = False
+castParamTypes _ _ = error "Unreachable: `castParamTypes` called with different number of parameters and arguments."
 
 -- Cast an annotated expression to a specific type.
 cast :: AnnExp -> T.Type -> AnnExp
@@ -130,7 +137,8 @@ annExpIdent env AS.ExpIdent {
             mode = Nothing
         } where (identType, identVal) = getTypeAndValue val
         -- Routine identifier.
-        (Nothing, Just _) -> annRoutineCall env ident [] pos
+        (Nothing, Just _) -> ann
+            where (ann, _) = annRoutineCall env ident [] pos
         -- TODO: the case in which the ambiguity can be resolved by the type
         -- Ambiguous case.
         _ -> IdentAnn {
@@ -155,30 +163,36 @@ annExpRoutCall env fc@AS.FunCall {
     },
     AS.expPos = pos
 } = fc {
-    AS.expCall = rc { AS.args = annArgs },
-    AS.expAnnot = annRoutineCall env ident annArgs pos
+    AS.expCall = rc { AS.args = castedArgs },
+    AS.expAnnot = ann
 } where
+    (ann, castedArgs) = annRoutineCall env ident annArgs pos
     annArgs = map (annExp env) args
 annExpRoutCall _ _ = error "Unreachable: `annExpRoutCall` called with non-`FunCall` expression."
 
--- Helper function that creates an annotation for a routine call.
-annRoutineCall :: Env -> AS.Ident -> [AnnExp] -> LG.Posn -> Ann
-annRoutineCall env ident annArgs pos = RoutCallAnn {
+-- Helper function that creates an annotation for a routine call, and casts the arguments
+-- to the expected types.
+annRoutineCall :: Env -> AS.Ident -> [AnnExp] -> LG.Posn -> (Ann, [AnnExp])
+annRoutineCall env ident annArgs pos = (RoutCallAnn {
     expType = routType,
     params = params
-} where
-    (routType, params) = case Map.lookup ident (routines env) of
-        Just (Fun pos params ty) -> case checkParamTypes params annArgs of
-            True  -> (T.type_ ty, params)
+}, castedArgs) where
+    (routType, params, castedArgs) = case Map.lookup ident (routines env) of
+        Just (Fun pos params ty) -> case length params == length annArgs of
+            True  -> case T.getErrs $ map (expType . AS.expAnnot) castedArgs of
+                [] -> (T.type_ ty, params, castedArgs)
+                errs -> (T.TError { T.msgs = errs }, params, castedArgs)
+                where
+                    castedArgs = castParamTypes params annArgs
             False -> (T.TError {
-                T.msgs = [E.err pos "Wrong argument types in routine call: " ++ show ident]
-            }, [])
+                T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length annArgs) ++ "."]
+            }, params, annArgs)
         Just (Proc pos params) -> (T.TError {
-            T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ show ident ++ "."]
-        }, params)
+            T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ PP.identPrinter ident ++ "."]
+        }, params, annArgs)
         Nothing -> (T.TError {
-            T.msgs = [E.err pos "Unbound routine: " ++ show ident ++ "."]
-        }, [])
+            T.msgs = [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."]
+        }, [], annArgs)
 
 -- Sign expressions.
 -- Rule: RExpSign.
