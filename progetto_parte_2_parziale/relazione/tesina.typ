@@ -80,6 +80,7 @@ par(
 - Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale
 - sostituire le costanti (da fare nel TAC?)
 - nelle call delle routine annotare la lista dei parametri coi tipi, modalità e nomi.
+- Controllare che nessuna costante sia a sinistra di un assegnamento O in un parametro ref o valres
 
 
 

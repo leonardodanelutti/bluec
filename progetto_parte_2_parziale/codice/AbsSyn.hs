@@ -108,7 +108,8 @@ data Mode = Mval | Mvalres | Mref
 
 data RoutBody a = RoutBody
   { declarations :: Declarations a,
-    statements :: [Statement a]
+    statements :: [Statement a],
+    routBodyAnnot :: a
   }
   deriving (Show)
 

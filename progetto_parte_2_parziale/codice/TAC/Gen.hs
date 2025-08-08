@@ -196,7 +196,7 @@ genUnknownExpr exp = do
         -- Already handled by genExpr
         AS.Literal {} -> error "Literal should not be passed to genUnknownExpr"
 
-        AS.FunCall call ann@(SS.RoutCallAnn {}) _ -> do
+        AS.FunCall call ann@(SS.FunCallAnn {}) _ -> do
             genFunCall call ann
 
         AS.FunCall {} -> error "Unreachable"
@@ -245,7 +245,7 @@ genUnknownExpr exp = do
 
                 Nothing -> return identName
 
-        AS.ExpIdent ident ann@(SS.RoutCallAnn {}) _ -> do
+        AS.ExpIdent ident ann@(SS.FunCallAnn {}) _ -> do
             genFunCall (AS.callFromIdent ident) ann
 
         AS.ExpIdent {} -> error "Unreachable"
@@ -429,7 +429,7 @@ genParamsPost params routName = let paramsValRes = filter (\p -> AS.mode p == AS
     ) paramsValRes
 
 genRoutineBody :: AS.RoutBody SS.Ann -> TAC -> StateMonad ()
-genRoutineBody (AS.RoutBody decls stmts) post = do
+genRoutineBody (AS.RoutBody decls stmts _) post = do
     genDeclarations decls
     mapM_ (`genStmt` post) stmts
 

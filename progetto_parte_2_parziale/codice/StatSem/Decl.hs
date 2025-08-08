@@ -151,13 +151,20 @@ annRoutine env AS.Function {
 } where
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
     paramEnv = envFromSymbolBindings paramBindings
-    newEnv = mergeEnv env paramEnv
+    newEnv = addReturn (mergeEnv env paramEnv) (Just (T.type_ ty))
+    -- Annotate the body with the new environment.
     bodyAnn = annRoutBody newEnv body
-    declsErrs = errs $ AS.declsAnnot $ AS.declarations bodyAnn
-    stmtsErrs = concatMap (errs . AS.annot) $ AS.statements bodyAnn
+    -- Get the body errors.
+    bodyErrs = errs $ AS.routBodyAnnot bodyAnn
+    -- Check if the routine body contains a return statement for every flow of control.
+    thsAlwaysReturn = any (alwaysReturn . AS.annot) (AS.statements bodyAnn)
+    doNotAlwaysReturnErr = if thsAlwaysReturn
+        then []
+        else [E.err pos "The function does not contain a return statement for every flow of control."]
+    -- Create the annotation.
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Fun pos params ty)],
-        errs = declsErrs ++ stmtsErrs
+        errs = bodyErrs ++ doNotAlwaysReturnErr
     }
 annRoutine env AS.Procedure {
     AS.routName = ident,
@@ -173,13 +180,20 @@ annRoutine env AS.Procedure {
 } where
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
     paramEnv = envFromSymbolBindings paramBindings
-    newEnv = mergeEnv env paramEnv
+    newEnv = addReturn (mergeEnv env paramEnv) Nothing
+    -- Annotate the body with the new environment.
     bodyAnn = annRoutBody newEnv body
-    declsErrs = errs $ AS.declsAnnot $ AS.declarations bodyAnn
-    stmtsErrs = [] -- TODO: concatMap errs (map AS.stmtAnnot $ AS.statements bodyAnn)
+    -- Get the body errors.
+    bodyErrs = errs $ AS.routBodyAnnot bodyAnn
+    -- Check if the routine body contains a return statement for every flow of control.
+    thsAlwaysReturn = any (alwaysReturn . AS.annot) (AS.statements bodyAnn)
+    doNotAlwaysReturnErr = if thsAlwaysReturn
+        then []
+        else [E.err pos "The procedure does not contain a return statement for every flow of control."]
+    -- Create the annotation.
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Proc pos params)],
-        errs = declsErrs ++ stmtsErrs
+        errs = bodyErrs ++ doNotAlwaysReturnErr
     }
 
 -- Annotate a routine body.
@@ -189,7 +203,21 @@ annRoutBody env AS.RoutBody {
     AS.statements = stmts
 } = AS.RoutBody {
     AS.declarations = declsAnn,
-    AS.statements = map (annStmt declEnv) stmts
+    AS.statements = stmtsAnn,
+    AS.routBodyAnnot = ann
 } where
+    -- Annotate the declarations and get the environment.
     declsAnn = annDecls env decls
     declEnv = bindings $ AS.declsAnnot declsAnn
+    -- Annotate the statements with the environment of the declarations.
+    stmtsAnn = map (annStmt declEnv) stmts
+    -- Errs from the declarations.
+    declErrs = errs $ AS.declsAnnot declsAnn
+    -- Errs from the statements.
+    stmtsErrs = concatMap (errs . AS.annot) stmtsAnn
+    -- Create the annotation.
+    ann = StmtAnn {
+        errs = declErrs ++ stmtsErrs,
+        -- Check if at least a statement always returns.
+        alwaysReturn = any (alwaysReturn . AS.annot) stmtsAnn
+    }

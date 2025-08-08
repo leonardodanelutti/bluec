@@ -15,32 +15,48 @@ import qualified PrettyPrinter  as PP
 -- to disambiguate between a variable and a function call.
 data Env = Env {
         symbols :: Map.Map AS.Ident SymbolEntry,
-        routines :: Map.Map AS.Ident RoutEntry
+        routines :: Map.Map AS.Ident RoutEntry,
+        keywords :: Map.Map String KeywordEntry
     }
     deriving (Show)
 
 data SymbolEntry
-    = Var LG.Posn T.TypePos (Maybe AS.Mode)
+    = Var LG.Posn T.TypePos (Maybe AS.Mode) -- TODO: a cosa serve Posn per var? Perchè TypePos e non Type?
     | Const AS.Literal
     deriving (Show)
 
-data RoutEntry
+data RoutEntry -- TODO: serve la posizione?
     = Fun LG.Posn [AS.Param] T.TypePos
     | Proc LG.Posn [AS.Param]
     deriving (Show)
 
+data KeywordEntry
+    -- If present specifies the return type. Cases:
+    -- - It is not present in the environment: return keyword is not permitted.
+    -- - It is present and bool is True: at least one return keyword is necessary.
+    -- - It is present and bool is False: return keyword is not necessary, but permitted.
+    = Return (Maybe T.Type)
+    | Continue
+    deriving (Show)
+
 emptyEnv :: Env
-emptyEnv = Env Map.empty Map.empty
+emptyEnv = Env Map.empty Map.empty Map.empty
 
 -- Merge two environments. In case of clashes, the second environment overrides the first.
 mergeEnv :: Env -> Env -> Env
-mergeEnv (Env s1 r1) (Env s2 r2) = Env (Map.union s2 s1) (Map.union r2 r1)
+mergeEnv (Env s1 r1 k1) (Env s2 r2 k2) = Env (Map.union s2 s1) (Map.union r2 r1) (Map.union k2 k1)
 
 envFromSymbolBindings :: [(AS.Ident, SymbolEntry)] -> Env
-envFromSymbolBindings bindings = Env (Map.fromList bindings) Map.empty
+envFromSymbolBindings bindings = Env (Map.fromList bindings) Map.empty Map.empty
 
 envFromRoutBindings :: [(AS.Ident, RoutEntry)] -> Env
-envFromRoutBindings bindings = Env Map.empty (Map.fromList bindings)
+envFromRoutBindings bindings = Env Map.empty (Map.fromList bindings) Map.empty
+
+addContinue :: Env -> Env
+addContinue env = env { keywords = Map.insert "continue" Continue (keywords env) }
+
+addReturn :: Env -> Maybe T.Type -> Env
+addReturn env mType = env { keywords = Map.insert "return" (Return mType) (keywords env) }
 
 -- Datatype for static semantics analysis module annotations (on the AST).
 data Ann
@@ -49,9 +65,9 @@ data Ann
         ctVal :: Maybe CTValue
         -- TODO: other fileds
     }
-    | RoutCallAnn {
+    | FunCallAnn {
         expType :: T.Type,
-        params :: [AS.Param] -- Parameters passed to the routine call
+        params :: [AS.Param] -- Parameters passed to the function call
     }
     | IdentAnn {
         expType :: T.Type,
@@ -64,7 +80,10 @@ data Ann
         errs :: [String]
     }
     | StmtAnn {
-        errs :: [String]
+        -- Errors of the tree rooted by the node with this annotation.
+        errs :: [String],
+        -- True if for each flow of control inside the node there is a return statement.
+        alwaysReturn :: Bool
     }
     deriving (Show)
 

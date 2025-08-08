@@ -110,7 +110,7 @@ routineCallPrinter (RoutineCall ident args _) =
 
 -- Corpo della routine
 routineBodyPrinter :: Show a => RoutBody a -> String
-routineBodyPrinter (RoutBody decls statements) =
+routineBodyPrinter (RoutBody decls statements _) =
     unlines $
         lines (declarationsPrinter decls) ++
         (if not (null statements)

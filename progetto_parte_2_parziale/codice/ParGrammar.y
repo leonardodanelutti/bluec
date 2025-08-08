@@ -236,7 +236,7 @@ ListParam
 
 RoutBody :: { A.RoutBody () }
 RoutBody
-  : 'is' Declarations 'do' ListStatement 'end' { A.RoutBody $2 $4 }
+  : 'is' Declarations 'do' ListStatement 'end' { A.RoutBody $2 $4 () }
 
 ListStatement :: { [A.Statement ()] }
 ListStatement

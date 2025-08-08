@@ -173,7 +173,7 @@ annExpRoutCall _ _ = error "Unreachable: `annExpRoutCall` called with non-`FunCa
 -- Helper function that creates an annotation for a routine call, and casts the arguments
 -- to the expected types.
 annRoutineCall :: Env -> AS.Ident -> [AnnExp] -> LG.Posn -> (Ann, [AnnExp])
-annRoutineCall env ident annArgs pos = (RoutCallAnn {
+annRoutineCall env ident annArgs pos = (FunCallAnn {
     expType = routType,
     params = params
 }, castedArgs) where
