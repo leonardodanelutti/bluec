@@ -15,7 +15,8 @@ data TACState = TACState {
     tempCount, labelCount :: Int,
     routineStack :: [TAC],
     currentStream :: TAC,
-    nextLabel :: Maybe Label
+    nextLabel :: Maybe Label,
+    loopLabelsStack :: [(Label, Label)]
 }
 
 out :: LabeledInstruction -> StateMonad ()
@@ -65,6 +66,31 @@ endRoutine = do
             St.put $ state { routineStack = rs,
                              currentStream = r ++ currentRoutine }
 
+newLoop :: StateMonad ()
+newLoop = do
+    state <- St.get
+    loopStart <- newLabel
+    loopEnd <- newLabel
+    attachToNext loopStart
+    -- Get updated state
+    state' <- St.get
+    St.put $ state' { loopLabelsStack = (loopStart, loopEnd) : loopLabelsStack state' }
+
+-- Only call when inside a loop
+getLoopLabels :: StateMonad (Label, Label)
+getLoopLabels = do
+    head . loopLabelsStack <$> St.get
+
+-- Only call when exiting a loop
+endLoop :: StateMonad ()
+endLoop = do
+    state <- St.get
+    let (_, loopEnd) : stack = loopLabelsStack state
+    attachToNext loopEnd
+    -- Get updated state
+    state' <- St.get
+    St.put $ state' { loopLabelsStack = stack }
+
 -- Entrypoint for TAC generation
 genProgram :: AS.Declarations SS.Ann -> TAC
 genProgram ast =
@@ -78,7 +104,8 @@ initState = TACState {
     labelCount = 0,
     routineStack = [],
     currentStream = [],
-    nextLabel = Nothing
+    nextLabel = Nothing,
+    loopLabelsStack = []
 }
 
 -- TAC generation functions
@@ -114,6 +141,11 @@ genExpr exp = do
         genLit (SS.CTVChar v)    = return $ Lit (LitChar v)
         genLit (SS.CTVBoolean v) = return $ Lit (LitBool v)
         genLit (SS.CTVString v)  = genString v
+        genLit (SS.CTVRef v)     = do
+            k <- newTmp
+            lit <- genLit v
+            out $ simpleInstruction (Ref k lit)
+            return k
 
 genString :: String -> StateMonad Address
 -- TODO: Strings are array of chars
@@ -328,40 +360,35 @@ genActualParams args ann procName =
             addr <- genExpr expr
 
             case AS.mode param of
-                AS.Mval -> do
-                    copy paramAddr addr paramType
-                    out $ simpleInstruction (Param paramAddr paramTACType)
+                AS.Mval -> case paramType of
+                    T.TString -> error "TODO: handle string"
+                    T.TArray {} -> do
+                        out $ simpleInstruction (ArrayGen paramAddr (T.getTypeSize paramType))
+                        copy paramAddr addr paramType
+                        out $ simpleInstruction (Param paramAddr paramTACType)
+                    _ -> do
+                        copy paramAddr addr paramType
+                        out $ simpleInstruction (Param paramAddr paramTACType)
                 -- Create a reference for value-result and reference
                 _ -> do
                     out $ simpleInstruction (Ref paramAddr addr)
                     out $ simpleInstruction (Param paramAddr paramTACType)
         ) exprs
 
-getMode :: SS.Ann -> Maybe AS.Mode
-getMode = error "TODO: replace this when mode is added to the annotation of Ident"
-
+-- copy data stored in the second address to the first address
 copy :: Address -> Address -> T.Type -> StateMonad ()
 copy newAddr prevAddr ty = case ty of
     T.TString -> error "TODO: implement copy for strings"
-    T.TArray elemType len -> do
-        out $ simpleInstruction (ArrayGen newAddr (T.getTypeSize ty))
-        copyArray newAddr prevAddr elemType len
-        where
-            copyArray :: Address -> Address -> T.Type -> Int -> StateMonad ()
-            copyArray newAddr prevAddr elemType len =
-                let elemSize = T.getTypeSize ty
-                    elemTACTy = castTypeToTACType elemType
-                in
-                mapM_ (\i -> do
-                    k <- newTmp
-                    out $ simpleInstruction (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
-                    copy' newAddr k elemType
-                )
-                [0..len]
-
-            copy' :: Address -> Address -> T.Type -> StateMonad ()
-            copy' newAddr prevAddr (T.TArray elemType len) = copyArray newAddr prevAddr elemType len
-            copy' a b c = copy a b c
+    T.TArray elemType len ->
+        let elemSize = T.getTypeSize ty
+            elemTACTy = castTypeToTACType elemType
+        in
+        mapM_ (\i -> do
+            k <- newTmp
+            out $ simpleInstruction (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
+            out $ simpleInstruction (IndexSet newAddr (Lit $ LitInt (i * elemSize)) k elemTACTy)
+            copy newAddr k elemType
+        ) [0..len]
 
     _ -> do
         out $ simpleInstruction (NOp newAddr prevAddr (castTypeToTACType ty))
@@ -407,4 +434,102 @@ genRoutineBody (AS.RoutBody decls stmts) post = do
     mapM_ (`genStmt` post) stmts
 
 genStmt :: AS.Statement SS.Ann -> TAC -> StateMonad ()
-genStmt = error "TODO: implement genStmt for all statements"
+genStmt stmt post = case stmt of
+    AS.StmtAss left right _ _ ->
+        mapM_ genAssign (zip left right)
+    AS.StmtRoutCall call ann -> if isFunction ann then
+            do
+                _ <- genFunCall call ann
+                return ()
+        else
+            genProcCall call ann
+    AS.StmtReturn val _ _-> do
+        addr <- genExpr val
+        -- Generate post-amble
+        mapM_ out post
+        out $ simpleInstruction (Return addr)
+    AS.StmtReturnEmpty _ _-> do
+        -- Generate post-amble
+        mapM_ out post
+        out $ simpleInstruction ReturnEmpty
+    AS.StmtLoop body exit _ _ -> do
+        newLoop
+        -- Generate first body
+        mapM_ (`genStmt` post) body
+        -- Generate the others (exit-condition, body) pairs
+        mapM_ (\(AS.LoopExit cond body _ _) -> do
+                -- TODO: Better way to generate condition using shortcut?
+                condAddr <- genExpr cond
+                (_, loopEnd) <- getLoopLabels
+                out $ simpleInstruction (BoolJumpT condAddr loopEnd)
+                mapM_ (`genStmt` post) body
+            ) exit
+        endLoop
+    AS.StmtContinue _ _ -> do
+        (loopStart, _) <- getLoopLabels
+        out $ simpleInstruction (UnJump loopStart)
+    AS.StmtIf cond body _ _ -> do
+        endLabel <- newLabel
+        -- TODO: Better way to generate condition using shortcut?
+        condAddr <- genExpr cond
+        out $ simpleInstruction (BoolJumpF condAddr endLabel)
+        mapM_ (`genStmt` post) body
+        attachToNext endLabel
+    AS.StmtIfElse cond bodyT bodyF _ _ -> do
+        elseLabel <- newLabel
+        endLabel <- newLabel
+        -- TODO: Better way to generate condition using shortcut?
+        condAddr <- genExpr cond
+        out $ simpleInstruction (BoolJumpF condAddr elseLabel)
+        mapM_ (`genStmt` post) bodyT
+        attachToNext elseLabel
+        out $ simpleInstruction (UnJump endLabel)
+        mapM_ (`genStmt` post) bodyF
+        attachToNext endLabel
+
+isFunction :: SS.Ann -> Bool
+isFunction = error "TODO: should be known by annotations"
+
+genAssign :: (AS.Exp SS.Ann, AS.Exp SS.Ann) -> StateMonad ()
+genAssign (left, right) =
+    let ty = getAssignType right in
+    case ty of
+        T.TArray {} -> do
+            lExprRes <- genExpr left
+            rExprRes <- genExpr right
+            copy lExprRes rExprRes ty
+        _ ->  do
+            lExprRes <- genLExpr left
+            rExprRes <- genExpr right
+            let tyTAC = castTypeToTACType $ getAssignType right
+            case lExprRes of
+                RefSet addr ->
+                    out $ simpleInstruction (DerefSet addr rExprRes tyTAC)
+                ArraySet addr idx ->
+                    out $ simpleInstruction (IndexSet addr idx rExprRes tyTAC)
+                Simple addr ->
+                    out $ simpleInstruction (NOp addr rExprRes tyTAC)
+
+getAssignType :: AS.Exp SS.Ann -> T.Type
+getAssignType = error "TODO: should be known by annotations"
+
+data LExprRes
+    = RefSet Address
+    | ArraySet Address Address
+    | Simple Address
+
+genLExpr :: AS.Exp SS.Ann -> StateMonad LExprRes
+genLExpr exp = case exp of
+    AS.ExpIdent name _ _ -> do
+        let identName = PName $ ProgramName (AS.identName name) "TODO: add routine name to variable"
+        return $ Simple identName
+    AS.Deref expr _ _ -> do
+        addr <- genExpr expr
+        return $ RefSet addr
+    AS.ArrayIndex expr index _ _ -> do
+        addr <- genExpr expr
+        idx <- genExpr index
+        return $ ArraySet addr idx
+    _ -> error "Unreachable, error thrown while parsing"
+
+
