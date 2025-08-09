@@ -146,7 +146,7 @@ annStmtReturnEmpty env AS.StmtReturnEmpty {
         _ -> [E.err pos "Return keyword is not permitted outside routines."]
     -- Create the annotation.
     ann = StmtAnn {
-        errs = [],
+        errs = returnErr,
         alwaysReturn = True
     }
 annStmtReturnEmpty _ _ = error "Unreachable: `annStmtReturnEmpty` called with non-`StmtReturnEmpty` expression."
