@@ -24,8 +24,7 @@ annStmt env stmt@AS.StmtReturnEmpty{} = annStmtReturnEmpty env stmt
 annStmt env stmt@AS.StmtContinue{} = annStmtContinue env stmt
 annStmt env stmt@AS.StmtIf{} = annStmtIf env stmt
 annStmt env stmt@AS.StmtIfElse{} = annStmtIfElse env stmt
-annStmt _ _ = error "TODO: Implement other statement types"
--- ...
+annStmt env stmt@AS.StmtLoop{} = annStmtLoop env stmt
 
 -- Annotate an assignment statement.
 annStmtAss :: Env -> Stmt -> AnnStmt
@@ -44,7 +43,7 @@ annStmtAss env AS.StmtAss {
     numberErr = if length left /= length right
                 then [E.err pos "The number of identifiers does not match number of values."]
                 else []
-    -- TODO: check that the left is a LExp?
+    -- TODO: check that the left is a LExp? FIXME: now a constant can be assigned as well which is not correct. Forse basta checkare che non abbia valore costante perchè tanto si preoccupa il parser di controllare che sia una LExp?
     -- Get expected types from the left expressions.
     leftTypes = map (expType . AS.expAnnot) annLeft
     -- Cast the right expressions to the expected types (when the expected type are non-errors).
@@ -152,7 +151,7 @@ annStmtReturnEmpty env AS.StmtReturnEmpty {
 annStmtReturnEmpty _ _ = error "Unreachable: `annStmtReturnEmpty` called with non-`StmtReturnEmpty` expression."
 
 annStmtContinue :: Env -> Stmt -> AnnStmt
-annStmtContinue env AS.StmtContinue {
+annStmtContinue env AS.StmtContinue { -- FIXME: gestire l'alwaysreturn dopo un continue. Al momento è sbagliato perchè non tengo conto del fatto che dopo il continue il codice non viene eseguito.
     AS.pos = pos
 } = AS.StmtContinue {
     AS.annot = ann,
@@ -250,6 +249,77 @@ annStmtIfElse env AS.StmtIfElse {
     }
 annStmtIfElse _ _ = error "Unreachable: `annStmtIfElse` called with non-`StmtIfElse` expression."
 
+-- Annotate a loop statement.
 annStmtLoop :: Env -> Stmt -> AnnStmt
--- TODO:
+annStmtLoop env AS.StmtLoop {
+    AS.body = body,
+    AS.exit = exit,
+    AS.pos = pos
+} = AS.StmtLoop {
+    AS.body = annBody,
+    AS.exit = annExit,
+    AS.annot = ann,
+    AS.pos = pos
+} where
+    -- Add the `continue` keyword to the environment.
+    env' = addContinue env
+    -- Annotate the body.
+    annBody = map (annStmt env') body
+    -- Get the errors from the body.
+    bodyErrs = concatMap (errs . AS.annot) annBody
+    -- Check if the body always returns.
+    bodyAlwaysReturn = any (alwaysReturn . AS.annot) annBody
+    -- Annotate the exit.
+    exitResults = map (annLoopExit env') exit
+    (annExit, _) = unzip exitResults
+    -- Get the errors from the exit.
+    exitErrs = concatMap (errs . AS.loopExitAnnot) annExit
+    -- Get only the statements before the first exit whose condition is always false (i.e. take while conditions are true).
+    neverExits = map fst $ takeWhile (\(_, condCTValBool) -> case condCTValBool of
+        Just False -> True
+        _ -> False) exitResults
+    -- Check if the exit always returns.
+    exitAlwaysReturn = any (alwaysReturn . AS.loopExitAnnot) neverExits
+    -- Create the annotation.
+    ann = StmtAnn {
+        errs = bodyErrs ++ exitErrs,
+        alwaysReturn = bodyAlwaysReturn || exitAlwaysReturn
+    }
 annStmtLoop _ _ = error "Unreachable: `annStmtLoop` called with non-`StmtLoop` expression."
+
+-- Annotate an exit statement.
+annLoopExit :: Env -> AS.Exit () -> (AS.Exit Ann, Maybe Bool)
+annLoopExit env AS.LoopExit {
+    AS.loopCond = cond,
+    AS.loopBody = body,
+    AS.loopExitPos = pos
+} = (AS.LoopExit {
+    AS.loopCond = castedCond,
+    AS.loopBody = annBody,
+    AS.loopExitAnnot = ann,
+    AS.loopExitPos = pos
+}, condCTValBool) where
+    -- Annotate the condition.
+    annCond = SSE.annExp env cond
+    -- Cast the condition to a boolean type.
+    castedCond = SSE.cast annCond T.TBoolean
+    -- Get the errors from the condition.
+    condErrs = T.getErrs [expType (AS.expAnnot castedCond)]
+    -- Condition compile-time value.
+    condCTVal = getCTValue $ AS.expAnnot castedCond
+    -- Annotate the body.
+    annBody = map (annStmt env) body
+    -- Body errors.
+    bodyErrs = concatMap (errs . AS.annot) annBody
+    -- Check if the body always returns.
+    bodyAlwaysReturn = any (alwaysReturn . AS.annot) annBody
+    -- Always returns?
+    (condCTValBool, thisAlwaysReturn) = case condCTVal of
+            Just (CTVBoolean v) -> (Just v, (not v) && bodyAlwaysReturn)
+            Nothing -> (Nothing, False) -- We cannot determine if the exit is false at least once in order to exit the loop.
+            _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
+    -- Create the annotation.
+    ann = StmtAnn {
+        errs = condErrs ++ bodyErrs,
+        alwaysReturn = thisAlwaysReturn
+    }
