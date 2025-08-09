@@ -11,13 +11,13 @@ instance Show LabeledInstruction where
     show (LabeledInstruction (Just label) inst) = 
         let labelStr = case label of
                 Loc n -> "L" ++ show n ++ ":"
-                Function name -> name ++ ":\n" 
+                Function name -> "\n" ++ name ++ ":\n" 
         in labelStr ++ replicate (6 - length labelStr) ' ' ++ show inst
 
 instance Show Instruction where
     show inst = case inst of
         BOp l op r1 r2 ty ->
-            show l ++ " =(" ++ show ty ++ ") " ++ " " ++ show r1 ++ show op ++ " " ++ show r2
+            show l ++ " =(" ++ show ty ++ ") " ++ show r1 ++ " " ++ show op ++ " " ++ show r2
         UOp l op r ty ->
             show l ++ " =(" ++ show ty ++ ") " ++ show op ++ " " ++ show r
         NOp l r ty ->

@@ -19,16 +19,20 @@ data TACState = TACState {
     loopLabelsStack :: [(Label, Label)]
 }
 
-out :: LabeledInstruction -> StateMonad ()
-out instr = do
+
+outLabeled :: LabeledInstruction -> StateMonad ()
+outLabeled instrLab = do
     state <- St.get
     --
     let -- Add pending label
-        instr' = case nextLabel state of
-            Just label -> instr { label = Just label }
-            Nothing    -> instr
-        newStream = instr' : currentStream state
+        instrLab' = case nextLabel state of
+            Just label -> instrLab { label = Just label }
+            Nothing    -> instrLab
+        newStream = instrLab' : currentStream state
     St.put $ state { currentStream = newStream, nextLabel = Nothing }
+
+out :: Instruction -> StateMonad ()
+out instr = outLabeled $ simpleInstruction instr 
 
 newTmp :: StateMonad Address
 newTmp = do
@@ -68,13 +72,11 @@ endRoutine = do
 
 newLoop :: StateMonad ()
 newLoop = do
-    state <- St.get
     loopStart <- newLabel
     loopEnd <- newLabel
     attachToNext loopStart
-    -- Get updated state
-    state' <- St.get
-    St.put $ state' { loopLabelsStack = (loopStart, loopEnd) : loopLabelsStack state' }
+    state <- St.get
+    St.put $ state { loopLabelsStack = (loopStart, loopEnd) : loopLabelsStack state }
 
 -- Only call when inside a loop
 getLoopLabels :: StateMonad (Label, Label)
@@ -92,6 +94,7 @@ endLoop = do
     St.put $ state' { loopLabelsStack = stack }
 
 -- Entrypoint for TAC generation
+
 genProgram :: AS.Declarations SS.Ann -> TAC
 genProgram ast =
     let finalState = St.execState (genDeclarations ast) initState
@@ -124,7 +127,7 @@ genVar (AS.VarAss idents ty values _ _) =
         addr <- genExpr exp
         let tyTAC = castTypeToTACType $ T.type_ ty
             name = PName $ ProgramName (AS.identName ident) "TODO: add routine name to variable"
-        out $ LabeledInstruction Nothing (NOp name addr tyTAC)
+        out (NOp name addr tyTAC)
 
 genExpr :: AS.Exp SS.Ann -> StateMonad Address
 genExpr exp = do
@@ -144,7 +147,7 @@ genExpr exp = do
         genLit (SS.CTVRef v)     = do
             k <- newTmp
             lit <- genLit v
-            out $ simpleInstruction (Ref k lit)
+            out (Ref k lit)
             return k
 
 genString :: String -> StateMonad Address
@@ -157,14 +160,14 @@ genUnknownExpr exp = do
         AS.BoolNeg e _ _ -> do
             k <- newTmp
             addr <- genExpr e
-            out $ simpleInstruction (UOp k BoolNeg addr TBoolean)
+            out (UOp k BoolNeg addr TBoolean)
             return addr
 
         AS.Sign e ann _ -> do
             k <- newTmp
             addr <- genExpr e
             let ty = castTypeToTACType $ SS.expType ann
-            out $ simpleInstruction (UOp k (Sign ty) addr ty)
+            out (UOp k (Sign ty) addr ty)
             return addr
 
         AS.BinOp AS.Or e1 e2 _ _ -> do
@@ -182,7 +185,7 @@ genUnknownExpr exp = do
             addr2 <- genExpr e2
             let tacOp = castBinOpToTACOp binOp (SS.expType ann)
                 ty = castTypeToTACType $ SS.expType ann
-            out $ simpleInstruction (BOp k tacOp addr1 addr2 ty)
+            out (BOp k tacOp addr1 addr2 ty)
             return k
 
         AS.RelOp relOp e1 e2 _ _ -> genRepOp relOp e1 e2
@@ -190,7 +193,7 @@ genUnknownExpr exp = do
         AS.Ref e _ _ -> do
             k <- newTmp
             addr <- genExpr e
-            out $ simpleInstruction (Ref k addr)
+            out (Ref k addr)
             return k
 
         -- Already handled by genExpr
@@ -205,7 +208,7 @@ genUnknownExpr exp = do
             k <- newTmp
             addr <- genExpr e
             let ty = castTypeToTACType $ SS.expType ann
-            out $ simpleInstruction (DerefGet k addr ty)
+            out (DerefGet k addr ty)
             return k
 
         AS.ArrayIndex e index ann _ -> do
@@ -215,11 +218,13 @@ genUnknownExpr exp = do
             let elemSize = T.getTypeSize $ SS.expType $ AS.expAnnot e
                 ty = castTypeToTACType $ SS.expType ann
             if elemSize == 1 then do
-                out $ simpleInstruction (IndexGet k addr indexAddr ty)
+                out (IndexGet k addr indexAddr ty)
             else do
                 -- If the element size is not 1, we need to multiply the index by the element size
-                out $ simpleInstruction (BOp indexAddr (Mul TInteger) indexAddr (Lit $ LitInt elemSize) TInteger)
-                out $ simpleInstruction (IndexGet k addr indexAddr ty)
+                indexShift <- newTmp
+                -- TODO: If indexAddr is a literal, we can optimize this
+                out (BOp indexShift (Mul TInteger) indexAddr (Lit $ LitInt elemSize) TInteger)
+                out (IndexGet k addr indexShift ty)
 
             return k
 
@@ -233,12 +238,12 @@ genUnknownExpr exp = do
                 -- the "'" and a dereference is made
                 Just AS.Mvalres -> do
                     k <- newTmp
-                    out $ simpleInstruction (DerefGet k identName' tyTAC)
+                    out (DerefGet k identName' tyTAC)
                     return k
                 -- Identifiers that are passes by reference are dereferenced before being used
                 Just AS.Mref -> do
                     k <- newTmp
-                    out $ simpleInstruction (DerefGet k identName tyTAC)
+                    out (DerefGet k identName tyTAC)
                     return k
 
                 Just AS.Mval -> return identName
@@ -250,21 +255,27 @@ genUnknownExpr exp = do
 
         AS.ExpIdent {} -> error "Unreachable"
 
+        -- TODO: When we write something like `A := Array[1,2]`, it generates:
+        -- genArray t0, 8
+        -- t0[0] := 1
+        -- t0[4] := 2
+        -- Maybe we shouldn't generate a temporary variable here?
+        -- Same for AS.Ref
         AS.Array elements ann _ -> do
             k <- newTmp
             let arrSize  = T.getTypeSize $ SS.expType ann
-            out $ simpleInstruction (ArrayGen k arrSize)
+            out (ArrayGen k arrSize)
             genArray elements k
 
             where
                 genArray :: [AS.Exp SS.Ann] -> Address -> StateMonad Address
                 genArray elements k = do
-                    let elemSize = T.getTypeSize  $ T.elementsType $ SS.expType ann
-                        tyTAC = castTypeToTACType $ T.elementsType $ SS.expType ann
+                    let elemSize = T.getTypeSize  $ T.elementsType $ SS.expType ann -- 8
+                        tyTAC = castTypeToTACType $ T.elementsType $ SS.expType ann -- addr
                     mapM_
                         (\(i, e) -> do
                             addr <- genExpArray e k
-                            out $ simpleInstruction (IndexSet k (Lit $ LitInt (i * elemSize)) addr tyTAC))
+                            out (IndexSet k (Lit $ LitInt (i * elemSize)) addr tyTAC))
                         (zip [0..] elements)
                     return k
 
@@ -284,22 +295,22 @@ genUnknownExpr exp = do
                     -- TODO: Char to String?
                     _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
                 newTypeTAC = castTypeToTACType newType
-            out $ simpleInstruction (UOp k (Coer cast) addr newTypeTAC)
+            out (UOp k (Coer cast) addr newTypeTAC)
             return k
 
 genBinExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genBinExp op tmp e1 e2 = do
     -- left to right evaluation
     addr1 <- genExpr' e1
-    out $ simpleInstruction (NOp tmp addr1 TBoolean)
+    out (NOp tmp addr1 TBoolean)
     label <- newLabel
     let instr = case op of
             AS.Or -> BoolJumpF tmp label
             AS.And -> BoolJumpT tmp label
             _ -> error "Only Or and And operations should be passed to genBinExp"
-    out $ simpleInstruction instr
+    out instr
     addr2 <- genExpr' e2
-    out $ simpleInstruction (NOp tmp addr2 TBoolean)
+    out (NOp tmp addr2 TBoolean)
     attachToNext label
     return tmp
     where
@@ -321,7 +332,7 @@ genRepOp relOp e1 e2 = do
         T.TReference {} -> error "TODO:"
         _ -> let tacRelOp = castRelOpToTACOp relOp ty
              in do
-                out $ simpleInstruction (BOp k tacRelOp addr1 addr2 TBoolean)
+                out (BOp k tacRelOp addr1 addr2 TBoolean)
     return k
 
 genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad Address
@@ -336,7 +347,7 @@ genFunCall (AS.RoutineCall routName args _) ann = do
         T.TArray {} -> error "TODO: handle array return types"
         T.TString -> error "TODO: handle string return types"
         -- Ref cannot be returned by a function
-        _ -> out $ simpleInstruction (FunCall k routLab numArgs ty)
+        _ -> out (FunCall k routLab numArgs ty)
     return k
 
 genProcCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad ()
@@ -344,7 +355,7 @@ genProcCall (AS.RoutineCall routName args _) ann = do
     genActualParams args ann (AS.identName routName)
     let routLab = Function $ AS.identName routName
         numArgs = length args
-    out $ simpleInstruction (ProcCall routLab numArgs)
+    out (ProcCall routLab numArgs)
 
 genActualParams ::  [AS.Exp SS.Ann] -> SS.Ann -> String -> StateMonad ()
 genActualParams args ann procName =
@@ -363,16 +374,16 @@ genActualParams args ann procName =
                 AS.Mval -> case paramType of
                     T.TString -> error "TODO: handle string"
                     T.TArray {} -> do
-                        out $ simpleInstruction (ArrayGen paramAddr (T.getTypeSize paramType))
+                        out (ArrayGen paramAddr (T.getTypeSize paramType))
                         copy paramAddr addr paramType
-                        out $ simpleInstruction (Param paramAddr paramTACType)
+                        out (Param paramAddr paramTACType)
                     _ -> do
                         copy paramAddr addr paramType
-                        out $ simpleInstruction (Param paramAddr paramTACType)
+                        out (Param paramAddr paramTACType)
                 -- Create a reference for value-result and reference
                 _ -> do
-                    out $ simpleInstruction (Ref paramAddr addr)
-                    out $ simpleInstruction (Param paramAddr paramTACType)
+                    out (Ref paramAddr addr)
+                    out (Param paramAddr paramTACType)
         ) exprs
 
 -- copy data stored in the second address to the first address
@@ -385,13 +396,13 @@ copy newAddr prevAddr ty = case ty of
         in
         mapM_ (\i -> do
             k <- newTmp
-            out $ simpleInstruction (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
-            out $ simpleInstruction (IndexSet newAddr (Lit $ LitInt (i * elemSize)) k elemTACTy)
+            out (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
+            out (IndexSet newAddr (Lit $ LitInt (i * elemSize)) k elemTACTy)
             copy newAddr k elemType
         ) [0..len]
 
     _ -> do
-        out $ simpleInstruction (NOp newAddr prevAddr (castTypeToTACType ty))
+        out (NOp newAddr prevAddr (castTypeToTACType ty))
 
 
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()
@@ -415,7 +426,7 @@ genParamsPre params routName = let paramsValRes = filter (\p -> AS.mode p == AS.
             let name = PName $ ProgramName (AS.identName ident) routName
                 name' = PName $ ProgramName (AS.identName ident ++ "'") routName
                 tyTAC = castTypeToTACType $ T.type_ ty
-            out $ simpleInstruction (DerefGet name' name tyTAC)
+            out (DerefGet name' name tyTAC)
     ) paramsValRes
 
 genParamsPost :: [AS.Param] -> String -> TAC
@@ -446,12 +457,12 @@ genStmt stmt post = case stmt of
     AS.StmtReturn val _ _-> do
         addr <- genExpr val
         -- Generate post-amble
-        mapM_ out post
-        out $ simpleInstruction (Return addr)
+        mapM_ outLabeled post
+        out (Return addr)
     AS.StmtReturnEmpty _ _-> do
         -- Generate post-amble
-        mapM_ out post
-        out $ simpleInstruction ReturnEmpty
+        mapM_ outLabeled post
+        out ReturnEmpty
     AS.StmtLoop body exit _ _ -> do
         newLoop
         -- Generate first body
@@ -461,18 +472,18 @@ genStmt stmt post = case stmt of
                 -- TODO: Better way to generate condition using shortcut?
                 condAddr <- genExpr cond
                 (_, loopEnd) <- getLoopLabels
-                out $ simpleInstruction (BoolJumpT condAddr loopEnd)
+                out (BoolJumpT condAddr loopEnd)
                 mapM_ (`genStmt` post) body
             ) exit
         endLoop
     AS.StmtContinue _ _ -> do
         (loopStart, _) <- getLoopLabels
-        out $ simpleInstruction (UnJump loopStart)
+        out (UnJump loopStart)
     AS.StmtIf cond body _ _ -> do
         endLabel <- newLabel
         -- TODO: Better way to generate condition using shortcut?
         condAddr <- genExpr cond
-        out $ simpleInstruction (BoolJumpF condAddr endLabel)
+        out (BoolJumpF condAddr endLabel)
         mapM_ (`genStmt` post) body
         attachToNext endLabel
     AS.StmtIfElse cond bodyT bodyF _ _ -> do
@@ -480,10 +491,10 @@ genStmt stmt post = case stmt of
         endLabel <- newLabel
         -- TODO: Better way to generate condition using shortcut?
         condAddr <- genExpr cond
-        out $ simpleInstruction (BoolJumpF condAddr elseLabel)
+        out (BoolJumpF condAddr elseLabel)
         mapM_ (`genStmt` post) bodyT
         attachToNext elseLabel
-        out $ simpleInstruction (UnJump endLabel)
+        out (UnJump endLabel)
         mapM_ (`genStmt` post) bodyF
         attachToNext endLabel
 
@@ -504,11 +515,11 @@ genAssign (left, right) =
             let tyTAC = castTypeToTACType $ getAssignType right
             case lExprRes of
                 RefSet addr ->
-                    out $ simpleInstruction (DerefSet addr rExprRes tyTAC)
+                    out (DerefSet addr rExprRes tyTAC)
                 ArraySet addr idx ->
-                    out $ simpleInstruction (IndexSet addr idx rExprRes tyTAC)
+                    out (IndexSet addr idx rExprRes tyTAC)
                 Simple addr ->
-                    out $ simpleInstruction (NOp addr rExprRes tyTAC)
+                    out (NOp addr rExprRes tyTAC)
 
 getAssignType :: AS.Exp SS.Ann -> T.Type
 getAssignType = error "TODO: should be known by annotations"

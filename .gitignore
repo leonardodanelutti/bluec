@@ -13,3 +13,4 @@ grammar
 ParGrammar.hs
 LexGrammar.hs
 TestGrammar
+/.vscode
