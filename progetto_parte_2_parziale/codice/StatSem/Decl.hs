@@ -32,7 +32,7 @@ annDecls env AS.ProgramDecl {
     routinesAnn = annRoutines inEnvRoutines routines
     inEnvConsts = mergeEnv env outEnvRoutines
     inEnvVars = mergeEnv env $ mergeEnv outEnvConsts outEnvRoutines
-    inEnvRoutines = mergeEnv env $ mergeEnv outEnvVars outEnvRoutines
+    inEnvRoutines = mergeEnv env $ mergeEnv inEnvVars outEnvVars
     outEnvConsts = constAsEnv constsAnn -- Local environment of constants.
     outEnvVars = varAsEnv varsAnn -- Local environment of variables.
     outEnvRoutines = routinesEnv routinesAnn -- Local environment of routines.

@@ -116,7 +116,7 @@ annStmtReturn env AS.StmtReturn {
     (returnType, returnErr) = case returnEntry of
         Just (Return (Just t)) -> (Just t, [])
         Just (Return Nothing) -> (Nothing, [E.err pos "Procedures cannot return a value."]) -- TODO: forse non si capisce bene l'errore
-        Nothing -> (Nothing, [E.err pos "Return keyword is not permitted outside routines."])
+        _ -> (Nothing, [E.err pos "Return keyword is not permitted outside routines."])
     -- Cast the return value to the expected type.
     castedRet = case returnType of
         Just t -> SSE.cast annRet t
@@ -187,7 +187,7 @@ annStmtIf env AS.StmtIf {
     -- Get the errors from the condition.
     condErrs = T.getErrs $ [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
-    condCTVal = getCTValue $ AS.expAnnot annCond
+    condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the body.
     annBody = map (annStmt env) body
     -- Body always returns?
@@ -198,6 +198,7 @@ annStmtIf env AS.StmtIf {
     thisAlwaysReturn = case condCTVal of
         Just (CTVBoolean v) -> v && bodyAlwaysReturn -- TODO: maybe warn that the `If` statement is useless because the condition is always true or false.
         Nothing -> False
+        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
@@ -225,7 +226,7 @@ annStmtIfElse env AS.StmtIfElse {
     -- Get the errors from the condition.
     condErrs = T.getErrs $ [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
-    condCTVal = getCTValue $ AS.expAnnot annCond
+    condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the true branch.
     annBodyT = map (annStmt env) bodyT
     -- Annotate the false branch.
@@ -241,6 +242,7 @@ annStmtIfElse env AS.StmtIfElse {
     thisAlwaysReturn = case condCTVal of
         Just (CTVBoolean v) -> (v && bodyTAlwaysReturn) || ((not v) && bodyFAlwaysReturn) -- TODO: warn that the `If` or `Else` are unreachable if the condition is constant.
         Nothing -> bodyTAlwaysReturn && bodyFAlwaysReturn
+        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyTErrs ++ bodyFErrs,

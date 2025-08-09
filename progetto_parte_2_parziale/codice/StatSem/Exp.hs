@@ -49,12 +49,10 @@ getTypeAndValue (AS.LitDouble v _) = (T.TReal, CTVReal v)
 -- - The `Param`s must have a valid type (not `TError`).
 castParamTypes :: [AS.Param] -> [AS.Exp Ann] -> [AS.Exp Ann]
 castParamTypes [] [] = []
-castParamTypes (AS.Param { AS.paramType = T.TypePos { T.type_ = T.TError {} } } : ps) _ =
+castParamTypes (AS.Param { AS.paramType = T.TypePos { T.type_ = T.TError {} } } : _) _ =
     error "Unreachable: `castParamTypes` called with an error type in the parameter list." -- Unreachable if Param comes from the parser.
 castParamTypes (AS.Param { AS.paramType = T.TypePos { T.type_ = paramType } } : ps) (arg : args) =
     cast arg paramType : castParamTypes ps args
-    where
-        argType = expType $ AS.expAnnot arg
 castParamTypes _ _ = error "Unreachable: `castParamTypes` called with different number of parameters and arguments."
 
 -- Cast an annotated expression to a specific type.
@@ -117,7 +115,7 @@ annExpIdent env AS.ExpIdent {
     ann = case (symbolType, routineType) of
         -- Identifier not found.
         (Nothing, Nothing) -> IdentAnn {
-            expType = T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ show ident ++ "."] },
+            expType = T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ PP.identPrinter ident ++ "."] },
             ctVal = Nothing,
             identCategory = ErrorCategory,
             mode = Nothing
