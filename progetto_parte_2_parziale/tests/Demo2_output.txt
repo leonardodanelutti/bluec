@@ -4,13 +4,9 @@ example 1: generic test
 
 Parse Successful!
 
-[Abstract Syntax]
-
-ProgramDecl {consts = [ConstAss {constIdents = [Ident {identName = "a", identPos = Pn (PnS 7 2 9) (PnS 8 2 10)},Ident {identName = "d", identPos = Pn (PnS 10 2 12) (PnS 11 2 13)}], constType = TypePos {type_ = TInteger, typePosn = Pn (PnS 14 2 16) (PnS 21 2 23)}, constValues = [Literal {val = LitInt {intVal = 0, litPos = Pn (PnS 25 2 27) (PnS 26 2 28)}, expAnnot = ExpAnn {expType = TInteger, ctVal = Just (CTVInteger 0)}, expPos = Pn (PnS 25 2 27) (PnS 26 2 28)},Literal {val = LitInt {intVal = 1, litPos = Pn (PnS 28 2 30) (PnS 29 2 31)}, expAnnot = ExpAnn {expType = TInteger, ctVal = Just (CTVInteger 1)}, expPos = Pn (PnS 28 2 30) (PnS 29 2 31)}], constAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = Pn (PnS 7 2 9) (PnS 8 2 10)},Const (LitInt {intVal = 0, litPos = Pn (PnS 25 2 27) (PnS 26 2 28)})),(Ident {identName = "d", identPos = Pn (PnS 10 2 12) (PnS 11 2 13)},Const (LitInt {intVal = 1, litPos = Pn (PnS 28 2 30) (PnS 29 2 31)}))], routines = fromList []}, errs = []}, constPos = Pn (PnS 7 2 9) (PnS 29 2 31)}], vars = [VarAss {varIdents = [Ident {identName = "_b", identPos = Pn (PnS 36 4 9) (PnS 38 4 11)}], varType = TypePos {type_ = TReal, typePosn = Pn (PnS 41 4 14) (PnS 45 4 18)}, varValues = [Literal {val = LitDouble {doubleVal = 1.0, litPos = Pn (PnS 49 4 22) (PnS 52 4 25)}, expAnnot = ExpAnn {expType = TReal, ctVal = Just (CTVReal 1.0)}, expPos = Pn (PnS 49 4 22) (PnS 52 4 25)}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "_b", identPos = Pn (PnS 36 4 9) (PnS 38 4 11)},Var (Pn (PnS 36 4 9) (PnS 52 4 25)) (TypePos {type_ = TReal, typePosn = Pn (PnS 41 4 14) (PnS 45 4 18)}))], routines = fromList []}, errs = []}, varPos = Pn (PnS 36 4 9) (PnS 52 4 25)},VarAss {varIdents = [Ident {identName = "x", identPos = Pn (PnS 55 5 9) (PnS 56 5 10)}], varType = TypePos {type_ = TInteger, typePosn = Pn (PnS 59 5 13) (PnS 66 5 20)}, varValues = [Literal {val = LitInt {intVal = 42, litPos = Pn (PnS 70 5 24) (PnS 72 5 26)}, expAnnobluec: StatSem/Exp.hs:(19,1)-(23,47): Non-exhaustive patterns in function annExp
-
-HasCallStack backtrace:
-  collectBacktraces, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:92:13 in ghc-internal:GHC.Internal.Exception
-  toExceptionWithBacktrace, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:84:32 in ghc-internal:GHC.Internal.Exception
-  throw, called at libraries/ghc-internal/src/GHC/Internal/Control/Exception/Base.hs:422:30 in ghc-internal:GHC.Internal.Control.Exception.Base
-
-
+Static Semantics Analysis Failed:
+../tests/testCase2.blue:11:32-11:33: ERROR: Unbound identifier: c.
+../tests/testCase2.blue:15:17-15:18: ERROR: Unbound identifier: b.
+../tests/testCase2.blue:23:17-23:27: ERROR: Unused return of the function call __util__().
+../tests/testCase2.blue:23:17-23:27: ERROR: Wrong number of arguments in routine call: __util__(). Expected 1 but got 0.
+../tests/testCase2.blue:9:9-25:13: ERROR: The procedure does not contain a return statement for every flow of control.

@@ -91,9 +91,11 @@ Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzional
 
 == Tipi
 Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String`#footnote[#cite( <implementazione-compilatori-imperativi>, form:"full" ), p. 3.3] e `Char`.
-Sono inoltre supportati gli arrayche sono dichiarati utilizzando nel modo seguente: `Array< Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array.
+Sono inoltre supportati gli array che sono dichiarati utilizzando nel modo seguente: `Array<Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array. Infine vi sono i puntatori, che sono dichiarati con la sintassi `&Type`.
 
 === Type system
+Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:
+#image("img/types.jpg", width: 100%)
 
 ==== Expression
 
