@@ -4,13 +4,9 @@ example 1: generic test
 
 Parse Successful!
 
-[Abstract Syntax]
-
-ProgramDecl {consts = [ConstAss {constIdents = [Ident {identName = "a", identPos = Pn (PnS 11 2 5) (PnS 12 2 6)},Ident {identName = "d", identPos = Pn (PnS 14 2 8) (PnS 15 2 9)}], constType = TypePos {type_ = TInteger, typePosn = Pn (PnS 17 2 11) (PnS 24 2 18)}, constValues = [Literal {val = LitInt {intVal = 0, litPos = Pn (PnS 28 2 22) (PnS 29 2 23)}, expAnnot = ExpAnn {expType = TInteger, ctVal = Just (CTVInteger 0)}, expPos = Pn (PnS 28 2 22) (PnS 29 2 23)},Literal {val = LitInt {intVal = 1, litPos = Pn (PnS 31 2 25) (PnS 32 2 26)}, expAnnot = ExpAnn {expType = TInteger, ctVal = Just (CTVInteger 1)}, expPos = Pn (PnS 31 2 25) (PnS 32 2 26)}], constAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = Pn (PnS 11 2 5) (PnS 12 2 6)},Const (LitInt {intVal = 0, litPos = Pn (PnS 28 2 22) (PnS 29 2 23)})),(Ident {identName = "d", identPos = Pn (PnS 14 2 8) (PnS 15 2 9)},Const (LitInt {intVal = 1, litPos = Pn (PnS 31 2 25) (PnS 32 2 26)}))], routines = fromList []}, errs = []}, constPos = Pn (PnS 11 2 5) (PnS 32 2 26)}], vars = [VarAss {varIdents = [Ident {identName = "_b", identPos = Pn (PnS 44 4 5) (PnS 46 4 7)}], varType = TypePos {type_ = TReal, typePosn = Pn (PnS 47 4 8) (PnS 51 4 12)}, varValues = [Literal {val = LitDouble {doubleVal = 1.0, litPos = Pn (PnS 55 4 16) (PnS 58 4 19)}, expAnnot = ExpAnn {expType = TReal, ctVal = Just (CTVReal 1.0)}, expPos = Pn (PnS 55 4 16) (PnS 58 4 19)}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "_b", identPos = Pn (PnS 44 4 5) (PnS 46 4 7)},Var (Pn (PnS 44 4 5) (PnS 58 4 19)) (TypePos {type_ = TReal, typePosn = Pn (PnS 47 4 8) (PnS 51 4 12)}))], routines = fromList []}, errs = []}, varPos = Pn (PnS 44 4 5) (PnS 58 4 19)}], routines = [Procedure {routName = Ident {identName = "main", identPos = Pn (PnS 99 9 10) (PnS 103 9 14)}, params = [], routBody = RoutBody {declarations = ProgramDecl {consts = [], vars = [VarAss {varIdents = [Ident {identName = "a", identPos = Pn (PnS 125 11 9) (PnS 126bluec: StatSem/Exp.hs:(106,31)-(110,9): Missing field in record construction mode
-
-HasCallStack backtrace:
-  collectBacktraces, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:92:13 in ghc-internal:GHC.Internal.Exception
-  toExceptionWithBacktrace, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:84:32 in ghc-internal:GHC.Internal.Exception
-  throw, called at libraries/ghc-internal/src/GHC/Internal/Control/Exception/Base.hs:420:30 in ghc-internal:GHC.Internal.Control.Exception.Base
-
-
+Static Semantics Analysis Failed:
+../tests/testCase1.blue:11:21-11:22: ERROR: Unbound identifier: c.
+../tests/testCase1.blue:16:13-16:14: ERROR: Unbound identifier: b.
+../tests/testCase1.blue:23:9-23:19: ERROR: Unused return of the function call __util__().
+../tests/testCase1.blue:23:9-23:19: ERROR: Wrong number of arguments in routine call: __util__(). Expected 1 but got 0.
+../tests/testCase1.blue:9:10-24:5: ERROR: The procedure does not contain a return statement for every flow of control.

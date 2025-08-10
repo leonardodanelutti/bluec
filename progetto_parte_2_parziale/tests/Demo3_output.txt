@@ -3,11 +3,7 @@ example 1: generic test
 ../tests/testCase3.blue
 
 Parse Successful!
-bluec: StatSem/Exp.hs:(19,1)-(23,47): Non-exhaustive patterns in function annExp
 
-HasCallStack backtrace:
-  collectBacktraces, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:92:13 in ghc-internal:GHC.Internal.Exception
-  toExceptionWithBacktrace, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:84:32 in ghc-internal:GHC.Internal.Exception
-  throw, called at libraries/ghc-internal/src/GHC/Internal/Control/Exception/Base.hs:422:30 in ghc-internal:GHC.Internal.Control.Exception.Base
-
-
+Static Semantics Analysis Failed:
+../tests/testCase3.blue:7:21-7:27: ERROR: &Error: 7:23-7:27: ERROR: Cannot index expression of type &Array<Integer; 2>. is not compatible with &Integer.
+../tests/testCase3.blue:13:25-13:29: ERROR: Cannot index expression of type &Array<Integer; 3>.
