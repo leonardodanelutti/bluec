@@ -118,21 +118,24 @@ annExpIdent env AS.ExpIdent {
             expType = T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ PP.identPrinter ident ++ "."] },
             ctVal = Nothing,
             identCategory = ErrorCategory,
-            mode = Nothing
+            mode = Nothing,
+            declPos = Nothing
         }
         -- Var identifier.
-        (Just (Var _ ty mode), Nothing) -> IdentAnn {
+        (Just (Var varPos ty mode), Nothing) -> IdentAnn {
             expType = T.type_ ty,
             ctVal = Nothing,
             identCategory = VarCategory,
-            mode = mode
+            mode = mode,
+            declPos = Just varPos
         }
         -- Const identifier.
-        (Just (Const val), Nothing) -> IdentAnn {
+        (Just (Const constPos val), Nothing) -> IdentAnn {
             expType = identType,
             ctVal = Just identVal,
             identCategory = ConstCategory,
-            mode = Nothing
+            mode = Nothing,
+            declPos = Just constPos
         } where (identType, identVal) = getTypeAndValue val
         -- Routine identifier.
         (Nothing, Just _) -> ann
@@ -143,7 +146,8 @@ annExpIdent env AS.ExpIdent {
             expType = T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ show ident] },
             ctVal = Nothing,
             identCategory = ErrorCategory,
-            mode = Nothing
+            mode = Nothing,
+            declPos = Nothing
         }
 annExpIdent _ _ = error "Unreachable: `annExpIdent` called with non-`ExpIdent` expression."
 

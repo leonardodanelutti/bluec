@@ -21,8 +21,10 @@ data Env = Env {
     deriving (Show)
 
 data SymbolEntry
+    -- Posn refers of the whole declaration (meaning that different symbols can have the
+    -- same Posn if they are declared together).
     = Var LG.Posn T.TypePos (Maybe AS.Mode) -- TODO: a cosa serve Posn per var? Perchè TypePos e non Type?
-    | Const AS.Literal
+    | Const LG.Posn AS.Literal
     deriving (Show)
 
 data RoutEntry -- TODO: serve la posizione?
@@ -73,7 +75,11 @@ data Ann
         expType :: T.Type,
         ctVal :: Maybe CTValue,
         identCategory :: IdentCategory,
-        mode :: Maybe AS.Mode
+        mode :: Maybe AS.Mode,
+        -- The position of the whole declaration (different symbols can have the same
+        -- position if they are declared together).
+        -- Nothing if the identifier is not found in the environment.
+        declPos :: Maybe LG.Posn
     }
     | DeclAnn {
         bindings :: Env, -- Local environment

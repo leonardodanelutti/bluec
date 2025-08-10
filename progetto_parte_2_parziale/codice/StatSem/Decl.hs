@@ -80,7 +80,7 @@ annConstA env AS.ConstAss {
     tryLiterals = map ctvToLiteral castedValuesAnn
     (literals, errs) = partitionEithers tryLiterals
     ann = DeclAnn {
-        bindings = envFromSymbolBindings (zip idents (map Const literals)),
+        bindings = envFromSymbolBindings (zip idents (map (Const pos) literals)),
         errs = (concat errs) ++ numberErr
     }
 

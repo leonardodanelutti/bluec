@@ -215,7 +215,7 @@ genUnknownExpr exp = do
         AS.ArrayIndex _ _ ann _ -> genArrayIndex exp ann                    
             
         -- ConstCategory is handled by genExpr
-        AS.ExpIdent ident (SS.IdentAnn ty _ SS.VarCategory mode) _ -> do
+        AS.ExpIdent ident (SS.IdentAnn ty _ SS.VarCategory mode declPos) _ -> do
             let identName = PName $ ProgramName (AS.identName ident) "TODO: add routine name to variable"
                 identName' = PName $ ProgramName (AS.identName ident ++ "'") "TODO: add routine name to variable"
                 tyTAC = castTypeToTACType $ T.elementsType ty
