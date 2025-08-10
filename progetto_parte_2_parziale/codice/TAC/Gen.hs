@@ -152,7 +152,7 @@ genExpr exp = do
             return k
 
 genString :: String -> StateMonad Address
--- TODO: Strings are array of chars
+-- TODO: Strings are pointers to some location
 genString _ = error "genString not implemented yet"
 
 genUnknownExpr :: AS.Exp SS.Ann -> StateMonad Address
@@ -271,6 +271,7 @@ genUnknownExpr exp = do
 
 -- GENERATION OF BINARY OPERATIONS
 
+-- TODO: a lot of useless temporary variables are generated here
 genBinExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genBinExp op tmp e1 e2 = do
     -- left to right evaluation
@@ -278,8 +279,8 @@ genBinExp op tmp e1 e2 = do
     out (NOp tmp addr1 TBoolean)
     label <- newLabel
     let instr = case op of
-            AS.Or -> BoolJumpF tmp label
-            AS.And -> BoolJumpT tmp label
+            AS.Or -> BoolJumpT tmp label
+            AS.And -> BoolJumpF tmp label
             _ -> error "Only Or and And operations should be passed to genBinExp"
     out instr
     addr2 <- genExpr' e2
@@ -350,6 +351,7 @@ genArrayIndex exp ann = do
         arrayIndexes _ = return []
         
         -- Generate the array index from the list of addresses and dimensions
+        -- TODO: If indexes are literals, we can optimize the generation
         genArrayIndex :: [Address] -> [Int] -> StateMonad Address
         genArrayIndex (a:as) (_:ls) = do
             idxTemp <- newTmp
@@ -555,7 +557,7 @@ isFunction = error "TODO: should be known by annotations"
 
 genAssign :: (AS.Exp SS.Ann, AS.Exp SS.Ann) -> StateMonad ()
 genAssign (left, right) =
-    let ty = getAssignType right in
+    let ty = SS.expType $ AS.expAnnot right in
     case ty of
         T.TArray {} -> do
             lExprRes <- genExpr left
@@ -564,7 +566,7 @@ genAssign (left, right) =
         _ ->  do
             lExprRes <- genLExpr left
             rExprRes <- genExpr right
-            let tyTAC = castTypeToTACType $ getAssignType right
+            let tyTAC = castTypeToTACType ty
             case lExprRes of
                 RefSet addr ->
                     out (DerefSet addr rExprRes tyTAC)
