@@ -11,7 +11,7 @@ instance Show LabeledInstruction where
     show (LabeledInstruction (Just label) inst) = 
         let labelStr = case label of
                 Loc n -> "L" ++ show n ++ ":"
-                Function name -> "\n" ++ name ++ ":\n" 
+                Function name -> "\n" ++ name ++ ":\n      " 
         in labelStr ++ replicate (6 - length labelStr) ' ' ++ show inst
 
 instance Show Instruction where
@@ -52,6 +52,8 @@ instance Show Instruction where
             "return " ++ show r
         ArrayGen id size ->
             "arraygen " ++ show id ++ ", " ++ show size
+        Comment str ->
+            "# " ++ str
 
 instance Show Address where
     show (PName pName) = show pName

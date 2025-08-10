@@ -4,6 +4,7 @@ import qualified Control.Monad.Trans.State as St
 import qualified AbsSyn                    as AS
 import qualified StatSem.Utils             as SS
 import qualified Types                     as T
+import qualified TAC.Printer()
 import TAC.Def
 
 
@@ -68,7 +69,7 @@ endRoutine = do
         [] -> St.put state
         (r:rs) -> do
             St.put $ state { routineStack = rs,
-                             currentStream = r ++ currentRoutine }
+                             currentStream = currentRoutine ++ r  }
 
 newLoop :: StateMonad ()
 newLoop = do
@@ -211,23 +212,8 @@ genUnknownExpr exp = do
             out (DerefGet k addr ty)
             return k
 
-        AS.ArrayIndex e index ann _ -> do
-            k <- newTmp
-            addr <- genExpr e
-            indexAddr <- genExpr index
-            let elemSize = T.getTypeSize $ SS.expType $ AS.expAnnot e
-                ty = castTypeToTACType $ SS.expType ann
-            if elemSize == 1 then do
-                out (IndexGet k addr indexAddr ty)
-            else do
-                -- If the element size is not 1, we need to multiply the index by the element size
-                indexShift <- newTmp
-                -- TODO: If indexAddr is a literal, we can optimize this
-                out (BOp indexShift (Mul TInteger) indexAddr (Lit $ LitInt elemSize) TInteger)
-                out (IndexGet k addr indexShift ty)
-
-            return k
-
+        AS.ArrayIndex _ _ ann _ -> genArrayIndex exp ann                    
+            
         -- ConstCategory is handled by genExpr
         AS.ExpIdent ident (SS.IdentAnn ty _ SS.VarCategory mode) _ -> do
             let identName = PName $ ProgramName (AS.identName ident) "TODO: add routine name to variable"
@@ -265,23 +251,8 @@ genUnknownExpr exp = do
             k <- newTmp
             let arrSize  = T.getTypeSize $ SS.expType ann
             out (ArrayGen k arrSize)
-            genArray elements k
-
-            where
-                genArray :: [AS.Exp SS.Ann] -> Address -> StateMonad Address
-                genArray elements k = do
-                    let elemSize = T.getTypeSize  $ T.elementsType $ SS.expType ann -- 8
-                        tyTAC = castTypeToTACType $ T.elementsType $ SS.expType ann -- addr
-                    mapM_
-                        (\(i, e) -> do
-                            addr <- genExpArray e k
-                            out (IndexSet k (Lit $ LitInt (i * elemSize)) addr tyTAC))
-                        (zip [0..] elements)
-                    return k
-
-                genExpArray :: AS.Exp SS.Ann -> Address -> StateMonad Address
-                genExpArray (AS.Array elements _ _) k = genArray elements k
-                genExpArray e _ = genExpr e
+            genArray elements k 0
+            return k                
 
         AS.Cast e ann _ -> do
             k <- newTmp
@@ -297,6 +268,8 @@ genUnknownExpr exp = do
                 newTypeTAC = castTypeToTACType newType
             out (UOp k (Coer cast) addr newTypeTAC)
             return k
+
+-- GENERATION OF BINARY OPERATIONS
 
 genBinExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genBinExp op tmp e1 e2 = do
@@ -319,6 +292,8 @@ genBinExp op tmp e1 e2 = do
         genExpr' (AS.BinOp AS.And e1 e2 _ _) = genBinExp AS.And tmp e1 e2
         genExpr' e = genExpr e
 
+-- GENERATION OF RELATIONAL OPERATIONS
+
 genRepOp :: AS.RelOp -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genRepOp relOp e1 e2 = do
     k <- newTmp
@@ -334,6 +309,79 @@ genRepOp relOp e1 e2 = do
              in do
                 out (BOp k tacRelOp addr1 addr2 TBoolean)
     return k
+
+-- GENERATION OF ARRAY INDEXING
+
+genArrayIndex :: AS.Exp SS.Ann -> SS.Ann -> StateMonad Address
+genArrayIndex exp ann = do
+    k <- newTmp
+
+    -- Generate base address
+    (baseAddr, baseType) <- genArrayBase exp
+    -- Generate index
+    indexes <- arrayIndexes exp
+    indexAddr <- genArrayIndex indexes (T.arrayDim baseType)
+
+    -- Multiply index by inner type size
+    let innerTypeSize = T.getTypeSize $ T.arrayInnerType $ SS.expType ann
+        innerTypeAddr = Lit $ LitInt innerTypeSize
+    out (BOp indexAddr (Mul TInteger) innerTypeAddr indexAddr TInteger)
+
+    -- Generate the IndexGet instruction
+    out (IndexGet k baseAddr indexAddr (castTypeToTACType $ SS.expType ann))
+
+    return k
+
+    where
+
+        genArrayBase :: AS.Exp SS.Ann -> StateMonad (Address, T.Type)
+        genArrayBase (AS.ArrayIndex expr _ _ _) = genArrayBase expr
+        genArrayBase notIndexExpr = do
+            addr <- genExpr notIndexExpr
+            let ty = SS.expType $ AS.expAnnot notIndexExpr
+            return (addr, ty)
+
+        -- Generate the list of indexes from the array indexing expression
+        arrayIndexes :: AS.Exp SS.Ann -> StateMonad [Address]
+        arrayIndexes (AS.ArrayIndex e idx _ _) = do
+            idxAddr <- genExpr idx
+            rest <- arrayIndexes e
+            return (rest ++ [idxAddr])
+        arrayIndexes _ = return []
+        
+        -- Generate the array index from the list of addresses and dimensions
+        genArrayIndex :: [Address] -> [Int] -> StateMonad Address
+        genArrayIndex (a:as) (_:ls) = do
+            idxTemp <- newTmp
+            out (NOp idxTemp a TInteger)
+            mapM_
+                (\(addr, dim) -> do
+                    out (BOp idxTemp (Mul TInteger) (Lit $ LitInt dim) idxTemp TInteger)
+                    out (BOp idxTemp (Add TInteger) addr idxTemp TInteger))
+                (zip as ls)
+            return idxTemp
+        genArrayIndex _ _ = error "genArrayIndex: expected at least one index address and one dimension"
+
+-- GENERATION OF ARRAYS DEFINITION
+
+genArray :: [AS.Exp SS.Ann] -> Address -> Int -> StateMonad ()
+genArray elements k offset = do
+    mapM_
+        (\(i, e) ->
+            let ty = SS.expType $ AS.expAnnot e
+                tyTAC = castTypeToTACType ty
+                elemSize = T.getTypeSize ty
+            in
+            case e of
+                AS.Array elements' _ _ -> do
+                    genArray elements' k (offset + i * elemSize)
+                _ -> do
+                    addr <- genExpr e
+                    out (IndexSet k (Lit $ LitInt (offset + i * elemSize)) addr tyTAC)
+        )
+        (zip [0..] elements)
+
+-- GENERATION OF ROUTINE CALLS
 
 genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad Address
 genFunCall (AS.RoutineCall routName args _) ann = do
@@ -404,7 +452,7 @@ copy newAddr prevAddr ty = case ty of
     _ -> do
         out (NOp newAddr prevAddr (castTypeToTACType ty))
 
-
+-- GENERATION OF ROUTINES
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()
 genRoutine rout = let
     name = AS.identName $ AS.routName rout
@@ -443,6 +491,8 @@ genRoutineBody :: AS.RoutBody SS.Ann -> TAC -> StateMonad ()
 genRoutineBody (AS.RoutBody decls stmts _) post = do
     genDeclarations decls
     mapM_ (`genStmt` post) stmts
+
+-- GENERATION OF STATEMENTS
 
 genStmt :: AS.Statement SS.Ann -> TAC -> StateMonad ()
 genStmt stmt post = case stmt of
@@ -500,6 +550,8 @@ genStmt stmt post = case stmt of
 
 isFunction :: SS.Ann -> Bool
 isFunction = error "TODO: should be known by annotations"
+
+-- GENERATION OF ASSIGNMENTS
 
 genAssign :: (AS.Exp SS.Ann, AS.Exp SS.Ann) -> StateMonad ()
 genAssign (left, right) =

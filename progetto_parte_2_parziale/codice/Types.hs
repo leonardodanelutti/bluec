@@ -77,3 +77,11 @@ getTypeSize TString  = error "TString size is not defined."
 getTypeSize (TArray { size = s, elementsType = ty }) = s * getTypeSize ty
 getTypeSize TReference {} = 4
 getTypeSize TError {} = error "TError size is not defined."
+
+arrayInnerType :: Type -> Type
+arrayInnerType (TArray { elementsType = ty }) = arrayInnerType ty
+arrayInnerType ty = ty
+
+arrayDim :: Type -> [Int]
+arrayDim (TArray { size = s, elementsType = ty }) = s : arrayDim ty
+arrayDim _ = []

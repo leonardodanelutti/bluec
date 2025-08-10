@@ -123,6 +123,7 @@ data Instruction
     | ReturnEmpty
     | Return { r :: Address }
     | ArrayGen { id :: Address, size :: Int }
+    | Comment String
 
 data LabeledInstruction = LabeledInstruction
   { label :: Maybe Label,
