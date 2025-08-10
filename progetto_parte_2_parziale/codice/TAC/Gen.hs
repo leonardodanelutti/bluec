@@ -6,6 +6,7 @@ import qualified StatSem.Utils             as SS
 import qualified Types                     as T
 import qualified TAC.Printer()
 import TAC.Def
+import Control.Monad (unless)
 
 
 -- Monad definitions and helper functions
@@ -16,7 +17,7 @@ data TACState = TACState {
     tempCount, labelCount :: Int,
     routineStack :: [TAC],
     currentStream :: TAC,
-    nextLabel :: Maybe Label,
+    nextLabel :: [Label],
     loopLabelsStack :: [(Label, Label)]
 }
 
@@ -24,13 +25,10 @@ data TACState = TACState {
 outLabeled :: LabeledInstruction -> StateMonad ()
 outLabeled instrLab = do
     state <- St.get
-    --
     let -- Add pending label
-        instrLab' = case nextLabel state of
-            Just label -> instrLab { label = Just label }
-            Nothing    -> instrLab
+        instrLab' = instrLab { label = nextLabel state }
         newStream = instrLab' : currentStream state
-    St.put $ state { currentStream = newStream, nextLabel = Nothing }
+    St.put $ state { currentStream = newStream, nextLabel = [] }
 
 out :: Instruction -> StateMonad ()
 out instr = outLabeled $ simpleInstruction instr 
@@ -52,8 +50,7 @@ newLabel = do
 attachToNext :: Label -> StateMonad ()
 attachToNext label = do
     state <- St.get
-    let newNext = Just label
-    St.put $ state { nextLabel = newNext }
+    St.put $ state { nextLabel = label : nextLabel state }
 
 newRoutine :: StateMonad ()
 newRoutine = do
@@ -108,7 +105,7 @@ initState = TACState {
     labelCount = 0,
     routineStack = [],
     currentStream = [],
-    nextLabel = Nothing,
+    nextLabel = [],
     loopLabelsStack = []
 }
 
@@ -173,11 +170,11 @@ genUnknownExpr exp = do
 
         AS.BinOp AS.Or e1 e2 _ _ -> do
             k <- newTmp
-            genBinExp AS.Or k e1 e2
+            genBoolExp AS.Or k e1 e2
 
         AS.BinOp AS.And e1 e2 _ _ -> do
             k <- newTmp
-            genBinExp AS.And k e1 e2
+            genBoolExp AS.And k e1 e2
 
         AS.BinOp binOp e1 e2 ann _ -> do
             k <- newTmp
@@ -269,29 +266,42 @@ genUnknownExpr exp = do
             out (UOp k (Coer cast) addr newTypeTAC)
             return k
 
--- GENERATION OF BINARY OPERATIONS
+-- GENERATION OF BOOLEAN OPERATIONS
 
 -- TODO: a lot of useless temporary variables are generated here
-genBinExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
-genBinExp op tmp e1 e2 = do
-    -- left to right evaluation
-    addr1 <- genExpr' e1
-    out (NOp tmp addr1 TBoolean)
+genBoolExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
+genBoolExp op tmp e1 e2 = do
+    -- Generate left operand
+    (addr1, isBoolOp1) <- genExpr' e1
+    unless isBoolOp1 (out (NOp tmp addr1 TBoolean))
+
+    -- Jump!
     label <- newLabel
     let instr = case op of
             AS.Or -> BoolJumpT tmp label
             AS.And -> BoolJumpF tmp label
             _ -> error "Only Or and And operations should be passed to genBinExp"
     out instr
-    addr2 <- genExpr' e2
-    out (NOp tmp addr2 TBoolean)
+
+    -- Generate right operand
+    (addr2, isBoolOp2) <- genExpr' e2
+    unless isBoolOp2 (out (NOp tmp addr2 TBoolean))
+
+    -- Jump to the next instruction
     attachToNext label
+
     return tmp
     where
-        genExpr' :: AS.Exp SS.Ann -> StateMonad Address
-        genExpr' (AS.BinOp AS.Or e1 e2 _ _)  = genBinExp AS.Or tmp e1 e2
-        genExpr' (AS.BinOp AS.And e1 e2 _ _) = genBinExp AS.And tmp e1 e2
-        genExpr' e = genExpr e
+        genExpr' :: AS.Exp SS.Ann -> StateMonad (Address, Bool)
+        genExpr' (AS.BinOp AS.Or e1 e2 _ _)  = do
+            addr <- genBoolExp AS.Or tmp e1 e2
+            return (addr, True)
+        genExpr' (AS.BinOp AS.And e1 e2 _ _) = do
+            addr <- genBoolExp AS.And tmp e1 e2
+            return (addr, True)
+        genExpr' e = do
+            addr <- genExpr e
+            return (addr, False)
 
 -- GENERATION OF RELATIONAL OPERATIONS
 
@@ -422,7 +432,7 @@ genActualParams args ann procName =
 
             case AS.mode param of
                 AS.Mval -> case paramType of
-                    T.TString -> error "TODO: handle string"
+                    T.TString -> error "TODO: handle string, maybe can be rewritten better with 'with'"
                     T.TArray {} -> do
                         out (ArrayGen paramAddr (T.getTypeSize paramType))
                         copy paramAddr addr paramType

@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module TAC.Printer where
 
 import TAC.Def 
@@ -7,12 +8,17 @@ printProgram instructions = unlines $ map show instructions
 
 
 instance Show LabeledInstruction where
-    show (LabeledInstruction Nothing inst) = "      " ++ show inst
-    show (LabeledInstruction (Just label) inst) = 
+    show (LabeledInstruction [] inst) = "      " ++ show inst
+    show (LabeledInstruction [label] inst) = 
         let labelStr = case label of
                 Loc n -> "L" ++ show n ++ ":"
                 Function name -> "\n" ++ name ++ ":\n      " 
         in labelStr ++ replicate (6 - length labelStr) ' ' ++ show inst
+    show (LabeledInstruction labels inst) = 
+        let labelStr = concatMap (\case
+                Loc n -> "L" ++ show n ++ ", "
+                Function name -> name ++ ", ") labels
+        in labelStr ++ ": " ++ show inst
 
 instance Show Instruction where
     show inst = case inst of

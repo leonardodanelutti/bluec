@@ -126,11 +126,11 @@ data Instruction
     | Comment String
 
 data LabeledInstruction = LabeledInstruction
-  { label :: Maybe Label,
+  { label :: [Label],
     instruction :: Instruction
   }
 
 simpleInstruction :: Instruction -> LabeledInstruction
-simpleInstruction = LabeledInstruction Nothing
+simpleInstruction = LabeledInstruction []
 
 type TAC = [LabeledInstruction]
