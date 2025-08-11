@@ -9,7 +9,7 @@ import TAC.Def
 import Control.Monad (unless)
 
 
--- Monad definitions and helper functions
+-- MONAD DEFINITION AND HELPER FUNCTIONS
 
 type StateMonad = St.State TACState
 
@@ -109,7 +109,8 @@ initState = TACState {
     loopLabelsStack = []
 }
 
--- TAC generation functions
+
+-- TAC GENERATION FUNCTIONS
 
 genEntryPoint :: AS.Declarations SS.Ann -> StateMonad ()
 genEntryPoint (AS.ProgramDecl _ vars routines _) = do
@@ -247,8 +248,9 @@ genUnknownExpr exp = do
 
         -- TODO: When we write something like `A := Array[1,2]`, it generates:
         -- genArray t0, 8
-        -- t0[0] := 1
-        -- t0[4] := 2
+        -- t0[0] = 1
+        -- t0[4] = 2
+        -- A = t0
         -- Maybe we shouldn't generate a temporary variable here?
         -- Same for AS.Ref
         AS.Array elements ann _ -> do
@@ -272,6 +274,7 @@ genUnknownExpr exp = do
                 newTypeTAC = castTypeToTACType newType
             out (UOp k (Coer cast) addr newTypeTAC)
             return k
+
 
 -- GENERATION OF BOOLEAN OPERATIONS
 
@@ -328,8 +331,10 @@ genRepOp relOp e1 e2 = do
                 out (BOp k tacRelOp addr1 addr2 TBoolean)
     return k
 
+
 -- GENERATION OF ARRAY INDEXING
 
+-- Generate the address of an array index operation
 genArrayIndex :: AS.Exp SS.Ann -> SS.Ann -> StateMonad Address
 genArrayIndex exp ann = do
     k <- newTmp
@@ -381,8 +386,11 @@ genArrayIndex exp ann = do
             return idxTemp
         genArrayIndex _ _ = error "genArrayIndex: expected at least one index address and one dimension"
 
+
 -- GENERATION OF ARRAYS DEFINITION
 
+-- Generate an array with the given elements, starting at the given address,
+-- offset is a recursion parameter
 genArray :: [AS.Exp SS.Ann] -> Address -> Int -> StateMonad ()
 genArray elements k offset = do
     mapM_
@@ -393,12 +401,15 @@ genArray elements k offset = do
             in
             case e of
                 AS.Array elements' _ _ -> do
+                    -- If the element is an array, we generate it recursively
                     genArray elements' k (offset + i * elemSize)
                 _ -> do
+                    -- Generate the element and set it in the array
                     addr <- genExpr e
                     out (IndexSet k (Lit $ LitInt (offset + i * elemSize)) addr tyTAC)
         )
         (zip [0..] elements)
+
 
 -- GENERATION OF ROUTINE CALLS
 
@@ -424,20 +435,24 @@ genProcCall (AS.RoutineCall routName args _) ann = do
         numArgs = length args
     out (ProcCall routLab numArgs)
 
+-- Generate the actual parameters for a routine call
 genActualParams ::  [AS.Exp SS.Ann] -> SS.Ann -> StateMonad ()
 genActualParams args ann =
     let params = SS.params ann
         exprs = zip args params
     in
+        -- Left to right evaluation of the parameters
         mapM_ (\(expr, param) -> do
             let paramName = AS.identName $ AS.paramName param
                 paramAddr = PName $ ProgramName paramName (AS.paramPos param)
                 paramType = T.type_ $ AS.paramType param
                 paramTACType = castTypeToTACType paramType
 
+            -- Generate the address of the parameter
             addr <- genExpr expr
 
             case AS.mode param of
+                -- For value parameters we have to copy the value
                 AS.Mval -> case paramType of
                     T.TString -> error "TODO: handle string, maybe can be rewritten better with 'with'"
                     T.TArray {} -> do
@@ -447,7 +462,7 @@ genActualParams args ann =
                     _ -> do
                         copy paramAddr addr paramType
                         out (Param paramAddr paramTACType)
-                -- Create a reference for value-result and reference
+                -- For value-result and reference parameters we just pass the address
                 _ -> do
                     out (Ref paramAddr addr)
                     out (Param paramAddr Addr)
@@ -470,40 +485,45 @@ copy newAddr prevAddr ty = case ty of
     _ -> do
         out (NOp newAddr prevAddr (castTypeToTACType ty))
 
+
 -- GENERATION OF ROUTINES
+
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()
 genRoutine rout = let
     name = AS.identName $ AS.routName rout
-    params = filter (\p -> AS.mode p == AS.Mvalres) (AS.params rout)
+    params = AS.params rout
     body = AS.routBody rout
     in do
-        newRoutine
+        newRoutine -- Needed for nested routines declarations
         attachToNext $ Function name
-        unless (null params) $ out (Comment "Start of preamble")
         genParamsPre params
-        unless (null params) $ out (Comment "End of preamble")
         let paramPost = genParamsPost params
         genRoutineBody body paramPost
         endRoutine
 
+-- Generate preamble for valres parameters
 genParamsPre :: [AS.Param] -> StateMonad ()
-genParamsPre params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
-    mapM_ (
-        \ AS.Param {AS.paramName = ident, AS.paramType = tyPos, AS.paramPos = pos} -> do
-            let name = PName $ ProgramName (AS.identName ident) pos
-                name' = PName $ ProgramName (AS.identName ident ++ "'") pos
-                ty = T.type_ tyPos
-                tyTAC = castTypeToTACType ty
-            case ty of
-                T.TArray {} -> do
-                    out (ArrayGen name' (T.getTypeSize ty))
-                    k <- newTmp
-                    out (DerefGet k name tyTAC)
-                    copy name' k ty
-                T.TString -> error "TODO: handle strings"
-                _ -> out (DerefGet name' name tyTAC)
-    ) paramsValRes
+genParamsPre params = do
+    let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params
+    unless (null paramsValRes) $ out (Comment "Start of preamble")
+    mapM_ (\(AS.Param {AS.paramName = ident, AS.paramType = tyPos, AS.paramPos = pos}) -> do
+        let name = PName $ ProgramName (AS.identName ident) pos
+            name' = PName $ ProgramName (AS.identName ident ++ "'") pos
+            ty = T.type_ tyPos
+            tyTAC = castTypeToTACType ty
+        case ty of
+            -- Array needed to be copied to the local variable
+            T.TArray {} -> do
+                out (ArrayGen name' (T.getTypeSize ty))
+                k <- newTmp
+                out (DerefGet k name tyTAC)
+                copy name' k ty
+            T.TString -> error "TODO: handle strings"
+            _ -> out (DerefGet name' name tyTAC)
+        ) paramsValRes
+    unless (null paramsValRes) $ out (Comment "End of preamble")
 
+-- Generate post-amble for valres parameters
 genParamsPost :: [AS.Param] -> TAC
 genParamsPost params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
     map (
@@ -519,6 +539,7 @@ genRoutineBody :: AS.RoutBody SS.Ann -> TAC -> StateMonad ()
 genRoutineBody (AS.RoutBody decls stmts _) post = do
     genDeclarations decls
     mapM_ (`genStmt` post) stmts
+
 
 -- GENERATION OF STATEMENTS
 
@@ -580,6 +601,7 @@ genStmt stmt post = case stmt of
 
 isFunction :: SS.Ann -> Bool
 isFunction = error "TODO: should be known by annotations"
+
 
 -- GENERATION OF ASSIGNMENTS
 
