@@ -266,8 +266,8 @@ annExpBinOp env AS.BinOp {
     castedsE2 = map (cast annE2) expectedTypes
     castedTypesE1 = map (expType . AS.expAnnot) castedsE1
     castedTypesE2 = map (expType . AS.expAnnot) castedsE2
-    castedValsE1 = map (ctVal . AS.expAnnot) castedsE1
-    castedValsE2 = map (ctVal . AS.expAnnot) castedsE2
+    castedValsE1 = map (getCTValue . AS.expAnnot) castedsE1
+    castedValsE2 = map (getCTValue . AS.expAnnot) castedsE2
     castedTypes = zipWith (T.sup pos) castedTypesE1 castedTypesE2
     -- Input:
     -- - list of types to which the expressions are tried to be casted (in order of
@@ -315,7 +315,7 @@ annExpNot env AS.BoolNeg {
     -- Cast both expressions to the expected type (TBoolean).
     castedE = cast annE T.TBoolean
     castedTypeE = expType $ AS.expAnnot castedE
-    castedValE = ctVal $ AS.expAnnot castedE
+    castedValE = getCTValue $ AS.expAnnot castedE
     -- Create annotation.
     ann = ExpAnn {
         expType = castedTypeE,
@@ -357,8 +357,8 @@ annExpRelOp env AS.RelOp {
     castedE2 = cast annE2 ty
     castedTypeE1 = expType $ AS.expAnnot castedE1
     castedTypeE2 = expType $ AS.expAnnot castedE2
-    castedValE1 = ctVal $ AS.expAnnot castedE1
-    castedValE2 = ctVal $ AS.expAnnot castedE2
+    castedValE1 = getCTValue $ AS.expAnnot castedE1
+    castedValE2 = getCTValue $ AS.expAnnot castedE2
     newType = case T.sup pos castedTypeE1 castedTypeE2 of
         e@T.TError {} -> e
         _ -> T.TBoolean -- Relational operations always return a boolean value.
