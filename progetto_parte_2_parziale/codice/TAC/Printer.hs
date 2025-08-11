@@ -2,6 +2,7 @@
 module TAC.Printer where
 
 import TAC.Def 
+import LexGrammar (posLineCol)
 
 printProgram :: TAC -> String
 printProgram instructions = unlines $ map show instructions
@@ -47,7 +48,7 @@ instance Show Instruction where
         DerefSet l r ty ->
             "*" ++ show l ++ " =(" ++ show ty ++ ") " ++ show r
         Param r ty ->
-            "param " ++ "(" ++ show ty ++ ") " ++ show r
+            "param" ++ "(" ++ show ty ++ ") " ++ show r
         ProcCall rout n ->
             "pcall " ++ show rout ++ ", " ++ show n
         FunCall l rout n ty ->
@@ -58,6 +59,8 @@ instance Show Instruction where
             "return " ++ show r
         ArrayGen id size ->
             "arraygen " ++ show id ++ ", " ++ show size
+        Custom str ->
+            str
         Comment str ->
             "# " ++ str
 
@@ -111,7 +114,8 @@ instance Show Temporary where
     show (Temporary n) = "t" ++ show n
 
 instance Show ProgramName where
-    show (ProgramName name procedure) = name ++ "." ++ procedure
+    show (ProgramName name pos) = let (l,c,_,_) = posLineCol pos in 
+        name ++ "@" ++ show l ++ ":" ++ show c
 
 instance Show Literal where
     show (LitInt n) = show n

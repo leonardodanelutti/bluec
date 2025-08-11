@@ -4,9 +4,10 @@ module TAC.Def where
 
 import qualified Types as T
 import qualified AbsSyn as AS
+import LexGrammar (Posn)
 
 -- A program name
-data ProgramName = ProgramName String String
+data ProgramName = ProgramName String Posn
 
 -- A temporary variable
 newtype Temporary = Temporary Int
@@ -123,6 +124,7 @@ data Instruction
     | ReturnEmpty
     | Return { r :: Address }
     | ArrayGen { id :: Address, size :: Int }
+    | Custom String
     | Comment String
 
 data LabeledInstruction = LabeledInstruction

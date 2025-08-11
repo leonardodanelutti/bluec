@@ -95,7 +95,7 @@ endLoop = do
 
 genProgram :: AS.Declarations SS.Ann -> TAC
 genProgram ast =
-    let finalState = St.execState (genDeclarations ast) initState
+    let finalState = St.execState (genEntryPoint ast) initState
         -- Reverse the stream to have the instructions in the correct order
     in reverse (currentStream finalState)
 
@@ -111,20 +111,27 @@ initState = TACState {
 
 -- TAC generation functions
 
+genEntryPoint :: AS.Declarations SS.Ann -> StateMonad ()
+genEntryPoint (AS.ProgramDecl _ vars routines _) = do
+    mapM_ genVar vars
+    out (ProcCall (Function "main") 0)
+    out (Custom "END_PROGRAM")
+    mapM_ genRoutine routines
+
 genDeclarations :: AS.Declarations SS.Ann -> StateMonad ()
 genDeclarations (AS.ProgramDecl _ vars routines _) = do
     mapM_ genVar vars
     mapM_ genRoutine routines
 
 genVar :: AS.VarA SS.Ann -> StateMonad ()
-genVar (AS.VarAss idents ty values _ _) =
+genVar (AS.VarAss idents ty values _ pos) =
     mapM_ genAssignment (zip idents values)
     where
     genAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
     genAssignment (ident, exp) = do
         addr <- genExpr exp
         let tyTAC = castTypeToTACType $ T.type_ ty
-            name = PName $ ProgramName (AS.identName ident) "TODO: add routine name to variable"
+            name = PName $ ProgramName (AS.identName ident) pos
         out (NOp name addr tyTAC)
 
 genExpr :: AS.Exp SS.Ann -> StateMonad Address
@@ -212,10 +219,10 @@ genUnknownExpr exp = do
         AS.ArrayIndex _ _ ann _ -> genArrayIndex exp ann                    
             
         -- ConstCategory is handled by genExpr
-        AS.ExpIdent ident (SS.IdentAnn ty _ SS.VarCategory mode declPos) _ -> do
-            let identName = PName $ ProgramName (AS.identName ident) "TODO: add routine name to variable"
-                identName' = PName $ ProgramName (AS.identName ident ++ "'") "TODO: add routine name to variable"
-                tyTAC = castTypeToTACType $ T.elementsType ty
+        AS.ExpIdent ident (SS.IdentAnn ty _ SS.VarCategory mode (Just declPos)) _ -> do
+            let identName = PName $ ProgramName (AS.identName ident) declPos
+                identName' = PName $ ProgramName (AS.identName ident ++ "'") declPos
+                tyTAC = castTypeToTACType ty
             case mode of
                 -- Identifiers that are passed by value-result are appended with
                 -- the "'" and a dereference is made
@@ -398,7 +405,7 @@ genArray elements k offset = do
 genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad Address
 genFunCall (AS.RoutineCall routName args _) ann = do
     k <- newTmp
-    genActualParams args ann (AS.identName routName)
+    genActualParams args ann
     let returnType = SS.expType ann
         routLab = Function $ AS.identName routName
         numArgs = length args
@@ -412,19 +419,19 @@ genFunCall (AS.RoutineCall routName args _) ann = do
 
 genProcCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad ()
 genProcCall (AS.RoutineCall routName args _) ann = do
-    genActualParams args ann (AS.identName routName)
+    genActualParams args ann
     let routLab = Function $ AS.identName routName
         numArgs = length args
     out (ProcCall routLab numArgs)
 
-genActualParams ::  [AS.Exp SS.Ann] -> SS.Ann -> String -> StateMonad ()
-genActualParams args ann procName =
+genActualParams ::  [AS.Exp SS.Ann] -> SS.Ann -> StateMonad ()
+genActualParams args ann =
     let params = SS.params ann
         exprs = zip args params
     in
         mapM_ (\(expr, param) -> do
             let paramName = AS.identName $ AS.paramName param
-                paramAddr = PName $ ProgramName paramName procName
+                paramAddr = PName $ ProgramName paramName (AS.paramPos param)
                 paramType = T.type_ $ AS.paramType param
                 paramTACType = castTypeToTACType paramType
 
@@ -443,7 +450,7 @@ genActualParams args ann procName =
                 -- Create a reference for value-result and reference
                 _ -> do
                     out (Ref paramAddr addr)
-                    out (Param paramAddr paramTACType)
+                    out (Param paramAddr Addr)
         ) exprs
 
 -- copy data stored in the second address to the first address
@@ -473,28 +480,29 @@ genRoutine rout = let
     in do
         newRoutine
         attachToNext $ Function name
-        genParamsPre params name
-        let paramPost = genParamsPost params name
+        genParamsPre params
+        let paramPost = genParamsPost params
         genRoutineBody body paramPost
         endRoutine
 
-
-genParamsPre :: [AS.Param] -> String -> StateMonad ()
-genParamsPre params routName = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
+-- TODO: Should copy the array
+genParamsPre :: [AS.Param] -> StateMonad ()
+genParamsPre params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
     mapM_ (
-        \ AS.Param {AS.paramName = ident, AS.paramType = ty} -> do
-            let name = PName $ ProgramName (AS.identName ident) routName
-                name' = PName $ ProgramName (AS.identName ident ++ "'") routName
+        \ AS.Param {AS.paramName = ident, AS.paramType = ty, AS.paramPos = pos} -> do
+            let name = PName $ ProgramName (AS.identName ident) pos
+                name' = PName $ ProgramName (AS.identName ident ++ "'") pos
                 tyTAC = castTypeToTACType $ T.type_ ty
             out (DerefGet name' name tyTAC)
     ) paramsValRes
 
-genParamsPost :: [AS.Param] -> String -> TAC
-genParamsPost params routName = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
+-- TODO: Should copy the array
+genParamsPost :: [AS.Param] -> TAC
+genParamsPost params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
     map (
-        \ AS.Param {AS.paramName = ident, AS.paramType = ty} ->
-            let name = PName $ ProgramName (AS.identName ident) routName
-                name' = PName $ ProgramName (AS.identName ident ++ "'") routName
+        \ AS.Param {AS.paramName = ident, AS.paramType = ty, AS.paramPos = pos} ->
+            let name = PName $ ProgramName (AS.identName ident) pos
+                name' = PName $ ProgramName (AS.identName ident ++ "'") pos
                 tyTAC = castTypeToTACType $ T.type_ ty in
             simpleInstruction (DerefSet name name' tyTAC)
     ) paramsValRes
@@ -595,8 +603,8 @@ data LExprRes
 
 genLExpr :: AS.Exp SS.Ann -> StateMonad LExprRes
 genLExpr exp = case exp of
-    AS.ExpIdent name _ _ -> do
-        let identName = PName $ ProgramName (AS.identName name) "TODO: add routine name to variable"
+    AS.ExpIdent name (SS.IdentAnn {SS.declPos = Just pos}) _ -> do
+        let identName = PName $ ProgramName (AS.identName name) pos
         return $ Simple identName
     AS.Deref expr _ _ -> do
         addr <- genExpr expr
@@ -606,5 +614,3 @@ genLExpr exp = case exp of
         idx <- genExpr index
         return $ ArraySet addr idx
     _ -> error "Unreachable, error thrown while parsing"
-
-
