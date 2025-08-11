@@ -31,7 +31,7 @@ outLabeled instrLab = do
     St.put $ state { currentStream = newStream, nextLabel = [] }
 
 out :: Instruction -> StateMonad ()
-out instr = outLabeled $ simpleInstruction instr 
+out instr = outLabeled $ simpleInstruction instr
 
 newTmp :: StateMonad Address
 newTmp = do
@@ -216,8 +216,8 @@ genUnknownExpr exp = do
             out (DerefGet k addr ty)
             return k
 
-        AS.ArrayIndex _ _ ann _ -> genArrayIndex exp ann                    
-            
+        AS.ArrayIndex _ _ ann _ -> genArrayIndex exp ann
+
         -- ConstCategory is handled by genExpr
         AS.ExpIdent ident (SS.IdentAnn ty _ SS.VarCategory mode (Just declPos)) _ -> do
             let identName = PName $ ProgramName (AS.identName ident) declPos
@@ -256,7 +256,7 @@ genUnknownExpr exp = do
             let arrSize  = T.getTypeSize $ SS.expType ann
             out (ArrayGen k arrSize)
             genArray elements k 0
-            return k                
+            return k
 
         AS.Cast e ann _ -> do
             k <- newTmp
@@ -366,7 +366,7 @@ genArrayIndex exp ann = do
             rest <- arrayIndexes e
             return (rest ++ [idxAddr])
         arrayIndexes _ = return []
-        
+
         -- Generate the array index from the list of addresses and dimensions
         -- TODO: If indexes are literals, we can optimize the generation
         genArrayIndex :: [Address] -> [Int] -> StateMonad Address
@@ -457,16 +457,15 @@ genActualParams args ann =
 copy :: Address -> Address -> T.Type -> StateMonad ()
 copy newAddr prevAddr ty = case ty of
     T.TString -> error "TODO: implement copy for strings"
-    T.TArray elemType len ->
-        let elemSize = T.getTypeSize ty
-            elemTACTy = castTypeToTACType elemType
+    T.TArray elemType _ ->
+        let innerTypeSize = T.getTypeSize $ T.arrayInnerType ty
+            arraySize = T.getTypeSize ty `div` innerTypeSize
         in
         mapM_ (\i -> do
             k <- newTmp
-            out (IndexGet k prevAddr (Lit $ LitInt (i * elemSize)) elemTACTy)
-            out (IndexSet newAddr (Lit $ LitInt (i * elemSize)) k elemTACTy)
-            copy newAddr k elemType
-        ) [0..len]
+            out (IndexGet k prevAddr (Lit $ LitInt (i * innerTypeSize)) (castTypeToTACType elemType))
+            out (IndexSet newAddr (Lit $ LitInt (i * innerTypeSize)) k (castTypeToTACType elemType))
+        ) [0..(arraySize-1)]
 
     _ -> do
         out (NOp newAddr prevAddr (castTypeToTACType ty))
@@ -480,30 +479,39 @@ genRoutine rout = let
     in do
         newRoutine
         attachToNext $ Function name
+        unless (null params) $ out (Comment "Start of preamble")
         genParamsPre params
+        unless (null params) $ out (Comment "End of preamble")
         let paramPost = genParamsPost params
         genRoutineBody body paramPost
         endRoutine
 
--- TODO: Should copy the array
 genParamsPre :: [AS.Param] -> StateMonad ()
 genParamsPre params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
     mapM_ (
-        \ AS.Param {AS.paramName = ident, AS.paramType = ty, AS.paramPos = pos} -> do
+        \ AS.Param {AS.paramName = ident, AS.paramType = tyPos, AS.paramPos = pos} -> do
             let name = PName $ ProgramName (AS.identName ident) pos
                 name' = PName $ ProgramName (AS.identName ident ++ "'") pos
-                tyTAC = castTypeToTACType $ T.type_ ty
-            out (DerefGet name' name tyTAC)
+                ty = T.type_ tyPos
+                tyTAC = castTypeToTACType ty
+            case ty of
+                T.TArray {} -> do
+                    out (ArrayGen name' (T.getTypeSize ty))
+                    k <- newTmp
+                    out (DerefGet k name tyTAC)
+                    copy name' k ty
+                T.TString -> error "TODO: handle strings"
+                _ -> out (DerefGet name' name tyTAC)
     ) paramsValRes
 
--- TODO: Should copy the array
 genParamsPost :: [AS.Param] -> TAC
 genParamsPost params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
     map (
-        \ AS.Param {AS.paramName = ident, AS.paramType = ty, AS.paramPos = pos} ->
+        \ AS.Param {AS.paramName = ident, AS.paramType = tyPos, AS.paramPos = pos} ->
             let name = PName $ ProgramName (AS.identName ident) pos
                 name' = PName $ ProgramName (AS.identName ident ++ "'") pos
-                tyTAC = castTypeToTACType $ T.type_ ty in
+                tyTAC = castTypeToTACType $ T.type_ tyPos in
+            -- TODO: strings? (Array should be good)
             simpleInstruction (DerefSet name name' tyTAC)
     ) paramsValRes
 
@@ -527,10 +535,12 @@ genStmt stmt post = case stmt of
     AS.StmtReturn val _ _-> do
         addr <- genExpr val
         -- Generate post-amble
+        unless (null post) $ out (Comment "Start of post-amble")
         mapM_ outLabeled post
         out (Return addr)
     AS.StmtReturnEmpty _ _-> do
         -- Generate post-amble
+        unless (null post) $ out (Comment "Start of post-amble")
         mapM_ outLabeled post
         out ReturnEmpty
     AS.StmtLoop body exit _ _ -> do
@@ -592,9 +602,6 @@ genAssign (left, right) =
                     out (IndexSet addr idx rExprRes tyTAC)
                 Simple addr ->
                     out (NOp addr rExprRes tyTAC)
-
-getAssignType :: AS.Exp SS.Ann -> T.Type
-getAssignType = error "TODO: should be known by annotations"
 
 data LExprRes
     = RefSet Address
