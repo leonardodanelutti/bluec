@@ -1,14 +1,14 @@
 const
 	a, d : Integer := 0, 1;
 var
-	_b : Real := 1.0;
+	b : Real := 1.0;
 	x : Integer := 42;
 	p : &Integer := &x;
 	y : Integer := *(p);
 routines
 	main() is
 	var
-		a : Integer := c;
+		a : Integer := d;
 	do
 		if (a > 0) then
 			a := 0;
@@ -20,11 +20,12 @@ routines
 		if (a = 1) then
 			a := 2;
 		end if
-		__util__();
+	return;
 	end
 	main
 
 -- Hello world utility-
+-- Modified with rispect to TestCase1 to include a return statement for every flow of control
 __util__(ref b: Boolean) ->String is
     const
         const1: String:="Hello world";
@@ -33,5 +34,6 @@ do
         else
     return "";
         end if
+	return "";
     end
     __util__

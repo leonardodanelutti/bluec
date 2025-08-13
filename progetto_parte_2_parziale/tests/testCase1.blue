@@ -1,3 +1,7 @@
+-- wrong call function;
+-- missing return statements;
+-- uninitialized variables;
+
 const
     a, d: Integer := 0, 1;
 var

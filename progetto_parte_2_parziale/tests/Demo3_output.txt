@@ -4,6 +4,62 @@ example 1: generic test
 
 Parse Successful!
 
-Static Semantics Analysis Failed:
-../tests/testCase3.blue:7:21-7:27: ERROR: &Error: 7:23-7:27: ERROR: Cannot index expression of type &Array<Integer; 2>. is not compatible with &Integer.
-../tests/testCase3.blue:13:25-13:29: ERROR: Cannot index expression of type &Array<Integer; 3>.
+[Abstract Syntax]
+
+ProgramDecl {consts = [], vars = [VarAss {varIdents = [Ident {identName = "A", identPos = 3:5-3:6}], varType = TypePos {type_ = Array<Integer; 3>, typePosn = 3:8-3:25}, varValues = [Array {elements = [Literal {val = LitInt {intVal = 1, litPos = 3:35-3:36}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 1)}, expPos = 3:35-3:36},Literal {val = LitInt {intVal = 2, litPos = 3:38-3:39}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 2)}, expPos = 3:38-3:39},Literal {val = LitInt {intVal = 3, litPos = 3:41-3:42}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 3)}, expPos = 3:41-3:42}], expAnnot = ExpAnn {expType = Array<Integer; 3>, ctVal = Nothing}, expPos = 3:29-3:43}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "A", identPos = 3:5-3:6},Var 3:5-3:43 (TypePos {type_ = Array<Integer; 3>, typePosn = 3:8-3:25}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 3:5-3:43},VarAss {varIdents = [Ident {identName = "B", identPos = 4:5-4:6}], varType = TypePos {type_ = Array<Array<Integer; 2>; 2>, typePosn = 4:8-4:35}, varValues = [Array {elements = [Array {elements = [Literal {val = LitInt {intVal = 10, litPos = 4:51-4:53}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 10)}, expPos = 4:51-4:53},Literal {val = LitInt {intVal = 20, litPos = 4:55-4:57}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 20)}, expPos = 4:55-4:57}], expAnnot = ExpAnn {expType = Array<Integer; 2>, ctVal = Nothing}, expPos = 4:45-4:58},Array {elements = [Literal {val = LitInt {intVal = 30, litPos = 4:66-4:68}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 30)}, expPos = 4:66-4:68},Literal {val = LitInt {intVal = 40, litPos = 4:70-4:72}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 40)}, expPos = 4:70-4:72}], expAnnot = ExpAnn {expType = Array<Integer; 2>, ctVal = Nothing}, expPos = 4:60-4:73}], expAnnot = ExpAnn {expType = Array<Array<Integer; 2>; 2>, ctVal = Nothing}, expPos = 4:39-4:74}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "B", identPos = 4:5-4:6},Var 4:5-4:74 (TypePos {type_ = Array<Array<Integer; 2>; 2>, typePosn = 4:8-4:35}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 4:5-4:74},VarAss {varIdents = [Ident {identName = "p", identPos = 5:5-5:6}], varType = TypePos {type_ = &Array<Integer; 3>, typePosn = 5:8-5:26}, varValues = [Ref {e = ExpIdent {name = Ident {identName = "A", identPos = 5:31-5:32}, expAnnot = IdentAnn {expType = Array<Integer; 3>, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 3:5-3:43}, expPos = 5:31-5:32}, expAnnot = ExpAnn {expType = &Array<Integer; 3>, ctVal = Nothing}, expPos = 5:30-5:32}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "p", identPos = 5:5-5:6},Var 5:5-5:32 (TypePos {type_ = &Array<Integer; 3>, typePosn = 5:8-5:26}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 5:5-5:32},VarAss {varIdents = [Ident {identName = "q", identPos = 6:5-6:6}], varType = TypePos {type_ = &Integer, typePosn = 6:8-6:16}, varValues = [Ref {e = ArrayIndex {e = ArrayIndex {e = ExpIdent {name = Ident {identName = "B", identPos = 6:21-6:22}, expAnnot = IdentAnn {expType = Array<Array<Integer; 2>; 2>, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 4:5-4:74}, expPos = 6:21-6:22}, index = Literal {val = LitInt {intVal = 1, litPos = 6:23-6:24}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 1)}, expPos = 6:23-6:24}, expAnnot = ExpAnn {expType = Array<Integer; 2>, ctVal = Nothing}, expPos = 6:21-6:25}, index = Literal {val = LitInt {intVal = 1, litPos = 6:26-6:27}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 1)}, expPos = 6:26-6:27}, expAnnot = ExpAnn {expType = Integer, ctVal = Nothing}, expPos = 6:21-6:28}, expAnnot = ExpAnn {expType = &Integer, ctVal = Nothing}, expPos = 6:20-6:28}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "q", identPos = 6:5-6:6},Var 6:5-6:28 (TypePos {type_ = &Integer, typePosn = 6:8-6:16}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 6:5-6:28}], routines = [Function {routName = Ident {identName = "test", identPos = 9:5-9:9}, params = [], returnType = TypePos {type_ = Integer, typePosn = 9:13-9:20}, routBody = RoutBody {declarations = ProgramDecl {consts = [], vars = [VarAss {varIdents = [Ident {identName = "x", identPos = 12:9-12:10}], varType = TypePos {type_ = Integer, typePosn = 12:12-12:19}, varValues = [ArrayIndex {e = Deref {e = ExpIdent {name = Ident {identName = "p", identPos = 12:25-12:26}, expAnnot = IdentAnn {expType = &Array<Integer; 3>, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 5:5-5:32}, expPos = 12:25-12:26}, expAnnot = ExpAnn {expType = Array<Integer; 3>, ctVal = Nothing}, expPos = 12:24-12:26}, index = Literal {val = LitInt {intVal = 1, litPos = 12:28-12:29}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 1)}, expPos = 12:28-12:29}, expAnnot = ExpAnn {expType = Integer, ctVal = Nothing}, expPos = 12:24-12:30}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "x", identPos = 12:9-12:10},Var 12:9-12:30 (TypePos {type_ = Integer, typePosn = 12:12-12:19}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 12:9-12:30},VarAss {varIdents = [Ident {identName = "y", identPos = 13:9-13:10}], varType = TypePos {type_ = Integer, typePosn = 13:12-13:19}, varValues = [Deref {e = ExpIdent {name = Ident {identName = "q", identPos = 13:24-13:25}, expAnnot = IdentAnn {expType = &Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 6:5-6:28}, expPos = 13:24-13:25}, expAnnot = ExpAnn {expType = Integer, ctVal = Nothing}, expPos = 13:23-13:25}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "y", identPos = 13:9-13:10},Var 13:9-13:25 (TypePos {type_ = Integer, typePosn = 13:12-13:19}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 13:9-13:25}], routines = [], declsAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "A", identPos = 3:5-3:6},Var 3:5-3:43 (TypePos {type_ = Array<Integer; 3>, typePosn = 3:8-3:25}) Nothing),(Ident {identName = "B", identPos = 4:5-4:6},Var 4:5-4:74 (TypePos {type_ = Array<Array<Integer; 2>; 2>, typePosn = 4:8-4:35}) Nothing),(Ident {identName = "p", identPos = 5:5-5:6},Var 5:5-5:32 (TypePos {type_ = &Array<Integer; 3>, typePosn = 5:8-5:26}) Nothing),(Ident {identName = "q", identPos = 6:5-6:6},Var 6:5-6:28 (TypePos {type_ = &Integer, typePosn = 6:8-6:16}) Nothing),(Ident {identName = "x", identPos = 12:9-12:10},Var 12:9-12:30 (TypePos {type_ = Integer, typePosn = 12:12-12:19}) Nothing),(Ident {identName = "y", identPos = 13:9-13:10},Var 13:9-13:25 (TypePos {type_ = Integer, typePosn = 13:12-13:19}) Nothing)], routines = fromList [(Ident {identName = "test", identPos = 9:5-9:9},Fun 9:5-17:9 [] (TypePos {type_ = Integer, typePosn = 9:13-9:20}))], keywords = fromList [("return",Return (Just Integer))]}, errs = []}}, statements = [StmtReturn {valReturn = BinOp {binOp = Add, e1 = ExpIdent {name = Ident {identName = "x", identPos = 15:16-15:17}, expAnnot = IdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 12:9-12:30}, expPos = 15:16-15:17}, e2 = ExpIdent {name = Ident {identName = "y", identPos = 15:20-15:21}, expAnnot = IdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 13:9-13:25}, expPos = 15:20-15:21}, expAnnot = ExpAnn {expType = Integer, ctVal = Nothing}, expPos = 15:16-15:21}, annot = StmtAnn {errs = [], alwaysReturn = True}, pos = 15:9-15:22}], routBodyAnnot = StmtAnn {errs = [], alwaysReturn = True}}, routAnnot = DeclAnn {bindings = Env {symbols = fromList [], routines = fromList [(Ident {identName = "test", identPos = 9:5-9:9},Fun 9:5-17:9 [] (TypePos {type_ = Integer, typePosn = 9:13-9:20}))], keywords = fromList []}, errs = []}, routPos = 9:5-17:9}], declsAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "A", identPos = 3:5-3:6},Var 3:5-3:43 (TypePos {type_ = Array<Integer; 3>, typePosn = 3:8-3:25}) Nothing),(Ident {identName = "B", identPos = 4:5-4:6},Var 4:5-4:74 (TypePos {type_ = Array<Array<Integer; 2>; 2>, typePosn = 4:8-4:35}) Nothing),(Ident {identName = "p", identPos = 5:5-5:6},Var 5:5-5:32 (TypePos {type_ = &Array<Integer; 3>, typePosn = 5:8-5:26}) Nothing),(Ident {identName = "q", identPos = 6:5-6:6},Var 6:5-6:28 (TypePos {type_ = &Integer, typePosn = 6:8-6:16}) Nothing)], routines = fromList [(Ident {identName = "test", identPos = 9:5-9:9},Fun 9:5-17:9 [] (TypePos {type_ = Integer, typePosn = 9:13-9:20}))], keywords = fromList []}, errs = []}}
+
+[Linearized tree]
+
+var
+	A : Array<Integer ; 3> := Array[1, 2, 3];
+	B : Array<Array<Integer ; 2> ; 2> := Array[Array[10, 20], Array[30, 40]];
+	p : &Array<Integer ; 3> := &A;
+	q : &Integer := &B[1][1];
+routines
+	test() -> Integer is
+	var
+		x : Integer := (*p)[1];
+		y : Integer := (*q);
+	do
+		return (x + y);
+	end
+	test
+
+
+
+[Generated TAC]
+
+      arraygen t0, 12
+      t0[0] =(int) 1
+      t0[4] =(int) 2
+      t0[8] =(int) 3
+      A@3:5 =(addr) t0
+      arraygen t1, 16
+      t1[0] =(int) 10
+      t1[4] =(int) 20
+      t1[8] =(int) 30
+      t1[12] =(int) 40
+      B@4:5 =(addr) t1
+      t2 = &A@3:5
+      p@5:5 =(addr) t2
+      t5 =(int) 1
+      t5 =(int) 2 *(int) t5
+      t5 =(int) 1 +(int) t5
+      t5 =(int) 4 *(int) t5
+      t4 =(int) B@4:5[t5]
+      t3 = &t4
+      q@6:5 =(addr) t3
+      pcall main, 0
+      END_PROGRAM
+
+test:
+      t7 =(addr) *p@5:5
+      t8 =(int) 1
+      t8 =(int) 4 *(int) t8
+      t6 =(int) t7[t8]
+      x@12:9 =(int) t6
+      t9 =(int) *q@6:5
+      y@13:9 =(int) t9
+      t10 =(int) x@12:9 +(int) y@13:9
+      return t10
+

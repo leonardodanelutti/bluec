@@ -2,13 +2,12 @@ var
 	A : Array<Integer ; 3> := Array[1, 2, 3];
 	B : Array<Array<Integer ; 2> ; 2> := Array[Array[10, 20], Array[30, 40]];
 	p : &Array<Integer ; 3> := &A;
-	q : &Array<Integer ; 2> := &B[1];
-	q1 : &Integer := &q[1];
+	q : &Integer := &B[1][1];
 routines
 	test() -> Integer is
 	var
-		x : Integer := (*p[1]);
-		y : Integer := (*q1);
+		x : Integer := (*p)[1];
+		y : Integer := (*q);
 	do
 		return (x + y);
 	end
