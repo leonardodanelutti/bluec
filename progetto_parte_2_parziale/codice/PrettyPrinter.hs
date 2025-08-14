@@ -94,11 +94,9 @@ paramsPrint params = intercalate ", " (map paramPrinter params)
 
 exitPrinter :: Show a => Exit a -> String
 exitPrinter (LoopExit e body _ _) =
-    unlines $
-        [expPrinter e] ++ ["\n"] ++
-        (if not (null body)
-            then [statementsPrinter body]
-            else []) ++ [";"]
+  "exit on " ++ expPrinter e ++ ";" ++
+  if (null body) then ""
+    else "\n\t" ++ statementsPrinter body
 
 exitsPrinter :: Show a =>[Exit a] -> String
 exitsPrinter exits = intercalate "\n" (map exitPrinter exits)
@@ -134,8 +132,9 @@ statementPrinter stm = "\t" ++
         StmtIfElse cond bodyT bodyF _ _ ->
             "if " ++ expPrinter cond ++ " then\n\t" ++ statementsPrinter bodyT ++
             "\n\telse\n\t" ++ statementsPrinter bodyF ++ "\n\tend if"
-        StmtLoop body exit _ _ ->
-            "loop\n\t" ++ statementsPrinter body ++ "\n\texit on " ++ exitsPrinter exit ++ ";" 
+        StmtLoop body exits _ _ ->
+            "loop\n\t" ++ statementsPrinter body ++
+            (if null exits then "" else "\n\t" ++ exitsPrinter exits) ++ "\n\tend loop"
 
 
 -- Tipi

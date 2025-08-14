@@ -75,6 +75,11 @@ demo: bluec
 		echo ""; \
 		./bluec ../tests/testOnTest.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/DemoTOT_output.txt
+	@{ \
+		echo "example 1: generic test"; \
+		echo ""; \
+		./bluec ../tests/testCase6.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo6_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

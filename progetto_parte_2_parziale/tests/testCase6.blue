@@ -1,0 +1,16 @@
+routines
+
+main() is
+var
+    y: Array<Integer; 2> := Array[4,2];
+    k: Integer := 0;
+do
+    k := 0;
+    loop
+        k := k + 1; 
+        exit on k > 3;
+        k := k + 1;
+    end loop
+    k := 0;
+    return;
+end main
