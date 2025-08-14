@@ -16,7 +16,8 @@ type StateMonad = St.State TACState
 data TACState = TACState {
     tempCount, labelCount :: Int,
     routineStack :: [TAC],
-    currentStream :: TAC,
+    currentRoutine :: TAC,
+    stream :: TAC,
     nextLabel :: [Label],
     loopLabelsStack :: [(Label, Label)]
 }
@@ -27,8 +28,8 @@ outLabeled instrLab = do
     state <- St.get
     let -- Add pending label
         instrLab' = instrLab { label = nextLabel state }
-        newStream = instrLab' : currentStream state
-    St.put $ state { currentStream = newStream, nextLabel = [] }
+        newStream = instrLab' : currentRoutine state
+    St.put $ state { currentRoutine = newStream, nextLabel = [] }
 
 out :: Instruction -> StateMonad ()
 out instr = outLabeled $ simpleInstruction instr
@@ -55,18 +56,19 @@ attachToNext label = do
 newRoutine :: StateMonad ()
 newRoutine = do
     state <- St.get
-    St.put $ state { routineStack = currentStream state : routineStack state,
-                     currentStream = [] }
+    St.put $ state { routineStack = currentRoutine state : routineStack state,
+                     currentRoutine = [] }
 
 endRoutine :: StateMonad ()
 endRoutine = do
     state <- St.get
-    let currentRoutine = currentStream state
+    let currentRout = currentRoutine state
     case routineStack state of
         [] -> St.put state
         (r:rs) -> do
             St.put $ state { routineStack = rs,
-                             currentStream = currentRoutine ++ r  }
+                             currentRoutine = r,
+                             stream = currentRout ++ stream state }
 
 newLoop :: StateMonad ()
 newLoop = do
@@ -97,14 +99,15 @@ genProgram :: AS.Declarations SS.Ann -> TAC
 genProgram ast =
     let finalState = St.execState (genEntryPoint ast) initState
         -- Reverse the stream to have the instructions in the correct order
-    in reverse (currentStream finalState)
+    in reverse (stream finalState)
 
 initState :: TACState
 initState = TACState {
     tempCount = 0,
     labelCount = 0,
     routineStack = [],
-    currentStream = [],
+    currentRoutine = [],
+    stream = [],
     nextLabel = [],
     loopLabelsStack = []
 }
@@ -114,9 +117,11 @@ initState = TACState {
 
 genEntryPoint :: AS.Declarations SS.Ann -> StateMonad ()
 genEntryPoint (AS.ProgramDecl _ vars routines _) = do
+    newRoutine
     mapM_ genVar vars
     out (ProcCall (Function "main") 0)
     out (Custom "END_PROGRAM")
+    endRoutine
     mapM_ genRoutine routines
 
 genDeclarations :: AS.Declarations SS.Ann -> StateMonad ()
