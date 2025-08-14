@@ -30,7 +30,7 @@ instance Show Instruction where
         NOp l r ty ->
             show l ++ " =(" ++ show ty ++ ") " ++ show r
         UnJump to ->
-            "UnJump to: " ++ show to
+            "goto " ++ show to
         BoolJumpT cond to ->
             "if " ++ show cond ++ " goto " ++ show to
         BoolJumpF cond to ->

@@ -571,16 +571,17 @@ genStmt stmt post = case stmt of
         out ReturnEmpty
     AS.StmtLoop body exit _ _ -> do
         newLoop
+        (loopStart, loopEnd) <- getLoopLabels
         -- Generate first body
         mapM_ (`genStmt` post) body
         -- Generate the others (exit-condition, body) pairs
         mapM_ (\(AS.LoopExit cond body _ _) -> do
                 -- TODO: Better way to generate condition using shortcut?
                 condAddr <- genExpr cond
-                (_, loopEnd) <- getLoopLabels
                 out (BoolJumpT condAddr loopEnd)
                 mapM_ (`genStmt` post) body
             ) exit
+        out (UnJump loopStart)
         endLoop
     AS.StmtContinue _ _ -> do
         (loopStart, _) <- getLoopLabels
@@ -599,13 +600,13 @@ genStmt stmt post = case stmt of
         condAddr <- genExpr cond
         out (BoolJumpF condAddr elseLabel)
         mapM_ (`genStmt` post) bodyT
-        attachToNext elseLabel
         out (UnJump endLabel)
+        attachToNext elseLabel
         mapM_ (`genStmt` post) bodyF
         attachToNext endLabel
 
 isFunction :: SS.Ann -> Bool
-isFunction = error "TODO: should be known by annotations"
+isFunction = error "TODO: should be known by annotations, currently only procedures should be statements"
 
 
 -- GENERATION OF ASSIGNMENTS
