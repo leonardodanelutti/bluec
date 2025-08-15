@@ -33,12 +33,12 @@ data RoutEntry -- TODO: serve la posizione?
     deriving (Show)
 
 data KeywordEntry
-    -- If present specifies the return type. Cases:
-    -- - It is not present in the environment: return keyword is not permitted.
-    -- - It is present and bool is True: at least one return keyword is necessary.
-    -- - It is present and bool is False: return keyword is not necessary, but permitted.
+    -- Allowed inside functions to allow returning.
     = Return (Maybe T.Type)
+    -- Allowed inside loops to allow skipping to the next iteration.
     | Continue
+    -- Inserted in the environment of unreachable statements.
+    | Unreachable
     deriving (Show)
 
 emptyEnv :: Env
@@ -59,6 +59,12 @@ addContinue env = env { keywords = Map.insert "continue" Continue (keywords env)
 
 addReturn :: Env -> Maybe T.Type -> Env
 addReturn env mType = env { keywords = Map.insert "return" (Return mType) (keywords env) }
+
+setUnreachable :: Env -> Env
+setUnreachable env = env { keywords = Map.insert "unreachable" Unreachable (keywords env) }
+
+isUnreachable :: Env -> Bool
+isUnreachable env = Map.member "unreachable" (keywords env)
 
 -- Datatype for static semantics analysis module annotations (on the AST).
 data Ann
@@ -89,7 +95,12 @@ data Ann
         -- Errors of the tree rooted by the node with this annotation.
         errs :: [String],
         -- True if for each flow of control inside the node there is a return statement.
-        alwaysReturn :: Bool
+        alwaysReturn :: Bool,
+        -- True if the node uses a return, continue or an exit on to exit a list of
+        -- statements.
+        alwaysExits :: Bool,
+        -- True if the node is unreachable (e.g. after a return statement).
+        unreachable :: Bool
     }
     deriving (Show)
 

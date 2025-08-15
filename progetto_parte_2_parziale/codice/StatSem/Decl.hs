@@ -2,9 +2,10 @@
 module StatSem.Decl where
 
 import Data.Either (partitionEithers)
-import qualified AbsSyn as AS
-import qualified Types  as T
-import qualified Errors as E
+import qualified AbsSyn         as AS
+import qualified Types          as T
+import qualified Errors         as E
+import qualified PrettyPrinter  as PP
 import StatSem.Utils
 import StatSem.Exp
 import StatSem.Stmt
@@ -157,10 +158,10 @@ annRoutine env AS.Function {
     -- Get the body errors.
     bodyErrs = errs $ AS.routBodyAnnot bodyAnn
     -- Check if the routine body contains a return statement for every flow of control.
-    thsAlwaysReturn = any (alwaysReturn . AS.annot) (AS.statements bodyAnn)
-    doNotAlwaysReturnErr = if thsAlwaysReturn
+    thisAlwaysReturn = alwaysReturn $ AS.routBodyAnnot bodyAnn
+    doNotAlwaysReturnErr = if thisAlwaysReturn
         then []
-        else [E.err pos "The function does not contain a return statement for every flow of control."]
+        else [E.err pos "The function \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
     -- Create the annotation.
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Fun pos params ty)],
@@ -189,7 +190,7 @@ annRoutine env AS.Procedure {
     thsAlwaysReturn = any (alwaysReturn . AS.annot) (AS.statements bodyAnn)
     doNotAlwaysReturnErr = if thsAlwaysReturn
         then []
-        else [E.err pos "The procedure does not contain a return statement for every flow of control."]
+        else [E.err pos "The procedure \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
     -- Create the annotation.
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Proc pos params)],
@@ -210,7 +211,7 @@ annRoutBody env AS.RoutBody {
     declsAnn = annDecls env decls
     declEnv = bindings $ AS.declsAnnot declsAnn
     -- Annotate the statements with the environment of the declarations.
-    stmtsAnn = map (annStmt declEnv) stmts
+    (stmtsAnn, alwaysExits, alwaysReturns) = annStmts declEnv stmts
     -- Errs from the declarations.
     declErrs = errs $ AS.declsAnnot declsAnn
     -- Errs from the statements.
@@ -219,5 +220,7 @@ annRoutBody env AS.RoutBody {
     ann = StmtAnn {
         errs = declErrs ++ stmtsErrs,
         -- Check if at least a statement always returns.
-        alwaysReturn = any (alwaysReturn . AS.annot) stmtsAnn
+        alwaysReturn = alwaysReturns,
+        alwaysExits = alwaysExits,
+        unreachable = isUnreachable env
     }

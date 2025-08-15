@@ -15,6 +15,24 @@ type Stmt = AS.Statement ()
 -- Annotated statements after static semantics analysis.
 type AnnStmt = AS.Statement Ann
 
+-- Annotate list of statements.
+--
+-- Returns:
+-- - a list of annotated statements;
+-- - a bool indicating if it always exits;
+-- - a bool indicating if it always returns.
+annStmts :: Env -> [Stmt] -> ([AnnStmt], Bool, Bool)
+annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || (xsReturns && (not xExits)))
+    where (xsAnn, xsExits, xsReturns) = annStmts env xs
+          xReturns = alwaysReturn (AS.annot xAnn)
+          xExits = alwaysExits (AS.annot xAnn)
+          xAnn = annStmt env x
+annStmts _ [] = ([], False, False)
+
+-- From a list of annotated statements take only the first that are reachable.
+takeWhileReachable :: [AnnStmt] -> [AnnStmt]
+takeWhileReachable = takeWhile (not . unreachable . AS.annot)
+
 -- Annotate a statement node.
 annStmt :: Env -> Stmt -> AnnStmt
 annStmt env stmt@AS.StmtAss{} = annStmtAss env stmt
@@ -38,12 +56,18 @@ annStmtAss env AS.StmtAss {
     AS.annot = ann,
     AS.pos = pos
 } where
+    -- Annotate the left and right expressions.
     annLeft = map (SSE.annExp env) left
     annRight = map (SSE.annExp env) right
+    -- Check that the left and right expressions have the same number of elements.
     numberErr = if length left /= length right
                 then [E.err pos "The number of identifiers does not match number of values."]
                 else []
-    -- TODO: check that the left is a LExp? FIXME: now a constant can be assigned as well which is not correct. Forse basta checkare che non abbia valore costante perchè tanto si preoccupa il parser di controllare che sia una LExp?
+    -- Check whether the left expressions aren't constants.
+    leftConstErr = concat $ map (\a -> case getCTValue (AS.expAnnot a) of -- TODO: is this enough to be sure that the left is not a constant?
+        Just _ -> [E.err (AS.expPos a) "Cannot assign a value to a constant. Suggested fix: make " ++ PP.expPrinter a ++ " a variable."]
+        _ -> []) annLeft
+    -- TODO: check that the left is a LExp? Forse è sufficiente checkare che non abbia valore costante perchè tanto si preoccupa il parser di controllare che sia una LExp?
     -- Get expected types from the left expressions.
     leftTypes = map (expType . AS.expAnnot) annLeft
     -- Cast the right expressions to the expected types (when the expected type are non-errors).
@@ -54,11 +78,13 @@ annStmtAss env AS.StmtAss {
     -- Get errors.
     rightErrs = T.getErrs $ map (expType . AS.expAnnot) castedRight
     leftErrs = T.getErrs $ map (expType . AS.expAnnot) annLeft
-    errs = leftErrs ++ rightErrs ++ numberErr -- Errors are printed in the order of evaluation (l-value is evaluated before r-value).
+    errs = leftErrs ++ rightErrs ++ numberErr ++ leftConstErr -- Errors are printed in the order of evaluation (l-value is evaluated before r-value).
     -- Create the annotation.
     ann = StmtAnn {
         errs = errs,
-        alwaysReturn = False
+        alwaysReturn = False,
+        alwaysExits = False,
+        unreachable = isUnreachable env
     }
 annStmtAss _ _ = error "Unreachable: `annStmtAss` called with non-`StmtAss` expression."
 
@@ -94,7 +120,9 @@ annStmtRoutCall env AS.StmtRoutCall {
     -- Create the annotation.
     ann = StmtAnn {
         errs = lookupErrs ++ argErrs ++ numberErr,
-        alwaysReturn = False
+        alwaysReturn = False,
+        alwaysExits = False,
+        unreachable = isUnreachable env
     }
 annStmtRoutCall _ _ = error "Unreachable: `annStmtRoutCall` called with non-`StmtRoutCall` expression."
 
@@ -125,7 +153,9 @@ annStmtReturn env AS.StmtReturn {
     -- Create the annotation.
     ann = StmtAnn {
         errs = returnErr ++ expErrs,
-        alwaysReturn = True
+        alwaysReturn = True,
+        alwaysExits = True,
+        unreachable = isUnreachable env
     }
 annStmtReturn _ _ = error "Unreachable: `annStmtReturn` called with non-`StmtReturn` expression."
 
@@ -146,7 +176,9 @@ annStmtReturnEmpty env AS.StmtReturnEmpty {
     -- Create the annotation.
     ann = StmtAnn {
         errs = returnErr,
-        alwaysReturn = True
+        alwaysReturn = True,
+        alwaysExits = True,
+        unreachable = isUnreachable env
     }
 annStmtReturnEmpty _ _ = error "Unreachable: `annStmtReturnEmpty` called with non-`StmtReturnEmpty` expression."
 
@@ -164,7 +196,9 @@ annStmtContinue env AS.StmtContinue { -- FIXME: gestire l'alwaysreturn dopo un c
     -- Create the annotation.
     ann = StmtAnn {
         errs = continueErr,
-        alwaysReturn = False
+        alwaysReturn = False,
+        alwaysExits = True,
+        unreachable = isUnreachable env
     }
 annStmtContinue _ _ = error "Unreachable: `annStmtContinue` called with non-`StmtContinue` expression."
 
@@ -188,9 +222,8 @@ annStmtIf env AS.StmtIf {
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the body.
-    annBody = map (annStmt env) body
+    (annBody, bodyAlwaysExits, bodyAlwaysReturn) = annStmts env body -- TODO: from the return we can output a warning if there are unreachable statements.
     -- Body always returns?
-    bodyAlwaysReturn = any (alwaysReturn . AS.annot) annBody -- TODO: from the return we can output a warning if there are unreachable statements.
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- If the condition has a compile-time value, we can determine if the statement always returns.
@@ -201,7 +234,9 @@ annStmtIf env AS.StmtIf {
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
-        alwaysReturn = thisAlwaysReturn
+        alwaysReturn = thisAlwaysReturn,
+        alwaysExits = bodyAlwaysExits,
+        unreachable = isUnreachable env
     }
 annStmtIf _ _ = error "Unreachable: `annStmtIf` called with non-`StmtIf` expression."
 
@@ -227,13 +262,11 @@ annStmtIfElse env AS.StmtIfElse {
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the true branch.
-    annBodyT = map (annStmt env) bodyT
+    (annBodyT, bodyTAlwaysExits, bodyTAlwaysReturn) = annStmts env bodyT
     -- Annotate the false branch.
-    annBodyF = map (annStmt env) bodyF
-    -- True branch always returns?
-    bodyTAlwaysReturn = any (alwaysReturn . AS.annot) annBodyT
-    -- False branch always returns?
-    bodyFAlwaysReturn = any (alwaysReturn . AS.annot) annBodyF
+    (annBodyF, bodyFAlwaysExits, bodyFAlwaysReturn) = annStmts env bodyF
+    -- Body always exits?
+    bodyAlwaysExits = bodyTAlwaysExits && bodyFAlwaysExits
     -- Body errors.
     bodyTErrs = concatMap (errs . AS.annot) annBodyT
     bodyFErrs = concatMap (errs . AS.annot) annBodyF
@@ -245,7 +278,9 @@ annStmtIfElse env AS.StmtIfElse {
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyTErrs ++ bodyFErrs,
-        alwaysReturn = thisAlwaysReturn
+        alwaysReturn = thisAlwaysReturn,
+        alwaysExits = bodyAlwaysExits,
+        unreachable = isUnreachable env
     }
 annStmtIfElse _ _ = error "Unreachable: `annStmtIfElse` called with non-`StmtIfElse` expression."
 
@@ -264,30 +299,57 @@ annStmtLoop env AS.StmtLoop {
     -- Add the `continue` keyword to the environment.
     env' = addContinue env
     -- Annotate the body.
-    annBody = map (annStmt env') body
+    (annBody, bodyAlwaysExits, bodyAlwaysReturn) = annStmts env' body
     -- Get the errors from the body.
     bodyErrs = concatMap (errs . AS.annot) annBody
-    -- Check if the body always returns.
-    bodyAlwaysReturn = any (alwaysReturn . AS.annot) annBody
     -- Annotate the exit.
-    exitResults = map (annLoopExit env') exit
-    (annExit, _) = unzip exitResults
+    (annExit, exitAlwaysReturn) = annLoopExits env' exit
     -- Get the errors from the exit.
     exitErrs = concatMap (errs . AS.loopExitAnnot) annExit
-    -- Get only the statements before the first exit whose condition is always false (i.e. take while conditions are true).
-    neverExits = map fst $ takeWhile (\(_, condCTValBool) -> case condCTValBool of
-        Just False -> True
-        _ -> False) exitResults
+    -- Get only the reachable statements.
+    -- reachableStmts = takeWhileReachable exitResults
+    -- -- Get only the statements before the first exit whose condition is always false (i.e. take while conditions are true).
+    -- neverExits = map fst $ takeWhile (\(_, condCTValBool) -> case condCTValBool of
+    --     Just False -> True
+    --     _ -> False) reachableStmts
     -- Check if the exit always returns.
-    exitAlwaysReturn = any (alwaysReturn . AS.loopExitAnnot) neverExits
+    -- exitAlwaysReturn = any (alwaysReturn . AS.loopExitAnnot) neverExits
     -- Create the annotation.
     ann = StmtAnn {
         errs = bodyErrs ++ exitErrs,
-        alwaysReturn = bodyAlwaysReturn || exitAlwaysReturn
+        alwaysReturn = bodyAlwaysReturn || (exitAlwaysReturn && not bodyAlwaysExits),
+        alwaysExits = False,
+        unreachable = isUnreachable env
     }
 annStmtLoop _ _ = error "Unreachable: `annStmtLoop` called with non-`StmtLoop` expression."
 
+-- Annotate an exit statements list.
+--
+-- Returns:
+-- - the annotated exit statements;
+-- - a bool indicating if the list always returns.
+annLoopExits :: Env -> [AS.Exit ()] -> ([AS.Exit Ann], Bool)
+annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, thisAlwaysReturn)
+    where (env', thisAlwaysReturn) = case xExits of
+            -- If x always exits, the next elements are unreachable. So the list in input
+            -- never returns.
+            Just True -> (setUnreachable env, False)
+            -- If the condition is always false, the body is always reached. So the list
+            -- in input always returns if the current exit does, or if the rest of the
+            -- list does.
+            Just False -> (env, alwaysReturn (AS.loopExitAnnot xAnn) || xsReturns)
+            -- If the condition is variable, the body is not guaranteed to be executed. So
+            -- it is not unreachable but we cannot determine if alwaysReturns.
+            Nothing -> (env, False)
+          (xAnn, xExits) = annLoopExit env x
+          (xsAnn, xsReturns) = annLoopExits env' xs
+annLoopExits _ [] = ([], False) -- If there are no exits, the list never returns.
+
 -- Annotate an exit statement.
+--
+-- Returns:
+-- - the annotated exit statement;
+-- - a bool indicating if it always exits (even with a continue or a return)
 annLoopExit :: Env -> AS.Exit () -> (AS.Exit Ann, Maybe Bool)
 annLoopExit env AS.LoopExit {
     AS.loopCond = cond,
@@ -298,7 +360,7 @@ annLoopExit env AS.LoopExit {
     AS.loopBody = annBody,
     AS.loopExitAnnot = ann,
     AS.loopExitPos = pos
-}, condCTValBool) where
+}, alwaysExits) where
     -- Annotate the condition.
     annCond = SSE.annExp env cond
     -- Cast the condition to a boolean type.
@@ -307,12 +369,14 @@ annLoopExit env AS.LoopExit {
     condErrs = T.getErrs [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
+    -- If the condition is always true the body is unreachable.
+    env' = case condCTVal of
+        Just (CTVBoolean True) -> setUnreachable env
+        _ -> env
     -- Annotate the body.
-    annBody = map (annStmt env) body
+    (annBody, bodyExits, bodyAlwaysReturn) = annStmts env' body
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
-    -- Check if the body always returns.
-    bodyAlwaysReturn = any (alwaysReturn . AS.annot) annBody
     -- Always returns?
     (condCTValBool, thisAlwaysReturn) = case condCTVal of
             Just (CTVBoolean v) -> (Just v, (not v) && bodyAlwaysReturn)
@@ -321,5 +385,13 @@ annLoopExit env AS.LoopExit {
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
-        alwaysReturn = thisAlwaysReturn
+        alwaysReturn = thisAlwaysReturn,
+        alwaysExits = case alwaysExits of
+            Just True -> True
+            _ -> False,
+        unreachable = isUnreachable env
     }
+    -- Determine if this statement always exits.
+    alwaysExits = case (bodyExits, condCTValBool) of
+        (True, _) -> Just True
+        (_, x) -> x
