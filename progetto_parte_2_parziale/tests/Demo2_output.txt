@@ -53,11 +53,37 @@ routines
 
 [Generated TAC]
 
-bluec: genString not implemented yet
-CallStack (from HasCallStack):
-  error, called at ./TAC/Gen.hs:166:15 in main:TAC.Gen
-HasCallStack backtrace:
-  collectBacktraces, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:92:13 in ghc-internal:GHC.Internal.Exception
-  toExceptionWithBacktrace, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:128:3 in ghc-internal:GHC.Internal.Exception
+$0 = "\"Hello world\"\NUL"
+$1 = "\"\"\NUL"
+$2 = "\"\"\NUL"
+      b@4:9 =(float) 1.0
+      x@5:9 =(int) 42
+      t0 = &x@5:9
+      p@6:9 =(addr) t0
+      t1 =(int) *p@6:9
+      y@7:9 =(int) t1
+      pcall main, 0
+      END_PROGRAM
 
+main:
+      a@11:17 =(int) 1
+      t2 =(bool) a@11:17 >(int) 0
+      ifFalse t2 goto L0
+      a@11:17 =(int) 0
+      b@4:9 =(float) 1.0
+L0:   t3 =(bool) a@11:17 >(int) 0
+      ifFalse t3 goto L1
+      d@2:9 =(int) 0
+L1:   t4 =(bool) a@11:17 ==(int) 1
+      ifFalse t4 goto L2
+      a@11:17 =(int) 2
+L2:   return
+
+__util__:
+      t5 =(bool) *b@29:14
+      ifFalse t5 goto L3
+      return $0
+      goto L4
+L3:   return $1
+L4:   return $2
 

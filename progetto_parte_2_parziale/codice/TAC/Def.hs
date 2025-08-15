@@ -24,6 +24,7 @@ data Address
     = PName ProgramName 
     | Temp Temporary
     | Lit Literal
+    | Stat Int
 
 castAddressToProgramName :: Address -> ProgramName
 castAddressToProgramName (PName name) = name
@@ -135,4 +136,20 @@ data LabeledInstruction = LabeledInstruction
 simpleInstruction :: Instruction -> LabeledInstruction
 simpleInstruction = LabeledInstruction []
 
-type TAC = [LabeledInstruction]
+type Instructions = [LabeledInstruction]
+
+data StaticData = Static {
+    addr :: Address,
+    value :: StaticValue
+}
+
+data StaticValue
+    = STVString String
+ -- | Can add more static value types
+
+type TACStatic = [StaticData]
+
+data TAC = TAC {
+    instructions :: Instructions,
+    staticData:: TACStatic
+}

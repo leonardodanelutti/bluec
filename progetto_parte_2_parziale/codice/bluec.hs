@@ -12,18 +12,18 @@ import Prelude
   , Show, show
   , IO, (>>), (>>=), mapM_, putStrLn
   , FilePath
-  , getContents, readFile, not, null, map
+  , getContents, readFile, null, print
   )
 import System.Environment ( getArgs )
 import System.Exit        ( exitFailure )
-import Control.Monad      ( when )
+import Control.Monad      ( when, unless )
 
 import LexGrammar   ( Token, mkPosToken )
 import ParGrammar   ( pDeclarations, myLexer )
 import PrettyPrinter  ( Print(..) )
 import qualified StatSem.Mod as SS
 import qualified TAC.Gen     as TAC
-import qualified TAC.Printer as TPrinter
+import qualified TAC.Printer()
 import qualified AbsSyn      as AS
 
 type Err        = Either String
@@ -49,15 +49,15 @@ run v p s f =
             putStrLn "\nParse Successful!"
             let annTree = SS.annotate tree
             let errs = SS.getErrs annTree
-            when (not $ null errs) $ do
+            unless (null errs) $ do
                 putStrLn "\nStatic Semantics Analysis Failed:"
                 case f of
                     Nothing -> mapM_ putStrLn errs
-                    Just f  -> mapM_ putStrLn (map (\err -> f ++ ":" ++ err) errs)
+                    Just f  -> mapM_ (putStrLn . (\err -> f ++ ":" ++ err)) errs
                 exitFailure
             showTree v annTree
             putStrV v $ "\n[Generated TAC]\n"
-            putStrLn $ TPrinter.printProgram $ TAC.genProgram annTree
+            print (TAC.genProgram annTree)
     where
         ts = myLexer s
         showPosToken ((l,c, _, _),t) = concat [ show l, ":", show c, "\t", show t ]

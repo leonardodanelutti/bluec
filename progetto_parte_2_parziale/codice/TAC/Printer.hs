@@ -4,9 +4,9 @@ module TAC.Printer where
 import TAC.Def 
 import LexGrammar (posLineCol)
 
-printProgram :: TAC -> String
-printProgram instructions = unlines $ map show instructions
-
+instance Show TAC where
+    show (TAC instructions staticData) = unlines (map show staticData) ++
+                                         unlines (map show instructions)
 
 instance Show LabeledInstruction where
     show (LabeledInstruction [] inst) = "      " ++ show inst
@@ -68,6 +68,7 @@ instance Show Address where
     show (PName pName) = show pName
     show (Temp tmp) = show tmp
     show (Lit lit) = show lit
+    show (Stat stat) = "$" ++ show stat
 
 instance Show TACType where
     show TInteger = "int"
@@ -122,3 +123,9 @@ instance Show Literal where
     show (LitReal n) = show n
     show (LitChar c) = "'" ++ [c] ++ "'"
     show (LitBool s) = show s
+
+instance Show StaticData where
+    show (Static addr value) = show addr ++ " = " ++ show value
+
+instance Show StaticValue where
+    show (STVString s) = show s

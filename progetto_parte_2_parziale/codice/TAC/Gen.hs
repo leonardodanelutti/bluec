@@ -14,10 +14,11 @@ import Control.Monad (unless)
 type StateMonad = St.State TACState
 
 data TACState = TACState {
-    tempCount, labelCount :: Int,
-    routineStack :: [TAC],
-    currentRoutine :: TAC,
-    stream :: TAC,
+    tempCount, labelCount, staticCount :: Int,
+    routineStack :: [Instructions],
+    currentRoutine :: Instructions,
+    stream :: Instructions,
+    staticStream :: [StaticData],
     nextLabel :: [Label],
     loopLabelsStack :: [(Label, Label)]
 }
@@ -32,7 +33,16 @@ outLabeled instrLab = do
     St.put $ state { currentRoutine = newStream, nextLabel = [] }
 
 out :: Instruction -> StateMonad ()
-out instr = outLabeled $ simpleInstruction instr
+out = outLabeled . simpleInstruction
+
+outStatic :: StaticValue -> StateMonad Address
+outStatic instrLab = do
+    state <- St.get
+    let k = staticCount state
+        newStream = Static (Stat k) instrLab : staticStream state
+    St.put $ state { staticStream = newStream,
+                     staticCount = k + 1 }
+    return (Stat k)
 
 newTmp :: StateMonad Address
 newTmp = do
@@ -99,15 +109,17 @@ genProgram :: AS.Declarations SS.Ann -> TAC
 genProgram ast =
     let finalState = St.execState (genEntryPoint ast) initState
         -- Reverse the stream to have the instructions in the correct order
-    in reverse (stream finalState)
+    in TAC (reverse $ stream finalState) (reverse $ staticStream finalState)
 
 initState :: TACState
 initState = TACState {
     tempCount = 0,
     labelCount = 0,
+    staticCount = 0,
     routineStack = [],
     currentRoutine = [],
     stream = [],
+    staticStream = [],
     nextLabel = [],
     loopLabelsStack = []
 }
@@ -154,16 +166,12 @@ genExpr exp = do
         genLit (SS.CTVReal v)    = return $ Lit (LitReal v)
         genLit (SS.CTVChar v)    = return $ Lit (LitChar v)
         genLit (SS.CTVBoolean v) = return $ Lit (LitBool v)
-        genLit (SS.CTVString v)  = genString v
+        genLit (SS.CTVString v)  = outStatic (STVString (v ++ "\0"))
         genLit (SS.CTVRef v)     = do
             k <- newTmp
             lit <- genLit v
             out (Ref k lit)
             return k
-
-genString :: String -> StateMonad Address
--- TODO: Strings are pointers to some location
-genString _ = error "genString not implemented yet"
 
 genUnknownExpr :: AS.Exp SS.Ann -> StateMonad Address
 genUnknownExpr exp = do
@@ -428,7 +436,6 @@ genFunCall (AS.RoutineCall routName args _) ann = do
         ty = castTypeToTACType returnType
     case returnType of
         T.TArray {} -> error "TODO: handle array return types"
-        T.TString -> error "TODO: handle string return types"
         -- Ref cannot be returned by a function
         _ -> out (FunCall k routLab numArgs ty)
     return k
@@ -456,10 +463,10 @@ genActualParams args ann =
             -- Generate the address of the parameter
             addr <- genExpr expr
 
+            -- TODO: rewrite this in a better way
             case AS.mode param of
                 -- For value parameters we have to copy the value
                 AS.Mval -> case paramType of
-                    T.TString -> error "TODO: handle string, maybe can be rewritten better with 'with'"
                     T.TArray {} -> do
                         out (ArrayGen paramAddr (T.getTypeSize paramType))
                         copy paramAddr addr paramType
@@ -469,6 +476,7 @@ genActualParams args ann =
                         out (Param paramAddr paramTACType)
                 -- For value-result and reference parameters we just pass the address
                 _ -> do
+                    -- TODO: for types that are already references what should we do?
                     out (Ref paramAddr addr)
                     out (Param paramAddr Addr)
         ) exprs
@@ -476,7 +484,6 @@ genActualParams args ann =
 -- copy data stored in the second address to the first address
 copy :: Address -> Address -> T.Type -> StateMonad ()
 copy newAddr prevAddr ty = case ty of
-    T.TString -> error "TODO: implement copy for strings"
     T.TArray elemType _ ->
         let innerTypeSize = T.getTypeSize $ T.arrayInnerType ty
             arraySize = T.getTypeSize ty `div` innerTypeSize
@@ -523,13 +530,13 @@ genParamsPre params = do
                 k <- newTmp
                 out (DerefGet k name tyTAC)
                 copy name' k ty
-            T.TString -> error "TODO: handle strings"
+            T.TString -> error "TODO: handle strings, also for references, what we should do?"
             _ -> out (DerefGet name' name tyTAC)
         ) paramsValRes
     unless (null paramsValRes) $ out (Comment "End of preamble")
 
 -- Generate post-amble for valres parameters
-genParamsPost :: [AS.Param] -> TAC
+genParamsPost :: [AS.Param] -> Instructions
 genParamsPost params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres) params in
     map (
         \ AS.Param {AS.paramName = ident, AS.paramType = tyPos, AS.paramPos = pos} ->
@@ -540,7 +547,7 @@ genParamsPost params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres)
             simpleInstruction (DerefSet name name' tyTAC)
     ) paramsValRes
 
-genRoutineBody :: AS.RoutBody SS.Ann -> TAC -> StateMonad ()
+genRoutineBody :: AS.RoutBody SS.Ann -> Instructions -> StateMonad ()
 genRoutineBody (AS.RoutBody decls stmts _) post = do
     genDeclarations decls
     mapM_ (`genStmt` post) stmts
@@ -548,7 +555,7 @@ genRoutineBody (AS.RoutBody decls stmts _) post = do
 
 -- GENERATION OF STATEMENTS
 
-genStmt :: AS.Statement SS.Ann -> TAC -> StateMonad ()
+genStmt :: AS.Statement SS.Ann -> Instructions -> StateMonad ()
 genStmt stmt post = case stmt of
     AS.StmtAss left right _ _ ->
         mapM_ genAssign (zip left right)
