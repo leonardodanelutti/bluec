@@ -3,6 +3,7 @@ const
 var
 	_b : Real := 1.0;
 	c : String := "test";
+    d : Char := 'a';
 
 routines
 

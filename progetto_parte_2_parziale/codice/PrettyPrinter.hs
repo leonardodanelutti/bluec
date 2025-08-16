@@ -171,8 +171,8 @@ literalPrinter l =
         LitBool b _  -> show b
         LitInt i _   -> show i
         LitDouble r _-> show r
-        LitString s _ -> "\"" ++ s ++ "\""
-        LitChar c _   -> [c]
+        LitString s _ -> show s
+        LitChar c _   ->  show c
 
 -- Operatori
 binOpPrinter :: BinOp -> String

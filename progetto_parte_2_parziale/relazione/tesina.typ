@@ -39,7 +39,7 @@ par(
 - Aggiunta keyword `return` nelle funzioni (al posto di avere i nomi delle variabili di
   ritorno che avrebbero richiesto di avere dichiarazioni senza assegnamento).
 
-== Risoluzione conflitti
+== Risoluzione conflitti (Alcuni conflitti sono già stati risolti nella definizione del linguaggio; il conflitto 105 è scritto sotto)
 - Il conflitto state 105 LExp vs RExp non è un problema. Essendo le LExp sottoinsieme
   delle RExp basta scegliere sempre la Shift.
 // TODO: MODIFICARE: anche in quelli più interni
@@ -80,11 +80,11 @@ par(
 - Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale
 - sostituire le costanti (da fare nel TAC?)
 - nelle call delle routine annotare la lista dei parametri coi tipi, modalità e nomi.
-- Controllare che nessuna costante sia a sinistra di un assegnamento O in un parametro ref o valres
+- Controllare che nessuna costante sia a sinistra di un assegnamento O in un parametro ref o valres
 
 
 
-= Definizione del linguaggio
+= Definizione del linguaggio: scelte di design e risoluzione dei conflitti
 Il linguaggio definito per questo progetto è un linguaggio di programmazione imperativo con scoping statico. La sua grammatica si basa sulla sintassi concreta del linguaggio Blue.
 
 Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzionalità richieste dalla consegna, come per esempio il dereferenziamento, sono stati introdotti alcuni elementi. Tuttavia, non sono presenti né classi né interfacce.
@@ -93,9 +93,10 @@ Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzional
 Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String`#footnote[#cite( <implementazione-compilatori-imperativi>, form:"full" ), p. 3.3] e `Char`.
 Sono inoltre supportati gli array che sono dichiarati utilizzando nel modo seguente: `Array<Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array. Infine vi sono i puntatori, che sono dichiarati con la sintassi `&Type`.
 
-=== Type system
+=== Type system (MEGLIO SOTTO)
 Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:
 #image("img/types.jpg", width: 100%)
+
 
 ==== Expression
 
@@ -176,11 +177,76 @@ Ad esempio:
 
 
 == Risoluzione conflitti rimanenti
-a grammatica definita presenta un solo conflitto, che si verifica nello stato 105, tra le produzioni di `LExp` e `RExp`.
+La grammatica definita presenta un solo conflitto, che si verifica nello stato 104, tra le produzioni di `LExp` e `RExp`.
 Questo conflitto non crea problemi per l'analisi sintattica, dal momento che le `LExp` sono un sottoinsieme delle `RExp`. 
 Pertanto, è sufficiente scegliere sempre l'azione di shift.
 
+= Definizione del lexer e del parser
+Lexer e Parser sono stati realizzati modificando i file-prototipo generati automaticamente da BNFC, in modo tale da adattarli alle specifiche della consegna. La grammatica utilizzata per la costruzione di lexer e parser è quella presente nel file `grammar.cf` e genera il linguaggio descritto in precedenza.
+
+== Modifiche al Parser
+Il parser è stato fortemente modificato nei seguenti aspetti:
+- Mantenimento della posizione dei token per la generazione del TAC.
+
+
+
+
+
+
 = TODO:
 - [ ] disambiguare funzioni con lo stesso nome nel tac
+
+
+= Definizione del Type system
+== Gerargia dei tipi
+Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:\ \
+#image("img/types.jpg", width: 100%, )
+
+== Regole formali per il type system
+Per definire il tipo di ogni nodo dell'albero di sintassi astratta, sono state definite delle regole formali. Queste regole sono utilizzate per determinare il tipo di espressioni, letterali e identificatori, in base all'ambiente corrente e ai tipi associati.
+\ \
+
+Di seguito sono riportate le regole formali utilizzate per definire tali tipi.
+
+=== Expression
+
+=== Literal
+
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitInt" {"intVal" = e} } : "INT")
+$
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitChar" {"charVal" = e} } : "CHAR")
+$
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitString" {"stringVal" = e} } : "STRING")
+$
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitBool" {"boolVal" = e} } : "BOOL")
+$
+$
+space/ ("env" ⊢ "Literal" { "val" = "LitDouble" {"doubleVal" = e} } : "REAL")
+$
+
+=== Ident
+$
+space/ ("env" ⊢ "ExpIdent" { "name" = id } : "env"(id))
+$
+
+===
+
+
+SBAGLIATE
+$
+("env" ⊢ e : "BOOL")/("env" ⊢ "Not" { "exp" = e } : "BOOL")
+$
+$
+("env" ⊢ e : T)/("env" ⊢ "Ref" { "exp" = e } : "&"T) ?
+$
+$
+("env" ⊢ e : "*"T) /("env" ⊢ "Deref" { "exp" = e } : T)
+$
+
+
 
 #bibliography("bibliografia.bib", title: "Bibliografia" , style: "ieee")
