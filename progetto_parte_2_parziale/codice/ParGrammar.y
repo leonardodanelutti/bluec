@@ -92,9 +92,8 @@ Double     : L_doubl     { A.LitDouble (read (tokenText $1)) (tokenPosn $1) }
 Integer    :: { A.Literal }
 Integer    : L_integ     { A.LitInt    (read (tokenText $1)) (tokenPosn $1) }
 
---TODO: provare a farlo nel lexer
 String     :: { A.Literal }
-String : L_quoted { A.LitString (let t = tokenText $1 in tail (init t)) (tokenPosn $1) }
+String : L_quoted { A.LitString (tokenText $1) (tokenPosn $1) }
 
 BlueIdent  :: { A.Ident }
 BlueIdent  : L_BlueIdent { A.Ident     (tokenText $1)        (tokenPosn $1) }

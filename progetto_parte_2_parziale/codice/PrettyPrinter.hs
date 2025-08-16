@@ -64,10 +64,7 @@ expPrinter exp =
         BinOp op e1 e2 _ _ -> "(" ++ expPrinter e1 ++ " " ++ binOpPrinter op ++ " " ++ expPrinter e2 ++ ")"
         RelOp op e1 e2 _ _ -> "(" ++ expPrinter e1 ++ " " ++ relOpPrinter op ++ " " ++ expPrinter e2 ++ ")"
         Ref e _ _ -> "&" ++ expPrinter e
-
-        --TODO vedere deref
         Deref e _ _ -> "(*" ++ expPrinter e ++ ")"
-
         ArrayIndex e index _ _ -> expPrinter e ++ "[" ++ expPrinter index ++ "]"
         Array e _ _ -> "Array[" ++ expsPrinter e ++ "]"
         FunCall call _ _ -> routineCallPrinter call
@@ -174,7 +171,7 @@ literalPrinter l =
         LitBool b _  -> show b
         LitInt i _   -> show i
         LitDouble r _-> show r
-        LitString s _ -> s
+        LitString s _ -> "\"" ++ s ++ "\""
         LitChar c _   -> [c]
 
 -- Operatori

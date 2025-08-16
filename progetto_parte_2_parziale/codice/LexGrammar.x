@@ -141,7 +141,7 @@ mkPosToken t = (tokenLineCol t, tokenText t)
 tokenText :: Token -> String
 tokenText t = case t of
   PT _ (TS s _) -> s
-  PT _ (TL s)   -> show s
+  PT _ (TL s)   -> s
   PT _ (TI s)   -> s
   PT _ (TV s)   -> s
   PT _ (TD s)   -> s
@@ -208,7 +208,7 @@ resWords =
 
 -- | Unquote string literal.
 unescapeInitTail :: String -> String
-unescapeInitTail = id . unesc . tail . id
+unescapeInitTail = id . unesc . init. tail . id
   where
   unesc s = case s of
     '\\':c:cs | elem c ['\"', '\\', '\''] -> c : unesc cs
