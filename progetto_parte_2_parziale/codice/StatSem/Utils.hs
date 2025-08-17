@@ -8,6 +8,10 @@ import qualified Types          as T
 import qualified Errors         as E
 import qualified PrettyPrinter  as PP
 
+-----------------
+-- ENVIRONMENT --
+-----------------
+
 -- Environment with different namespaces for variables, functions, and constants.
 --
 -- Routine calls without parameters and variables can be indistinguishable if have the
@@ -20,6 +24,7 @@ data Env = Env {
     }
     deriving (Show)
 
+-- Variable or constant bindings.
 data SymbolEntry
     -- Posn refers of the whole declaration (meaning that different symbols can have the
     -- same Posn if they are declared together).
@@ -27,11 +32,15 @@ data SymbolEntry
     | Const LG.Posn AS.Literal
     deriving (Show)
 
+-- Function or procedure bindings.
 data RoutEntry -- TODO: serve la posizione?
     = Fun LG.Posn [AS.Param] T.TypePos
     | Proc LG.Posn [AS.Param]
     deriving (Show)
 
+-- Keyword bindings:
+-- - `Return (Just ty)` is present inside a function with returning type `ty`;
+-- - `Return Nothing` is present inside procedures.
 data KeywordEntry
     -- Allowed inside functions to allow returning.
     = Return (Maybe T.Type)

@@ -22,7 +22,9 @@ type AnnStmt = AS.Statement Ann
 -- - a bool indicating if it always exits;
 -- - a bool indicating if it always returns.
 annStmts :: Env -> [Stmt] -> ([AnnStmt], Bool, Bool)
-annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || (xsReturns && (not xExits)))
+-- Note that when we check if xsReturns we do not have to check whether x does not exit
+-- because the only way it exits is with a return statement.
+annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || xsReturns)
     where (xsAnn, xsExits, xsReturns) = annStmts env xs
           xReturns = alwaysReturn (AS.annot xAnn)
           xExits = alwaysExits (AS.annot xAnn)
@@ -183,7 +185,7 @@ annStmtReturnEmpty env AS.StmtReturnEmpty {
 annStmtReturnEmpty _ _ = error "Unreachable: `annStmtReturnEmpty` called with non-`StmtReturnEmpty` expression."
 
 annStmtContinue :: Env -> Stmt -> AnnStmt
-annStmtContinue env AS.StmtContinue { -- FIXME: gestire l'alwaysreturn dopo un continue. Al momento è sbagliato perchè non tengo conto del fatto che dopo il continue il codice non viene eseguito.
+annStmtContinue env AS.StmtContinue {
     AS.pos = pos
 } = AS.StmtContinue {
     AS.annot = ann,
@@ -227,15 +229,15 @@ annStmtIf env AS.StmtIf {
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- If the condition has a compile-time value, we can determine if the statement always returns.
-    thisAlwaysReturn = case condCTVal of
-        Just (CTVBoolean v) -> v && bodyAlwaysReturn -- TODO: maybe warn that the `If` statement is useless because the condition is always true or false.
-        Nothing -> False
+    (thisAlwaysReturn, thisAlwaysExits) = case condCTVal of
+        Just (CTVBoolean v) -> (v && bodyAlwaysReturn, v && bodyAlwaysExits) -- TODO: maybe warn that the `If` statement is useless because the condition is always true or false.
+        Nothing -> (False, False)
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
         alwaysReturn = thisAlwaysReturn,
-        alwaysExits = bodyAlwaysExits,
+        alwaysExits = thisAlwaysExits,
         unreachable = isUnreachable env
     }
 annStmtIf _ _ = error "Unreachable: `annStmtIf` called with non-`StmtIf` expression."
@@ -265,21 +267,19 @@ annStmtIfElse env AS.StmtIfElse {
     (annBodyT, bodyTAlwaysExits, bodyTAlwaysReturn) = annStmts env bodyT
     -- Annotate the false branch.
     (annBodyF, bodyFAlwaysExits, bodyFAlwaysReturn) = annStmts env bodyF
-    -- Body always exits?
-    bodyAlwaysExits = bodyTAlwaysExits && bodyFAlwaysExits
     -- Body errors.
     bodyTErrs = concatMap (errs . AS.annot) annBodyT
     bodyFErrs = concatMap (errs . AS.annot) annBodyF
     -- If the condition has a compile-time value, we can determine if the statement always returns.
-    thisAlwaysReturn = case condCTVal of
-        Just (CTVBoolean v) -> (v && bodyTAlwaysReturn) || ((not v) && bodyFAlwaysReturn) -- TODO: warn that the `If` or `Else` are unreachable if the condition is constant.
-        Nothing -> bodyTAlwaysReturn && bodyFAlwaysReturn
+    (thisAlwaysReturn, thisAlwaysExits) = case condCTVal of
+        Just (CTVBoolean v) -> ((v && bodyTAlwaysReturn) || ((not v) && bodyFAlwaysReturn), (v && bodyTAlwaysExits) || ((not v) && bodyFAlwaysExits)) -- TODO: warn that the `If` or `Else` are unreachable if the condition is constant.
+        Nothing -> (bodyTAlwaysReturn && bodyFAlwaysReturn, bodyTAlwaysExits && bodyFAlwaysExits)
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyTErrs ++ bodyFErrs,
         alwaysReturn = thisAlwaysReturn,
-        alwaysExits = bodyAlwaysExits,
+        alwaysExits = thisAlwaysExits,
         unreachable = isUnreachable env
     }
 annStmtIfElse _ _ = error "Unreachable: `annStmtIfElse` called with non-`StmtIfElse` expression."
