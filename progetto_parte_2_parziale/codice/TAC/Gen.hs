@@ -178,7 +178,7 @@ genExpr exp = do
     case AS.expAnnot exp of
         -- Handle expressions with known values
         SS.ExpAnn { SS.ctVal = Just val } -> genLit val
-        SS.IdentAnn { SS.ctVal = Just val } -> genLit val
+        SS.ExpIdentAnn { SS.ctVal = Just val } -> genLit val
         -- Handle expressions with no known values
         _ -> genUnknownExpr exp
     where
@@ -240,7 +240,7 @@ genUnknownExpr exp = do
         -- Already handled by genExpr
         AS.Literal {} -> error "Literal should not be passed to genUnknownExpr"
 
-        AS.FunCall call ann@(SS.FunCallAnn {}) _ -> do
+        AS.FunCall call ann@(SS.ExpFunCallAnn {}) _ -> do
             genFunCall call ann
 
         AS.FunCall {} -> error "Unreachable"
@@ -255,7 +255,7 @@ genUnknownExpr exp = do
         AS.ArrayIndex _ _ ann _ -> genArrayIndex exp ann
 
         -- ConstCategory is handled by genExpr
-        AS.ExpIdent ident (SS.IdentAnn ty _ SS.VarCategory mode (Just declPos)) _ -> do
+        AS.ExpIdent ident (SS.ExpIdentAnn ty _ SS.VarCategory mode (Just declPos)) _ -> do
             let identName = PName $ ProgramName (AS.identName ident) declPos
                 identName' = PName $ ProgramName (AS.identName ident ++ "'") declPos
                 tyTAC = castTypeToTACType ty
@@ -276,7 +276,7 @@ genUnknownExpr exp = do
 
                 Nothing -> return identName
 
-        AS.ExpIdent ident ann@(SS.FunCallAnn {}) _ -> do
+        AS.ExpIdent ident ann@(SS.ExpFunCallAnn {}) _ -> do
             genFunCall (AS.callFromIdent ident) ann
 
         AS.ExpIdent {} -> error "Unreachable"
@@ -667,7 +667,7 @@ data LExprRes
 
 genLExpr :: AS.Exp SS.Ann -> StateMonad LExprRes
 genLExpr exp = case exp of
-    AS.ExpIdent name (SS.IdentAnn {SS.declPos = Just pos}) _ -> do
+    AS.ExpIdent name (SS.ExpIdentAnn {SS.declPos = Just pos}) _ -> do
         let identName = PName $ ProgramName (AS.identName name) pos
         return $ Simple identName
     AS.Deref expr _ _ -> do

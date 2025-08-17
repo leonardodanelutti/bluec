@@ -114,7 +114,7 @@ annExpIdent env AS.ExpIdent {
     routineType = Map.lookup ident (routines env)
     ann = case (symbolType, routineType) of
         -- Identifier not found.
-        (Nothing, Nothing) -> IdentAnn {
+        (Nothing, Nothing) -> ExpIdentAnn {
             expType = T.TError { T.msgs = [E.err pos "Unbound identifier: " ++ PP.identPrinter ident ++ "."] },
             ctVal = Nothing,
             identCategory = ErrorCategory,
@@ -122,7 +122,7 @@ annExpIdent env AS.ExpIdent {
             declPos = Nothing
         }
         -- Var identifier.
-        (Just (Var varPos ty mode), Nothing) -> IdentAnn {
+        (Just (Var varPos ty mode), Nothing) -> ExpIdentAnn {
             expType = T.type_ ty,
             ctVal = Nothing,
             identCategory = VarCategory,
@@ -130,7 +130,7 @@ annExpIdent env AS.ExpIdent {
             declPos = Just varPos
         }
         -- Const identifier.
-        (Just (Const constPos val), Nothing) -> IdentAnn {
+        (Just (Const constPos val), Nothing) -> ExpIdentAnn {
             expType = identType,
             ctVal = Just identVal,
             identCategory = ConstCategory,
@@ -142,7 +142,7 @@ annExpIdent env AS.ExpIdent {
             where (ann, _) = annRoutineCall env ident [] pos
         -- TODO: the case in which the ambiguity can be resolved by the type
         -- Ambiguous case.
-        _ -> IdentAnn {
+        _ -> ExpIdentAnn {
             expType = T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ show ident] },
             ctVal = Nothing,
             identCategory = ErrorCategory,
@@ -175,26 +175,27 @@ annExpRoutCall _ _ = error "Unreachable: `annExpRoutCall` called with non-`FunCa
 -- Helper function that creates an annotation for a routine call, and casts the arguments
 -- to the expected types.
 annRoutineCall :: Env -> AS.Ident -> [AnnExp] -> LG.Posn -> (Ann, [AnnExp])
-annRoutineCall env ident annArgs pos = (FunCallAnn {
+annRoutineCall env ident annArgs pos = (ExpFunCallAnn {
     expType = routType,
-    params = params
+    params = params,
+    declPos = declPos
 }, castedArgs) where
-    (routType, params, castedArgs) = case Map.lookup ident (routines env) of
-        Just (Fun pos params ty) -> case length params == length annArgs of
+    (routType, params, castedArgs, declPos) = case Map.lookup ident (routines env) of
+        Just (Fun declPos params ty) -> case length params == length annArgs of
             True  -> case T.getErrs $ map (expType . AS.expAnnot) castedArgs of
-                [] -> (T.type_ ty, params, castedArgs)
-                errs -> (T.TError { T.msgs = errs }, params, castedArgs)
+                [] -> (T.type_ ty, params, castedArgs, Just declPos)
+                errs -> (T.TError { T.msgs = errs }, params, castedArgs, Just declPos)
                 where
                     castedArgs = castParamTypes params annArgs
             False -> (T.TError {
                 T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length annArgs) ++ "."]
-            }, params, annArgs)
-        Just (Proc pos params) -> (T.TError {
+            }, params, annArgs, Just declPos)
+        Just (Proc declPos params) -> (T.TError {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ PP.identPrinter ident ++ "."]
-        }, params, annArgs)
+        }, params, annArgs, Just declPos)
         Nothing -> (T.TError {
             T.msgs = [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."]
-        }, [], annArgs)
+        }, [], annArgs, Nothing)
 
 -- Sign expressions.
 -- Rule: RExpSign.

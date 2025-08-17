@@ -109,10 +109,10 @@ annStmtRoutCall env AS.StmtRoutCall {
     -- Annotate the arguments.
     annArgs = map (SSE.annExp env) args
     -- Params.
-    (params, lookupErrs) = case Map.lookup ident (routines env) of
-        Just (Fun _ params _) -> (params, [E.err pos "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."]) -- TODO: maybe make it a warning?
-        Just (Proc _ params) -> (params, [])
-        Nothing -> ([], [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."])
+    (params, lookupErrs, declPos) = case Map.lookup ident (routines env) of
+        Just (Fun declPos params _) -> (params, [E.err pos "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."], Just declPos) -- TODO: maybe make it a warning?
+        Just (Proc declPos params) -> (params, [], Just declPos)
+        Nothing -> ([], [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing)
     -- Cast the arguments to the expected types.
     (castedArgs, numberErr) = if length params /= length annArgs
                 then (annArgs, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length annArgs) ++ "."])
@@ -120,11 +120,13 @@ annStmtRoutCall env AS.StmtRoutCall {
     -- Argument errors.
     argErrs = T.getErrs $ map (expType . AS.expAnnot) castedArgs
     -- Create the annotation.
-    ann = StmtAnn {
+    ann = StmtRoutCallAnn {
         errs = lookupErrs ++ argErrs ++ numberErr,
         alwaysReturn = False,
         alwaysExits = False,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        params = params,
+        declPos = declPos
     }
 annStmtRoutCall _ _ = error "Unreachable: `annStmtRoutCall` called with non-`StmtRoutCall` expression."
 

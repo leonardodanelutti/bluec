@@ -50,8 +50,30 @@ data KeywordEntry
     | Unreachable
     deriving (Show)
 
+-- Construct an empty environment.
 emptyEnv :: Env
 emptyEnv = Env Map.empty Map.empty Map.empty
+
+-- Pre-defined routines fictitious position.
+preludePos :: LG.Posn
+preludePos = LG.Pn (LG.PnS 0 0 0) (LG.PnS 0 0 0)
+
+-- Pre-defined routines.
+preludeRoutines :: [(AS.Ident, RoutEntry)]
+preludeRoutines = [
+        ((AS.Ident "writeInt" preludePos), Proc preludePos [AS.Param AS.Mval (AS.Ident "value" preludePos) (T.TypePos T.TInteger preludePos) preludePos]),
+        ((AS.Ident "writeReal" preludePos), Proc preludePos [AS.Param AS.Mval (AS.Ident "value" preludePos) (T.TypePos T.TReal preludePos) preludePos]),
+        ((AS.Ident "writeChar" preludePos), Proc preludePos [AS.Param AS.Mval (AS.Ident "value" preludePos) (T.TypePos T.TChar preludePos) preludePos]),
+        ((AS.Ident "writeString" preludePos), Proc preludePos [AS.Param AS.Mval (AS.Ident "value" preludePos) (T.TypePos T.TString preludePos) preludePos]),
+        ((AS.Ident "readInt" preludePos), Fun preludePos [] (T.TypePos T.TInteger preludePos)),
+        ((AS.Ident "readReal" preludePos), Fun preludePos [] (T.TypePos T.TReal preludePos)),
+        ((AS.Ident "readChar" preludePos), Fun preludePos [] (T.TypePos T.TChar preludePos)),
+        ((AS.Ident "readString" preludePos), Fun preludePos [] (T.TypePos T.TString preludePos))
+    ]
+
+-- Construct an environment with the pre-defined routines.
+preludeEnv :: Env
+preludeEnv = Env Map.empty (Map.fromList preludeRoutines) Map.empty
 
 -- Merge two environments. In case of clashes, the second environment overrides the first.
 mergeEnv :: Env -> Env -> Env
@@ -75,18 +97,30 @@ setUnreachable env = env { keywords = Map.insert "unreachable" Unreachable (keyw
 isUnreachable :: Env -> Bool
 isUnreachable env = Map.member "unreachable" (keywords env)
 
+-----------------
+-- ANNOTATIONS --
+-----------------
+
 -- Datatype for static semantics analysis module annotations (on the AST).
 data Ann
+    ----------------------------
+    -- EXPRESSION ANNOTATIONS --
+    ----------------------------
     = ExpAnn {
         expType :: T.Type,
         ctVal :: Maybe CTValue
         -- TODO: other fileds
     }
-    | FunCallAnn {
+    | ExpFunCallAnn {
         expType :: T.Type,
-        params :: [AS.Param] -- Parameters passed to the function call
+        -- Parameters passed to the function call.
+        params :: [AS.Param],
+        -- The position of the whole declaration (different symbols can have the same
+        -- position if they are declared together).
+        -- Nothing if the identifier is not found in the environment.
+        declPos :: Maybe LG.Posn
     }
-    | IdentAnn {
+    | ExpIdentAnn {
         expType :: T.Type,
         ctVal :: Maybe CTValue,
         identCategory :: IdentCategory,
@@ -96,10 +130,16 @@ data Ann
         -- Nothing if the identifier is not found in the environment.
         declPos :: Maybe LG.Posn
     }
+    -----------------------------
+    -- DECLARATION ANNOTATIONS --
+    -----------------------------
     | DeclAnn {
         bindings :: Env, -- Local environment
         errs :: [String]
     }
+    ---------------------------
+    -- STATEMENT ANNOTATIONS --
+    ---------------------------
     | StmtAnn {
         -- Errors of the tree rooted by the node with this annotation.
         errs :: [String],
@@ -110,6 +150,23 @@ data Ann
         alwaysExits :: Bool,
         -- True if the node is unreachable (e.g. after a return statement).
         unreachable :: Bool
+    }
+    | StmtRoutCallAnn {
+         -- Errors of the tree rooted by the node with this annotation.
+        errs :: [String],
+        -- True if for each flow of control inside the node there is a return statement.
+        alwaysReturn :: Bool,
+        -- True if the node uses a return, continue or an exit on to exit a list of
+        -- statements.
+        alwaysExits :: Bool,
+        -- True if the node is unreachable (e.g. after a return statement).
+        unreachable :: Bool,
+        -- Parameters passed to the function call.
+        params :: [AS.Param],
+        -- The position of the whole declaration (different symbols can have the same
+        -- position if they are declared together).
+        -- Nothing if the identifier is not found in the environment.
+        declPos :: Maybe LG.Posn
     }
     deriving (Show)
 
@@ -126,7 +183,7 @@ data IdentCategory
 -- Get the compile-time value from an annotation.
 getCTValue :: Ann -> Maybe CTValue
 getCTValue (ExpAnn { ctVal = val }) = val
-getCTValue (IdentAnn { ctVal = val }) = val
+getCTValue (ExpIdentAnn { ctVal = val }) = val
 getCTValue _ = Nothing
 
 -- data DownwardAnn
@@ -156,7 +213,7 @@ ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
     Just (CTVRef v)     -> Right [E.err pos $ "constants cannot be references: " ++ show v ++ "."]
     Nothing             -> case AS.expAnnot exp of
         ExpAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
-        IdentAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
+        ExpIdentAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
         _ -> Right [E.err pos $ PP.expPrinter exp ++ " is not a constant expression."]
     where
         pos = AS.expPos exp
