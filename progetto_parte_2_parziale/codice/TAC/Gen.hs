@@ -15,15 +15,20 @@ type StateMonad = St.State TACState
 
 data TACState = TACState {
     tempCount, labelCount, staticCount :: Int,
+    -- The routine stack and the current routine is used to menage nested routines
     routineStack :: [Instructions],
     currentRoutine :: Instructions,
+    -- Current stream for TAC code
     stream :: Instructions,
+    -- Static data stream
     staticStream :: [StaticData],
+    -- List of labels to be attached to the next instruction
     nextLabel :: [Label],
+    -- current loop labels stack
     loopLabelsStack :: [(Label, Label)]
 }
 
-
+-- Add instruction to the stream
 outLabeled :: LabeledInstruction -> StateMonad ()
 outLabeled instrLab = do
     state <- St.get
@@ -32,9 +37,11 @@ outLabeled instrLab = do
         newStream = instrLab' : currentRoutine state
     St.put $ state { currentRoutine = newStream, nextLabel = [] }
 
+-- Add instruction (with no label) to the stream
 out :: Instruction -> StateMonad ()
 out = outLabeled . simpleInstruction
 
+-- Add static data to the static stream
 outStatic :: StaticValue -> StateMonad Address
 outStatic instrLab = do
     state <- St.get
@@ -44,6 +51,7 @@ outStatic instrLab = do
                      staticCount = k + 1 }
     return (Stat k)
 
+-- Return a new temporary variable
 newTmp :: StateMonad Address
 newTmp = do
     state <- St.get
@@ -51,6 +59,7 @@ newTmp = do
     St.put $ state { tempCount = k + 1 }
     return $ Temp (Temporary k)
 
+-- Return a new label
 newLabel :: StateMonad Label
 newLabel = do
     state <- St.get
@@ -58,17 +67,22 @@ newLabel = do
     St.put $ state { labelCount = k + 1 }
     return $ Loc k
 
+-- Attach a label to the next instruction
 attachToNext :: Label -> StateMonad ()
 attachToNext label = do
     state <- St.get
     St.put $ state { nextLabel = label : nextLabel state }
 
+-- Call when starting a new routine, pushes the current routine onto the stack
+-- This is used to menage nested routines
 newRoutine :: StateMonad ()
 newRoutine = do
     state <- St.get
     St.put $ state { routineStack = currentRoutine state : routineStack state,
                      currentRoutine = [] }
 
+-- Call when ending a routine (cannot be called before a newRoutine)
+-- This is used to menage nested routines
 endRoutine :: StateMonad ()
 endRoutine = do
     state <- St.get
@@ -80,6 +94,8 @@ endRoutine = do
                              currentRoutine = r,
                              stream = currentRout ++ stream state }
 
+-- Call when starting a new loop. Creates a new labels for the loop start and
+-- end and pushes them onto a stack.
 newLoop :: StateMonad ()
 newLoop = do
     loopStart <- newLabel
@@ -88,11 +104,7 @@ newLoop = do
     state <- St.get
     St.put $ state { loopLabelsStack = (loopStart, loopEnd) : loopLabelsStack state }
 
--- Only call when inside a loop
-getLoopLabels :: StateMonad (Label, Label)
-getLoopLabels = do
-    head . loopLabelsStack <$> St.get
-
+-- Call when ending a loop. Attaches the loop end label to the next instruction
 -- Only call when exiting a loop
 endLoop :: StateMonad ()
 endLoop = do
@@ -103,8 +115,14 @@ endLoop = do
     state' <- St.get
     St.put $ state' { loopLabelsStack = stack }
 
+-- Only call when inside a loop
+getLoopLabels :: StateMonad (Label, Label)
+getLoopLabels = do
+    head . loopLabelsStack <$> St.get
+
 -- Entrypoint for TAC generation
 
+-- Generate the TAC code form the state
 genProgram :: AS.Declarations SS.Ann -> TAC
 genProgram ast =
     let finalState = St.execState (genEntryPoint ast) initState
@@ -131,6 +149,7 @@ genEntryPoint :: AS.Declarations SS.Ann -> StateMonad ()
 genEntryPoint (AS.ProgramDecl _ vars routines _) = do
     newRoutine
     mapM_ genVar vars
+    -- Program calls main and then ends
     out (ProcCall (Function "main") 0)
     out (Custom "END_PROGRAM")
     endRoutine
@@ -143,6 +162,8 @@ genDeclarations (AS.ProgramDecl _ vars routines _) = do
 
 genVar :: AS.VarA SS.Ann -> StateMonad ()
 genVar (AS.VarAss idents ty values _ pos) =
+    -- Evaluate the first left expression, then the first right expression
+    -- then the seconds left expression and so on
     mapM_ genAssignment (zip idents values)
     where
     genAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
@@ -166,6 +187,7 @@ genExpr exp = do
         genLit (SS.CTVReal v)    = return $ Lit (LitReal v)
         genLit (SS.CTVChar v)    = return $ Lit (LitChar v)
         genLit (SS.CTVBoolean v) = return $ Lit (LitBool v)
+        -- Put strings in static data
         genLit (SS.CTVString v)  = outStatic (STVString (v ++ "\0"))
         genLit (SS.CTVRef v)     = do
             k <- newTmp
@@ -463,20 +485,17 @@ genActualParams args ann =
             -- Generate the address of the parameter
             addr <- genExpr expr
 
-            -- TODO: rewrite this in a better way
-            case AS.mode param of
-                -- For value parameters we have to copy the value
-                AS.Mval -> case paramType of
-                    T.TArray {} -> do
-                        out (ArrayGen paramAddr (T.getTypeSize paramType))
-                        copy paramAddr addr paramType
-                        out (Param paramAddr paramTACType)
-                    _ -> do
-                        copy paramAddr addr paramType
-                        out (Param paramAddr paramTACType)
-                -- For value-result and reference parameters we just pass the address
-                _ -> do
-                    -- TODO: for types that are already references what should we do?
+            case (AS.mode param, paramType) of
+                -- Value parameters: copy the value
+                (AS.Mval, T.TArray {}) -> do
+                    out (ArrayGen paramAddr (T.getTypeSize paramType))
+                    copy paramAddr addr paramType
+                    out (Param paramAddr paramTACType)
+                (AS.Mval, _) -> do
+                    copy paramAddr addr paramType
+                    out (Param paramAddr paramTACType)
+                -- Value-result and reference parameters: pass the address
+                (_, _) -> do
                     out (Ref paramAddr addr)
                     out (Param paramAddr Addr)
         ) exprs
@@ -558,6 +577,8 @@ genRoutineBody (AS.RoutBody decls stmts _) post = do
 genStmt :: AS.Statement SS.Ann -> Instructions -> StateMonad ()
 genStmt stmt post = case stmt of
     AS.StmtAss left right _ _ ->
+        -- Evaluate the first left expression, then the first right expression
+        -- then the seconds left expression and so on
         mapM_ genAssign (zip left right)
     AS.StmtRoutCall call ann -> if isFunction ann then
             do
@@ -623,6 +644,7 @@ genAssign (left, right) =
     let ty = SS.expType $ AS.expAnnot right in
     case ty of
         T.TArray {} -> do
+            -- Arrays needs to be copied
             lExprRes <- genExpr left
             rExprRes <- genExpr right
             copy lExprRes rExprRes ty
