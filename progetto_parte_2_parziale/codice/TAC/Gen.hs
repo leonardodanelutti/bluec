@@ -10,7 +10,7 @@ import qualified TAC.Printer()
 import TAC.Def
 import TAC.State
 
-import Control.Monad (unless)
+import Control.Monad (when, unless)
 import Data.Maybe
 
 -- Entrypoint for TAC generation
@@ -109,7 +109,13 @@ genUnknownExpr exp = do
             out (BOp k tacOp addr1 addr2 ty)
             return k
 
-        AS.RelOp relOp e1 e2 _ _ -> genRepOp relOp e1 e2
+        AS.RelOp relOp e1 e2 _ _ -> do
+            k <- newTmp
+            addr1 <- genExpr e1
+            addr2 <- genExpr e2
+            let ty = SS.expType $ AS.expAnnot e1
+            genRepOp k relOp addr1 addr2 ty
+            return k
 
         AS.Ref e _ _ -> do
             k <- newTmp
@@ -229,16 +235,13 @@ genBoolExp op tmp e1 e2 = do
 
 -- GENERATION OF RELATIONAL OPERATIONS
 
-genRepOp :: AS.RelOp -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
-genRepOp relOp e1 e2 = do
-    k <- newTmp
-    -- Left to right evaluation
-    addr1 <- genExpr e1
-    addr2 <- genExpr e2
-    let ty = SS.expType $ AS.expAnnot e1
-        tyTAC = castTypeToTACType ty
+genRepOp :: Address -> AS.RelOp -> Address -> Address -> T.Type -> StateMonad ()
+genRepOp k relOp addr1 addr2 ty = do
+    let tyTAC = castTypeToTACType ty
     case ty of
         T.TString -> do
+            -- Generate the string comparison function (if not already generated)
+            -- and call it
             let (funName, firstArg, secondArg) = stringRelNames relOp
             isCompGenerated <- isStringCompGen relOp
             unless isCompGenerated (genStringComp relOp)
@@ -248,21 +251,24 @@ genRepOp relOp e1 e2 = do
             out (NOp secondArg addr2 Addr)
             out (Param secondArg Addr)
             out (FunCall k funName 2 TBoolean)
-        T.TArray innerType size -> do
-            let (funName, firstArg, secondArg) = stringRelNames relOp
+        T.TArray {} -> do
+            -- Generate the array comparison function (if not already generated)
+            -- and call it
+            let innerType = T.arrayInnerType ty
+                (funName, firstArg, secondArg, size) = arrayRelNames relOp innerType
             isCompGenerated <- isArrayCompGen (relOp, innerType)
-            unless isCompGenerated (genArrayComp relOp innerType size)
+            unless isCompGenerated (genArrayComp relOp innerType)
             unless isCompGenerated (addArrayCompGen (relOp, innerType))
             out (NOp firstArg addr1 Addr)
             out (Param firstArg tyTAC)
             out (NOp secondArg addr2 Addr)
             out (Param secondArg tyTAC)
-            out (FunCall k funName 2 TBoolean)
+            out (NOp size (Lit $ LitInt (T.getTypeSize ty)) TInteger)
+            out (FunCall k funName 3 TBoolean)
         T.TReference {} -> error "TODO:"
         _ -> let tacRelOp = castRelOpToTACOp relOp ty
              in do
                 out (BOp k tacRelOp addr1 addr2 TBoolean)
-    return k
 
 genStringComp :: AS.RelOp -> StateMonad ()
 genStringComp relOp = do
@@ -277,25 +283,25 @@ genStringComp relOp = do
     attachToNext funName
     out (Comment $ "String comparison: " ++ relName relOp)
     out (NOp idx (Lit $ LitInt (-1)) TInteger)
-    
+
     -- Main comparison loop
     attachToNext labelLoop
     out (BOp idx (Add TInteger) (Lit $ LitInt 1) idx TInteger)
     out (IndexGet char1 arg1 idx TChar)
     out (IndexGet char2 arg2 idx TChar)
-    
+
     -- Check if characters are equal
     out (BOp cmp (Rel (RelEq TChar)) char1 char2 TBoolean)
     out (BoolJumpF cmp labelEnd)  -- If different, exit loop
-    
+
     -- Characters are equal, check if we reached end of both strings
     out (BOp cmp (Rel (RelEq TChar)) char1 (Lit $ LitChar '\0') TBoolean)
     out (BoolJumpF cmp labelLoop)  -- If not at end, continue loop
-    
+
     -- Both strings are equal (reached end together)
     let equalResult = relOp `elem` [AS.Eq, AS.Le, AS.Ge]
     out (Return (Lit $ LitBool equalResult))
-    
+
     -- Characters are different, determine result
     attachToNext labelEnd
     let tacRelOp = case relOp of
@@ -309,8 +315,61 @@ genStringComp relOp = do
     out (Return cmp)
     endRoutine
 
-genArrayComp :: AS.RelOp -> T.Type -> Int -> StateMonad ()
-genArrayComp relOp innerType size = error "TODO:"
+genArrayComp :: AS.RelOp -> T.Type -> StateMonad ()
+genArrayComp relOp innerType = do
+    let innerTypeTAC = castTypeToTACType innerType
+        (funName, arg1, arg2, size) = arrayRelNames relOp innerType
+    labelLoop <- newLabel
+    labelTrue <- newLabel
+    labelFalse <- newLabel
+    idx <- newTmp
+    val1 <- newTmp
+    val2 <- newTmp
+    cmp <- newTmp
+    newRoutine
+    attachToNext funName
+    out (Comment $ "Array comparison: " ++ relName relOp ++ " for type " ++ show innerType)
+    out (NOp idx (Lit $ LitInt (- (T.getTypeSize innerType))) TInteger)
+
+    -- Start the main comparison loop
+    attachToNext labelLoop
+    out (BOp idx (Add TInteger) (Lit $ LitInt (T.getTypeSize innerType)) idx TInteger)
+    out (IndexGet val1 arg1 idx innerTypeTAC)
+    out (IndexGet val2 arg2 idx innerTypeTAC)
+
+    -- Check if we reached the end of the array
+    if relOp `elem` [AS.Eq, AS.Le, AS.Ge] then
+        out (RelJump (RelGe TInteger) idx size labelTrue)
+    else
+        out (RelJump (RelLt TInteger) idx size labelFalse)
+
+    -- If elements are equal, continue
+    genRepOp cmp AS.Eq val1 val2 innerType
+    out (BoolJumpT cmp labelLoop)
+
+    -- If they are not equal, first check the relation they are in
+    when (relOp `elem` [AS.Lt, AS.Le]) $ do
+        genRepOp cmp AS.Lt val1 val2 innerType
+        out (BoolJumpT cmp labelTrue)
+
+    when (relOp `elem` [AS.Gt, AS.Ge]) $ do
+        genRepOp cmp AS.Gt val1 val2 innerType
+        out (BoolJumpT cmp labelFalse)
+
+    -- anf then return the right value
+    if relOp == AS.Neq then do
+        attachToNext labelTrue
+        out (Return (Lit $ LitBool True))
+
+        attachToNext labelFalse
+        out (Return (Lit $ LitBool False))
+    else do
+        attachToNext labelFalse
+        out (Return (Lit $ LitBool False))
+
+        attachToNext labelTrue
+        out (Return (Lit $ LitBool True))
+    endRoutine
 
 relName :: AS.RelOp -> String
 relName relOp = case relOp of
@@ -324,6 +383,7 @@ relName relOp = case relOp of
 stringRelName :: AS.RelOp -> String
 stringRelName relOp = "string" ++ relName relOp
 
+-- Names for string comparison functions and the respective parameters
 stringRelNames :: AS.RelOp -> (Label, Address, Address)
 stringRelNames relOp = let funName = stringRelName relOp in (
         FunctionUnique funName,
@@ -333,6 +393,15 @@ stringRelNames relOp = let funName = stringRelName relOp in (
 
 arrayRelName :: AS.RelOp -> T.Type -> String
 arrayRelName relOp ty = "array" ++ relName relOp ++ show ty
+
+-- Names for array comparison functions and the respective parameters
+arrayRelNames :: AS.RelOp -> T.Type -> (Label, Address, Address, Address)
+arrayRelNames relOp ty = let funName = arrayRelName relOp ty in (
+        FunctionUnique funName,
+        PName $ ProgramName (funName ++ "1") Lex.defaultPosn,
+        PName $ ProgramName (funName ++ "2") Lex.defaultPosn,
+        PName $ ProgramName (funName ++ "Size") Lex.defaultPosn
+    )
 
 
 -- GENERATION OF ARRAY INDEXING

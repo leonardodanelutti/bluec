@@ -73,7 +73,7 @@ getTypeSize TBoolean = 1
 getTypeSize TInteger = 4
 getTypeSize TReal    = 8
 getTypeSize TChar    = 1
-getTypeSize TString  = error "TString size is not defined."
+getTypeSize TString  = 4 -- A string is represented by a pointer
 getTypeSize (TArray { size = s, elementsType = ty }) = s * getTypeSize ty
 getTypeSize TReference {} = 4
 getTypeSize TError {} = error "TError size is not defined."

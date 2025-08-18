@@ -30,4 +30,4 @@ routines
 
 bluec: TODO: should be known by annotations, currently only procedures should be statements
 CallStack (from HasCallStack):
-  error, called at ./TAC/Gen.hs:608:14 in main:TAC.Gen
+  error, called at ./TAC/Gen.hs:677:14 in main:TAC.Gen
