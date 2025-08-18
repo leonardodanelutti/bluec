@@ -1,0 +1,26 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - Annidated routine definition.
+-- - Return keyword is correctly relative to the innermost function.
+-- - Check that every control flow has a return.
+var
+    a: Integer := main(1);
+routines
+    main(d: Real) -> Integer is
+	var
+		e : Boolean := not true;
+    routines
+        p(d: Real, e: Integer) is
+        do
+            return;
+        end p
+	do
+        loop
+            if e then
+                return a;
+            else
+                return 12;
+            end if
+        end loop
+	end main

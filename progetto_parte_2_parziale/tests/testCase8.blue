@@ -1,0 +1,12 @@
+-- This example should return an error.
+--
+-- What does this example test:
+-- - The impossibility to assign values to constants.
+const
+    c: Boolean := 2 = 2;
+routines
+    main() is
+	do
+        c := 12;
+        return;
+	end main

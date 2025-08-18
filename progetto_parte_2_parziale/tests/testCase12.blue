@@ -1,0 +1,16 @@
+-- This example should have an error.
+--
+-- What does this example test:
+-- - Exit on can be only a first level statement inside loops.
+routines
+    main() is
+	do
+        loop
+            if e then
+                return;
+            else
+                exit on not e;
+                return;
+            end if
+        end loop
+	end main

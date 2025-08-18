@@ -8,7 +8,7 @@ import AbsSyn as AS
 
 -- Main annotation function.
 annotate :: Decls -> AnnDecls
-annotate decls = annDecls emptyEnv decls
+annotate decls = annDecls preludeEnv decls
 
 -- Function to retrieve errors from an annotated AST.
 getErrs :: AnnDecls -> [String]

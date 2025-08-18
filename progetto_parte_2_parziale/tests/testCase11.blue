@@ -1,0 +1,13 @@
+-- This example should have an error.
+--
+-- What does this example test:
+-- - That the dereference must be explicit.
+const
+    a: Integer := 2;
+var
+    b: &Integer := &a;
+routines
+    main() -> Boolean is
+	do
+        return b = 1;
+	end main

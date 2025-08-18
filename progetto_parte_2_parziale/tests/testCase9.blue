@@ -1,0 +1,23 @@
+-- This example have an error but ideally should have none.
+--
+-- What does this example test:
+-- - The return presence in every flow of control.
+
+routines
+    main() is
+    var
+        e: Real := 33;
+	do
+        loop
+            e := readReal();
+            if e = 33
+            then
+                -- Inserting a return here without any exit on the loop guarantees that
+                -- loops until it returns (potentially forever). The return presence Check
+                -- cannot detect this and returns an error. This is not a big deal because
+                -- it is just needed to add a uncomment the return at line 22.
+                return;
+            end if
+        end loop
+        -- return;
+	end main

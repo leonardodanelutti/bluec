@@ -80,6 +80,36 @@ demo: bluec
 		echo ""; \
 		./bluec ../tests/testCase6.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo6_output.txt
+	@{ \
+		echo "example 7: testing annidated functions"; \
+		echo ""; \
+		./bluec ../tests/testCase7.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo7_output.txt
+	@{ \
+		echo "example 8: testing assignments to constants"; \
+		echo ""; \
+		./bluec ../tests/testCase8.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo8_output.txt
+	@{ \
+		echo "example 9: testing the limit of checking presence of the return statement in every flow of control"; \
+		echo ""; \
+		./bluec ../tests/testCase9.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo9_output.txt
+	@{ \
+		echo "example 10: testing the pre-defined routines"; \
+		echo ""; \
+		./bluec ../tests/testCase10.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo10_output.txt
+	@{ \
+		echo "example 11: testing implicit dereferences"; \
+		echo ""; \
+		./bluec ../tests/testCase11.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo11_output.txt
+	@{ \
+		echo "example 12: testing annidated exit on"; \
+		echo ""; \
+		./bluec ../tests/testCase12.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo12_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
