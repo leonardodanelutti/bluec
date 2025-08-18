@@ -4,9 +4,11 @@ import qualified Control.Monad.Trans.State as St
 import qualified AbsSyn                    as AS
 import qualified StatSem.Utils             as SS
 import qualified Types                     as T
+import qualified LexGrammar                as Lex
 import qualified TAC.Printer()
 import TAC.Def
 import Control.Monad (unless)
+import Data.Maybe
 
 
 -- MONAD DEFINITION AND HELPER FUNCTIONS
@@ -150,7 +152,8 @@ genEntryPoint (AS.ProgramDecl _ vars routines _) = do
     newRoutine
     mapM_ genVar vars
     -- Program calls main and then ends
-    out (ProcCall (Function "main") 0)
+    -- TODO: This is a temporary solution, we should know the main position
+    out (ProcCall (Function (ProgramName "main" Lex.defaultPosn)) 0)
     out (Custom "END_PROGRAM")
     endRoutine
     mapM_ genRoutine routines
@@ -304,7 +307,6 @@ genUnknownExpr exp = do
                     (T.TBoolean, T.TInteger) -> BoolToInt
                     (T.TInteger, T.TReal)    -> IntToDouble
                     (T.TChar, T.TInteger)    -> CharToInt
-                    -- TODO: Char to String?
                     _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
                 newTypeTAC = castTypeToTACType newType
             out (UOp k (Coer cast) addr newTypeTAC)
@@ -453,7 +455,8 @@ genFunCall (AS.RoutineCall routName args _) ann = do
     k <- newTmp
     genActualParams args ann
     let returnType = SS.expType ann
-        routLab = Function $ AS.identName routName
+        definitionPos = fromJust $ SS.declPos ann
+        routLab = Function $ ProgramName (AS.identName routName) definitionPos
         numArgs = length args
         ty = castTypeToTACType returnType
     case returnType of
@@ -465,7 +468,8 @@ genFunCall (AS.RoutineCall routName args _) ann = do
 genProcCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad ()
 genProcCall (AS.RoutineCall routName args _) ann = do
     genActualParams args ann
-    let routLab = Function $ AS.identName routName
+    let definitionPos = fromJust $ SS.declPos ann
+        routLab = Function $ ProgramName (AS.identName routName) definitionPos
         numArgs = length args
     out (ProcCall routLab numArgs)
 
@@ -521,12 +525,13 @@ copy newAddr prevAddr ty = case ty of
 
 genRoutine :: AS.Routine SS.Ann -> StateMonad ()
 genRoutine rout = let
+    position = AS.routPos rout
     name = AS.identName $ AS.routName rout
     params = AS.params rout
     body = AS.routBody rout
     in do
         newRoutine -- Needed for nested routines declarations
-        attachToNext $ Function name
+        attachToNext $ Function (ProgramName name position)
         genParamsPre params
         let paramPost = genParamsPost params
         genRoutineBody body paramPost

@@ -15,7 +15,7 @@ routines
 		b := 1.0;
 		end if
 		if (a > 0) then
-			d := 0;
+			x := 0;
 		end if
 		if (a = 1) then
 			a := 2;

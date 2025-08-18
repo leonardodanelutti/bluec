@@ -104,7 +104,7 @@ castRelOpToTACOp AS.Ge ty     = Rel $ RelGe  (castTypeToTACType ty)
 -- A label
 data Label
     = Loc Int
-    | Function String
+    | Function ProgramName
 
 data Instruction
     = BOp { l :: Address, binOp :: BinOp,  r1, r2 :: Address, assignType :: TACType }

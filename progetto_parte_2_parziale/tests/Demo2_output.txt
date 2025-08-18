@@ -4,5 +4,86 @@ example 1: generic test
 
 Parse Successful!
 
-Static Semantics Analysis Failed:
-../tests/testCase2.blue:18:25-18:26: ERROR: Cannot assign a value to a constant. Suggested fix: make d a variable.
+[Abstract Syntax]
+
+ProgramDecl {consts = [ConstAss {constIdents = [Ident {identName = "a", identPos = 2:9-2:10},Ident {identName = "d", identPos = 2:12-2:13}], constType = TypePos {type_ = Integer, typePosn = 2:16-2:23}, constValues = [Literal {val = LitInt {intVal = 0, litPos = 2:27-2:28}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 0)}, expPos = 2:27-2:28},Literal {val = LitInt {intVal = 1, litPos = 2:30-2:31}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 1)}, expPos = 2:30-2:31}], constAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 2:9-2:10},Const 2:9-2:31 (LitInt {intVal = 0, litPos = 2:27-2:28})),(Ident {identName = "d", identPos = 2:12-2:13},Const 2:9-2:31 (LitInt {intVal = 1, litPos = 2:30-2:31}))], routines = fromList [], keywords = fromList []}, errs = []}, constPos = 2:9-2:31}], vars = [VarAss {varIdents = [Ident {identName = "b", identPos = 4:9-4:10}], varType = TypePos {type_ = Real, typePosn = 4:13-4:17}, varValues = [Literal {val = LitDouble {doubleVal = 1.0, litPos = 4:21-4:24}, expAnnot = ExpAnn {expType = Real, ctVal = Just (CTVReal 1.0)}, expPos = 4:21-4:24}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "b", identPos = 4:9-4:10},Var 4:9-4:24 (TypePos {type_ = Real, typePosn = 4:13-4:17}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 4:9-4:24},VarAss {varIdents = [Ident {identName = "x", identPos = 5:9-5:10}], varType = TypePos {type_ = Integer, typePosn = 5:13-5:20}, varValues = [Literal {val = LitInt {intVal = 42, litPos = 5:24-5:26}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 42)}, expPos = 5:24-5:26}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "x", identPos = 5:9-5:10},Var 5:9-5:26 (TypePos {type_ = Integer, typePosn = 5:13-5:20}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 5:9-5:26},VarAss {varIdents = [Ident {identName = "p", identPos = 6:9-6:10}], varType = TypePos {type_ = &Integer, typePosn = 6:13-6:21}, varValues = [Ref {e = ExpIdent {name = Ident {identName = "x", identPos = 6:26-6:27}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 5:9-5:26}, expPos = 6:26-6:27}, expAnnot = ExpAnn {expType = &Integer, ctVal = Nothing}, expPos = 6:25-6:27}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "p", identPos = 6:9-6:10},Var 6:9-6:27 (TypePos {type_ = &Integer, typePosn = 6:13-6:21}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 6:9-6:27},VarAss {varIdents = [Ident {identName = "y", identPos = 7:9-7:10}], varType = TypePos {type_ = Integer, typePosn = 7:13-7:20}, varValues = [Deref {e = ExpIdent {name = Ident {identName = "p", identPos = 7:26-7:27}, expAnnot = ExpIdentAnn {expType = &Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 6:9-6:27}, expPos = 7:26-7:27}, expAnnot = ExpAnn {expType = Integer, ctVal = Nothing}, expPos = 7:24-7:27}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "y", identPos = 7:9-7:10},Var 7:9-7:27 (TypePos {type_ = Integer, typePosn = 7:13-7:20}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 7:9-7:27}], routines = [Procedure {routName = Ident {identName = "main", identPos = 9:9-9:13}, params = [], routBody = RoutBody {declarations = ProgramDecl {consts = [], vars = [VarAss {varIdents = [Ident {identName = "a", identPos = 11:17-11:18}], varType = TypePos {type_ = Integer, typePosn = 11:21-11:28}, varValues = [ExpIdent {name = Ident {identName = "d", identPos = 11:32-11:33}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Just (CTVInteger 1), identCategory = ConstCategory, mode = Nothing, declPos = Just 2:9-2:31}, expPos = 11:32-11:33}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 11:17-11:18},Var 11:17-11:33 (TypePos {type_ = Integer, typePosn = 11:21-11:28}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 11:17-11:33}], routines = [], declsAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 11:17-11:18},Var 11:17-11:33 (TypePos {type_ = Integer, typePosn = 11:21-11:28}) Nothing),(Ident {identName = "b", identPos = 4:9-4:10},Var 4:9-4:24 (TypePos {type_ = Real, typePosn = 4:13-4:17}) Nothing),(Ident {identName = "d", identPos = 2:12-2:13},Const 2:9-2:31 (LitInt {intVal = 1, litPos = 2:30-2:31})),(Ident {identName = "p", identPos = 6:9-6:10},Var 6:9-6:27 (TypePos {type_ = &Integer, typePosn = 6:13-6:21}) Nothing),(Ident {identName = "x", identPos = 5:9-5:10},Var 5:9-5:26 (TypePos {type_ = Integer, typePosn = 5:13-5:20}) Nothing),(Ident {identName = "y", identPos = 7:9-7:10},Var 7:9-7:27 (TypePos {type_ = Integer, typePosn = 7:13-7:20}) Nothing)], routines = fromList [(Ident {identName = "__util__", identPos = 29:1-29:9},Fun 29:1-39:13 [Param {mode = Mref, paramName = Ident {identName = "b", identPos = 29:14-29:15}, paramType = TypePos {type_ = Boolean, typePosn = 29:17-29:24}, paramPos = 29:14-29:24}] (TypePos {type_ = String, typePosn = 29:28-29:34})),(Ident {identName = "main", identPos = 9:9-9:13},Proc 9:9-25:13 [])], keywords = fromList [("return",Return Nothing)]}, errs = []}}, statements = [StmtIf {cond = RelOp {relOp = Gt, e1 = ExpIdent {name = Ident {identName = "a", identPos = 13:21-13:22}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 11:17-11:33}, expPos = 13:21-13:22}, e2 = Literal {val = LitInt {intVal = 0, litPos = 13:25-13:26}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 0)}, expPos = 13:25-13:26}, expAnnot = ExpAnn {expType = Boolean, ctVal = Nothing}, expPos = 13:21-13:26}, body = [StmtAss {left = [ExpIdent {name = Ident {identName = "a", identPos = 14:25-14:26}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 11:17-11:33}, expPos = 14:25-14:26}], right = [Literal {val = LitInt {intVal = 0, litPos = 14:30-14:31}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 0)}, expPos = 14:30-14:31}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 14:25-14:32},StmtAss {left = [ExpIdent {name = Ident {identName = "b", identPos = 15:17-15:18}, expAnnot = ExpIdentAnn {expType = Real, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 4:9-4:24}, expPos = 15:17-15:18}], right = [Literal {val = LitDouble {doubleVal = 1.0, litPos = 15:22-15:25}, expAnnot = ExpAnn {expType = Real, ctVal = Just (CTVReal 1.0)}, expPos = 15:22-15:25}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 15:17-15:26}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 13:17-16:23},StmtIf {cond = RelOp {relOp = Gt, e1 = ExpIdent {name = Ident {identName = "a", identPos = 17:21-17:22}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 11:17-11:33}, expPos = 17:21-17:22}, e2 = Literal {val = LitInt {intVal = 0, litPos = 17:25-17:26}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 0)}, expPos = 17:25-17:26}, expAnnot = ExpAnn {expType = Boolean, ctVal = Nothing}, expPos = 17:21-17:26}, body = [StmtAss {left = [ExpIdent {name = Ident {identName = "x", identPos = 18:25-18:26}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 5:9-5:26}, expPos = 18:25-18:26}], right = [Literal {val = LitInt {intVal = 0, litPos = 18:30-18:31}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 0)}, expPos = 18:30-18:31}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 18:25-18:32}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 17:17-19:23},StmtIf {cond = RelOp {relOp = Eq, e1 = ExpIdent {name = Ident {identName = "a", identPos = 20:21-20:22}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 11:17-11:33}, expPos = 20:21-20:22}, e2 = Literal {val = LitInt {intVal = 1, litPos = 20:25-20:26}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 1)}, expPos = 20:25-20:26}, expAnnot = ExpAnn {expType = Boolean, ctVal = Nothing}, expPos = 20:21-20:26}, body = [StmtAss {left = [ExpIdent {name = Ident {identName = "a", identPos = 21:25-21:26}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 11:17-11:33}, expPos = 21:25-21:26}], right = [Literal {val = LitInt {intVal = 2, litPos = 21:30-21:31}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 2)}, expPos = 21:30-21:31}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 21:25-21:32}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 20:17-22:23},StmtReturnEmpty {annot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}, pos = 23:9-23:16}], routBodyAnnot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}}, routAnnot = DeclAnn {bindings = Env {symbols = fromList [], routines = fromList [(Ident {identName = "main", identPos = 9:9-9:13},Proc 9:9-25:13 [])], keywords = fromList []}, errs = []}, routPos = 9:9-25:13},Function {routName = Ident {identName = "__util__", identPos = 29:1-29:9}, params = [Param {mode = Mref, paramName = Ident {identName = "b", identPos = 29:14-29:15}, paramType = TypePos {type_ = Boolean, typePosn = 29:17-29:24}, paramPos = 29:14-29:24}], returnType = TypePos {type_ = String, typePosn = 29:28-29:34}, routBody = RoutBody {declarations = ProgramDecl {consts = [ConstAss {constIdents = [Ident {identName = "const1", identPos = 31:9-31:15}], constType = TypePos {type_ = String, typePosn = 31:17-31:23}, constValues = [Literal {val = LitString {stringVal = "Hello world", litPos = 31:25-31:38}, expAnnot = ExpAnn {expType = String, ctVal = Just (CTVString "Hello world")}, expPos = 31:25-31:38}], constAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "const1", identPos = 31:9-31:15},Const 31:9-31:38 (LitString {stringVal = "Hello world", litPos = 31:25-31:38}))], routines = fromList [], keywords = fromList []}, errs = []}, constPos = 31:9-31:38}], vars = [], routines = [], declsAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 2:9-2:10},Const 2:9-2:31 (LitInt {intVal = 0, litPos = 2:27-2:28})),(Ident {identName = "b", identPos = 29:14-29:15},Var 29:14-29:24 (TypePos {type_ = Boolean, typePosn = 29:17-29:24}) (Just Mref)),(Ident {identName = "const1", identPos = 31:9-31:15},Const 31:9-31:38 (LitString {stringVal = "Hello world", litPos = 31:25-31:38})),(Ident {identName = "d", identPos = 2:12-2:13},Const 2:9-2:31 (LitInt {intVal = 1, litPos = 2:30-2:31})),(Ident {identName = "p", identPos = 6:9-6:10},Var 6:9-6:27 (TypePos {type_ = &Integer, typePosn = 6:13-6:21}) Nothing),(Ident {identName = "x", identPos = 5:9-5:10},Var 5:9-5:26 (TypePos {type_ = Integer, typePosn = 5:13-5:20}) Nothing),(Ident {identName = "y", identPos = 7:9-7:10},Var 7:9-7:27 (TypePos {type_ = Integer, typePosn = 7:13-7:20}) Nothing)], routines = fromList [(Ident {identName = "__util__", identPos = 29:1-29:9},Fun 29:1-39:13 [Param {mode = Mref, paramName = Ident {identName = "b", identPos = 29:14-29:15}, paramType = TypePos {type_ = Boolean, typePosn = 29:17-29:24}, paramPos = 29:14-29:24}] (TypePos {type_ = String, typePosn = 29:28-29:34})),(Ident {identName = "main", identPos = 9:9-9:13},Proc 9:9-25:13 [])], keywords = fromList [("return",Return (Just String))]}, errs = []}}, statements = [StmtIfElse {cond = ExpIdent {name = Ident {identName = "b", identPos = 33:12-33:13}, expAnnot = ExpIdentAnn {expType = Boolean, ctVal = Nothing, identCategory = VarCategory, mode = Just Mref, declPos = Just 29:14-29:24}, expPos = 33:12-33:13}, bodyT = [StmtReturn {valReturn = ExpIdent {name = Ident {identName = "const1", identPos = 33:26-33:32}, expAnnot = ExpIdentAnn {expType = String, ctVal = Just (CTVString "Hello world"), identCategory = ConstCategory, mode = Nothing, declPos = Just 31:9-31:38}, expPos = 33:26-33:32}, annot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}, pos = 33:19-33:33}], bodyF = [StmtReturn {valReturn = Literal {val = LitString {stringVal = "", litPos = 35:12-35:14}, expAnnot = ExpAnn {expType = String, ctVal = Just (CTVString "")}, expPos = 35:12-35:14}, annot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}, pos = 35:5-35:15}], annot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}, pos = 33:9-36:15},StmtReturn {valReturn = Literal {val = LitString {stringVal = "", litPos = 37:16-37:18}, expAnnot = ExpAnn {expType = String, ctVal = Just (CTVString "")}, expPos = 37:16-37:18}, annot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}, pos = 37:9-37:19}], routBodyAnnot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}}, routAnnot = DeclAnn {bindings = Env {symbols = fromList [], routines = fromList [(Ident {identName = "__util__", identPos = 29:1-29:9},Fun 29:1-39:13 [Param {mode = Mref, paramName = Ident {identName = "b", identPos = 29:14-29:15}, paramType = TypePos {type_ = Boolean, typePosn = 29:17-29:24}, paramPos = 29:14-29:24}] (TypePos {type_ = String, typePosn = 29:28-29:34}))], keywords = fromList []}, errs = []}, routPos = 29:1-39:13}], declsAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 2:9-2:10},Const 2:9-2:31 (LitInt {intVal = 0, litPos = 2:27-2:28})),(Ident {identName = "b", identPos = 4:9-4:10},Var 4:9-4:24 (TypePos {type_ = Real, typePosn = 4:13-4:17}) Nothing),(Ident {identName = "d", identPos = 2:12-2:13},Const 2:9-2:31 (LitInt {intVal = 1, litPos = 2:30-2:31})),(Ident {identName = "p", identPos = 6:9-6:10},Var 6:9-6:27 (TypePos {type_ = &Integer, typePosn = 6:13-6:21}) Nothing),(Ident {identName = "x", identPos = 5:9-5:10},Var 5:9-5:26 (TypePos {type_ = Integer, typePosn = 5:13-5:20}) Nothing),(Ident {identName = "y", identPos = 7:9-7:10},Var 7:9-7:27 (TypePos {type_ = Integer, typePosn = 7:13-7:20}) Nothing)], routines = fromList [(Ident {identName = "__util__", identPos = 29:1-29:9},Fun 29:1-39:13 [Param {mode = Mref, paramName = Ident {identName = "b", identPos = 29:14-29:15}, paramType = TypePos {type_ = Boolean, typePosn = 29:17-29:24}, paramPos = 29:14-29:24}] (TypePos {type_ = String, typePosn = 29:28-29:34})),(Ident {identName = "main", identPos = 9:9-9:13},Proc 9:9-25:13 [])], keywords = fromList []}, errs = []}}
+
+[Linearized tree]
+
+const
+	a, d : Integer := 0, 1;
+var
+	b : Real := 1.0;
+	x : Integer := 42;
+	p : &Integer := &x;
+	y : Integer := (*p);
+routines
+	main() is
+	var
+		a : Integer := d;
+	do
+		if (a > 0) then
+			a := 0;
+		b := 1.0;
+		end if
+		if (a > 0) then
+			x := 0;
+		end if
+		if (a = 1) then
+			a := 2;
+		end if
+		return;
+	end
+	main
+
+	__util__(ref b : Boolean) -> String is
+	const
+		const1 : String := "Hello world";
+	do
+		if b then
+			return const1;
+		else
+			return "";
+		end if
+		return "";
+	end
+	__util__
+
+
+
+[Generated TAC]
+
+$0 = "Hello world\NUL"
+$1 = "\NUL"
+$2 = "\NUL"
+      b@4:9 =(float) 1.0
+      x@5:9 =(int) 42
+      t0 = &x@5:9
+      p@6:9 =(addr) t0
+      t1 =(int) *p@6:9
+      y@7:9 =(int) t1
+      pcall main@0:0, 0
+      END_PROGRAM
+
+main@9:9:
+      a@11:17 =(int) 1
+      t2 =(bool) a@11:17 >(int) 0
+      ifFalse t2 goto L0
+      a@11:17 =(int) 0
+      b@4:9 =(float) 1.0
+L0:   t3 =(bool) a@11:17 >(int) 0
+      ifFalse t3 goto L1
+      x@5:9 =(int) 0
+L1:   t4 =(bool) a@11:17 ==(int) 1
+      ifFalse t4 goto L2
+      a@11:17 =(int) 2
+L2:   return
+
+__util__@29:1:
+      t5 =(bool) *b@29:14
+      ifFalse t5 goto L3
+      return $0
+      goto L4
+L3:   return $1
+L4:   return $2
+

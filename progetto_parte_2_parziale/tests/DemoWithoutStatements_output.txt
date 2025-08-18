@@ -24,6 +24,6 @@ $0 = "test\NUL"
       _b@4:9 =(float) 1.0
       c@5:9 =(addr) $0
       d@6:5 =(char) 'a'
-      pcall main, 0
+      pcall main@0:0, 0
       END_PROGRAM
 

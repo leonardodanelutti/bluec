@@ -233,6 +233,9 @@ data PosnS = PnS !Int !Int !Int
 data Posn = Pn PosnS PosnS
   deriving (Eq, Ord)
 
+defaultPosn :: Posn
+defaultPosn = Pn (PnS 0 0 0) (PnS 0 0 0)
+
 -- Custom Show instances for pretty printing positions
 instance Show PosnS where
   show (PnS _ line col) = show line ++ ":" ++ show col
