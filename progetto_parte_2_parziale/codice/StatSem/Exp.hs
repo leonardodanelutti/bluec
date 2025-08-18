@@ -183,19 +183,19 @@ annRoutineCall env ident annArgs pos = (ExpFunCallAnn {
     (routType, params, castedArgs, declPos) = case Map.lookup ident (routines env) of
         Just (Fun declPos params ty) -> case length params == length annArgs of
             True  -> case T.getErrs $ map (expType . AS.expAnnot) castedArgs of
-                [] -> (T.type_ ty, params, castedArgs, Just declPos)
-                errs -> (T.TError { T.msgs = errs }, params, castedArgs, Just declPos)
+                [] -> (T.type_ ty, Just params, castedArgs, Just declPos)
+                errs -> (T.TError { T.msgs = errs }, Just params, castedArgs, Just declPos)
                 where
                     castedArgs = castParamTypes params annArgs
             False -> (T.TError {
                 T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length annArgs) ++ "."]
-            }, params, annArgs, Just declPos)
+            }, Just params, annArgs, Just declPos)
         Just (Proc declPos params) -> (T.TError {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ PP.identPrinter ident ++ "."]
-        }, params, annArgs, Just declPos)
+        }, Just params, annArgs, Just declPos)
         Nothing -> (T.TError {
             T.msgs = [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."]
-        }, [], annArgs, Nothing)
+        }, Nothing, annArgs, Nothing)
 
 -- Sign expressions.
 -- Rule: RExpSign.

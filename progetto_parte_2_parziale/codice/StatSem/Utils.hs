@@ -114,7 +114,7 @@ data Ann
     | ExpFunCallAnn {
         expType :: T.Type,
         -- Parameters passed to the function call.
-        params :: [AS.Param],
+        params :: Maybe [AS.Param],
         -- The position of the whole declaration (different symbols can have the same
         -- position if they are declared together).
         -- Nothing if the identifier is not found in the environment.
@@ -161,8 +161,9 @@ data Ann
         alwaysExits :: Bool,
         -- True if the node is unreachable (e.g. after a return statement).
         unreachable :: Bool,
-        -- Parameters passed to the function call.
-        params :: [AS.Param],
+        -- Parameters passed to the function call. Nothing if the identifier is not found
+        -- in the environment.
+        params :: Maybe [AS.Param],
         -- The position of the whole declaration (different symbols can have the same
         -- position if they are declared together).
         -- Nothing if the identifier is not found in the environment.

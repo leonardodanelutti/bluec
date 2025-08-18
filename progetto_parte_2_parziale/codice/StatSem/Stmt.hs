@@ -110,13 +110,14 @@ annStmtRoutCall env AS.StmtRoutCall {
     annArgs = map (SSE.annExp env) args
     -- Params.
     (params, lookupErrs, declPos, isFunction) = case Map.lookup ident (routines env) of
-        Just (Fun declPos params _) -> (params, [E.err pos "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."], Just declPos, Just True) -- TODO: maybe make it a warning?
-        Just (Proc declPos params) -> (params, [], Just declPos, Just False)
-        Nothing -> ([], [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing)
+        Just (Fun declPos params _) -> (Just params, [E.err pos "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."], Just declPos, Just True) -- TODO: maybe make it a warning?
+        Just (Proc declPos params) -> (Just params, [], Just declPos, Just False)
+        Nothing -> (Nothing, [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing)
     -- Cast the arguments to the expected types.
-    (castedArgs, numberErr) = if length params /= length annArgs
-                then (annArgs, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length annArgs) ++ "."])
-                else (SSE.castParamTypes params annArgs, [])
+    (castedArgs, numberErr) = case params of
+        Nothing -> (annArgs, []) -- No numberErr because the identifier was not found.
+        Just innerParams | length innerParams /= length annArgs -> (annArgs, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length annArgs) ++ "."])
+        Just innerParams -> (SSE.castParamTypes innerParams annArgs, [])
     -- Argument errors.
     argErrs = T.getErrs $ map (expType . AS.expAnnot) castedArgs
     -- Create the annotation.
