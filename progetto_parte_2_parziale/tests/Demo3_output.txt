@@ -44,10 +44,7 @@ EntryPoint:
       B@4:5 =(addr) t1
       t2 = &A@3:5
       p@5:5 =(addr) t2
-      t5 =(int) 1
-      t5 =(int) 2 *(int) t5
-      t5 =(int) 1 +(int) t5
-      t5 =(int) 4 *(int) t5
+      t5 =(int) 12
       t4 =(int) B@4:5[t5]
       t3 = &t4
       q@6:5 =(addr) t3
@@ -56,8 +53,7 @@ EntryPoint:
 
 test@9:5:
       t7 =(addr) *p@5:5
-      t8 =(int) 1
-      t8 =(int) 4 *(int) t8
+      t8 =(int) 4
       t6 =(int) t7[t8]
       x@12:9 =(int) t6
       t9 =(int) *q@6:5

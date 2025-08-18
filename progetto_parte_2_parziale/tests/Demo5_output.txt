@@ -245,22 +245,16 @@ EntryPoint:
       END_PROGRAM
 
 test@18:5:
-      t10 =(int) 2
-      t10 =(int) 4 *(int) t10
+      t10 =(int) 8
       t9 =(addr) a@15:5[t10]
       t8 =(addr) *t9
-      t11 =(int) 3
-      t11 =(int) 4 *(int) t11
+      t11 =(int) 12
       t7 =(addr) t8[t11]
       t7[0] =(int) 1
-      t15 =(int) 2
-      t15 =(int) 4 *(int) t15
+      t15 =(int) 8
       t14 =(addr) a@15:5[t15]
       t13 =(addr) *t14
-      t16 =(int) 3
-      t16 =(int) 20 *(int) t16
-      t16 =(int) 0 +(int) t16
-      t16 =(int) 4 *(int) t16
+      t16 =(int) 240
       t12 =(int) t13[t16]
       return t12
 

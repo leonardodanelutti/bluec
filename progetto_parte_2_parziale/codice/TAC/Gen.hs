@@ -10,7 +10,7 @@ import qualified TAC.Printer()
 import TAC.Def
 import TAC.State
 
-import Control.Monad (when, unless)
+import Control.Monad (when, unless, foldM)
 import Data.Maybe
 
 -- Entrypoint for TAC generation
@@ -417,11 +417,6 @@ genArrayIndex exp ann = do
     indexes <- arrayIndexes exp
     indexAddr <- genArrayIndex indexes (T.arrayDim baseType)
 
-    -- Multiply index by inner type size
-    let innerTypeSize = T.getTypeSize $ T.arrayInnerType $ SS.expType ann
-        innerTypeAddr = Lit $ LitInt innerTypeSize
-    out (BOp indexAddr (Mul TInteger) innerTypeAddr indexAddr TInteger)
-
     -- Generate the IndexGet instruction
     out (IndexGet k baseAddr indexAddr (castTypeToTACType $ SS.expType ann))
 
@@ -445,17 +440,44 @@ genArrayIndex exp ann = do
         arrayIndexes _ = return []
 
         -- Generate the array index from the list of addresses and dimensions
-        -- TODO: If indexes are literals, we can optimize the generation
         genArrayIndex :: [Address] -> [Int] -> StateMonad Address
         genArrayIndex (a:as) (_:ls) = do
+            let accStart = maybeLit a
             idxTemp <- newTmp
-            out (NOp idxTemp a TInteger)
-            mapM_
-                (\(addr, dim) -> do
-                    out (BOp idxTemp (Mul TInteger) (Lit $ LitInt dim) idxTemp TInteger)
-                    out (BOp idxTemp (Add TInteger) addr idxTemp TInteger))
+            
+            -- Calculate the index.
+            -- The offset to the first non-literal index is calculated using foldM
+            accEnd <- foldM
+                (\acc (addr, dim) -> case (acc, maybeLit addr) of
+                    (Just litAcc, Just newLit) -> do
+                        return (Just ((litAcc * dim) + newLit))
+                    (Just litAcc, Nothing) -> do
+                        out (BOp idxTemp (Add TInteger) addr (Lit $ LitInt (litAcc * dim)) TInteger)
+                        return Nothing
+                    _ -> do
+                        out (BOp idxTemp (Mul TInteger) (Lit $ LitInt dim) idxTemp TInteger)
+                        out (BOp idxTemp (Add TInteger) addr idxTemp TInteger)
+                        return Nothing
+                )
+                accStart
                 (zip as ls)
+            
+            -- Multiply index by inner type size
+            let innerTypeSize = T.getTypeSize $ T.arrayInnerType $ SS.expType ann
+                innerTypeAddr = Lit $ LitInt innerTypeSize
+            
+            case accEnd of
+                Just idx -> do
+                    out (NOp idxTemp (Lit $ LitInt (idx * innerTypeSize)) TInteger)
+                Nothing -> do
+                    out (BOp idxTemp (Mul TInteger) innerTypeAddr idxTemp TInteger)
+            
             return idxTemp
+            
+            where
+                maybeLit :: Address -> Maybe Int
+                maybeLit (Lit (LitInt v)) = Just v
+                maybeLit _ = Nothing
         genArrayIndex _ _ = error "genArrayIndex: expected at least one index address and one dimension"
 
 
@@ -494,10 +516,7 @@ genFunCall (AS.RoutineCall routName args _) ann = do
         routLab = Function $ ProgramName (AS.identName routName) definitionPos
         numArgs = length args
         ty = castTypeToTACType returnType
-    case returnType of
-        T.TArray {} -> error "TODO: handle array return types"
-        -- Ref cannot be returned by a function
-        _ -> out (FunCall k routLab numArgs ty)
+    out (FunCall k routLab numArgs ty)
     return k
 
 genProcCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad ()
@@ -589,7 +608,7 @@ genParamsPre params = do
                 k <- newTmp
                 out (DerefGet k name tyTAC)
                 copy name' k ty
-            T.TString -> error "TODO: handle strings, also for references, what we should do?"
+            -- Strings and references to values are not copied (reference are)
             _ -> out (DerefGet name' name tyTAC)
         ) paramsValRes
     unless (null paramsValRes) $ out (Comment "End of preamble")
@@ -602,7 +621,6 @@ genParamsPost params = let paramsValRes = filter (\p -> AS.mode p == AS.Mvalres)
             let name = PName $ ProgramName (AS.identName ident) pos
                 name' = PName $ ProgramName (AS.identName ident ++ "'") pos
                 tyTAC = castTypeToTACType $ T.type_ tyPos in
-            -- TODO: strings? (Array should be good)
             simpleInstruction (DerefSet name name' tyTAC)
     ) paramsValRes
 
