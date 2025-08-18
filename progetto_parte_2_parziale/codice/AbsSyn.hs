@@ -93,7 +93,7 @@ typeOfBinOpArgs Mod = [Ty.TInteger]
 typeOfBinOpArgs Pow = [Ty.TInteger, Ty.TReal]
 
 data RelOp = Eq | Neq | Lt | Le | Gt | Ge
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 data Param = Param
   { mode :: Mode,

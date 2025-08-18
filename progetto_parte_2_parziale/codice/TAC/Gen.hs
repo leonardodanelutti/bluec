@@ -6,124 +6,14 @@ import qualified StatSem.Utils             as SS
 import qualified Types                     as T
 import qualified LexGrammar                as Lex
 import qualified TAC.Printer()
+
 import TAC.Def
+import TAC.State
+
 import Control.Monad (unless)
 import Data.Maybe
 
-
--- MONAD DEFINITION AND HELPER FUNCTIONS
-
-type StateMonad = St.State TACState
-
-data TACState = TACState {
-    tempCount, labelCount, staticCount :: Int,
-    -- The routine stack and the current routine is used to menage nested routines
-    routineStack :: [Instructions],
-    currentRoutine :: Instructions,
-    -- Current stream for TAC code
-    stream :: Instructions,
-    -- Static data stream
-    staticStream :: [StaticData],
-    -- List of labels to be attached to the next instruction
-    nextLabel :: [Label],
-    -- current loop labels stack
-    loopLabelsStack :: [(Label, Label)]
-}
-
--- Add instruction to the stream
-outLabeled :: LabeledInstruction -> StateMonad ()
-outLabeled instrLab = do
-    state <- St.get
-    let -- Add pending label
-        instrLab' = instrLab { label = nextLabel state }
-        newStream = instrLab' : currentRoutine state
-    St.put $ state { currentRoutine = newStream, nextLabel = [] }
-
--- Add instruction (with no label) to the stream
-out :: Instruction -> StateMonad ()
-out = outLabeled . simpleInstruction
-
--- Add static data to the static stream
-outStatic :: StaticValue -> StateMonad Address
-outStatic instrLab = do
-    state <- St.get
-    let k = staticCount state
-        newStream = Static (Stat k) instrLab : staticStream state
-    St.put $ state { staticStream = newStream,
-                     staticCount = k + 1 }
-    return (Stat k)
-
--- Return a new temporary variable
-newTmp :: StateMonad Address
-newTmp = do
-    state <- St.get
-    let k = tempCount state
-    St.put $ state { tempCount = k + 1 }
-    return $ Temp (Temporary k)
-
--- Return a new label
-newLabel :: StateMonad Label
-newLabel = do
-    state <- St.get
-    let k = labelCount state
-    St.put $ state { labelCount = k + 1 }
-    return $ Loc k
-
--- Attach a label to the next instruction
-attachToNext :: Label -> StateMonad ()
-attachToNext label = do
-    state <- St.get
-    St.put $ state { nextLabel = label : nextLabel state }
-
--- Call when starting a new routine, pushes the current routine onto the stack
--- This is used to menage nested routines
-newRoutine :: StateMonad ()
-newRoutine = do
-    state <- St.get
-    St.put $ state { routineStack = currentRoutine state : routineStack state,
-                     currentRoutine = [] }
-
--- Call when ending a routine (cannot be called before a newRoutine)
--- This is used to menage nested routines
-endRoutine :: StateMonad ()
-endRoutine = do
-    state <- St.get
-    let currentRout = currentRoutine state
-    case routineStack state of
-        [] -> St.put state
-        (r:rs) -> do
-            St.put $ state { routineStack = rs,
-                             currentRoutine = r,
-                             stream = currentRout ++ stream state }
-
--- Call when starting a new loop. Creates a new labels for the loop start and
--- end and pushes them onto a stack.
-newLoop :: StateMonad ()
-newLoop = do
-    loopStart <- newLabel
-    loopEnd <- newLabel
-    attachToNext loopStart
-    state <- St.get
-    St.put $ state { loopLabelsStack = (loopStart, loopEnd) : loopLabelsStack state }
-
--- Call when ending a loop. Attaches the loop end label to the next instruction
--- Only call when exiting a loop
-endLoop :: StateMonad ()
-endLoop = do
-    state <- St.get
-    let (_, loopEnd) : stack = loopLabelsStack state
-    attachToNext loopEnd
-    -- Get updated state
-    state' <- St.get
-    St.put $ state' { loopLabelsStack = stack }
-
--- Only call when inside a loop
-getLoopLabels :: StateMonad (Label, Label)
-getLoopLabels = do
-    head . loopLabelsStack <$> St.get
-
 -- Entrypoint for TAC generation
-
 -- Generate the TAC code form the state
 genProgram :: AS.Declarations SS.Ann -> TAC
 genProgram ast =
@@ -131,29 +21,16 @@ genProgram ast =
         -- Reverse the stream to have the instructions in the correct order
     in TAC (reverse $ stream finalState) (reverse $ staticStream finalState)
 
-initState :: TACState
-initState = TACState {
-    tempCount = 0,
-    labelCount = 0,
-    staticCount = 0,
-    routineStack = [],
-    currentRoutine = [],
-    stream = [],
-    staticStream = [],
-    nextLabel = [],
-    loopLabelsStack = []
-}
-
 
 -- TAC GENERATION FUNCTIONS
 
 genEntryPoint :: AS.Declarations SS.Ann -> StateMonad ()
 genEntryPoint (AS.ProgramDecl _ vars routines _) = do
     newRoutine
+    attachToNext $ FunctionUnique "EntryPoint"
     mapM_ genVar vars
     -- Program calls main and then ends
-    -- TODO: This is a temporary solution, we should know the main position
-    out (ProcCall (Function (ProgramName "main" Lex.defaultPosn)) 0)
+    out (ProcCall (FunctionUnique "main") 0)
     out (Custom "END_PROGRAM")
     endRoutine
     mapM_ genRoutine routines
@@ -359,14 +236,85 @@ genRepOp relOp e1 e2 = do
     addr1 <- genExpr e1
     addr2 <- genExpr e2
     let ty = SS.expType $ AS.expAnnot e1
+        tyTAC = castTypeToTACType ty
     case ty of
-        T.TString -> error "TODO:"
-        T.TArray {} -> error "TODO:"
+        T.TString -> do
+            let (funName, firstArg, secondArg) = stringRelNames relOp
+            isCompGenerated <- isStringCompGen relOp
+            unless isCompGenerated (genStringComp relOp)
+            out (NOp firstArg addr1 Addr)
+            out (Param firstArg Addr)
+            out (NOp secondArg addr2 Addr)
+            out (Param secondArg Addr)
+            out (FunCall k funName 2 TBoolean)
+        T.TArray innerType size -> do
+            let (funName, firstArg, secondArg) = stringRelNames relOp
+            isCompGenerated <- isArrayCompGen (relOp, innerType)
+            unless isCompGenerated (genArrayComp relOp innerType size)
+            out (NOp firstArg addr1 Addr)
+            out (Param firstArg tyTAC)
+            out (NOp secondArg addr2 Addr)
+            out (Param secondArg tyTAC)
+            out (FunCall k funName 2 TBoolean)
         T.TReference {} -> error "TODO:"
         _ -> let tacRelOp = castRelOpToTACOp relOp ty
              in do
                 out (BOp k tacRelOp addr1 addr2 TBoolean)
     return k
+
+genStringComp :: AS.RelOp -> StateMonad ()
+genStringComp relOp = do
+    let (funName, arg1, arg2) = stringRelNames relOp
+    labelLoop <- newLabel
+    labelTrue <- newLabel
+    idx <- newTmp
+    char1 <- newTmp
+    char2 <- newTmp
+    eq <- newTmp
+    isZero <- newTmp
+    endCond <- newTmp
+    newRoutine
+    attachToNext funName
+    out (Comment $ "String comparison: " ++ relName relOp)
+    out (NOp idx (Lit $ LitInt (-1)) TInteger)
+    attachToNext labelLoop
+    out (BOp idx (Add TInteger) (Lit $ LitInt 1) idx TInteger)
+    out (IndexGet char1 arg1 idx TChar)
+    out (IndexGet char2 arg2 idx TChar)
+    out (BOp eq (Rel (RelEq TChar)) char1 char2 TBoolean)
+    out (BOp isZero (Rel (RelEq TChar)) char1 (Lit $ LitChar '\0') TBoolean)
+    out (BOp endCond And eq isZero TBoolean)
+    out (BoolJumpT endCond labelTrue)
+    out (BoolJumpT eq labelLoop)
+    out (Return (Lit $ LitBool False))
+    attachToNext labelTrue
+    out (Return (Lit $ LitBool True))
+    endRoutine
+
+genArrayComp :: AS.RelOp -> T.Type -> Int -> StateMonad ()
+genArrayComp relOp innerType size = error "TODO:"
+
+relName :: AS.RelOp -> String
+relName relOp = case relOp of
+    AS.Eq -> "Eq"
+    AS.Neq -> "Neq"
+    AS.Lt -> "Lt"
+    AS.Le -> "Le"
+    AS.Gt -> "Gt"
+    AS.Ge -> "Ge"
+
+stringRelName :: AS.RelOp -> String
+stringRelName relOp = "string" ++ relName relOp
+
+stringRelNames :: AS.RelOp -> (Label, Address, Address)
+stringRelNames relOp = let funName = stringRelName relOp in (
+        FunctionUnique funName,
+        PName $ ProgramName (funName ++ "1") Lex.defaultPosn,
+        PName $ ProgramName (funName ++ "2") Lex.defaultPosn
+    )
+
+arrayRelName :: AS.RelOp -> T.Type -> String
+arrayRelName relOp ty = "array" ++ relName relOp ++ show ty
 
 
 -- GENERATION OF ARRAY INDEXING
@@ -477,7 +425,7 @@ genProcCall (AS.RoutineCall routName args _) ann = do
 genActualParams ::  [AS.Exp SS.Ann] -> SS.Ann -> StateMonad ()
 genActualParams args ann =
     let params = SS.params ann
-        exprs = zip args params
+        exprs = zip args (fromJust params)
     in
         -- Left to right evaluation of the parameters
         mapM_ (\(expr, param) -> do

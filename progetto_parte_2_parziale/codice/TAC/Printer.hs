@@ -14,11 +14,13 @@ instance Show LabeledInstruction where
         let labelStr = case label of
                 Loc n -> "L" ++ show n ++ ":"
                 Function name -> "\n" ++ show name ++ ":\n      " 
+                FunctionUnique name -> "\n" ++ name ++ ":\n      "
         in labelStr ++ replicate (6 - length labelStr) ' ' ++ show inst
     show (LabeledInstruction labels inst) = 
         let labelStr = concatMap (\case
                 Loc n -> "L" ++ show n ++ ", "
-                Function name -> show name ++ ", ") labels
+                Function name -> show name ++ ", "
+                FunctionUnique name -> name ++ ", ") labels
         in labelStr ++ ": " ++ show inst
 
 instance Show Instruction where
@@ -110,6 +112,7 @@ instance Show Coercion where
 instance Show Label where
     show (Loc n) = "L" ++ show n
     show (Function pName) = show pName
+    show (FunctionUnique name) = name
 instance Show Temporary where
     show (Temporary n) = "t" ++ show n
 

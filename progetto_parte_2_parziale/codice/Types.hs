@@ -18,7 +18,7 @@ data Type
         }
     | TReference { refType :: Type }
     | TError { msgs :: [String] }
-    deriving (Eq)
+    deriving (Eq, Ord)
 
 instance Show Type where
     show TBoolean = "Boolean"
