@@ -166,7 +166,10 @@ data Ann
         -- The position of the whole declaration (different symbols can have the same
         -- position if they are declared together).
         -- Nothing if the identifier is not found in the environment.
-        declPos :: Maybe LG.Posn
+        declPos :: Maybe LG.Posn,
+        -- Just True: the routine call is a function call. Just False: the routine call is
+        -- a procedure call. Nothing if the identifier is not found in the environment.
+        isFunction :: Maybe Bool
     }
     deriving (Show)
 
