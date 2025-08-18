@@ -242,6 +242,7 @@ genRepOp relOp e1 e2 = do
             let (funName, firstArg, secondArg) = stringRelNames relOp
             isCompGenerated <- isStringCompGen relOp
             unless isCompGenerated (genStringComp relOp)
+            unless isCompGenerated (addStringCompGen relOp)
             out (NOp firstArg addr1 Addr)
             out (Param firstArg Addr)
             out (NOp secondArg addr2 Addr)
@@ -251,6 +252,7 @@ genRepOp relOp e1 e2 = do
             let (funName, firstArg, secondArg) = stringRelNames relOp
             isCompGenerated <- isArrayCompGen (relOp, innerType)
             unless isCompGenerated (genArrayComp relOp innerType size)
+            unless isCompGenerated (addArrayCompGen (relOp, innerType))
             out (NOp firstArg addr1 Addr)
             out (Param firstArg tyTAC)
             out (NOp secondArg addr2 Addr)
@@ -266,29 +268,45 @@ genStringComp :: AS.RelOp -> StateMonad ()
 genStringComp relOp = do
     let (funName, arg1, arg2) = stringRelNames relOp
     labelLoop <- newLabel
-    labelTrue <- newLabel
+    labelEnd <- newLabel
     idx <- newTmp
     char1 <- newTmp
     char2 <- newTmp
-    eq <- newTmp
-    isZero <- newTmp
-    endCond <- newTmp
+    cmp <- newTmp
     newRoutine
     attachToNext funName
     out (Comment $ "String comparison: " ++ relName relOp)
     out (NOp idx (Lit $ LitInt (-1)) TInteger)
+    
+    -- Main comparison loop
     attachToNext labelLoop
     out (BOp idx (Add TInteger) (Lit $ LitInt 1) idx TInteger)
     out (IndexGet char1 arg1 idx TChar)
     out (IndexGet char2 arg2 idx TChar)
-    out (BOp eq (Rel (RelEq TChar)) char1 char2 TBoolean)
-    out (BOp isZero (Rel (RelEq TChar)) char1 (Lit $ LitChar '\0') TBoolean)
-    out (BOp endCond And eq isZero TBoolean)
-    out (BoolJumpT endCond labelTrue)
-    out (BoolJumpT eq labelLoop)
-    out (Return (Lit $ LitBool False))
-    attachToNext labelTrue
-    out (Return (Lit $ LitBool True))
+    
+    -- Check if characters are equal
+    out (BOp cmp (Rel (RelEq TChar)) char1 char2 TBoolean)
+    out (BoolJumpF cmp labelEnd)  -- If different, exit loop
+    
+    -- Characters are equal, check if we reached end of both strings
+    out (BOp cmp (Rel (RelEq TChar)) char1 (Lit $ LitChar '\0') TBoolean)
+    out (BoolJumpF cmp labelLoop)  -- If not at end, continue loop
+    
+    -- Both strings are equal (reached end together)
+    let equalResult = relOp `elem` [AS.Eq, AS.Le, AS.Ge]
+    out (Return (Lit $ LitBool equalResult))
+    
+    -- Characters are different, determine result
+    attachToNext labelEnd
+    let tacRelOp = case relOp of
+            AS.Eq -> RelEq TChar    -- Will be false since we know they're different
+            AS.Neq -> RelNeq TChar  -- Will be true since we know they're different  
+            AS.Lt -> RelLt TChar
+            AS.Le -> RelLe TChar
+            AS.Gt -> RelGt TChar
+            AS.Ge -> RelGe TChar
+    out (BOp cmp (Rel tacRelOp) char1 char2 TBoolean)
+    out (Return cmp)
     endRoutine
 
 genArrayComp :: AS.RelOp -> T.Type -> Int -> StateMonad ()
