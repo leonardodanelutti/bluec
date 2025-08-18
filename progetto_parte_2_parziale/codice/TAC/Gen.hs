@@ -265,7 +265,13 @@ genRepOp k relOp addr1 addr2 ty = do
             out (Param secondArg tyTAC)
             out (NOp size (Lit $ LitInt (T.getTypeSize ty)) TInteger)
             out (FunCall k funName 3 TBoolean)
-        T.TReference {} -> error "TODO:"
+        T.TReference refType -> do
+            let tyTAC = castTypeToTACType refType
+            derefTemp1 <- newTmp
+            derefTemp2 <- newTmp
+            out (DerefGet derefTemp1 addr1 tyTAC)
+            out (DerefGet derefTemp2 addr2 tyTAC)
+            genRepOp k relOp derefTemp1 derefTemp2 refType
         _ -> let tacRelOp = castRelOpToTACOp relOp ty
              in do
                 out (BOp k tacRelOp addr1 addr2 TBoolean)
@@ -444,7 +450,7 @@ genArrayIndex exp ann = do
         genArrayIndex (a:as) (_:ls) = do
             let accStart = maybeLit a
             idxTemp <- newTmp
-            
+
             -- Calculate the index.
             -- The offset to the first non-literal index is calculated using foldM
             accEnd <- foldM
@@ -461,19 +467,19 @@ genArrayIndex exp ann = do
                 )
                 accStart
                 (zip as ls)
-            
+
             -- Multiply index by inner type size
             let innerTypeSize = T.getTypeSize $ T.arrayInnerType $ SS.expType ann
                 innerTypeAddr = Lit $ LitInt innerTypeSize
-            
+
             case accEnd of
                 Just idx -> do
                     out (NOp idxTemp (Lit $ LitInt (idx * innerTypeSize)) TInteger)
                 Nothing -> do
                     out (BOp idxTemp (Mul TInteger) innerTypeAddr idxTemp TInteger)
-            
+
             return idxTemp
-            
+
             where
                 maybeLit :: Address -> Maybe Int
                 maybeLit (Lit (LitInt v)) = Just v
@@ -497,10 +503,23 @@ genArray elements k offset = do
                 AS.Array elements' _ _ -> do
                     -- If the element is an array, we generate it recursively
                     genArray elements' k (offset + i * elemSize)
-                _ -> do
-                    -- Generate the element and set it in the array
-                    addr <- genExpr e
-                    out (IndexSet k (Lit $ LitInt (offset + i * elemSize)) addr tyTAC)
+                _ -> case ty of
+                    -- If the element is an array, we have to copy it
+                    T.TArray {} -> do
+                        let innerType = T.arrayInnerType ty
+                            innerTypeSize = T.getTypeSize innerType
+                            fullSize = elemSize `div` innerTypeSize
+                        addr <- genExpr e
+                        copyTmp <- newTmp
+                        mapM_ 
+                            (\j -> do
+                                out (IndexGet copyTmp addr (Lit $ LitInt (j * innerTypeSize)) (castTypeToTACType innerType))
+                                out (IndexSet k (Lit $ LitInt (offset + i * elemSize + j * innerTypeSize)) copyTmp tyTAC)) 
+                            [0.. (fullSize - 1)]
+                    _ -> do
+                        -- Generate the element and set it in the array
+                        addr <- genExpr e
+                        out (IndexSet k (Lit $ LitInt (offset + i * elemSize)) addr tyTAC)
         )
         (zip [0..] elements)
 
