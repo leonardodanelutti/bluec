@@ -1,0 +1,17 @@
+var
+	a: Integer := 2;
+	b: Boolean := false;
+	c: Integer := 3;
+
+routines 
+
+main is
+do
+    if (a < 20 or b) and (b and c <> 10) then
+	    a := 0;
+	    return;
+	else
+	    a := 1;
+	    return;
+	end if
+end main

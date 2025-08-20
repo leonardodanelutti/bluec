@@ -110,6 +110,11 @@ demo: bluec
 		echo ""; \
 		./bluec ../tests/testCase12.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo12_output.txt
+	@{ \
+		echo "example 13: testing if with multiple conditions"; \
+		echo ""; \
+		./bluec ../tests/testCase13.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo13_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

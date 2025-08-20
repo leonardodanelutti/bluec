@@ -41,7 +41,7 @@ genDeclarations (AS.ProgramDecl _ vars routines _) = do
     mapM_ genRoutine routines
 
 genVar :: AS.VarA SS.Ann -> StateMonad ()
-genVar (AS.VarAss idents ty values _ pos) =
+genVar (AS.VarAss idents _ values _ pos) =
     -- Evaluate the first left expression, then the first right expression
     -- then the seconds left expression and so on
     mapM_ genAssignment (zip idents values)
