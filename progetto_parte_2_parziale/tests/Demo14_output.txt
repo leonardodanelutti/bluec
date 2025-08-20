@@ -1,0 +1,8 @@
+example 14: testing reference return types
+
+../tests/testCase14.blue
+
+Parse Successful!
+
+Static Semantics Analysis Failed:
+../tests/testCase14.blue:13:5-19:12: ERROR: Functions cannot return a reference type, but `foo` does.

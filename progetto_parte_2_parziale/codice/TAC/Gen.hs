@@ -215,13 +215,12 @@ returnAddr addrOutMaybe addrReturn ty = case addrOutMaybe of
 
 -- GENERATION OF BOOLEAN OPERATIONS
 
--- TODO: Multiple "or" and "and" can be jumped together
 genBoolExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad ()
 genBoolExp op tmp e1 e2 = do
+    label <- newLabel
     genBoolExp' e1
 
     -- Short-circuit evaluation, jump after the second operand
-    label <- newLabel
     let instr = case op of
             AS.Or -> BoolJumpT tmp label
             AS.And -> BoolJumpF tmp label
@@ -240,6 +239,48 @@ genBoolExp op tmp e1 e2 = do
             genBoolExp AS.And tmp e1 e2
         genBoolExp' e = do
             genExprAddr e tmp
+
+-- Whenever to jump if an a condition is true or false
+-- otherwise fallthrough to the next instruction
+data IfJump
+    = JumpTrue Label
+    | JumpFalse Label
+
+-- Generate a boolean expression inside an "if" condition 
+genBoolExpIf :: AS.Exp SS.Ann -> IfJump -> StateMonad ()
+genBoolExpIf (AS.BinOp AS.Or e1 e2 _ _) jump = do
+    case jump of
+        JumpTrue _ -> do
+            genBoolExpIf e1 jump
+            genBoolExpIf e2 jump
+        JumpFalse _ -> do
+            label <- newLabel
+            genBoolExpIf e1 (JumpTrue label)
+            genBoolExpIf e2 jump
+            attachToNext label
+genBoolExpIf (AS.BinOp AS.And e1 e2 _ _) jump = do
+    case jump of
+        JumpTrue _ -> do
+            label <- newLabel
+            genBoolExpIf e1 (JumpFalse label)
+            genBoolExpIf e2 jump
+            attachToNext label
+        JumpFalse _ -> do
+            genBoolExpIf e1 jump
+            genBoolExpIf e2 jump
+genBoolExpIf (AS.RelOp op e1 e2 _ _) jump = do
+    addr1 <- genExprTmp e1
+    addr2 <- genExprTmp e2
+    let opTAC = castRelOpToTACRelOp op (SS.expType $ AS.expAnnot e1)
+        (opIf, label) = case jump of
+            JumpTrue label -> (opTAC, label)
+            JumpFalse label -> (negateRelOp opTAC, label)
+    out (RelJump opIf addr1 addr2 label)
+genBoolExpIf e jump = do
+    a <- genExprTmp e
+    case jump of
+        JumpTrue label -> out (BoolJumpT a label)
+        JumpFalse label -> out (BoolJumpF a label)
 
 -- GENERATION OF RELATIONAL OPERATIONS
 
@@ -686,9 +727,7 @@ genStmt stmt post = case stmt of
         mapM_ (`genStmt` post) body
         -- Generate the others (exit-condition, body) pairs
         mapM_ (\(AS.LoopExit cond body _ _) -> do
-                -- TODO: Better way to generate condition using shortcut?
-                condAddr <- genExprTmp cond
-                out (BoolJumpT condAddr loopEnd)
+                genBoolExpIf cond (JumpTrue loopEnd)
                 mapM_ (`genStmt` post) body
             ) exit
         out (UnJump loopStart)
@@ -698,17 +737,13 @@ genStmt stmt post = case stmt of
         out (UnJump loopStart)
     AS.StmtIf cond body _ _ -> do
         endLabel <- newLabel
-        -- TODO: Better way to generate condition using shortcut?
-        condAddr <- genExprTmp cond
-        out (BoolJumpF condAddr endLabel)
+        genBoolExpIf cond (JumpFalse endLabel)
         mapM_ (`genStmt` post) body
         attachToNext endLabel
     AS.StmtIfElse cond bodyT bodyF _ _ -> do
         elseLabel <- newLabel
         endLabel <- newLabel
-        -- TODO: Better way to generate condition using shortcut?
-        condAddr <- genExprTmp cond
-        out (BoolJumpF condAddr elseLabel)
+        genBoolExpIf cond (JumpFalse elseLabel)
         mapM_ (`genStmt` post) bodyT
         out (UnJump endLabel)
         attachToNext elseLabel

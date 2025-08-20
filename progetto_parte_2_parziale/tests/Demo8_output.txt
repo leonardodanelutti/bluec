@@ -5,5 +5,5 @@ example 8: testing assignments to constants
 Parse Successful!
 
 Static Semantics Analysis Failed:
-../tests/testCase8.blue:10:14-10:16: ERROR: Integer is not compatible with Boolean.
+../tests/testCase8.blue:10:9-10:10: ERROR: Left-hand side expression required, but found constant.
 ../tests/testCase8.blue:10:9-10:10: ERROR: Cannot assign a value to a constant. Suggested fix: make c a variable.

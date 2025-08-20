@@ -137,6 +137,8 @@ getLoopLabels :: StateMonad (Label, Label)
 getLoopLabels = do
     head . loopLabelsStack <$> St.get
 
+-- Functions to manage the generation of string and array comparison functions
+
 isStringCompGen :: AS.RelOp -> StateMonad Bool
 isStringCompGen relOp = do
     state <- St.get

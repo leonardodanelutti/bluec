@@ -40,14 +40,10 @@ EntryPoint:
       END_PROGRAM
 
 main@8:1:
-      t0 =(bool) a@2:9 <(int) 20
-      if t0 goto L2
-      t0 =(bool) b@3:9
-L2:   ifFalse t0 goto L3
-      t0 =(bool) b@3:9
-      ifFalse t0 goto L4
-      t0 =(bool) c@4:9 !=(int) 10
-L3, L4, : ifFalse t0 goto L0
+      if a@2:9 <(int) 20 goto L2
+      ifFalse b@3:9 goto L0
+L2:   ifFalse b@3:9 goto L0
+      if c@4:9 ==(int) 10 goto L0
       a@2:9 =(int) 0
       return
       goto L1

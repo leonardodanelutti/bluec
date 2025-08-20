@@ -43,8 +43,7 @@ main@3:1:
       k@6:5 =(int) 0
       k@6:5 =(int) 0
 L0:   k@6:5 =(int) k@6:5 +(int) 1
-      t0 =(bool) k@6:5 >(int) 3
-      if t0 goto L1
+      if k@6:5 >(int) 3 goto L1
       k@6:5 =(int) k@6:5 +(int) 1
       goto L0
 L1:   k@6:5 =(int) 0

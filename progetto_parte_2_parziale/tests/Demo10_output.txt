@@ -40,8 +40,7 @@ L0:   e@9:9 =(float) fcall readReal@0:0, 0
       value@0:0 =(char) t0
       param(char) value@0:0
       pcall writeChar@0:0, 1
-      t1 =(bool) e@9:9 ==(float) 12.0
-      if t1 goto L1
+      if e@9:9 ==(float) 12.0 goto L1
       goto L0
 L1:   return
 

@@ -92,14 +92,24 @@ data RelOp
     | RelGt TACType
     | RelGe TACType
 
-castRelOpToTACOp :: AS.RelOp -> T.Type -> BinOp
-castRelOpToTACOp AS.Eq ty     = Rel $ RelEq  (castTypeToTACType ty)
-castRelOpToTACOp AS.Neq ty    = Rel $ RelNeq (castTypeToTACType ty)
-castRelOpToTACOp AS.Lt ty     = Rel $ RelLt  (castTypeToTACType ty)
-castRelOpToTACOp AS.Le ty     = Rel $ RelLe  (castTypeToTACType ty)
-castRelOpToTACOp AS.Gt ty     = Rel $ RelGt  (castTypeToTACType ty)
-castRelOpToTACOp AS.Ge ty     = Rel $ RelGe  (castTypeToTACType ty)
+negateRelOp :: RelOp -> RelOp
+negateRelOp (RelEq ty) = RelNeq ty
+negateRelOp (RelNeq ty) = RelEq ty
+negateRelOp (RelLt ty) = RelGe ty
+negateRelOp (RelLe ty) = RelGt ty
+negateRelOp (RelGt ty) = RelLe ty
+negateRelOp (RelGe ty) = RelLt ty
 
+castRelOpToTACOp :: AS.RelOp -> T.Type -> BinOp
+castRelOpToTACOp op ty = Rel $ castRelOpToTACRelOp op ty
+
+castRelOpToTACRelOp :: AS.RelOp -> T.Type -> RelOp
+castRelOpToTACRelOp AS.Eq ty     = RelEq  (castTypeToTACType ty)
+castRelOpToTACRelOp AS.Neq ty    = RelNeq (castTypeToTACType ty)
+castRelOpToTACRelOp AS.Lt ty     = RelLt  (castTypeToTACType ty)
+castRelOpToTACRelOp AS.Le ty     = RelLe  (castTypeToTACType ty)
+castRelOpToTACRelOp AS.Gt ty     = RelGt  (castTypeToTACType ty)
+castRelOpToTACRelOp AS.Ge ty     = RelGe  (castTypeToTACType ty)
 
 -- A label
 data Label
