@@ -1,0 +1,42 @@
+-- This example should have an error.
+--
+-- What does this example test:
+-- - Ref and valres passing modality require left-hand side expressions.
+-- - Ambiguous idents can be automatically disambiguated when they are at the left-hand
+--   side of an assignment.
+routines
+    main() is
+    var
+        a: Integer := 1;
+    do
+        a := foo(a);
+        return;
+    end main
+
+    foo(val a: Real) -> Integer
+    is
+    var
+        a: Integer := 2;
+    do
+        -- Cannot automatically cast if argument is passed by ref.
+        return bar(a);
+    end foo
+
+    bar(ref a: Real) -> Integer
+    is
+    var
+        a: Integer := 3;
+    do
+        return 0;
+    end bar
+
+    fn -> Integer is
+    var
+        fn: Integer := 0;
+    do
+        -- Here we expect an left expression at the left-hand side of the assignment, so
+        -- we can disambiguate (it can only be the variable).
+        fn := 1;
+        -- While here it is ambiguous: we mean the function or the variable?
+        return fn;
+    end fn

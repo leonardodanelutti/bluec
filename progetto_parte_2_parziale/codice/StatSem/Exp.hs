@@ -33,6 +33,7 @@ annExp _ AS.Cast {} = error "Unreachable: `annExp` called with `Cast` expression
 -----------
 -- UTILS --
 -----------
+-- Expression-specific utilities.
 
 -- Get type and value from a literal expression.
 getTypeAndValue :: AS.Literal -> (T.Type, CTValue)
@@ -42,29 +43,16 @@ getTypeAndValue (AS.LitString v _) = (T.TString, CTVString v)
 getTypeAndValue (AS.LitBool v _) = (T.TBoolean, CTVBoolean v)
 getTypeAndValue (AS.LitDouble v _) = (T.TReal, CTVReal v)
 
--- Try to cast the actual parameters (arguments) to the formal parameters types.
---
--- Preconditions:
--- - The number of actual parameters must match the number of formal parameters.
--- - The `Param`s must have a valid type (not `TError`).
-castParamTypes :: [AS.Param] -> [AS.Exp Ann] -> [AS.Exp Ann]
-castParamTypes [] [] = []
-castParamTypes (AS.Param { AS.paramType = T.TypePos { T.type_ = T.TError {} } } : _) _ =
-    error "Unreachable: `castParamTypes` called with an error type in the parameter list." -- Unreachable if Param comes from the parser.
-castParamTypes (AS.Param { AS.paramType = T.TypePos { T.type_ = paramType } } : ps) (arg : args) =
-    cast arg paramType : castParamTypes ps args
-castParamTypes _ _ = error "Unreachable: `castParamTypes` called with different number of parameters and arguments."
-
 -- Cast an annotated expression to a specific type.
-cast :: AnnExp -> T.Type -> AnnExp
-cast exp newType = case expType ann of
+cast :: Env -> AnnExp -> T.Type -> AnnExp
+cast env exp newType = case expType ann of
     T.TError {} -> exp
     oldType | oldType == newType -> exp
     oldType -> case T.sup pos oldType newType of
         err@T.TError {} -> AS.Cast { AS.e = exp, AS.expAnnot = ExpAnn { expType = err, ctVal = Nothing }, AS.expPos = pos }
         ty | ty == newType -> case (exp, valCast) of
-            (AS.Cast {}, _) -> exp { AS.expAnnot = castAnn } -- Simplify cast chains. (FIXME: è giusto fare sta cosa?)
-            _ -> AS.Cast { AS.e = exp, AS.expAnnot = castAnn, AS.expPos = pos }
+            (AS.Cast {}, _) -> exp { AS.expAnnot = castAnn' } -- Simplify cast chains. (FIXME: è giusto fare sta cosa?)
+            _ -> AS.Cast { AS.e = exp, AS.expAnnot = castAnn', AS.expPos = pos }
         _ -> AS.Cast {
             AS.e = exp,
             AS.expAnnot = ExpAnn {
@@ -79,6 +67,8 @@ cast exp newType = case expType ann of
             expType = newType,
             ctVal   = valCast
         }
+        castAnn' = if mustBeLExp env then addErr castAnn expectedLExpErr else castAnn
+        expectedLExpErr = E.err pos "Implicit casting is forbidden in left-hand side expressions."
 
 -----------
 -- LEAFS --
@@ -87,16 +77,18 @@ cast exp newType = case expType ann of
 -- Literal expressions.
 -- Rules: RExpInt, RExpChar, RExpString, RExpBool, RExpDouble.
 annExpLit :: Env -> Exp -> AnnExp
-annExpLit _ AS.Literal { AS.val = exp, AS.expPos = expPos } = AS.Literal {
+annExpLit env AS.Literal { AS.val = exp, AS.expPos = expPos } = AS.Literal {
     AS.val = exp,
-    AS.expAnnot = ann,
+    AS.expAnnot = ann',
     AS.expPos = expPos
 } where
     ann = ExpAnn {
         expType = expType,
         ctVal   = Just ctVal
     }
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
     (expType, ctVal) = getTypeAndValue exp
+    expectedLExpErr = E.err expPos "Left-hand side expression required, but found literal."
 annExpLit _ _ = error "Unreachable: `annExpLit` called with non-`Literal` expression."
 
 -- Identifier expressions.
@@ -130,20 +122,48 @@ annExpIdent env AS.ExpIdent {
             declPos = Just varPos
         }
         -- Const identifier.
-        (Just (Const constPos val), Nothing) -> ExpIdentAnn {
-            expType = identType,
-            ctVal = Just identVal,
-            identCategory = ConstCategory,
-            mode = Nothing,
-            declPos = Just constPos
-        } where (identType, identVal) = getTypeAndValue val
+        (Just (Const constPos val), Nothing) -> ann'
+            where
+            (identType, identVal) = getTypeAndValue val
+            ann = ExpIdentAnn {
+                expType = identType,
+                ctVal = Just identVal,
+                identCategory = ConstCategory,
+                mode = Nothing,
+                declPos = Just constPos
+            }
+            ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
+            expectedLExpErr = E.err pos "Left-hand side expression required, but found constant."
         -- Routine identifier.
         (Nothing, Just _) -> ann
             where (ann, _) = annRoutineCall env ident [] pos
+        -- Var identifier (the ambiguity is resolved because function calls cannot be
+        -- LExp).
+        (Just (Var varPos ty mode), _) | mustBeLExp env -> ExpIdentAnn {
+            expType = T.type_ ty,
+            ctVal = Nothing,
+            identCategory = VarCategory,
+            mode = mode,
+            declPos = Just varPos
+        }
+        -- Const identifier (the ambiguity is resolved because function calls cannot be
+        -- LExp).
+        (Just (Const constPos val), _) | mustBeLExp env -> ann'
+            where
+            (identType, identVal) = getTypeAndValue val
+            ann = ExpIdentAnn {
+                expType = identType,
+                ctVal = Just identVal,
+                identCategory = ConstCategory,
+                mode = Nothing,
+                declPos = Just constPos
+            }
+            ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
+            expectedLExpErr = E.err pos "Left-hand side expression required, but found constant."
         -- TODO: the case in which the ambiguity can be resolved by the type
         -- Ambiguous case.
         _ -> ExpIdentAnn {
-            expType = T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ show ident] },
+            expType = T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ PP.identPrinter ident] },
             ctVal = Nothing,
             identCategory = ErrorCategory,
             mode = Nothing,
@@ -168,34 +188,72 @@ annExpRoutCall env fc@AS.FunCall {
     AS.expCall = rc { AS.args = castedArgs },
     AS.expAnnot = ann
 } where
-    (ann, castedArgs) = annRoutineCall env ident annArgs pos
-    annArgs = map (annExp env) args
+    (ann, castedArgs) = annRoutineCall env ident args pos
 annExpRoutCall _ _ = error "Unreachable: `annExpRoutCall` called with non-`FunCall` expression."
 
 -- Helper function that creates an annotation for a routine call, and casts the arguments
 -- to the expected types.
-annRoutineCall :: Env -> AS.Ident -> [AnnExp] -> LG.Posn -> (Ann, [AnnExp])
-annRoutineCall env ident annArgs pos = (ExpFunCallAnn {
-    expType = routType,
-    params = params,
-    declPos = declPos
-}, castedArgs) where
+annRoutineCall :: Env -> AS.Ident -> [Exp] -> LG.Posn -> (Ann, [AnnExp])
+annRoutineCall env ident args pos = (ann', castedArgs) where
     (routType, params, castedArgs, declPos) = case Map.lookup ident (routines env) of
-        Just (Fun declPos params ty) -> case length params == length annArgs of
+        Just (Fun declPos params ty) -> case length params == length args of
             True  -> case T.getErrs $ map (expType . AS.expAnnot) castedArgs of
                 [] -> (T.type_ ty, Just params, castedArgs, Just declPos)
                 errs -> (T.TError { T.msgs = errs }, Just params, castedArgs, Just declPos)
                 where
-                    castedArgs = castParamTypes params annArgs
+                    castedArgs = annAndCastRoutArgs env args params
+                    --castedArgs = castParamTypes env params annArgs
+                    -- FIXME: castare non è per left exp
             False -> (T.TError {
-                T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length annArgs) ++ "."]
-            }, Just params, annArgs, Just declPos)
+                T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."]
+            }, Just params, map (annExp env) args, Just declPos)
         Just (Proc declPos params) -> (T.TError {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ PP.identPrinter ident ++ "."]
-        }, Just params, annArgs, Just declPos)
+        }, Just params, annAndCastRoutArgs env args params, Just declPos)
         Nothing -> (T.TError {
             T.msgs = [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."]
-        }, Nothing, annArgs, Nothing)
+        }, Nothing, map (annExp (doNotRequireLExp env)) args, Nothing)
+    ann = ExpFunCallAnn {
+        expType = routType,
+        params = params,
+        declPos = declPos
+    }
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
+    expectedLExpErr = E.err pos "Left-hand side expression required, but found routine call."
+
+-- Helper function that annotates routine call arguments accordingly to their passing
+-- modality and try to cast the actual parameters (arguments) to the formal parameters
+-- types.
+--
+-- Preconditions:
+-- - The number of actual parameters must match the number of formal parameters.
+-- - The `Param`s must have a valid type (not `TError`).
+annAndCastRoutArgs :: Env -> [Exp] -> [AS.Param] -> [AnnExp]
+annAndCastRoutArgs _ _ (AS.Param { AS.paramType = T.TypePos { T.type_ = T.TError {} } } : _) =
+    error "Unreachable: `castParamTypes` called with an error type in the parameter list." -- Unreachable if Param comes from the parser.
+annAndCastRoutArgs env (arg : args) (AS.Param { AS.mode = mode, AS.paramType = T.TypePos { T.type_ = paramType } } : params) =
+    castedArg : annAndCastRoutArgs env args params
+    where
+        castedArg = case mode of
+            -- Arguments passed by value do not need to be LExp.
+            AS.Mval -> annExp (doNotRequireLExp env) arg
+            -- Arguments passed by value-result and reference must be LExp.
+            _       -> cast (requireLExp env) (annExp (requireLExp env) arg) paramType
+annAndCastRoutArgs _ [] [] = []
+annAndCastRoutArgs _ _ _ = error "Unreachable: `annRoutArgs` called with different number of parameters and arguments."
+
+-- Try to cast the actual parameters (arguments) to the formal parameters types.
+--
+-- Preconditions:
+-- - The number of actual parameters must match the number of formal parameters.
+-- - The `Param`s must have a valid type (not `TError`).
+-- castParamTypes :: Env -> [AS.Param] -> [AS.Exp Ann] -> [AS.Exp Ann]
+-- castParamTypes _ [] [] = []
+-- castParamTypes _ (AS.Param { AS.paramType = T.TypePos { T.type_ = T.TError {} } } : _) _ =
+--     error "Unreachable: `castParamTypes` called with an error type in the parameter list." -- Unreachable if Param comes from the parser.
+-- castParamTypes env (AS.Param { AS.paramType = T.TypePos { T.type_ = paramType } } : ps) (arg : args) =
+--     cast env arg paramType : castParamTypes env ps args
+-- castParamTypes _ _ _ = error "Unreachable: `castParamTypes` called with different number of parameters and arguments."
 
 -- Sign expressions.
 -- Rule: RExpSign.
@@ -205,12 +263,12 @@ annExpSign env AS.Sign {
     AS.expPos = pos
 } = AS.Sign {
     AS.e = annE,
-    AS.expAnnot = ann,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
-    annE = annExp env e
-    intCastedAnnE = cast annE T.TInteger
-    realCastedAnnE = cast annE T.TReal
+    annE = annExp (doNotRequireLExp env) e
+    intCastedAnnE = cast (doNotRequireLExp env) annE T.TInteger
+    realCastedAnnE = cast (doNotRequireLExp env) annE T.TReal
     ann = case (expType $ AS.expAnnot intCastedAnnE, expType $ AS.expAnnot realCastedAnnE) of
         (T.TInteger, _) -> ExpAnn {
             expType = T.TInteger,
@@ -232,6 +290,8 @@ annExpSign env AS.Sign {
             },
             ctVal = Nothing
         }
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
+    expectedLExpErr = E.err pos "Sign is forbidden in left-hand side expressions."
 annExpSign _ _ = error "Unreachable: `annExpSign` called with non-`Sign` expression."
 
 -- Binary Operation expressions.
@@ -247,7 +307,7 @@ annExpBinOp env AS.BinOp {
     AS.binOp = binOp,
     AS.e1 = castedE1,
     AS.e2 = castedE2,
-    AS.expAnnot = ann,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
     ann = ExpAnn {
@@ -255,16 +315,16 @@ annExpBinOp env AS.BinOp {
         ctVal = newVal
     }
     -- Call recursive annotation for both expressions.
-    annE1 = annExp env e1
-    annE2 = annExp env e2
+    annE1 = annExp (doNotRequireLExp env) e1
+    annE2 = annExp (doNotRequireLExp env) e2
     -- Get types.
     typeE1 = expType $ AS.expAnnot annE1
     typeE2 = expType $ AS.expAnnot annE2
     -- Get expected types.
     expectedTypes = AS.typeOfBinOpArgs binOp
     -- Cast both expressions to the expected types (try for each type).
-    castedsE1 = map (cast annE1) expectedTypes
-    castedsE2 = map (cast annE2) expectedTypes
+    castedsE1 = map (cast (doNotRequireLExp env) annE1) expectedTypes
+    castedsE2 = map (cast (doNotRequireLExp env) annE2) expectedTypes
     castedTypesE1 = map (expType . AS.expAnnot) castedsE1
     castedTypesE2 = map (expType . AS.expAnnot) castedsE2
     castedValsE1 = map (getCTValue . AS.expAnnot) castedsE1
@@ -298,6 +358,8 @@ annExpBinOp env AS.BinOp {
         (e@T.TError {}, _) -> (e, Nothing, annE1, annE2)
         (_, e@T.TError {}) -> (e, Nothing, annE1, annE2)
         _ -> getTypeAndVal castedTypes castedValsE1 castedValsE2 castedsE1 castedsE2
+    expectedLExpErr = E.err pos "Left-hand side expression required, but found binary operation."
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
 annExpBinOp _ _ = error "Unreachable: `annExpBinOp` called with non-`BinOp` expression."
 
 -- Bool NOT expressions.
@@ -308,13 +370,13 @@ annExpNot env AS.BoolNeg {
     AS.expPos = pos
 } = AS.BoolNeg {
     AS.e = castedE,
-    AS.expAnnot = ann,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
     -- Call recursive annotation.
-    annE = annExp env e
+    annE = annExp (doNotRequireLExp env) e
     -- Cast both expressions to the expected type (TBoolean).
-    castedE = cast annE T.TBoolean
+    castedE = cast (doNotRequireLExp env) annE T.TBoolean
     castedTypeE = expType $ AS.expAnnot castedE
     castedValE = getCTValue $ AS.expAnnot castedE
     -- Create annotation.
@@ -324,6 +386,8 @@ annExpNot env AS.BoolNeg {
             Just (CTVBoolean v) -> Just (CTVBoolean (not v))
             _ -> Nothing
     }
+    expectedLExpErr = E.err pos "Left-hand side expression required, but found not operation."
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
 annExpNot _ _ = error "Unreachable: `annExpNot` called with non-`BoolNeg` expression."
 
 -- Relational Operation expressions.
@@ -338,7 +402,7 @@ annExpRelOp env AS.RelOp {
     AS.relOp = relOp,
     AS.e1 = castedE1,
     AS.e2 = castedE2,
-    AS.expAnnot = ann,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
     ann = ExpAnn {
@@ -346,16 +410,16 @@ annExpRelOp env AS.RelOp {
         ctVal = newVal
     }
     -- Call recursive annotation for both expressions.
-    annE1 = annExp env e1
-    annE2 = annExp env e2
+    annE1 = annExp (doNotRequireLExp env) e1
+    annE2 = annExp (doNotRequireLExp env) e2
     -- Get types.
     typeE1 = expType $ AS.expAnnot annE1
     typeE2 = expType $ AS.expAnnot annE2
     -- Get super type.
     ty = T.sup pos typeE1 typeE2 -- TODO: every type supports relational operations?
     -- Cast both expressions to the sup type.
-    castedE1 = cast annE1 ty
-    castedE2 = cast annE2 ty
+    castedE1 = cast (doNotRequireLExp env) annE1 ty
+    castedE2 = cast (doNotRequireLExp env) annE2 ty
     castedTypeE1 = expType $ AS.expAnnot castedE1
     castedTypeE2 = expType $ AS.expAnnot castedE2
     castedValE1 = getCTValue $ AS.expAnnot castedE1
@@ -367,6 +431,8 @@ annExpRelOp env AS.RelOp {
     newVal = case (castedValE1, castedValE2) of
         (Just v1, Just v2) -> Just (CTVBoolean (applyRelOp relOp v1 v2))
         _ -> Nothing
+    expectedLExpErr = E.err pos "Left-hand side expression required, but found relational operation."
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
 annExpRelOp _ _ = error "Unreachable: `annExpRelOp` called with non-`RelOp` expression."
 
 -- Reference expressions.
@@ -377,16 +443,21 @@ annExpRef env AS.Ref {
     AS.expPos = pos
 } = AS.Ref {
     AS.e = annE,
-    AS.expAnnot = ann,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
-    annE = annExp env e -- TODO: anything can be referenced?
+    annE = annExp (requireLExp env) e -- Only LExp can be referenced. TODO: anything can be referenced?
     ann = ExpAnn {
-        expType = T.TReference (expType $ AS.expAnnot annE),
+        expType = case refType of
+            e@T.TError {} -> e
+            _ -> T.TReference refType,
         ctVal = case getCTValue $ AS.expAnnot annE of
             Just ctv -> Just (CTVRef ctv)
             Nothing -> Nothing
     }
+    refType = expType $ AS.expAnnot annE
+    expectedLExpErr = E.err pos "Reference is forbidden in left-hand side expressions."
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
 annExpRef _ _ = error "Unreachable: `annExpRef` called with non-`Ref` expression."
 
 -- Dereference expressions.
@@ -400,7 +471,7 @@ annExpDeref env AS.Deref {
     AS.expAnnot = ann,
     AS.expPos = pos
 } where
-    annE = annExp env e
+    annE = annExp (requireLExp env) e -- Only LExp can be dereferenced.
     ann = ExpAnn {
         expType = case expType $ AS.expAnnot annE of
             T.TReference ty -> ty
@@ -427,9 +498,9 @@ annExpArrayIndex env AS.ArrayIndex {
     AS.expAnnot = ann,
     AS.expPos = pos
 } where
-    annE = annExp env e
-    annIndex = annExp env index
-    castedIndex = cast annIndex T.TInteger
+    annE = annExp (requireLExp env) e
+    annIndex = annExp (doNotRequireLExp env) index
+    castedIndex = cast (doNotRequireLExp env) annIndex T.TInteger
     typeE = expType $ AS.expAnnot annE
     ty = case typeE of
         T.TArray { T.elementsType = ty } -> ty
@@ -453,17 +524,17 @@ annExpArray env AS.Array {
     AS.elements = case supType of
         T.TError {} -> annElements -- If the super type is an error, keep the original annotations without casting.
         _ -> castedElements, -- Otherwise, cast all elements to the super type.
-    AS.expAnnot = ann,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
-    annElements = map (annExp env) elements
+    annElements = map (annExp (doNotRequireLExp env)) elements
     -- Get the type of all the elements.
     elementTypes = map (expType . AS.expAnnot) annElements
     -- Get the super type of all the elements.
     supType = case elementTypes of
         [] -> T.TError { T.msgs = [E.err pos "Cannot create an empty array."] } -- TODO: forse è meglio mettere non-empty direttamente nella grammatica?
         t:ts -> foldr (T.sup pos) t ts
-    castedElements = map (\e -> cast e supType) annElements -- Cast all elements to the super type.
+    castedElements = map (\e -> cast (doNotRequireLExp env) e supType) annElements -- Cast all elements to the super type.
     -- Create the annotation.
     ann = ExpAnn {
         expType = case supType of
@@ -474,4 +545,6 @@ annExpArray env AS.Array {
             },
         ctVal = Nothing -- Constants cannot be arrays. TODO: potremmo permettere che lo siano sostituendo i valori a compile time.
     }
+    expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
 annExpArray _ _ = error "Unreachable: `annExpArray` called with non-`Array` expression."

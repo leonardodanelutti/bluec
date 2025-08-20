@@ -76,8 +76,8 @@ annConstA env AS.ConstAss {
     numberErr = if length idents /= length values
                 then [E.err pos "The number of identifiers does not match number of values."]
                 else []
-    valuesAnn = map (annExp env) values
-    castedValuesAnn = map (\x -> (cast x (T.type_ ty))) valuesAnn
+    valuesAnn = map (annExp (doNotRequireLExp env)) values
+    castedValuesAnn = map (\x -> (cast (doNotRequireLExp env) x (T.type_ ty))) valuesAnn
     tryLiterals = map ctvToLiteral castedValuesAnn
     (literals, errs) = partitionEithers tryLiterals
     ann = DeclAnn {
@@ -116,8 +116,8 @@ annVarA env AS.VarAss {
     numberErr = if length idents /= length values
                 then [E.err pos "The number of identifiers does not match number of values."]
                 else []
-    valuesAnn = map (annExp env) values
-    castedValuesAnn = map (\x -> (cast x (T.type_ ty))) valuesAnn
+    valuesAnn = map (annExp (doNotRequireLExp env)) values
+    castedValuesAnn = map (\x -> (cast (doNotRequireLExp env) x (T.type_ ty))) valuesAnn
     errs = T.getErrs $ map (expType . AS.expAnnot) castedValuesAnn
     ann = DeclAnn {
         bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty Nothing))),
@@ -150,6 +150,9 @@ annRoutine env AS.Function {
     AS.routAnnot = ann,
     AS.routPos = pos
 } where
+    returnRefErr = case T.type_ ty of
+        T.TReference {} -> [E.err pos "Functions cannot return a reference type, but `" ++ PP.identPrinter ident ++ "` does."]
+        _ -> []
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
     paramEnv = envFromSymbolBindings paramBindings
     newEnv = addReturn (mergeEnv env paramEnv) (Just (T.type_ ty))
@@ -165,7 +168,7 @@ annRoutine env AS.Function {
     -- Create the annotation.
     ann = DeclAnn {
         bindings = envFromRoutBindings [(ident, Fun pos params ty)],
-        errs = bodyErrs ++ doNotAlwaysReturnErr
+        errs = returnRefErr ++ bodyErrs ++ doNotAlwaysReturnErr
     }
 annRoutine env AS.Procedure {
     AS.routName = ident,

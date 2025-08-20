@@ -48,27 +48,26 @@ data KeywordEntry
     | Continue
     -- Inserted in the environment of unreachable statements.
     | Unreachable
+    -- Insert inside expression environment to require it to be a left-hand side
+    -- expression.
+    | LExp
     deriving (Show)
 
 -- Construct an empty environment.
 emptyEnv :: Env
 emptyEnv = Env Map.empty Map.empty Map.empty
 
--- Pre-defined routines fictitious position.
-preludePos :: LG.Posn
-preludePos = LG.Pn (LG.PnS 0 0 0) (LG.PnS 0 0 0)
-
 -- Pre-defined routines.
 preludeRoutines :: [(AS.Ident, RoutEntry)]
 preludeRoutines = [
-        ((AS.Ident "writeInt" preludePos), Proc preludePos [AS.Param AS.Mval (AS.Ident "value" preludePos) (T.TypePos T.TInteger preludePos) preludePos]),
-        ((AS.Ident "writeReal" preludePos), Proc preludePos [AS.Param AS.Mval (AS.Ident "value" preludePos) (T.TypePos T.TReal preludePos) preludePos]),
-        ((AS.Ident "writeChar" preludePos), Proc preludePos [AS.Param AS.Mval (AS.Ident "value" preludePos) (T.TypePos T.TChar preludePos) preludePos]),
-        ((AS.Ident "writeString" preludePos), Proc preludePos [AS.Param AS.Mval (AS.Ident "value" preludePos) (T.TypePos T.TString preludePos) preludePos]),
-        ((AS.Ident "readInt" preludePos), Fun preludePos [] (T.TypePos T.TInteger preludePos)),
-        ((AS.Ident "readReal" preludePos), Fun preludePos [] (T.TypePos T.TReal preludePos)),
-        ((AS.Ident "readChar" preludePos), Fun preludePos [] (T.TypePos T.TChar preludePos)),
-        ((AS.Ident "readString" preludePos), Fun preludePos [] (T.TypePos T.TString preludePos))
+        ((AS.Ident "writeInt" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TInteger LG.defaultPosn) LG.defaultPosn]),
+        ((AS.Ident "writeReal" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TReal LG.defaultPosn) LG.defaultPosn]),
+        ((AS.Ident "writeChar" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TChar LG.defaultPosn) LG.defaultPosn]),
+        ((AS.Ident "writeString" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TString LG.defaultPosn) LG.defaultPosn]),
+        ((AS.Ident "readInt" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TInteger LG.defaultPosn)),
+        ((AS.Ident "readReal" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TReal LG.defaultPosn)),
+        ((AS.Ident "readChar" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TChar LG.defaultPosn)),
+        ((AS.Ident "readString" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TString LG.defaultPosn))
     ]
 
 -- Construct an environment with the pre-defined routines.
@@ -96,6 +95,15 @@ setUnreachable env = env { keywords = Map.insert "unreachable" Unreachable (keyw
 
 isUnreachable :: Env -> Bool
 isUnreachable env = Map.member "unreachable" (keywords env)
+
+requireLExp :: Env -> Env
+requireLExp env = env { keywords = Map.insert "LExp" LExp (keywords env) }
+
+mustBeLExp :: Env -> Bool
+mustBeLExp env = Map.member "LExp" (keywords env)
+
+doNotRequireLExp :: Env -> Env
+doNotRequireLExp env = env { keywords = Map.delete "LExp" (keywords env) }
 
 -----------------
 -- ANNOTATIONS --
@@ -184,17 +192,28 @@ data IdentCategory
     | ErrorCategory
     deriving (Show)
 
+-- Add an error to the annotation.
+addErr :: Ann -> String -> Ann
+addErr ann msg = case ann of
+    DeclAnn { errs = errs } -> ann { errs = msg : errs }
+    StmtAnn { errs = errs } -> ann { errs = msg : errs }
+    StmtRoutCallAnn { errs = errs } -> ann { errs = msg : errs }
+    exp -> exp { expType = newExpType }
+        where
+            ty = expType exp
+            newExpType = case ty of
+                T.TError { T.msgs = msgs } -> T.TError { T.msgs = msg : msgs }
+                _ -> T.TError { T.msgs = [msg] }
+
+-------------------------
+-- COMPILE TIME VALUES --
+-------------------------
+
 -- Get the compile-time value from an annotation.
 getCTValue :: Ann -> Maybe CTValue
 getCTValue (ExpAnn { ctVal = val }) = val
 getCTValue (ExpIdentAnn { ctVal = val }) = val
 getCTValue _ = Nothing
-
--- data DownwardAnn
---     = ExpAnn
---     | DownwardIdentAnn {
---         expectedType :: AS.Type
---     }
 
 -- Values known at compile time.
 data CTValue
@@ -207,6 +226,7 @@ data CTValue
     -- | CTVArray [CTValue]
     deriving (Show)
 
+-- Convert a compile-time value to a literal.
 ctvToLiteral :: AS.Exp Ann -> Either AS.Literal [String]
 ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
     Just (CTVInteger v) -> Left $ AS.LitInt v pos
@@ -271,9 +291,47 @@ applyRelOp f (CTVBoolean v1) (CTVBoolean v2) = funRelOp f v1 v2
 applyRelOp f (CTVRef v1) (CTVRef v2) = applyRelOp f v1 v2
 applyRelOp _ _ _ = error "Invalid arguments for compile-time relational operation"
 
+-- Function to apply a relational operation.
 funRelOp AS.Eq = (==)
 funRelOp AS.Neq = (/=)
 funRelOp AS.Lt = (<)
 funRelOp AS.Le = (<=)
 funRelOp AS.Gt = (>)
 funRelOp AS.Ge = (>=)
+
+-----------------
+-- OTHER UTILS --
+-----------------
+
+-- Check if an expression is a valid l-value (left-hand side of an assignment).
+-- isLExp :: AS.Exp Ann -> Bool
+-- isLExp exp = case AS.expAnnot exp of
+--     AS.Var _ -> True
+--     AS.Deref _ -> True
+--     _ -> False
+
+-- Check that expressions passed to routines comply to modality requirements.
+-- In particular checks that, if a parameter is passed by reference or by value-result it
+-- is a non-constant l-expr.
+--
+-- Input:
+-- - the parameter;
+-- - the passed argument already annotated and casted (if needed).
+-- Output:
+-- - the argument checked (if does not comply, an error is raised).
+-- checkPassingMode :: AS.Param -> AS.Exp Ann -> AS.Exp Ann
+-- checkPassingMode param arg = case mode of 
+--     AS.Mval -> arg
+--     _ -> 
+--     where
+--         mode = AS.mode param
+--         expPos = AS.expPos arg
+--         expAnnot = AS.expAnnot arg
+--         expCTV = getCTValue expAnnot
+--         isConstantErr = case expCTV of
+--             Just _ -> [E.err expPos "Cannot pass constant expression with mode " ++ show mode ++ "."]
+--             _      -> []
+--         -- Checking it is a LExp. An LExp can be:
+--         -- -
+--         isNotLExprErr = case expAnnot of
+--             AS.Deref

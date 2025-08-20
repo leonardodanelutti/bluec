@@ -1,0 +1,19 @@
+-- This example should have an error.
+--
+-- What does this example test:
+-- - Reference return types are not permitted.
+routines
+    main() is
+    var
+        a: Real := 1.234;
+	do
+        a := a + 1;
+        return;
+	end main
+    foo() -> &Real is
+    var
+        a: Real := 1;
+    do
+        a := 12;
+        return &a;
+    end foo

@@ -59,8 +59,8 @@ annStmtAss env AS.StmtAss {
     AS.pos = pos
 } where
     -- Annotate the left and right expressions.
-    annLeft = map (SSE.annExp env) left
-    annRight = map (SSE.annExp env) right
+    annLeft = map (SSE.annExp (requireLExp env)) left
+    annRight = map (SSE.annExp (doNotRequireLExp env)) right
     -- Check that the left and right expressions have the same number of elements.
     numberErr = if length left /= length right
                 then [E.err pos "The number of identifiers does not match number of values."]
@@ -75,7 +75,7 @@ annStmtAss env AS.StmtAss {
     -- Cast the right expressions to the expected types (when the expected type are non-errors).
     castedRight = zipWith (\a -> \t -> case t of
         T.TError _ -> a -- If the expected type is an error, keep the original expression.
-        _ -> SSE.cast a t
+        _ -> SSE.cast (doNotRequireLExp env) a t
         ) annRight leftTypes
     -- Get errors.
     rightErrs = T.getErrs $ map (expType . AS.expAnnot) castedRight
@@ -106,8 +106,6 @@ annStmtRoutCall env AS.StmtRoutCall {
     },
     AS.annot = ann
 } where
-    -- Annotate the arguments.
-    annArgs = map (SSE.annExp env) args
     -- Params.
     (params, lookupErrs, declPos, isFunction) = case Map.lookup ident (routines env) of
         Just (Fun declPos params _) -> (Just params, [E.err pos "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."], Just declPos, Just True) -- TODO: maybe make it a warning?
@@ -115,9 +113,9 @@ annStmtRoutCall env AS.StmtRoutCall {
         Nothing -> (Nothing, [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing)
     -- Cast the arguments to the expected types.
     (castedArgs, numberErr) = case params of
-        Nothing -> (annArgs, []) -- No numberErr because the identifier was not found.
-        Just innerParams | length innerParams /= length annArgs -> (annArgs, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length annArgs) ++ "."])
-        Just innerParams -> (SSE.castParamTypes innerParams annArgs, [])
+        Nothing -> (map (SSE.annExp (doNotRequireLExp env)) args, []) -- No numberErr because the identifier was not found.
+        Just innerParams | length innerParams /= length args -> (map (SSE.annExp (doNotRequireLExp env)) args, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."])
+        Just innerParams -> (SSE.annAndCastRoutArgs env args innerParams, [])
     -- Argument errors.
     argErrs = T.getErrs $ map (expType . AS.expAnnot) castedArgs
     -- Create the annotation.
@@ -126,8 +124,8 @@ annStmtRoutCall env AS.StmtRoutCall {
         alwaysReturn = False,
         alwaysExits = False,
         unreachable = isUnreachable env,
-        params = params,
-        declPos = declPos,
+        params,
+        declPos,
         isFunction
     }
 annStmtRoutCall _ _ = error "Unreachable: `annStmtRoutCall` called with non-`StmtRoutCall` expression."
@@ -142,7 +140,7 @@ annStmtReturn env AS.StmtReturn {
     AS.pos = pos
 } where
     -- Annotate the return value.
-    annRet = SSE.annExp env ret
+    annRet = SSE.annExp (doNotRequireLExp env) ret
     -- Search for the return keyword in the environment.
     returnEntry = Map.lookup "return" (keywords env)
     -- Check if the return keyword is present.
@@ -152,7 +150,7 @@ annStmtReturn env AS.StmtReturn {
         _ -> (Nothing, [E.err pos "Return keyword is not permitted outside routines."])
     -- Cast the return value to the expected type.
     castedRet = case returnType of
-        Just t -> SSE.cast annRet t
+        Just t -> SSE.cast (doNotRequireLExp env) annRet t
         Nothing -> annRet   -- If there was an error in the retrival of the return type,
                             -- keep the original expression.
     expErrs = T.getErrs $ [expType (AS.expAnnot castedRet)]
@@ -220,9 +218,9 @@ annStmtIf env AS.StmtIf {
     AS.pos = pos
 } where
     -- Annotate the condition.
-    annCond = SSE.annExp env cond
+    annCond = SSE.annExp (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
-    castedCond = SSE.cast annCond T.TBoolean
+    castedCond = SSE.cast (doNotRequireLExp env) annCond T.TBoolean
     -- Get the errors from the condition.
     condErrs = T.getErrs $ [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
@@ -260,9 +258,9 @@ annStmtIfElse env AS.StmtIfElse {
     AS.pos = pos
 } where
     -- Annotate the condition.
-    annCond = SSE.annExp env cond
+    annCond = SSE.annExp (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
-    castedCond = SSE.cast annCond T.TBoolean
+    castedCond = SSE.cast (doNotRequireLExp env) annCond T.TBoolean
     -- Get the errors from the condition.
     condErrs = T.getErrs $ [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
@@ -366,9 +364,9 @@ annLoopExit env AS.LoopExit {
     AS.loopExitPos = pos
 }, alwaysExits) where
     -- Annotate the condition.
-    annCond = SSE.annExp env cond
+    annCond = SSE.annExp (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
-    castedCond = SSE.cast annCond T.TBoolean
+    castedCond = SSE.cast (doNotRequireLExp env) annCond T.TBoolean
     -- Get the errors from the condition.
     condErrs = T.getErrs [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.

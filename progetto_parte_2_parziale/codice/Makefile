@@ -115,6 +115,16 @@ demo: bluec
 		echo ""; \
 		./bluec ../tests/testCase13.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo13_output.txt
+		@{ \
+		echo "example 14: testing reference return types"; \
+		echo ""; \
+		./bluec ../tests/testCase14.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo14_output.txt
+	@{ \
+		echo "example 15: testing left-hand side expressions' requirements"; \
+		echo ""; \
+		./bluec ../tests/testCase15.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > ../tests/Demo15_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
