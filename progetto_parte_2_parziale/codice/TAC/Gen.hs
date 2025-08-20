@@ -61,30 +61,19 @@ genExpr exp addrIn = do
         _ -> genUnknownExpr exp addrIn
     where
         genLit :: SS.CTValue -> StateMonad Address
-        genLit (SS.CTVInteger v) = returnLit (LitInt v) TInteger
-        genLit (SS.CTVReal v)    = returnLit (LitReal v) TReal
-        genLit (SS.CTVChar v)    = returnLit (LitChar v) TChar
-        genLit (SS.CTVBoolean v) = returnLit (LitBool v) TBoolean
+        genLit (SS.CTVInteger v) = returnAddr addrIn (Lit (LitInt  v)) TInteger
+        genLit (SS.CTVReal v)    = returnAddr addrIn (Lit (LitReal v)) TReal
+        genLit (SS.CTVChar v)    = returnAddr addrIn (Lit (LitChar v)) TChar
+        genLit (SS.CTVBoolean v) = returnAddr addrIn (Lit (LitBool v)) TBoolean
         -- Put strings in static data
         genLit (SS.CTVString v)  = do
             stringAddr <- outStatic (STVString (v ++ "\0"))
-            case addrIn of
-                Just addr -> do
-                    out (NOp addr stringAddr Addr)
-                    return addr
-                Nothing -> return stringAddr
+            returnAddr addrIn stringAddr Addr
         genLit (SS.CTVRef v)     = do
             k <- getOutAddr addrIn
             lit <- genLit v
             out (Ref k lit)
             return k
-
-        returnLit :: Literal -> TACType -> StateMonad Address
-        returnLit lit ty = case addrIn of
-            Just addr -> do
-                out (NOp addr (Lit lit) ty)
-                return addr
-            Nothing -> return $ Lit lit
 
 genUnknownExpr :: AS.Exp SS.Ann -> Maybe Address -> StateMonad Address
 genUnknownExpr exp addrIn = do
@@ -105,10 +94,12 @@ genUnknownExpr exp addrIn = do
         AS.BinOp AS.Or e1 e2 _ _ -> do
             addrOut <- getOutAddr addrIn
             genBoolExp AS.Or addrOut e1 e2
+            return addrOut
 
         AS.BinOp AS.And e1 e2 _ _ -> do
             addrOut <- getOutAddr addrIn
             genBoolExp AS.And addrOut e1 e2
+            return addrOut
 
         AS.BinOp binOp e1 e2 ann _ -> do
             addrOut <- getOutAddr addrIn
@@ -165,16 +156,16 @@ genUnknownExpr exp addrIn = do
                 Just AS.Mvalres -> do
                     addrOut <- getOutAddr addrIn
                     out (DerefGet addrOut identName' tyTAC)
-                    return addrOut
+                    returnAddr addrIn addrOut tyTAC
                 -- Identifiers that are passes by reference are dereferenced before being used
                 Just AS.Mref -> do
                     addrOut <- getOutAddr addrIn
                     out (DerefGet addrOut identName tyTAC)
-                    return addrOut
+                    returnAddr addrIn addrOut tyTAC
 
-                Just AS.Mval -> return identName
+                Just AS.Mval -> returnAddr addrIn identName tyTAC
 
-                Nothing -> return identName
+                Nothing -> returnAddr addrIn identName tyTAC
 
         AS.ExpIdent ident ann@(SS.ExpFunCallAnn {}) _ -> do
             addrOut <- getOutAddr addrIn
@@ -203,23 +194,33 @@ genUnknownExpr exp addrIn = do
             out (UOp addrOut (Coer cast) addr newTypeTAC)
             return addrOut
 
+-- Generate an expression, the result is stored in a temporary variable that is returned
 genExprTmp :: AS.Exp SS.Ann -> StateMonad Address
 genExprTmp exp = genExpr exp Nothing
 
+-- Generate an expression, the result is stored in the given address
 genExprAddr :: AS.Exp SS.Ann -> Address -> StateMonad ()
 genExprAddr exp addr = void $ genExpr exp (Just addr)
+
+-- In the generation of an expression: if the address is specified and if
+-- the address is an identifier or a Literal then we need to assign the value
+-- to the address specified.
+returnAddr :: Maybe Address -> Address -> TACType -> StateMonad Address
+returnAddr addrOutMaybe addrReturn ty = case addrOutMaybe of
+    Just addrOut -> do
+        out (NOp addrOut addrReturn ty)
+        return addrOut
+    Nothing -> return addrReturn
 
 
 -- GENERATION OF BOOLEAN OPERATIONS
 
--- TODO: a lot of useless temporary variables are generated here (check logic of ..)
-genBoolExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
+-- TODO: Multiple "or" and "and" can be jumped together
+genBoolExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad ()
 genBoolExp op tmp e1 e2 = do
-    -- Generate left operand
-    (addr1, isBoolOp1) <- genExpr' e1
-    unless isBoolOp1 (out (NOp tmp addr1 TBoolean))
+    genBoolExp' e1
 
-    -- Jump!
+    -- Short-circuit evaluation, jump after the second operand
     label <- newLabel
     let instr = case op of
             AS.Or -> BoolJumpT tmp label
@@ -227,25 +228,18 @@ genBoolExp op tmp e1 e2 = do
             _ -> error "Only Or and And operations should be passed to genBinExp"
     out instr
 
-    -- Generate right operand
-    (addr2, isBoolOp2) <- genExpr' e2
-    unless isBoolOp2 (out (NOp tmp addr2 TBoolean))
-
-    -- Jump to the next instruction
+    genBoolExp' e2
     attachToNext label
 
-    return tmp
     where
-        genExpr' :: AS.Exp SS.Ann -> StateMonad (Address, Bool)
-        genExpr' (AS.BinOp AS.Or e1 e2 _ _)  = do
-            addr <- genBoolExp AS.Or tmp e1 e2
-            return (addr, True)
-        genExpr' (AS.BinOp AS.And e1 e2 _ _) = do
-            addr <- genBoolExp AS.And tmp e1 e2
-            return (addr, True)
-        genExpr' e = do
-            addr <- genExprTmp e -- TODO:
-            return (addr, False)
+        -- Continue the generation of the boolean expression
+        genBoolExp' :: AS.Exp SS.Ann -> StateMonad ()
+        genBoolExp' (AS.BinOp AS.Or e1 e2 _ _) = do
+            genBoolExp AS.Or tmp e1 e2
+        genBoolExp' (AS.BinOp AS.And e1 e2 _ _) = do
+            genBoolExp AS.And tmp e1 e2
+        genBoolExp' e = do
+            genExprAddr e tmp
 
 -- GENERATION OF RELATIONAL OPERATIONS
 
