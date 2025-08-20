@@ -72,6 +72,10 @@ newTmp = do
     St.put $ state { tempCount = k + 1 }
     return $ Temp (Temporary k)
 
+getOutAddr :: Maybe Address -> StateMonad Address
+getOutAddr Nothing = newTmp
+getOutAddr (Just addr) = return addr
+
 -- Return a new label
 newLabel :: StateMonad Label
 newLabel = do

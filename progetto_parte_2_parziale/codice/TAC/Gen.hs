@@ -10,7 +10,7 @@ import qualified TAC.Printer()
 import TAC.Def
 import TAC.State
 
-import Control.Monad (when, unless, foldM)
+import Control.Monad (when, unless, foldM, void)
 import Data.Maybe
 
 -- Entrypoint for TAC generation
@@ -48,97 +48,111 @@ genVar (AS.VarAss idents ty values _ pos) =
     where
     genAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
     genAssignment (ident, exp) = do
-        addr <- genExpr exp
-        let tyTAC = castTypeToTACType $ T.type_ ty
-            name = PName $ ProgramName (AS.identName ident) pos
-        out (NOp name addr tyTAC)
+        let name = PName $ ProgramName (AS.identName ident) pos
+        genExprAddr exp name
 
-genExpr :: AS.Exp SS.Ann -> StateMonad Address
-genExpr exp = do
+genExpr :: AS.Exp SS.Ann -> Maybe Address -> StateMonad Address
+genExpr exp addrIn = do
     case AS.expAnnot exp of
         -- Handle expressions with known values
         SS.ExpAnn { SS.ctVal = Just val } -> genLit val
         SS.ExpIdentAnn { SS.ctVal = Just val } -> genLit val
         -- Handle expressions with no known values
-        _ -> genUnknownExpr exp
+        _ -> genUnknownExpr exp addrIn
     where
         genLit :: SS.CTValue -> StateMonad Address
-        genLit (SS.CTVInteger v) = return $ Lit (LitInt v)
-        genLit (SS.CTVReal v)    = return $ Lit (LitReal v)
-        genLit (SS.CTVChar v)    = return $ Lit (LitChar v)
-        genLit (SS.CTVBoolean v) = return $ Lit (LitBool v)
+        genLit (SS.CTVInteger v) = returnLit (LitInt v) TInteger
+        genLit (SS.CTVReal v)    = returnLit (LitReal v) TReal
+        genLit (SS.CTVChar v)    = returnLit (LitChar v) TChar
+        genLit (SS.CTVBoolean v) = returnLit (LitBool v) TBoolean
         -- Put strings in static data
-        genLit (SS.CTVString v)  = outStatic (STVString (v ++ "\0"))
+        genLit (SS.CTVString v)  = do
+            stringAddr <- outStatic (STVString (v ++ "\0"))
+            case addrIn of
+                Just addr -> do
+                    out (NOp addr stringAddr Addr)
+                    return addr
+                Nothing -> return stringAddr
         genLit (SS.CTVRef v)     = do
-            k <- newTmp
+            k <- getOutAddr addrIn
             lit <- genLit v
             out (Ref k lit)
             return k
 
-genUnknownExpr :: AS.Exp SS.Ann -> StateMonad Address
-genUnknownExpr exp = do
+        returnLit :: Literal -> TACType -> StateMonad Address
+        returnLit lit ty = case addrIn of
+            Just addr -> do
+                out (NOp addr (Lit lit) ty)
+                return addr
+            Nothing -> return $ Lit lit
+
+genUnknownExpr :: AS.Exp SS.Ann -> Maybe Address -> StateMonad Address
+genUnknownExpr exp addrIn = do
     case exp of
         AS.BoolNeg e _ _ -> do
-            k <- newTmp
-            addr <- genExpr e
-            out (UOp k BoolNeg addr TBoolean)
-            return addr
+            addrOut <- getOutAddr addrIn
+            inner <- genExprTmp e
+            out (UOp addrOut BoolNeg inner TBoolean)
+            return addrOut
 
         AS.Sign e ann _ -> do
-            k <- newTmp
-            addr <- genExpr e
+            addrOut <- getOutAddr addrIn
+            inner <- genExprTmp e
             let ty = castTypeToTACType $ SS.expType ann
-            out (UOp k (Sign ty) addr ty)
-            return addr
+            out (UOp addrOut (Sign ty) inner ty)
+            return addrOut
 
         AS.BinOp AS.Or e1 e2 _ _ -> do
-            k <- newTmp
-            genBoolExp AS.Or k e1 e2
+            addrOut <- getOutAddr addrIn
+            genBoolExp AS.Or addrOut e1 e2
 
         AS.BinOp AS.And e1 e2 _ _ -> do
-            k <- newTmp
-            genBoolExp AS.And k e1 e2
+            addrOut <- getOutAddr addrIn
+            genBoolExp AS.And addrOut e1 e2
 
         AS.BinOp binOp e1 e2 ann _ -> do
-            k <- newTmp
+            addrOut <- getOutAddr addrIn
             -- Left to right evaluation
-            addr1 <- genExpr e1
-            addr2 <- genExpr e2
+            addr1 <- genExprTmp e1
+            addr2 <- genExprTmp e2
             let tacOp = castBinOpToTACOp binOp (SS.expType ann)
                 ty = castTypeToTACType $ SS.expType ann
-            out (BOp k tacOp addr1 addr2 ty)
-            return k
+            out (BOp addrOut tacOp addr1 addr2 ty)
+            return addrOut
 
         AS.RelOp relOp e1 e2 _ _ -> do
-            k <- newTmp
-            addr1 <- genExpr e1
-            addr2 <- genExpr e2
+            addrOut <- getOutAddr addrIn
+            addr1 <- genExprTmp e1
+            addr2 <- genExprTmp e2
             let ty = SS.expType $ AS.expAnnot e1
-            genRepOp k relOp addr1 addr2 ty
-            return k
+            genRepOp addrOut relOp addr1 addr2 ty
+            return addrOut
 
         AS.Ref e _ _ -> do
-            k <- newTmp
-            addr <- genExpr e
-            out (Ref k addr)
-            return k
+            addrOut <- getOutAddr addrIn
+            addr <- genExprTmp e
+            out (Ref addrOut addr)
+            return addrOut
 
         -- Already handled by genExpr
         AS.Literal {} -> error "Literal should not be passed to genUnknownExpr"
 
         AS.FunCall call ann@(SS.ExpFunCallAnn {}) _ -> do
-            genFunCall call ann
+            addrOut <- getOutAddr addrIn
+            genFunCall call ann addrOut
 
         AS.FunCall {} -> error "Unreachable"
 
         AS.Deref e ann _ -> do
-            k <- newTmp
-            addr <- genExpr e
+            addrOut <- getOutAddr addrIn
+            addr <- genExprTmp e
             let ty = castTypeToTACType $ SS.expType ann
-            out (DerefGet k addr ty)
-            return k
+            out (DerefGet addrOut addr ty)
+            return addrOut
 
-        AS.ArrayIndex _ _ ann _ -> genArrayIndex exp ann
+        AS.ArrayIndex _ _ ann _ -> do
+            addrOut <- getOutAddr addrIn
+            genArrayIndex exp ann addrOut
 
         -- ConstCategory is handled by genExpr
         AS.ExpIdent ident (SS.ExpIdentAnn ty _ SS.VarCategory mode (Just declPos)) _ -> do
@@ -149,41 +163,35 @@ genUnknownExpr exp = do
                 -- Identifiers that are passed by value-result are appended with
                 -- the "'" and a dereference is made
                 Just AS.Mvalres -> do
-                    k <- newTmp
-                    out (DerefGet k identName' tyTAC)
-                    return k
+                    addrOut <- getOutAddr addrIn
+                    out (DerefGet addrOut identName' tyTAC)
+                    return addrOut
                 -- Identifiers that are passes by reference are dereferenced before being used
                 Just AS.Mref -> do
-                    k <- newTmp
-                    out (DerefGet k identName tyTAC)
-                    return k
+                    addrOut <- getOutAddr addrIn
+                    out (DerefGet addrOut identName tyTAC)
+                    return addrOut
 
                 Just AS.Mval -> return identName
 
                 Nothing -> return identName
 
         AS.ExpIdent ident ann@(SS.ExpFunCallAnn {}) _ -> do
-            genFunCall (AS.callFromIdent ident) ann
+            addrOut <- getOutAddr addrIn
+            genFunCall (AS.callFromIdent ident) ann addrOut
 
         AS.ExpIdent {} -> error "Unreachable"
 
-        -- TODO: When we write something like `A := Array[1,2]`, it generates:
-        -- genArray t0, 8
-        -- t0[0] = 1
-        -- t0[4] = 2
-        -- A = t0
-        -- Maybe we shouldn't generate a temporary variable here?
-        -- Same for AS.Ref
         AS.Array elements ann _ -> do
-            k <- newTmp
+            addrOut <- getOutAddr addrIn
             let arrSize  = T.getTypeSize $ SS.expType ann
-            out (ArrayGen k arrSize)
-            genArray elements k 0
-            return k
+            out (ArrayGen addrOut arrSize)
+            genArray elements addrOut 0
+            return addrOut
 
         AS.Cast e ann _ -> do
-            k <- newTmp
-            addr <- genExpr e
+            addrOut <- getOutAddr addrIn
+            addr <- genExprTmp e
             let oldType = SS.expType $ AS.expAnnot e
                 newType = SS.expType ann
                 cast = case (oldType, newType) of
@@ -192,13 +200,19 @@ genUnknownExpr exp = do
                     (T.TChar, T.TInteger)    -> CharToInt
                     _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
                 newTypeTAC = castTypeToTACType newType
-            out (UOp k (Coer cast) addr newTypeTAC)
-            return k
+            out (UOp addrOut (Coer cast) addr newTypeTAC)
+            return addrOut
+
+genExprTmp :: AS.Exp SS.Ann -> StateMonad Address
+genExprTmp exp = genExpr exp Nothing
+
+genExprAddr :: AS.Exp SS.Ann -> Address -> StateMonad ()
+genExprAddr exp addr = void $ genExpr exp (Just addr)
 
 
 -- GENERATION OF BOOLEAN OPERATIONS
 
--- TODO: a lot of useless temporary variables are generated here
+-- TODO: a lot of useless temporary variables are generated here (check logic of ..)
 genBoolExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Address
 genBoolExp op tmp e1 e2 = do
     -- Generate left operand
@@ -230,7 +244,7 @@ genBoolExp op tmp e1 e2 = do
             addr <- genBoolExp AS.And tmp e1 e2
             return (addr, True)
         genExpr' e = do
-            addr <- genExpr e
+            addr <- genExprTmp e -- TODO:
             return (addr, False)
 
 -- GENERATION OF RELATIONAL OPERATIONS
@@ -413,9 +427,8 @@ arrayRelNames relOp ty = let funName = arrayRelName relOp ty in (
 -- GENERATION OF ARRAY INDEXING
 
 -- Generate the address of an array index operation
-genArrayIndex :: AS.Exp SS.Ann -> SS.Ann -> StateMonad Address
-genArrayIndex exp ann = do
-    k <- newTmp
+genArrayIndex :: AS.Exp SS.Ann -> SS.Ann -> Address -> StateMonad Address
+genArrayIndex exp ann addrOut = do
 
     -- Generate base address
     (baseAddr, baseType) <- genArrayBase exp
@@ -424,23 +437,23 @@ genArrayIndex exp ann = do
     indexAddr <- genArrayIndex indexes (T.arrayDim baseType)
 
     -- Generate the IndexGet instruction
-    out (IndexGet k baseAddr indexAddr (castTypeToTACType $ SS.expType ann))
+    out (IndexGet addrOut baseAddr indexAddr (castTypeToTACType $ SS.expType ann))
 
-    return k
+    return addrOut
 
     where
 
         genArrayBase :: AS.Exp SS.Ann -> StateMonad (Address, T.Type)
         genArrayBase (AS.ArrayIndex expr _ _ _) = genArrayBase expr
         genArrayBase notIndexExpr = do
-            addr <- genExpr notIndexExpr
+            addr <- genExprTmp notIndexExpr
             let ty = SS.expType $ AS.expAnnot notIndexExpr
             return (addr, ty)
 
         -- Generate the list of indexes from the array indexing expression
         arrayIndexes :: AS.Exp SS.Ann -> StateMonad [Address]
         arrayIndexes (AS.ArrayIndex e idx _ _) = do
-            idxAddr <- genExpr idx
+            idxAddr <- genExprTmp idx
             rest <- arrayIndexes e
             return (rest ++ [idxAddr])
         arrayIndexes _ = return []
@@ -474,11 +487,10 @@ genArrayIndex exp ann = do
 
             case accEnd of
                 Just idx -> do
-                    out (NOp idxTemp (Lit $ LitInt (idx * innerTypeSize)) TInteger)
+                    return (Lit $ LitInt (idx * innerTypeSize))
                 Nothing -> do
                     out (BOp idxTemp (Mul TInteger) innerTypeAddr idxTemp TInteger)
-
-            return idxTemp
+                    return idxTemp
 
             where
                 maybeLit :: Address -> Maybe Int
@@ -509,16 +521,16 @@ genArray elements k offset = do
                         let innerType = T.arrayInnerType ty
                             innerTypeSize = T.getTypeSize innerType
                             fullSize = elemSize `div` innerTypeSize
-                        addr <- genExpr e
+                        addr <- genExprTmp e
                         copyTmp <- newTmp
-                        mapM_ 
+                        mapM_
                             (\j -> do
                                 out (IndexGet copyTmp addr (Lit $ LitInt (j * innerTypeSize)) (castTypeToTACType innerType))
-                                out (IndexSet k (Lit $ LitInt (offset + i * elemSize + j * innerTypeSize)) copyTmp tyTAC)) 
+                                out (IndexSet k (Lit $ LitInt (offset + i * elemSize + j * innerTypeSize)) copyTmp tyTAC))
                             [0.. (fullSize - 1)]
                     _ -> do
                         -- Generate the element and set it in the array
-                        addr <- genExpr e
+                        addr <- genExprTmp e
                         out (IndexSet k (Lit $ LitInt (offset + i * elemSize)) addr tyTAC)
         )
         (zip [0..] elements)
@@ -526,17 +538,16 @@ genArray elements k offset = do
 
 -- GENERATION OF ROUTINE CALLS
 
-genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad Address
-genFunCall (AS.RoutineCall routName args _) ann = do
-    k <- newTmp
+genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> Address -> StateMonad Address
+genFunCall (AS.RoutineCall routName args _) ann addrOut = do
     genActualParams args ann
     let returnType = SS.expType ann
         definitionPos = fromJust $ SS.declPos ann
         routLab = Function $ ProgramName (AS.identName routName) definitionPos
         numArgs = length args
         ty = castTypeToTACType returnType
-    out (FunCall k routLab numArgs ty)
-    return k
+    out (FunCall addrOut routLab numArgs ty)
+    return addrOut
 
 genProcCall :: AS.RoutineCall SS.Ann -> SS.Ann -> StateMonad ()
 genProcCall (AS.RoutineCall routName args _) ann = do
@@ -560,7 +571,7 @@ genActualParams args ann =
                 paramTACType = castTypeToTACType paramType
 
             -- Generate the address of the parameter
-            addr <- genExpr expr
+            addr <- genExprTmp expr
 
             case (AS.mode param, paramType) of
                 -- Value parameters: copy the value
@@ -659,12 +670,12 @@ genStmt stmt post = case stmt of
         mapM_ genAssign (zip left right)
     AS.StmtRoutCall call ann -> if isFunction ann then
             do
-                _ <- genFunCall call ann
-                return ()
+                k <- newTmp
+                void $ genFunCall call ann k
         else
             genProcCall call ann
     AS.StmtReturn val _ _-> do
-        addr <- genExpr val
+        addr <- genExprTmp val
         -- Generate post-amble
         unless (null post) $ out (Comment "Start of post-amble")
         mapM_ outLabeled post
@@ -682,7 +693,7 @@ genStmt stmt post = case stmt of
         -- Generate the others (exit-condition, body) pairs
         mapM_ (\(AS.LoopExit cond body _ _) -> do
                 -- TODO: Better way to generate condition using shortcut?
-                condAddr <- genExpr cond
+                condAddr <- genExprTmp cond
                 out (BoolJumpT condAddr loopEnd)
                 mapM_ (`genStmt` post) body
             ) exit
@@ -694,7 +705,7 @@ genStmt stmt post = case stmt of
     AS.StmtIf cond body _ _ -> do
         endLabel <- newLabel
         -- TODO: Better way to generate condition using shortcut?
-        condAddr <- genExpr cond
+        condAddr <- genExprTmp cond
         out (BoolJumpF condAddr endLabel)
         mapM_ (`genStmt` post) body
         attachToNext endLabel
@@ -702,7 +713,7 @@ genStmt stmt post = case stmt of
         elseLabel <- newLabel
         endLabel <- newLabel
         -- TODO: Better way to generate condition using shortcut?
-        condAddr <- genExpr cond
+        condAddr <- genExprTmp cond
         out (BoolJumpF condAddr elseLabel)
         mapM_ (`genStmt` post) bodyT
         out (UnJump endLabel)
@@ -710,8 +721,9 @@ genStmt stmt post = case stmt of
         mapM_ (`genStmt` post) bodyF
         attachToNext endLabel
 
+-- TODO: this is a temporary implementation, it should be replaced with a proper check
 isFunction :: SS.Ann -> Bool
-isFunction = error "TODO: should be known by annotations, currently only procedures should be statements"
+isFunction _ = False
 
 
 -- GENERATION OF ASSIGNMENTS
@@ -722,20 +734,21 @@ genAssign (left, right) =
     case ty of
         T.TArray {} -> do
             -- Arrays needs to be copied
-            lExprRes <- genExpr left
-            rExprRes <- genExpr right
+            lExprRes <- genExprTmp left
+            rExprRes <- genExprTmp right
             copy lExprRes rExprRes ty
         _ ->  do
             lExprRes <- genLExpr left
-            rExprRes <- genExpr right
             let tyTAC = castTypeToTACType ty
             case lExprRes of
-                RefSet addr ->
+                RefSet addr -> do
+                    rExprRes <- genExprTmp right
                     out (DerefSet addr rExprRes tyTAC)
-                ArraySet addr idx ->
+                ArraySet addr idx -> do
+                    rExprRes <- genExprTmp right
                     out (IndexSet addr idx rExprRes tyTAC)
-                Simple addr ->
-                    out (NOp addr rExprRes tyTAC)
+                Simple addr -> do
+                    genExprAddr right addr
 
 data LExprRes
     = RefSet Address
@@ -748,10 +761,10 @@ genLExpr exp = case exp of
         let identName = PName $ ProgramName (AS.identName name) pos
         return $ Simple identName
     AS.Deref expr _ _ -> do
-        addr <- genExpr expr
+        addr <- genExprTmp expr
         return $ RefSet addr
     AS.ArrayIndex expr index _ _ -> do
-        addr <- genExpr expr
-        idx <- genExpr index
+        addr <- genExprTmp expr
+        idx <- genExprTmp index
         return $ ArraySet addr idx
     _ -> error "Unreachable, error thrown while parsing"

@@ -37,18 +37,15 @@ EntryPoint:
       END_PROGRAM
 
 main@3:1:
-      arraygen t0, 8
-      t0[0] =(int) 4
-      t0[4] =(int) 2
-      y@5:5 =(addr) t0
+      arraygen y@5:5, 8
+      y@5:5[0] =(int) 4
+      y@5:5[4] =(int) 2
       k@6:5 =(int) 0
       k@6:5 =(int) 0
-L0:   t1 =(int) k@6:5 +(int) 1
-      k@6:5 =(int) t1
-      t2 =(bool) k@6:5 >(int) 3
-      if t2 goto L1
-      t3 =(int) k@6:5 +(int) 1
-      k@6:5 =(int) t3
+L0:   k@6:5 =(int) k@6:5 +(int) 1
+      t0 =(bool) k@6:5 >(int) 3
+      if t0 goto L1
+      k@6:5 =(int) k@6:5 +(int) 1
       goto L0
 L1:   k@6:5 =(int) 0
       return

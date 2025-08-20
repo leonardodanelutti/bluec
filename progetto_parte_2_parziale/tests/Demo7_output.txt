@@ -42,8 +42,7 @@ routines
 EntryPoint:
       d@10:10 =(float) 1.0
       param(float) d@10:10
-      t0 =(int) fcall main@10:5, 1
-      a@8:5 =(int) t0
+      a@8:5 =(int) fcall main@10:5, 1
       pcall main, 0
       END_PROGRAM
 

@@ -28,6 +28,20 @@ routines
 
 [Generated TAC]
 
-bluec: TODO: should be known by annotations, currently only procedures should be statements
-CallStack (from HasCallStack):
-  error, called at ./TAC/Gen.hs:696:14 in main:TAC.Gen
+
+EntryPoint:
+      pcall main, 0
+      END_PROGRAM
+
+main@7:5:
+      e@9:9 =(float) 12.0
+L0:   e@9:9 =(float) fcall readReal@0:0, 0
+      t0 =(char) fcall readChar@0:0, 0
+      value@0:0 =(char) t0
+      param(char) value@0:0
+      pcall writeChar@0:0, 1
+      t1 =(bool) e@9:9 ==(float) 12.0
+      if t1 goto L1
+      goto L0
+L1:   return
+

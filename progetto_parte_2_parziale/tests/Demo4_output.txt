@@ -32,36 +32,27 @@ routines
 
 
 EntryPoint:
-      arraygen t0, 12
-      t0[0] =(int) 1
-      t0[4] =(int) 2
-      t0[8] =(int) 3
-      A@2:5 =(addr) t0
-      arraygen t1, 16
-      t1[0] =(int) 10
-      t1[4] =(int) 20
-      t1[8] =(int) 30
-      t1[12] =(int) 40
-      B@3:5 =(addr) t1
-      t2 = &A@2:5
-      p@4:5 =(addr) t2
-      t5 =(int) 12
-      t4 =(int) B@3:5[t5]
-      t3 = &t4
-      r@5:5 =(addr) t3
-      t6 = &r@5:5
-      q@6:5 =(addr) t6
+      arraygen A@2:5, 12
+      A@2:5[0] =(int) 1
+      A@2:5[4] =(int) 2
+      A@2:5[8] =(int) 3
+      arraygen B@3:5, 16
+      B@3:5[0] =(int) 10
+      B@3:5[4] =(int) 20
+      B@3:5[8] =(int) 30
+      B@3:5[12] =(int) 40
+      p@4:5 = &A@2:5
+      t0 =(int) B@3:5[12]
+      r@5:5 = &t0
+      q@6:5 = &r@5:5
       pcall main, 0
       END_PROGRAM
 
 test@9:5:
-      t8 =(addr) *p@4:5
-      t9 =(int) 4
-      t7 =(int) t8[t9]
-      x@12:9 =(int) t7
-      t11 =(addr) *q@6:5
-      t10 =(int) *t11
-      y@13:9 =(int) t10
-      t12 =(int) x@12:9 +(int) y@13:9
-      return t12
+      t2 =(addr) *p@4:5
+      x@12:9 =(int) t2[4]
+      t4 =(addr) *q@6:5
+      y@13:9 =(int) *t4
+      t5 =(int) x@12:9 +(int) y@13:9
+      return t5
 
