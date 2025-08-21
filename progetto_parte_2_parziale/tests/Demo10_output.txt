@@ -1,6 +1,6 @@
 example 10: testing the pre-defined routines
 
-../tests/testCase10.blue
+tests/testCase10.blue
 
 Parse Successful!
 

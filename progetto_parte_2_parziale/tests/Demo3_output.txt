@@ -1,6 +1,6 @@
 example 1: generic test
 
-../tests/testCase3.blue
+tests/testCase3.blue
 
 Parse Successful!
 

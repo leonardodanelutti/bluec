@@ -1,14 +1,14 @@
 example 1: generic test
 
-../tests/testCase1.blue
+tests/testCase1.blue
 
 Parse Successful!
 
 Static Semantics Analysis Failed:
-../tests/testCase1.blue:15:21-15:22: ERROR: Unbound identifier: c.
-../tests/testCase1.blue:20:13-20:14: ERROR: Unbound identifier: b.
-../tests/testCase1.blue:22:23-22:24: ERROR: Left-hand side expression required, but found constant.
-../tests/testCase1.blue:22:23-22:24: ERROR: Cannot assign a value to a constant. Suggested fix: make d a variable.
-../tests/testCase1.blue:27:9-27:19: ERROR: Unused return of the function call __util__().
-../tests/testCase1.blue:27:9-27:19: ERROR: Wrong number of arguments in routine call: __util__(). Expected 1 but got 0.
-../tests/testCase1.blue:13:10-28:5: ERROR: The procedure "main" does not contain a return statement for every flow of control.
+tests/testCase1.blue:15:21-15:22: ERROR: Unbound identifier: c.
+tests/testCase1.blue:20:13-20:14: ERROR: Unbound identifier: b.
+tests/testCase1.blue:22:23-22:24: ERROR: Left-hand side expression required, but found constant.
+tests/testCase1.blue:22:23-22:24: ERROR: Cannot assign a value to a constant. Suggested fix: make d a variable.
+tests/testCase1.blue:27:9-27:19: ERROR: Unused return of the function call __util__().
+tests/testCase1.blue:27:9-27:19: ERROR: Wrong number of arguments in routine call: __util__(). Expected 1 but got 0.
+tests/testCase1.blue:13:10-28:5: ERROR: The procedure "main" does not contain a return statement for every flow of control.

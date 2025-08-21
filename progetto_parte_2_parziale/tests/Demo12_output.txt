@@ -1,6 +1,6 @@
 example 12: testing annidated exit on
 
-../tests/testCase12.blue
+tests/testCase12.blue
 
 Parse              Failed...
 

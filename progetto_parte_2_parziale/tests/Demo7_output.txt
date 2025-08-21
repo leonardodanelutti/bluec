@@ -1,6 +1,6 @@
 example 7: testing annidated functions
 
-../tests/testCase7.blue
+tests/testCase7.blue
 
 Parse Successful!
 

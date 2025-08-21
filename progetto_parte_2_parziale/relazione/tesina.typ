@@ -27,7 +27,7 @@ par(
   `implementazione-compilatori-imperativi.pdf`).
 - I due tipi di iterazione indeterminata sono derivabili dall'implementazione del loop
   come previsto dalla sintassi concreta di Blue.
-- `fn` è syntax sugar di `fn()`.
+- `fn` è syntax sugar di `fn()`. (FIXME: non è una nostra scelta, è una cosa di blue)
 
 == Modifiche alla sintassi concreta (Integrate nella definizione del linguaggio)
 - Dalla sintassi concreta sono state tolte classi, pre post condizioni, etc. perchè non
@@ -38,6 +38,13 @@ par(
   non richiesti. Inoltre sono stati aggiunti i commenti multi-line "/*"..."*/".
 - Aggiunta keyword `return` nelle funzioni (al posto di avere i nomi delle variabili di
   ritorno che avrebbero richiesto di avere dichiarazioni senza assegnamento).
+// TODO: queste sono gia dopo, ma anche quelle sopra. Cosa serve questo paragrafo?
+- Le funzioni tornano solo un tipo
+- aggiunti i tipi `val`, `valres` e `ref` per i parametri delle funzioni.
+- La keyword `routines` (che in Blue viene usata solo per la dichiarazione di routines nelle classi)
+  viene usata anche all'interno del corpo delle funzioni in modo che ci possano essere
+  dichiarazioni di routine annidate
+// TODO: dire che per routines intendiamo sia funzioni che procedure, come in Blue
 
 == Risoluzione conflitti (Alcuni conflitti sono già stati risolti nella definizione del linguaggio; il conflitto 105 è scritto sotto)
 - Il conflitto state 105 LExp vs RExp non è un problema. Essendo le LExp sottoinsieme
@@ -181,16 +188,17 @@ La grammatica definita presenta un solo conflitto, che si verifica nello stato 1
 Questo conflitto non crea problemi per l'analisi sintattica, dal momento che le `LExp` sono un sottoinsieme delle `RExp`. 
 Pertanto, è sufficiente scegliere sempre l'azione di shift.
 
+
+// TODO: spiegare come lo abbiamo implementato, approccio pipeline: prima viene creato l'AST, poi vengono fatti i check di semantica statica ed infine viene generato il TAC.
+
 = Definizione del lexer e del parser
 Lexer e Parser sono stati realizzati modificando i file-prototipo generati automaticamente da BNFC, in modo tale da adattarli alle specifiche della consegna. La grammatica utilizzata per la costruzione di lexer e parser è quella presente nel file `grammar.cf` e genera il linguaggio descritto in precedenza.
 
+== Modifiche al lexer
+- Oltre la posizione iniziale di un token è stata aggiunta anche la sua posizione finale, in modo da poter generare errori più precisi.
+
 == Modifiche al Parser
-Il parser è stato fortemente modificato nei seguenti aspetti:
-- Mantenimento della posizione dei token per la generazione del TAC.
-
-
-
-
+Il parser è stato modificato in modo da utilizzare la sintassi astratta da noi definita nel file `AbsSyn.hs` (a differenza di quella generata da BNFC). La struttura delle regole non è stata alterata.
 
 
 = TODO:
@@ -247,6 +255,11 @@ $
 ("env" ⊢ e : "*"T) /("env" ⊢ "Deref" { "exp" = e } : T)
 $
 
+= Generazione del Three Address Code (TAC)
 
+Il modulo di generazione del TAC(reperibile nella cartella `TAC`) utilizza una monade di stato per generare il codice, consentendo di mantenere traccia di informazioni di stato, quali:
+- contatori per la creazione di temporanei, di label e di indirizzi statici
+- lo stream di output per il codice generato
+- uno stack per il
 
 #bibliography("bibliografia.bib", title: "Bibliografia" , style: "ieee")

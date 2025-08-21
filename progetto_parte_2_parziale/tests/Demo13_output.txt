@@ -1,6 +1,6 @@
 example 13: testing if with multiple conditions
 
-../tests/testCase13.blue
+tests/testCase13.blue
 
 Parse Successful!
 

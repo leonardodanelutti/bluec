@@ -1,6 +1,6 @@
 example 1: generic test
 
-../tests/testWithoutStatements.blue
+tests/testWithoutStatements.blue
 
 Parse Successful!
 
