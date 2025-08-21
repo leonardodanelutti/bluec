@@ -5,5 +5,6 @@ tests/testCase11.blue
 Parse Successful!
 
 Static Semantics Analysis Failed:
+tests/testCase11.blue:: ERROR: `main` routine must be a procedure.
 tests/testCase11.blue:8:21-8:22: ERROR: Left-hand side expression required, but found constant.
 tests/testCase11.blue:12:16-12:21: ERROR: &Integer is not compatible with Integer.

@@ -4,28 +4,5 @@ tests/testWithoutStatements.blue
 
 Parse Successful!
 
-[Abstract Syntax]
-
-ProgramDecl {consts = [ConstAss {constIdents = [Ident {identName = "a", identPos = 2:9-2:10},Ident {identName = "d", identPos = 2:12-2:13}], constType = TypePos {type_ = Integer, typePosn = 2:16-2:23}, constValues = [Literal {val = LitInt {intVal = 0, litPos = 2:27-2:28}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 0)}, expPos = 2:27-2:28},Literal {val = LitInt {intVal = 1, litPos = 2:30-2:31}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 1)}, expPos = 2:30-2:31}], constAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 2:9-2:10},Const 2:9-2:31 (LitInt {intVal = 0, litPos = 2:27-2:28})),(Ident {identName = "d", identPos = 2:12-2:13},Const 2:9-2:31 (LitInt {intVal = 1, litPos = 2:30-2:31}))], routines = fromList [], keywords = fromList []}, errs = []}, constPos = 2:9-2:31}], vars = [VarAss {varIdents = [Ident {identName = "_b", identPos = 4:9-4:11}], varType = TypePos {type_ = Real, typePosn = 4:14-4:18}, varValues = [Literal {val = LitDouble {doubleVal = 1.0, litPos = 4:22-4:25}, expAnnot = ExpAnn {expType = Real, ctVal = Just (CTVReal 1.0)}, expPos = 4:22-4:25}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "_b", identPos = 4:9-4:11},Var 4:9-4:25 (TypePos {type_ = Real, typePosn = 4:14-4:18}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 4:9-4:25},VarAss {varIdents = [Ident {identName = "c", identPos = 5:9-5:10}], varType = TypePos {type_ = String, typePosn = 5:13-5:19}, varValues = [Literal {val = LitString {stringVal = "test", litPos = 5:23-5:29}, expAnnot = ExpAnn {expType = String, ctVal = Just (CTVString "test")}, expPos = 5:23-5:29}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "c", identPos = 5:9-5:10},Var 5:9-5:29 (TypePos {type_ = String, typePosn = 5:13-5:19}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 5:9-5:29},VarAss {varIdents = [Ident {identName = "d", identPos = 6:5-6:6}], varType = TypePos {type_ = Char, typePosn = 6:9-6:13}, varValues = [Literal {val = LitChar {charVal = 'a', litPos = 6:17-6:20}, expAnnot = ExpAnn {expType = Char, ctVal = Just (CTVChar 'a')}, expPos = 6:17-6:20}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "d", identPos = 6:5-6:6},Var 6:5-6:20 (TypePos {type_ = Char, typePosn = 6:9-6:13}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 6:5-6:20}], routines = [], declsAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "_b", identPos = 4:9-4:11},Var 4:9-4:25 (TypePos {type_ = Real, typePosn = 4:14-4:18}) Nothing),(Ident {identName = "a", identPos = 2:9-2:10},Const 2:9-2:31 (LitInt {intVal = 0, litPos = 2:27-2:28})),(Ident {identName = "c", identPos = 5:9-5:10},Var 5:9-5:29 (TypePos {type_ = String, typePosn = 5:13-5:19}) Nothing),(Ident {identName = "d", identPos = 6:5-6:6},Var 6:5-6:20 (TypePos {type_ = Char, typePosn = 6:9-6:13}) Nothing)], routines = fromList [(Ident {identName = "readChar", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Char, typePosn = 0:0})),(Ident {identName = "readInt", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Integer, typePosn = 0:0})),(Ident {identName = "readReal", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Real, typePosn = 0:0})),(Ident {identName = "readString", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = String, typePosn = 0:0})),(Ident {identName = "writeChar", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Char, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeInt", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Integer, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeReal", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Real, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeString", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = String, typePosn = 0:0}, paramPos = 0:0}])], keywords = fromList []}, errs = []}}
-
-[Linearized tree]
-
-const
-	a, d : Integer := 0, 1;
-var
-	_b : Real := 1.0;
-	c : String := "test";
-	d : Char := 'a';
-
-
-[Generated TAC]
-
-$0 = "test\NUL"
-
-EntryPoint:
-      _b@4:9 =(float) 1.0
-      c@5:9 =(addr) $0
-      d@6:5 =(char) 'a'
-      pcall main, 0
-      END_PROGRAM
-
+Static Semantics Analysis Failed:
+tests/testWithoutStatements.blue:: ERROR: Missing `main` procedure.
