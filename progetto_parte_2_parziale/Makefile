@@ -62,22 +62,12 @@ demo: bluec
 		./bluec tests/testCase4.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo4_output.txt
 	@{ \
-		echo "example 1: generic test"; \
+		echo "example 5: Complex array and array indexing"; \
 		echo ""; \
 		./bluec tests/testCase5.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo5_output.txt
 	@{ \
-		echo "example 1: generic test"; \
-		echo ""; \
-		./bluec tests/testWithoutStatements.blue || true; \
-	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoWithoutStatements_output.txt
-	@{ \
-		echo "example 1: generic test"; \
-		echo ""; \
-		./bluec tests/testOnTest.blue || true; \
-	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoTOT_output.txt
-	@{ \
-		echo "example 1: generic test"; \
+		echo "example 6: Array relation operation"; \
 		echo ""; \
 		./bluec tests/testCase6.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo6_output.txt
@@ -141,6 +131,11 @@ demo: bluec
 		echo ""; \
 		./bluec tests/testCase18.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo18_output.txt
+	@{ \
+		echo "example 19: parameter passing modalities"; \
+		echo ""; \
+		./bluec tests/testCase19.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo19_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

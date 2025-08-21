@@ -1,16 +1,23 @@
-routines
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - relation operations on arrays
 
-main() is
 var
-    y: Array<Integer; 2> := [4,2];
-    k: Integer := 0;
-do
-    k := 0;
-    loop
-        k := k + 1; 
-        exit on k > 3;
-        k := k + 1;
-    end loop
-    k := 0;
-    return;
-end main
+    arr: Array<Array<Integer; 3>; 4> := [
+        [0,0,0],
+        [0,0,0],
+        [0,0,0],
+        [0,0,0]
+    ];
+
+
+routines
+    main is
+    var
+        b : Boolean := false;
+    do
+        b := arr[1] > arr[2];
+        b := arr <> arr;
+        return;
+    end main

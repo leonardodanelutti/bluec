@@ -1,5 +1,0 @@
-example 1: generic test
-
-
-Static Semantics Analysis Failed:
-tests/testOnTest.blue:: ERROR: Missing `main` procedure.

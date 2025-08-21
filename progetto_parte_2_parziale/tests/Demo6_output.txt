@@ -1,21 +1,17 @@
-example 1: generic test
+example 6: Array relation operation
 
 
 [Pretty-Print of source]
 
+var
+	arr : Array<Array<Integer ; 3> ; 4> := [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]];
 routines
 	main() is
 	var
-		y : Array<Integer ; 2> := [4, 2];
-		k : Integer := 0;
+		b : Boolean := false;
 	do
-		k := 0;
-		loop
-			k := (k + 1);
-		exit on (k > 3);
-			k := (k + 1);
-		end loop
-		k := 0;
+		b := (arr[1] > arr[2]);
+		b := (arr <> arr);
 		return;
 	end
 	main
@@ -26,19 +22,63 @@ routines
 
 
 EntryPoint:
+      arraygen arr@7:5, 48
+      arr@7:5[0] =(int) 0
+      arr@7:5[4] =(int) 0
+      arr@7:5[8] =(int) 0
+      arr@7:5[12] =(int) 0
+      arr@7:5[16] =(int) 0
+      arr@7:5[20] =(int) 0
+      arr@7:5[24] =(int) 0
+      arr@7:5[28] =(int) 0
+      arr@7:5[32] =(int) 0
+      arr@7:5[36] =(int) 0
+      arr@7:5[40] =(int) 0
+      arr@7:5[44] =(int) 0
       pcall main, 0
       END_PROGRAM
 
-main@3:1:
-      arraygen y@5:5, 8
-      y@5:5[0] =(int) 4
-      y@5:5[4] =(int) 2
-      k@6:5 =(int) 0
-      k@6:5 =(int) 0
-L0:   k@6:5 =(int) k@6:5 +(int) 1
-      if k@6:5 >(int) 3 goto L1
-      k@6:5 =(int) k@6:5 +(int) 1
-      goto L0
-L1:   k@6:5 =(int) 0
+arrayGtInteger':
+      # Array comparison: Gt for type Integer
+      t4 =(int) -4
+L0:   t4 =(int) 4 +(int) t4
+      t5 =(int) arrayGtInteger'val1@0:0[t4]
+      t6 =(int) arrayGtInteger'val2@0:0[t4]
+      if t4 <(int) arrayGtInteger'Size@0:0 goto L2
+      t7 =(bool) t5 ==(int) t6
+      if t7 goto L0
+      t7 =(bool) t5 >(int) t6
+      if t7 goto L2
+L2:   return False
+L1:   return True
+
+arrayNeqInteger':
+      # Array comparison: Neq for type Integer
+      t8 =(int) -4
+L3:   t8 =(int) 4 +(int) t8
+      t9 =(int) arrayNeqInteger'val1@0:0[t8]
+      t10 =(int) arrayNeqInteger'val2@0:0[t8]
+      if t8 <(int) arrayNeqInteger'Size@0:0 goto L5
+      t11 =(bool) t9 ==(int) t10
+      if t11 goto L3
+L4:   return True
+L5:   return False
+
+main@16:5:
+      b@18:9 =(bool) False
+      t0 =(addr) arr@7:5[4]
+      t2 =(addr) arr@7:5[8]
+      arrayGtInteger'val1@0:0 =(addr) t0
+      param(addr) arrayGtInteger'val1@0:0
+      arrayGtInteger'val2@0:0 =(addr) t2
+      param(addr) arrayGtInteger'val2@0:0
+      arrayGtInteger'Size@0:0 =(int) 12
+      b@18:9 =(bool) fcall arrayGtInteger', 3
+      arrayNeqInteger'val1@0:0 =(addr) arr@7:5
+      param(addr) arrayNeqInteger'val1@0:0
+      arrayNeqInteger'val2@0:0 =(addr) arr@7:5
+      param(addr) arrayNeqInteger'val2@0:0
+      arrayNeqInteger'Size@0:0 =(int) 48
+      b@18:9 =(bool) fcall arrayNeqInteger', 3
       return
 

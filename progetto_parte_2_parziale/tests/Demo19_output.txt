@@ -1,0 +1,56 @@
+example 19: parameter passing modalities
+
+
+[Pretty-Print of source]
+
+routines
+	main() is
+	var
+		a : Integer := 1;
+		c : Char := 'c';
+	do
+		a := test(a, c);
+		return;
+	end
+	main
+
+	test(ref x : Integer, valres y : Char) -> Integer is
+	do
+		if (y = '?') then
+			x := (x + 1);
+		end if
+		return x;
+	end
+	test
+
+
+
+[Generated TAC]
+
+
+EntryPoint:
+      pcall main, 0
+      END_PROGRAM
+
+main@8:1:
+      a@10:5 =(int) 1
+      c@11:5 =(char) 'c'
+      x@17:10 = &a@10:5
+      param(addr) x@17:10
+      y@17:29 = &c@11:5
+      param(addr) y@17:29
+      a@10:5 =(int) fcall test@17:1, 2
+      return
+
+test@17:1:
+      # Start of preamble
+      y'@17:29 =(char) *y@17:29
+      # End of preamble
+      if y'@17:29 !=(char) '?' goto L0
+      t0 =(int) *x@17:10
+      x@17:10 =(int) t0 +(int) 1
+L0:   t1 =(int) *x@17:10
+      # Start of post-amble
+      *y@17:29 =(char) y'@17:29
+      return t1
+

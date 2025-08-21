@@ -112,7 +112,7 @@ RExpBool.                       RExp7 ::= Bool;
 RExpDouble.                     RExp7 ::= Double;
 RExpCall.                       RExp7 ::= RoutCall;
 RExpLExp.                       RExp7 ::= LExp;
-RExpArray.                      RExp7 ::= "Array" "[" [RExp] "]";
+RExpArray.                      RExp7 ::= "[" [RExp] "]";
 
 rules Bool ::= "true" | "false";
 

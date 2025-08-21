@@ -1,24 +1,30 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - Usage of complex types like `Array<&Array<Array<Integer; 3>; 4>; 3>`
+-- - Indexing using constant values
+-- - Indexing using variables
+
 var
-    base0: Array<Array<Integer; 20>; 10> := [
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    base0: Array<Array<Integer; 3>; 4> := [
+        [0,0,0],
+        [0,0,0],
+        [0,0,0],
+        [0,0,0]
     ];
 
-    a: Array<&Array<Array<Integer; 20>; 10>; 5> := [&base0, &base0, &base0, &base0, &base0];
+    a: Array<&Array<Array<Integer; 3>; 4>; 3> := [&base0, &base0, &base0];
+    b: Array<Array<Array<Integer; 3>; 4>; 3> := [base0, base0, base0];
+
 
 routines
-    test -> Integer
-    is
+    main is
+    var
+        idx : Integer := 3;
+        res1, res2 : Integer := 0, 0;
     do
         (*a[2])[3][0] := 1;
-        return (*a[2])[3][0];
-    end
-    test
+        res1 := b[2][3][0];
+        res2 := b[2][idx][0];
+        return;
+    end main

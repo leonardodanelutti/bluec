@@ -444,8 +444,8 @@ stringRelName relOp = "string" ++ relName relOp ++ "'"
 stringRelNames :: AS.RelOp -> (Label, Address, Address)
 stringRelNames relOp = let funName = stringRelName relOp in (
         FunctionUnique funName,
-        PName $ ProgramName (funName ++ "1") Lex.defaultPosn,
-        PName $ ProgramName (funName ++ "2") Lex.defaultPosn
+        PName $ ProgramName (funName ++ "val11") Lex.defaultPosn,
+        PName $ ProgramName (funName ++ "val2") Lex.defaultPosn
     )
 
 arrayRelName :: AS.RelOp -> T.Type -> String
@@ -455,8 +455,8 @@ arrayRelName relOp ty = "array" ++ relName relOp ++ show ty ++ "'"
 arrayRelNames :: AS.RelOp -> T.Type -> (Label, Address, Address, Address)
 arrayRelNames relOp ty = let funName = arrayRelName relOp ty in (
         FunctionUnique funName,
-        PName $ ProgramName (funName ++ "1") Lex.defaultPosn,
-        PName $ ProgramName (funName ++ "2") Lex.defaultPosn,
+        PName $ ProgramName (funName ++ "val1") Lex.defaultPosn,
+        PName $ ProgramName (funName ++ "val2") Lex.defaultPosn,
         PName $ ProgramName (funName ++ "Size") Lex.defaultPosn
     )
 
