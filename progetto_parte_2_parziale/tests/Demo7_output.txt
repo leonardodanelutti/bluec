@@ -1,8 +1,5 @@
 example 7: testing annidated functions
 
-tests/testCase7.blue
-
-Parse Successful!
 
 Static Semantics Analysis Failed:
 tests/testCase7.blue:: ERROR: `main` routine must be a procedure.

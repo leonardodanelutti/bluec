@@ -1,0 +1,27 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - generation of undetermined loops
+
+routines 
+
+main is
+var
+    a, b: Integer := 0, 0;
+do
+    b := readInt;
+	loop
+		exit on a > b;
+		a := a + 1;
+        if a > 100 then 
+            continue;
+        else
+            loop
+                exit on false;
+            end loop
+        end if
+	end loop
+	
+	writeChar('W');
+    return;
+end main

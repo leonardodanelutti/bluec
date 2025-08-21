@@ -1,29 +1,26 @@
-example 13: testing if with multiple conditions
+example 13: testing boolean expressions on guards
 
-tests/testCase13.blue
 
-Parse Successful!
-
-[Abstract Syntax]
-
-ProgramDecl {consts = [], vars = [VarAss {varIdents = [Ident {identName = "a", identPos = 2:9-2:10}], varType = TypePos {type_ = Integer, typePosn = 2:12-2:19}, varValues = [Literal {val = LitInt {intVal = 2, litPos = 2:23-2:24}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 2)}, expPos = 2:23-2:24}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 2:9-2:10},Var 2:9-2:24 (TypePos {type_ = Integer, typePosn = 2:12-2:19}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 2:9-2:24},VarAss {varIdents = [Ident {identName = "b", identPos = 3:9-3:10}], varType = TypePos {type_ = Boolean, typePosn = 3:12-3:19}, varValues = [Literal {val = LitBool {boolVal = False, litPos = 3:23-3:28}, expAnnot = ExpAnn {expType = Boolean, ctVal = Just (CTVBoolean False)}, expPos = 3:23-3:28}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "b", identPos = 3:9-3:10},Var 3:9-3:28 (TypePos {type_ = Boolean, typePosn = 3:12-3:19}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 3:9-3:28},VarAss {varIdents = [Ident {identName = "c", identPos = 4:9-4:10}], varType = TypePos {type_ = Integer, typePosn = 4:12-4:19}, varValues = [Literal {val = LitInt {intVal = 3, litPos = 4:23-4:24}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 3)}, expPos = 4:23-4:24}], varAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "c", identPos = 4:9-4:10},Var 4:9-4:24 (TypePos {type_ = Integer, typePosn = 4:12-4:19}) Nothing)], routines = fromList [], keywords = fromList []}, errs = []}, varPos = 4:9-4:24}], routines = [Procedure {routName = Ident {identName = "main", identPos = 8:1-8:5}, params = [], routBody = RoutBody {declarations = ProgramDecl {consts = [], vars = [], routines = [], declsAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 2:9-2:10},Var 2:9-2:24 (TypePos {type_ = Integer, typePosn = 2:12-2:19}) Nothing),(Ident {identName = "b", identPos = 3:9-3:10},Var 3:9-3:28 (TypePos {type_ = Boolean, typePosn = 3:12-3:19}) Nothing),(Ident {identName = "c", identPos = 4:9-4:10},Var 4:9-4:24 (TypePos {type_ = Integer, typePosn = 4:12-4:19}) Nothing)], routines = fromList [(Ident {identName = "main", identPos = 8:1-8:5},Proc 8:1-17:9 []),(Ident {identName = "readChar", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Char, typePosn = 0:0})),(Ident {identName = "readInt", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Integer, typePosn = 0:0})),(Ident {identName = "readReal", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Real, typePosn = 0:0})),(Ident {identName = "readString", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = String, typePosn = 0:0})),(Ident {identName = "writeChar", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Char, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeInt", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Integer, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeReal", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Real, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeString", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = String, typePosn = 0:0}, paramPos = 0:0}])], keywords = fromList [("return",Return Nothing)]}, errs = []}}, statements = [StmtIfElse {cond = BinOp {binOp = And, e1 = BinOp {binOp = Or, e1 = RelOp {relOp = Lt, e1 = ExpIdent {name = Ident {identName = "a", identPos = 10:9-10:10}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 2:9-2:24}, expPos = 10:9-10:10}, e2 = Literal {val = LitInt {intVal = 20, litPos = 10:13-10:15}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 20)}, expPos = 10:13-10:15}, expAnnot = ExpAnn {expType = Boolean, ctVal = Nothing}, expPos = 10:9-10:15}, e2 = ExpIdent {name = Ident {identName = "b", identPos = 10:19-10:20}, expAnnot = ExpIdentAnn {expType = Boolean, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 3:9-3:28}, expPos = 10:19-10:20}, expAnnot = ExpAnn {expType = Boolean, ctVal = Nothing}, expPos = 10:9-10:20}, e2 = BinOp {binOp = And, e1 = ExpIdent {name = Ident {identName = "b", identPos = 10:27-10:28}, expAnnot = ExpIdentAnn {expType = Boolean, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 3:9-3:28}, expPos = 10:27-10:28}, e2 = RelOp {relOp = Neq, e1 = ExpIdent {name = Ident {identName = "c", identPos = 10:33-10:34}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 4:9-4:24}, expPos = 10:33-10:34}, e2 = Literal {val = LitInt {intVal = 10, litPos = 10:38-10:40}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 10)}, expPos = 10:38-10:40}, expAnnot = ExpAnn {expType = Boolean, ctVal = Nothing}, expPos = 10:33-10:40}, expAnnot = ExpAnn {expType = Boolean, ctVal = Nothing}, expPos = 10:27-10:40}, expAnnot = ExpAnn {expType = Boolean, ctVal = Nothing}, expPos = 10:9-10:40}, bodyT = [StmtAss {left = [ExpIdent {name = Ident {identName = "a", identPos = 11:13-11:14}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 2:9-2:24}, expPos = 11:13-11:14}], right = [Literal {val = LitInt {intVal = 0, litPos = 11:18-11:19}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 0)}, expPos = 11:18-11:19}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 11:13-11:20},StmtReturnEmpty {annot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}, pos = 12:13-12:20}], bodyF = [StmtAss {left = [ExpIdent {name = Ident {identName = "a", identPos = 14:13-14:14}, expAnnot = ExpIdentAnn {expType = Integer, ctVal = Nothing, identCategory = VarCategory, mode = Nothing, declPos = Just 2:9-2:24}, expPos = 14:13-14:14}], right = [Literal {val = LitInt {intVal = 1, litPos = 14:18-14:19}, expAnnot = ExpAnn {expType = Integer, ctVal = Just (CTVInteger 1)}, expPos = 14:18-14:19}], annot = StmtAnn {errs = [], alwaysReturn = False, alwaysExits = False, unreachable = False}, pos = 14:13-14:20},StmtReturnEmpty {annot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}, pos = 15:13-15:20}], annot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}, pos = 10:5-16:15}], routBodyAnnot = StmtAnn {errs = [], alwaysReturn = True, alwaysExits = True, unreachable = False}}, routAnnot = DeclAnn {bindings = Env {symbols = fromList [], routines = fromList [(Ident {identName = "main", identPos = 8:1-8:5},Proc 8:1-17:9 [])], keywords = fromList []}, errs = []}, routPos = 8:1-17:9}], declsAnnot = DeclAnn {bindings = Env {symbols = fromList [(Ident {identName = "a", identPos = 2:9-2:10},Var 2:9-2:24 (TypePos {type_ = Integer, typePosn = 2:12-2:19}) Nothing),(Ident {identName = "b", identPos = 3:9-3:10},Var 3:9-3:28 (TypePos {type_ = Boolean, typePosn = 3:12-3:19}) Nothing),(Ident {identName = "c", identPos = 4:9-4:10},Var 4:9-4:24 (TypePos {type_ = Integer, typePosn = 4:12-4:19}) Nothing)], routines = fromList [(Ident {identName = "main", identPos = 8:1-8:5},Proc 8:1-17:9 []),(Ident {identName = "readChar", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Char, typePosn = 0:0})),(Ident {identName = "readInt", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Integer, typePosn = 0:0})),(Ident {identName = "readReal", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = Real, typePosn = 0:0})),(Ident {identName = "readString", identPos = 0:0},Fun 0:0 [] (TypePos {type_ = String, typePosn = 0:0})),(Ident {identName = "writeChar", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Char, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeInt", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Integer, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeReal", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = Real, typePosn = 0:0}, paramPos = 0:0}]),(Ident {identName = "writeString", identPos = 0:0},Proc 0:0 [Param {mode = Mval, paramName = Ident {identName = "value", identPos = 0:0}, paramType = TypePos {type_ = String, typePosn = 0:0}, paramPos = 0:0}])], keywords = fromList []}, errs = []}}
-
-[Linearized tree]
+[Pretty-Print of source]
 
 var
-	a : Integer := 2;
-	b : Boolean := False;
-	c : Integer := 3;
+	a, c : Integer := 2, 3;
+	b : Boolean := false;
 routines
 	main() is
 	do
 		if (((a < 20) or b) and (b and (c <> 10))) then
 			a := 0;
-		return;
 		else
 			a := 1;
-		return;
 		end if
+		b := not b;
+		loop
+		
+		exit on ((a < c) or (a = c));
+			c := (c + 1);
+		end loop
+		return;
 	end
 	main
 
@@ -33,20 +30,24 @@ routines
 
 
 EntryPoint:
-      a@2:9 =(int) 2
-      b@3:9 =(bool) False
-      c@4:9 =(int) 3
+      a@8:9 =(int) 2
+      c@8:9 =(int) 3
+      b@9:9 =(bool) False
       pcall main, 0
       END_PROGRAM
 
-main@8:1:
-      if a@2:9 <(int) 20 goto L2
-      ifFalse b@3:9 goto L0
-L2:   ifFalse b@3:9 goto L0
-      if c@4:9 ==(int) 10 goto L0
-      a@2:9 =(int) 0
-      return
+main@13:1:
+      if a@8:9 <(int) 20 goto L2
+      ifFalse b@9:9 goto L0
+L2:   ifFalse b@9:9 goto L0
+      if c@8:9 ==(int) 10 goto L0
+      a@8:9 =(int) 0
       goto L1
-L0:   a@2:9 =(int) 1
-      return
+L0:   a@8:9 =(int) 1
+L1:   b@9:9 =(bool) ! b@9:9
+L3:   if a@8:9 <(int) c@8:9 goto L4
+      if a@8:9 ==(int) c@8:9 goto L4
+      c@8:9 =(int) c@8:9 +(int) 1
+      goto L3
+L4:   return
 

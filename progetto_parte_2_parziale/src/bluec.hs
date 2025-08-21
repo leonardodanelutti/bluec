@@ -10,7 +10,7 @@ import Prelude
   , Int, (>)
   , String, (++), concat, unlines
   , Show, show
-  , IO, (>>), (>>=), mapM_, putStrLn
+  , IO, (>>=), mapM_, putStrLn
   , FilePath
   , getContents, readFile, null, print
   )
@@ -34,7 +34,7 @@ putStrV :: Verbosity -> String -> IO ()
 putStrV v s = when (v > 1) $ putStrLn s
 
 runFile :: Verbosity -> ParseFun (AS.Declarations ()) -> FilePath -> IO ()
-runFile v p f = putStrLn f >> readFile f >>= \s -> run v p s (Just f)
+runFile v p f = readFile f >>= \s -> run v p s (Just f)
 
 run :: Verbosity -> ParseFun (AS.Declarations ()) -> String -> Maybe FilePath -> IO ()
 run v p s f =
@@ -46,7 +46,6 @@ run v p s f =
             putStrLn err
             exitFailure
         Right tree -> do
-            putStrLn "\nParse Successful!"
             let annTree = SS.annotate tree
             let errs = SS.getErrs annTree
             unless (null errs) $ do
@@ -55,8 +54,8 @@ run v p s f =
                     Nothing -> mapM_ putStrLn errs
                     Just f  -> mapM_ (putStrLn . (\err -> f ++ ":" ++ err)) errs
                 exitFailure
-            showTree v annTree
-            putStrV v $ "\n[Generated TAC]\n"
+            putStrV v $ "\n[Pretty-Print of source]\n\n" ++ prt tree
+            putStrV v "\n[Generated TAC]\n"
             print (TAC.genProgram annTree)
     where
         ts = myLexer s
@@ -74,7 +73,7 @@ usage = do
     , "  --help          Display this help message."
     , "  (no arguments)  Parse stdin verbosely."
     , "  (files)         Parse content of files verbosely."
-    , "  -s (files)      Silent mode. Parse content of files silently."
+    , "  -s (files)      Silent mode. Only print TAC output"
     ]
 
 main :: IO ()

@@ -3,6 +3,7 @@ module PrettyPrinter where
 import Data.List (intercalate)
 import AbsSyn
 import Types
+import Data.Char (toLower)
 
 class Print a where
   prt :: a -> String
@@ -168,7 +169,7 @@ typePrinter (TypePos typ _) =
 literalPrinter :: Literal -> String
 literalPrinter l =
     case l of
-        LitBool b _  -> show b
+        LitBool b _  -> map toLower (show b)
         LitInt i _   -> show i
         LitDouble r _-> show r
         LitString s _ -> show s

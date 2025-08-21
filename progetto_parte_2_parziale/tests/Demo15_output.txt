@@ -1,8 +1,5 @@
 example 15: testing left-hand side expressions' requirements
 
-tests/testCase15.blue
-
-Parse Successful!
 
 Static Semantics Analysis Failed:
 tests/testCase15.blue:22:20-22:21: ERROR: Implicit casting is forbidden in left-hand side expressions.

@@ -1,8 +1,5 @@
 example 1: generic test
 
-tests/testWithoutStatements.blue
-
-Parse Successful!
 
 Static Semantics Analysis Failed:
 tests/testWithoutStatements.blue:: ERROR: Missing `main` procedure.

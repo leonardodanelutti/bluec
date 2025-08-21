@@ -45,7 +45,7 @@ demo: bluec
 		echo "example 1: generic test"; \
 		echo ""; \
 		./bluec tests/testCase1.blue || true; \
-	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo_output.txt
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo1_output.txt
 	@{ \
 		echo "example 1: generic test"; \
 		echo ""; \
@@ -112,7 +112,7 @@ demo: bluec
 		./bluec tests/testCase12.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo12_output.txt
 	@{ \
-		echo "example 13: testing if with multiple conditions"; \
+		echo "example 13: testing boolean expressions on guards"; \
 		echo ""; \
 		./bluec tests/testCase13.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo13_output.txt
@@ -126,6 +126,16 @@ demo: bluec
 		echo ""; \
 		./bluec tests/testCase15.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo15_output.txt
+	@{ \
+		echo "example 16: testing generations of loops"; \
+		echo ""; \
+		./bluec tests/testCase16.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo16_output.txt
+	@{ \
+		echo "example 17: generation of boolean expressions"; \
+		echo ""; \
+		./bluec tests/testCase17.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo17_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

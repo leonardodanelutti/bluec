@@ -3,6 +3,7 @@ module TAC.Printer where
 
 import TAC.Def 
 import LexGrammar (posLineCol)
+import Data.List (intercalate)
 
 instance Show TAC where
     show (TAC instructions staticData) = unlines (map show staticData) ++
@@ -17,10 +18,10 @@ instance Show LabeledInstruction where
                 FunctionUnique name -> "\n" ++ name ++ ":\n      "
         in labelStr ++ replicate (6 - length labelStr) ' ' ++ show inst
     show (LabeledInstruction labels inst) = 
-        let labelStr = concatMap (\case
-                Loc n -> "L" ++ show n ++ ", "
-                Function name -> show name ++ ", "
-                FunctionUnique name -> name ++ ", ") labels
+        let labelStr = intercalate ", " (map (\case
+                Loc n -> "L" ++ show n
+                Function name -> show name
+                FunctionUnique name -> name) labels)
         in labelStr ++ ": " ++ show inst
 
 instance Show Instruction where

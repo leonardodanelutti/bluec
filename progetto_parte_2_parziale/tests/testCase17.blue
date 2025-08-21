@@ -1,0 +1,16 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - generation of boolean expressions
+
+var
+	a, c: Integer := 2, 3;
+	b: Boolean := false;
+    x: Boolean := (a < 20 or b) and (b and c <> 10);
+
+routines 
+
+main is
+do
+	return;
+end main

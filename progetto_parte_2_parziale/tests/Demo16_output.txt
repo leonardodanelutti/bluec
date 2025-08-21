@@ -1,0 +1,55 @@
+example 16: testing generations of loops
+
+
+[Pretty-Print of source]
+
+routines
+	main() is
+	var
+		a, b : Integer := 0, 0;
+	do
+		b := readInt;
+		loop
+		
+		exit on (a > b);
+			a := (a + 1);
+		if (a > 100) then
+			continue;
+		else
+			loop
+		
+		exit on false;
+		end loop
+		end if
+		end loop
+		writeChar('W');
+		return;
+	end
+	main
+
+
+
+[Generated TAC]
+
+
+EntryPoint:
+      pcall main, 0
+      END_PROGRAM
+
+main@8:1:
+      a@10:5 =(int) 0
+      b@10:5 =(int) 0
+      b@10:5 =(int) fcall readInt@0:0, 0
+L0:   if a@10:5 >(int) b@10:5 goto L1
+      a@10:5 =(int) a@10:5 +(int) 1
+      if a@10:5 <=(int) 100 goto L2
+      goto L0
+      goto L3
+L4, L2: if False goto L5
+      goto L4
+L3, L5: goto L0
+L1:   value@0:0 =(char) 'W'
+      param(char) value@0:0
+      pcall writeChar@0:0, 1
+      return
+

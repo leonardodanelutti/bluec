@@ -1,8 +1,5 @@
 example 1: generic test
 
-tests/testCase4.blue
-
-Parse Successful!
 
 Static Semantics Analysis Failed:
 tests/testCase4.blue:: ERROR: Missing `main` procedure.
