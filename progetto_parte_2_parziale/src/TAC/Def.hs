@@ -156,7 +156,7 @@ data StaticData = Static {
 
 data StaticValue
     = STVString String
- -- | Can add more static value types
+ -- | More static value types can be added
 
 type TACStatic = [StaticData]
 

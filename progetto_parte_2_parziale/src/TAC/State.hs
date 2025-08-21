@@ -54,7 +54,7 @@ outLabeled instrLab = do
 out :: Instruction -> StateMonad ()
 out = outLabeled . simpleInstruction
 
--- Add static data to the static stream
+-- Add static data to the static stream, return the address of the static data
 outStatic :: StaticValue -> StateMonad Address
 outStatic instrLab = do
     state <- St.get

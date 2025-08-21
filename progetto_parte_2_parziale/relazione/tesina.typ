@@ -257,9 +257,53 @@ $
 
 = Generazione del Three Address Code (TAC)
 
-Il modulo di generazione del TAC(reperibile nella cartella `TAC`) utilizza una monade di stato per generare il codice, consentendo di mantenere traccia di informazioni di stato, quali:
+Oltre alle istruzioni viste a lezione sono state aggiunte le seguenti istruzioni:
+- `ArrayGen addr size` per la creazione di un array di dimensione `size`.
+- `Custom str` per la generazione di un istruzione personalizzata, viene utilizzata per l'istruzione `END_PROGRAM` che indica la fine del programma
+- `Comment` per la generazione di commenti nel codice TAC.
+
+Altro da dire:
+- Le stringhe (letterali) vengono allocate in una sezione statica, e sono accessibili tramite un indirizzo statico.
+- Le espressioni e i parametri vengono generate da sinistra a destra (perché più intuitivo di destra verso sinistra?). Invece gli assegnamenti multipli vengono trattati come zucchero sintattico di assegnamenti "su più linee", ad esempio:
+```
+x, y, z := 0, 1, 2;
+```
+risulta nello stesso codice TAC di:
+```
+x := 0;
+y := 1;
+z := 2;
+```
+- le modalità di passaggio sono gestite nel seguente modo:
+  - Per valore: i parametri formali vengono copiati nei nomi dei parametri locali e quindi viene chiamata la funzione.
+  - Per ref: prima della chiamata di funzione ai parametri locali viene assegnata la reference dei parametri formali, quindi viene chiamata la funzione. All'interno del corpo della funzione prima di ogni utilizzo di parametri locali viene generata un'istruzione di deref. 
+  - Per valres: prima della chiamata di funzione ai parametri locali viene assegnata la reference dei parametri formali, quindi viene chiamata la funzione. Prima del corpo della funzione i parametri locali vengono deferenziati in una copia locale (con un apice alla fine del nome). Prima di ogni `return` quindi viene assegnato il valore della copia locale al parametro locale deferenziato.
+- Le funzioni di relazione tra stringhe e array sono generate direttamente nel TAC, con nomi che seguono la convenzione `string<relop>'` o `array<relop><type>'`, dove `<relop>` è l'operatore di relazione e `<type>` è il tipo intero dell'array.
+- sia le espressioni booleane che le condizioni per il flow-control sono valutate con short-circuit usando il fall-trough
+
+Il modulo di generazione del TAC (reperibile nella cartella `TAC`) utilizza una monade di stato per generare il codice, consentendo di mantenere traccia di informazioni di stato, quali:
 - contatori per la creazione di temporanei, di label e di indirizzi statici
-- lo stream di output per il codice generato
-- uno stack per il
+- lo stream di output per il codice generato (al contrario, come tutti gli altri stream)
+- uno stack di stream di codice per la gestione di routine annidate
+- uno stream per i dati statici (stringhe)
+- Una lista di label che viene associata alla prossima istruzione
+- Una lista di coppie di label, per la gestione degli exit on/continue all'interno dei loop (possibilmente annidati)
+- Un insieme che tiene traccia quali funzioni di comparazione tra stringhe o array sono già state generate
+
+Nel file `TAC/State.hs`, oltre alla definizione dello stato appena descritto sono presenti anche funzioni di supporto per la gestione dello stato.
+
+Notazioni usate nel printer:
+- Gli identificatori e nomi di sono annotati con la posizione nel file originale in questo modo: `<ident>@<line>:<column>`
+- i commenti sono preceduti da `#`
+- Le copie locali dei parametri passati per `valres` hanno il nome del parametro seguito da un apice (')
+- le funzioni di relazione tra stringhe e array hanno un apice (') alla fine del nome
+- le variabili che puntano a dati statici sono precedute da `$`
+
+// Cose che potrebbe chiedere:
+// - Switch
+// - break
+// - loop determinato
+// - array checked
+// - try/catch
 
 #bibliography("bibliografia.bib", title: "Bibliografia" , style: "ieee")

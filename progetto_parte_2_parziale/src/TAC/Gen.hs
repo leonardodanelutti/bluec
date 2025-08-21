@@ -151,12 +151,8 @@ genUnknownExpr exp addrIn = do
                 identName' = PName $ ProgramName (AS.identName ident ++ "'") declPos
                 tyTAC = castTypeToTACType ty
             case mode of
-                -- Identifiers that are passed by value-result are appended with
-                -- the "'" and a dereference is made
-                Just AS.Mvalres -> do
-                    addrOut <- getOutAddr addrIn
-                    out (DerefGet addrOut identName' tyTAC)
-                    returnAddr addrIn addrOut tyTAC
+                -- Identifiers that are passed by value-result are appended with the "'"
+                Just AS.Mvalres -> returnAddr addrIn identName' tyTAC
                 -- Identifiers that are passes by reference are dereferenced before being used
                 Just AS.Mref -> do
                     addrOut <- getOutAddr addrIn
@@ -442,7 +438,7 @@ relName relOp = case relOp of
     AS.Ge -> "Ge"
 
 stringRelName :: AS.RelOp -> String
-stringRelName relOp = "string" ++ relName relOp
+stringRelName relOp = "string" ++ relName relOp ++ "'"
 
 -- Names for string comparison functions and the respective parameters
 stringRelNames :: AS.RelOp -> (Label, Address, Address)
@@ -453,7 +449,7 @@ stringRelNames relOp = let funName = stringRelName relOp in (
     )
 
 arrayRelName :: AS.RelOp -> T.Type -> String
-arrayRelName relOp ty = "array" ++ relName relOp ++ show ty
+arrayRelName relOp ty = "array" ++ relName relOp ++ show ty ++ "'"
 
 -- Names for array comparison functions and the respective parameters
 arrayRelNames :: AS.RelOp -> T.Type -> (Label, Address, Address, Address)
