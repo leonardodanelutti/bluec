@@ -215,10 +215,10 @@ returnAddr addrOutMaybe addrReturn ty = case addrOutMaybe of
 
 -- GENERATION OF BOOLEAN OPERATIONS
 
-genBoolExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad ()
+genBoolExp :: AS.BinOp -> Address -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad Label
 genBoolExp op tmp e1 e2 = do
     label <- newLabel
-    genBoolExp' e1
+    endLabel1 <- genBoolExp' e1
 
     -- Short-circuit evaluation, jump after the second operand
     let instr = case op of
@@ -227,18 +227,24 @@ genBoolExp op tmp e1 e2 = do
             _ -> error "Only Or and And operations should be passed to genBinExp"
     out instr
 
-    genBoolExp' e2
-    attachToNext label
+    mapM_ attachToNext endLabel1
+    endLabel2 <- genBoolExp' e2
+    mapM_ attachToNext endLabel2
+    
+    return label
 
     where
         -- Continue the generation of the boolean expression
-        genBoolExp' :: AS.Exp SS.Ann -> StateMonad ()
+        genBoolExp' :: AS.Exp SS.Ann -> StateMonad (Maybe Label)
         genBoolExp' (AS.BinOp AS.Or e1 e2 _ _) = do
-            genBoolExp AS.Or tmp e1 e2
+            l <- genBoolExp AS.Or tmp e1 e2
+            return $ Just l
         genBoolExp' (AS.BinOp AS.And e1 e2 _ _) = do
-            genBoolExp AS.And tmp e1 e2
+            l <- genBoolExp AS.And tmp e1 e2
+            return $ Just l
         genBoolExp' e = do
             genExprAddr e tmp
+            return Nothing
 
 -- Whenever to jump if an a condition is true or false
 -- otherwise fallthrough to the next instruction
