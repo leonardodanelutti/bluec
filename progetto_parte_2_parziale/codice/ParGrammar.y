@@ -408,15 +408,15 @@ RExp6
 
 RExp7 :: { A.Exp () }
 RExp7
-  : '(' RExp ')' { $2 }
-  | Integer                  { A.Literal  $1 () (A.litPos $1) }
-  | Char                     { A.Literal  $1 () (A.litPos $1) }
-  | String                   { A.Literal  $1 () (A.litPos $1) }
-  | Bool                     { A.Literal  $1 () (A.litPos $1) }
-  | Double                   { A.Literal  $1 () (A.litPos $1) }
-  | RoutCall                 { A.FunCall  $1 () (A.routCallPos $1) }
-  | LExp                     { $1 }
-  | 'Array' '[' ListRExp ']' { A.Array $3 () (mergeTokenPos $1 $4) }
+  : '(' RExp ')'      { $2 }
+  | Integer           { A.Literal  $1 () (A.litPos $1) }
+  | Char              { A.Literal  $1 () (A.litPos $1) }
+  | String            { A.Literal  $1 () (A.litPos $1) }
+  | Bool              { A.Literal  $1 () (A.litPos $1) }
+  | Double            { A.Literal  $1 () (A.litPos $1) }
+  | RoutCall          { A.FunCall  $1 () (A.routCallPos $1) }
+  | LExp              { $1 }
+  | '[' ListRExp ']'  { A.Array $2 () (mergeTokenPos $1 $3) }
 
 Bool :: { A.Literal }
 Bool

@@ -2,7 +2,7 @@ routines
 
 main() is
 var
-    y: Array<Integer; 2> := Array[4,2];
+    y: Array<Integer; 2> := [4,2];
     k: Integer := 0;
 do
     k := 0;

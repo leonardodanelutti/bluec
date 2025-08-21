@@ -126,13 +126,13 @@ genUnknownExpr exp addrIn = do
             return addrOut
 
         -- Already handled by genExpr
-        AS.Literal {} -> error "Literal should not be passed to genUnknownExpr"
+        AS.Literal {} -> error "genUnknownExpr: Literal expressions should be handled by genExpr"
 
         AS.FunCall call ann@(SS.ExpFunCallAnn {}) _ -> do
             addrOut <- getOutAddr addrIn
             genFunCall call ann addrOut
 
-        AS.FunCall {} -> error "Unreachable"
+        AS.FunCall {} -> error "genUnknownExpr: FunCall without ExpFunCallAnn annotation is unreachable"
 
         AS.Deref e ann _ -> do
             addrOut <- getOutAddr addrIn
@@ -171,7 +171,7 @@ genUnknownExpr exp addrIn = do
             addrOut <- getOutAddr addrIn
             genFunCall (AS.callFromIdent ident) ann addrOut
 
-        AS.ExpIdent {} -> error "Unreachable"
+        AS.ExpIdent {} -> error "genUnknownExpr: ExpIdent with unexpected annotation type"
 
         AS.Array elements ann _ -> do
             addrOut <- getOutAddr addrIn
@@ -230,7 +230,7 @@ genBoolExp op tmp e1 e2 = do
     mapM_ attachToNext endLabel1
     endLabel2 <- genBoolExp' e2
     mapM_ attachToNext endLabel2
-    
+
     return label
 
     where
@@ -802,4 +802,4 @@ genLExpr exp = case exp of
         addr <- genExprTmp expr
         idx <- genExprTmp index
         return $ ArraySet addr idx
-    _ -> error "Unreachable, error thrown while parsing"
+    _ -> error "genLExpr: Invalid left-hand side expression (parser should prevent this)"

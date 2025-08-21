@@ -1,6 +1,6 @@
 var
-	A : Array<Integer ; 3> := Array[1, 2, 3];
-	B : Array<Array<Integer ; 2> ; 2> := Array[Array[10, 20], Array[30, 40]];
+	A : Array<Integer ; 3> := [1, 2, 3];
+	B : Array<Array<Integer ; 2> ; 2> := [[10, 20], [30, 40]];
 	p : &Array<Integer ; 3> := &A;
 	q : &Integer := &B[1][1];
 routines

@@ -166,7 +166,7 @@ All other symbols are terminals.
   |  |  **|**  | //Double//
   |  |  **|**  | //RoutCall//
   |  |  **|**  | //LExp//
-  |  |  **|**  | ``Array`` ``[`` //[RExp]// ``]``
+  |  |  **|**  | ``[`` //[RExp]// ``]``
   | //Bool// | -> | ``true``
   |  |  **|**  | ``false``
   | //LExp// | -> | //LExp1//
