@@ -135,7 +135,10 @@ endLoop = do
 -- Only call when inside a loop
 getLoopLabels :: StateMonad (Label, Label)
 getLoopLabels = do
-    head . loopLabelsStack <$> St.get
+    firstLabels <- loopLabelsStack <$> St.get
+    case firstLabels of
+        [] -> error "getLoopLabels called outside a loop"
+        labels : _ -> return labels
 
 -- Functions to manage the generation of string and array comparison functions
 
