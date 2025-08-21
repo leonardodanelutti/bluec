@@ -202,8 +202,6 @@ annRoutineCall env ident args pos = (ann', castedArgs) where
                 errs -> (T.TError { T.msgs = errs }, Just params, castedArgs, Just declPos)
                 where
                     castedArgs = annAndCastRoutArgs env args params
-                    --castedArgs = castParamTypes env params annArgs
-                    -- FIXME: castare non è per left exp
             False -> (T.TError {
                 T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."]
             }, Just params, map (annExp env) args, Just declPos)
@@ -416,7 +414,7 @@ annExpRelOp env AS.RelOp {
     typeE1 = expType $ AS.expAnnot annE1
     typeE2 = expType $ AS.expAnnot annE2
     -- Get super type.
-    ty = T.sup pos typeE1 typeE2 -- TODO: every type supports relational operations?
+    ty = T.sup pos typeE1 typeE2
     -- Cast both expressions to the sup type.
     castedE1 = cast (doNotRequireLExp env) annE1 ty
     castedE2 = cast (doNotRequireLExp env) annE2 ty
@@ -446,7 +444,7 @@ annExpRef env AS.Ref {
     AS.expAnnot = ann',
     AS.expPos = pos
 } where
-    annE = annExp (requireLExp env) e -- Only LExp can be referenced. TODO: anything can be referenced?
+    annE = annExp (requireLExp env) e -- Only LExp can be referenced.
     ann = ExpAnn {
         expType = case refType of
             e@T.TError {} -> e

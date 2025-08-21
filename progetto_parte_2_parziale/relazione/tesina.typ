@@ -221,28 +221,126 @@ Di seguito sono riportate le regole formali utilizzate per definire tali tipi.
 === Literal
 
 $
-space/ ("env" ⊢ "Literal" { "val" = "LitInt" {"intVal" = e} } : "INT")
+space/ ("env" ⊢""_E "Literal" { "val" = "LitInt" {"intVal" = e} } : "INT")
 $
 $
-space/ ("env" ⊢ "Literal" { "val" = "LitChar" {"charVal" = e} } : "CHAR")
+space/ ("env" ⊢""_E "Literal" { "val" = "LitChar" {"charVal" = e} } : "CHAR")
 $
 $
-space/ ("env" ⊢ "Literal" { "val" = "LitString" {"stringVal" = e} } : "STRING")
+space/ ("env" ⊢""_E "Literal" { "val" = "LitString" {"stringVal" = e} } : "STRING")
 $
 $
-space/ ("env" ⊢ "Literal" { "val" = "LitBool" {"boolVal" = e} } : "BOOL")
+space/ ("env" ⊢""_E "Literal" { "val" = "LitBool" {"boolVal" = e} } : "BOOL")
 $
 $
-space/ ("env" ⊢ "Literal" { "val" = "LitDouble" {"doubleVal" = e} } : "REAL")
+space/ ("env" ⊢""_E "Literal" { "val" = "LitDouble" {"doubleVal" = e} } : "REAL")
 $
 
 === Ident
 $
-space/ ("env" ⊢ "ExpIdent" { "name" = id } : "env"(id))
+space/ ("env" ⊢""_E "ExpIdent" { "name" = id } : "env"(id))
 $
 
-===
+=== FunCall
+Chiamate di funzione con mdalità di passaggio per valore (con casting):
+$
+("env"(id) : mu_1 tau_1 x ... x mu_n tau_n ⊢""_E tau
+space space space space space space
+forall i = 1, ..., n ("env" ⊢""_E e_i : tau'_i) and "sup"(tau'_i, tau_i) == tau_i)
+/
+("env" ⊢""_E "FunCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } : "env"(id))
+$
 
+Chiamate di funzione con mdalità di passaggio per reference o valore-risultato (senza casting):
+$
+("env"(id) : mu_1 tau_1 x ... x mu_n tau_n ⊢""_E tau
+space space space space space space
+forall i = 1, ..., n ("env" ⊢""_E e_i : tau_i))
+/
+("env" ⊢""_E "FunCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } : "env"(id))
+$
+
+=== Sign
+
+In ordine la prima che matcha:
+
+$
+("env" ⊢""_E "exp" : tau'
+space space space space space space
+"sup"(tau', "Integer") == "Integer")
+/
+("env" ⊢""_E "Sign" { e = "exp" } : "Integer")
+$
+
+$
+("env" ⊢""_E "exp" : tau'
+space space space space space space
+"sup"(tau', "Real") == "Real")
+/
+("env" ⊢""_E "Sign" { e = "exp" } : "Real")
+$
+
+altrimenti errore.
+
+=== BinOp
+
+$
+("env" ⊢""_E e_1 : tau_1 and sup(tau_1, "Boolean") == "Boolean"
+space space space space space space
+"env" ⊢""_E e_2 : tau_2 and sup(tau_2, "Boolean") == "Boolean")
+/
+("env" ⊢""_E "BinOp" { "binOp" = "AND", "e1" = e_1, "e2" = e_2 } : "Boolean")
+$
+
+TODO: le altre binop sono simili
+
+=== BoolNeg
+
+$
+("env" ⊢""_E "exp" : tau
+space space space space space space
+"sup"(tau, "Boolean"))
+/
+("env" ⊢""_E "BoolNeg" { e = "exp" } : "Boolean")
+$
+
+=== RelOp
+
+$
+("env" ⊢""_E e_1 : tau_1
+space space space space space space
+"env" ⊢""_E e_2 : tau_2
+space space space space space space
+sup(tau_1, tau_2) == tau)
+/
+("env" ⊢""_E "RelOp" { "e1" = e_1, "e2" = e_2 } : tau)
+$
+
+=== Ref
+
+$
+("env" ⊢""_E "exp" : tau
+space space space space space space
+"isLExp"(exp))
+/
+("env" ⊢""_E "Ref" { e = "exp" } : &tau)
+$
+
+TODO: è giusto me chiamata a funzioni
+- va scritto come funziona
+ttere isLExp? Se sì:
+- va aggiunto nella
+=== Deref
+
+$
+("env" ⊢""_E "exp" : &tau)
+/
+("env" ⊢""_E "Deref" { e = "exp" } : tau)
+$
+
+=== ArrayIndex
+
+=== Array
 
 SBAGLIATE
 $
@@ -254,6 +352,16 @@ $
 $
 ("env" ⊢ e : "*"T) /("env" ⊢ "Deref" { "exp" = e } : T)
 $
+
+= Analisi Semantica Statica
+- type system sopra
+- calcolo di valori costanti dove possibile
+- propagazione degli errori (e come vengono evitati errori annidati)
+- casting. vale solo al primo livello, i.e. non per tipi composti (tipo &Int non può essere castato a &Real)
+- distinzione LExp e RExp:
+    - per le reference
+    - i parametri passati con Ref e valres
+    - left-hand side di assegnamenti e dichiarazioni (utile perchè le funzioni possono essere chiamate senza parentesi -> quindi il parser non da errore)
 
 = Generazione del Three Address Code (TAC)
 
