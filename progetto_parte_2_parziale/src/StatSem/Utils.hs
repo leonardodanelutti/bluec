@@ -2,6 +2,7 @@
 module StatSem.Utils where
 
 import qualified Data.Map.Lazy  as Map
+import qualified Data.Maybe     as Maybe
 import qualified AbsSyn         as AS
 import qualified LexGrammar     as LG
 import qualified Types          as T
@@ -37,6 +38,10 @@ data RoutEntry -- TODO: serve la posizione?
     = Fun LG.Posn [AS.Param] T.TypePos
     | Proc LG.Posn [AS.Param]
     deriving (Show)
+
+pos :: RoutEntry -> LG.Posn
+pos (Fun p _ _) = p
+pos (Proc p _)  = p
 
 -- Keyword bindings:
 -- - `Return (Just ty)` is present inside a function with returning type `ty`;
@@ -74,9 +79,21 @@ preludeRoutines = [
 preludeEnv :: Env
 preludeEnv = Env Map.empty (Map.fromList preludeRoutines) Map.empty
 
--- Merge two environments. In case of clashes, the second environment overrides the first.
-mergeEnv :: Env -> Env -> Env
-mergeEnv (Env s1 r1 k1) (Env s2 r2 k2) = Env (Map.union s2 s1) (Map.union r2 r1) (Map.union k2 k1)
+-- Merge two environments.
+--
+-- In case of symbol clashes, the second environment overrides the first.
+-- In case of routine clashes, an error is added to the list.
+-- In case of keyword clashes, the second environment overrides the first.
+mergeEnv :: Env -> Env -> (Env, [String])
+mergeEnv (Env s1 r1 k1) (Env s2 r2 k2) = (Env s r k, errs)
+    where
+        s = Map.union s2 s1
+        r = Map.union r2 r1
+        k = Map.union k2 k1
+        errs = Map.foldrWithKey f [] r2
+        f key value accErr = case Map.lookup key r1 of
+            Just _  -> accErr ++ [E.err (pos value) "A routine with the same name `" ++ PP.identPrinter key ++ "` is already defined at " ++ show (pos $ Maybe.fromJust $ Map.lookup key r1) ++ "."]
+            _       -> accErr
 
 envFromSymbolBindings :: [(AS.Ident, SymbolEntry)] -> Env
 envFromSymbolBindings bindings = Env (Map.fromList bindings) Map.empty Map.empty

@@ -1,0 +1,6 @@
+example 18: routine overloading
+
+
+Static Semantics Analysis Failed:
+tests/testCase18.blue:18:5-24:13: ERROR: A routine with the same name `main` is already defined at 6:5-13:13.
+tests/testCase18.blue:9:9-9:50: ERROR: A routine with the same name `foo` is already defined at 15:5-15:40.

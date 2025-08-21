@@ -2,12 +2,12 @@
 
 module StatSem.Mod where
 
+import qualified Data.Map.Lazy  as Map
 import StatSem.Utils
 import StatSem.Decl
 import qualified AbsSyn         as AS
 import qualified LexGrammar     as LG
 import qualified Errors         as E
-import qualified Data.Map.Lazy  as Map
 
 -- Main annotation function.
 annotate :: Decls -> AnnDecls

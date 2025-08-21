@@ -136,6 +136,11 @@ demo: bluec
 		echo ""; \
 		./bluec tests/testCase17.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo17_output.txt
+	@{ \
+		echo "example 18: routine overloading"; \
+		echo ""; \
+		./bluec tests/testCase18.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo18_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

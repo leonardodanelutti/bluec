@@ -2,10 +2,10 @@
 module StatSem.Decl where
 
 import Data.Either (partitionEithers)
-import qualified AbsSyn         as AS
-import qualified Types          as T
-import qualified Errors         as E
-import qualified PrettyPrinter  as PP
+import qualified AbsSyn             as AS
+import qualified Types              as T
+import qualified Errors             as E
+import qualified PrettyPrinter      as PP
 import StatSem.Utils
 import StatSem.Exp
 import StatSem.Stmt
@@ -31,18 +31,18 @@ annDecls env AS.ProgramDecl {
     constsAnn = annConstAs inEnvConsts consts
     varsAnn = annVarAs inEnvVars vars
     routinesAnn = annRoutines inEnvRoutines routines
-    inEnvConsts = mergeEnv env outEnvRoutines
-    inEnvVars = mergeEnv env $ mergeEnv outEnvConsts outEnvRoutines
-    inEnvRoutines = mergeEnv env $ mergeEnv inEnvVars outEnvVars
+    (inEnvConsts, annidatedRoutOverloadErr) = mergeEnv env outEnvRoutines
+    (inEnvVars, _) = mergeEnv env $ fst $ mergeEnv outEnvConsts outEnvRoutines
+    (inEnvRoutines, _) = mergeEnv env $ fst $ mergeEnv inEnvVars outEnvVars
     outEnvConsts = constAsEnv constsAnn -- Local environment of constants.
     outEnvVars = varAsEnv varsAnn -- Local environment of variables.
-    outEnvRoutines = routinesEnv routinesAnn -- Local environment of routines.
+    (outEnvRoutines, sameLevelRoutOverloadErr) = routinesEnv routinesAnn -- Local environment of routines.
     errsConsts = concatMap (errs . AS.constAnnot) constsAnn
     errsVars = concatMap (errs . AS.varAnnot) varsAnn
     errsRoutines = concatMap (errs . AS.routAnnot) routinesAnn
     ann = DeclAnn {
-        bindings = mergeEnv inEnvVars outEnvVars,
-        errs = errsConsts ++ errsVars ++ errsRoutines
+        bindings = fst $ mergeEnv inEnvVars outEnvVars,
+        errs = errsConsts ++ errsVars ++ annidatedRoutOverloadErr ++ sameLevelRoutOverloadErr ++ errsRoutines
     }
 
 -- Annotate a list of constant declarations.
@@ -52,12 +52,12 @@ annConstAs env (c : cs) = cAnn : annConstAs newEnv cs
     where
         cAnn = annConstA env c
         cEnv = bindings $ AS.constAnnot cAnn
-        newEnv = mergeEnv env cEnv
+        newEnv = fst $ mergeEnv env cEnv
 
 -- Get the environment of a list of constant declarations.
 constAsEnv :: [AS.ConstA Ann] -> Env
 constAsEnv [] = emptyEnv
-constAsEnv (c : cs) = mergeEnv (bindings $ AS.constAnnot c) (constAsEnv cs)
+constAsEnv (c : cs) = fst $ mergeEnv (bindings $ AS.constAnnot c) (constAsEnv cs)
 
 -- Annotate a constant declaration.
 annConstA :: Env -> AS.ConstA () -> AS.ConstA Ann
@@ -92,12 +92,12 @@ annVarAs env (v : vs) = vAnn : annVarAs newEnv vs
     where
         vAnn = annVarA env v
         vEnv = bindings $ AS.varAnnot vAnn
-        newEnv = mergeEnv env vEnv
+        newEnv = fst $ mergeEnv env vEnv
 
 -- Get the environment of a list of variable declarations.
 varAsEnv :: [AS.VarA Ann] -> Env
 varAsEnv [] = emptyEnv
-varAsEnv (v : vs) = mergeEnv (bindings $ AS.varAnnot v) (varAsEnv vs)
+varAsEnv (v : vs) = fst $ mergeEnv (bindings $ AS.varAnnot v) (varAsEnv vs)
 
 -- Annotate a variable declaration.
 annVarA :: Env -> AS.VarA () -> AS.VarA Ann
@@ -130,9 +130,11 @@ annRoutines _ [] = []
 annRoutines env (r : rs) = annRoutine env r : annRoutines env rs
 
 -- Get the environment of a list of routine declarations.
-routinesEnv :: [AS.Routine Ann] -> Env
-routinesEnv [] = emptyEnv
-routinesEnv (r : rs) = mergeEnv (bindings $ AS.routAnnot r) (routinesEnv rs)
+routinesEnv :: [AS.Routine Ann] -> (Env, [String])
+routinesEnv [] = (emptyEnv, [])
+routinesEnv (r : rs) = (thisEnv, thisErrs ++ nextErrs) where
+    (thisEnv, thisErrs) = mergeEnv (bindings $ AS.routAnnot r) nextEnv
+    (nextEnv, nextErrs) = (routinesEnv rs)
 
 -- Annotate a routine declaration.
 annRoutine :: Env -> AS.Routine () -> AS.Routine Ann
@@ -155,7 +157,7 @@ annRoutine env AS.Function {
         _ -> []
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
     paramEnv = envFromSymbolBindings paramBindings
-    newEnv = addReturn (mergeEnv env paramEnv) (Just (T.type_ ty))
+    newEnv = addReturn (fst $ mergeEnv env paramEnv) (Just (T.type_ ty))
     -- Annotate the body with the new environment.
     bodyAnn = annRoutBody newEnv body
     -- Get the body errors.
@@ -184,7 +186,7 @@ annRoutine env AS.Procedure {
 } where
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
     paramEnv = envFromSymbolBindings paramBindings
-    newEnv = addReturn (mergeEnv env paramEnv) Nothing
+    newEnv = addReturn (fst $ mergeEnv env paramEnv) Nothing
     -- Annotate the body with the new environment.
     bodyAnn = annRoutBody newEnv body
     -- Get the body errors.

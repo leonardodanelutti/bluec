@@ -1,0 +1,24 @@
+-- This example should have two error.
+--
+-- What does this example test:
+-- - The detection of doubly defined routines (in the same environment).
+routines
+    main() is
+    routines
+        -- Foo is already defined in this environment at an outer level.
+        foo -> Boolean is do return true; end foo
+        bar -> Boolean is do return true; end bar
+    do
+        return;
+    end main
+
+    foo() is do main(); return; end foo
+
+    -- Main is already defined in this environment at this level.
+    main() is
+    routines
+        -- Bar is not already defined in this environment.
+        bar -> Boolean is do return false; end bar
+    do
+        return;
+    end main
