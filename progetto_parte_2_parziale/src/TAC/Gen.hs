@@ -700,61 +700,61 @@ genRoutineBody (AS.RoutBody decls stmts _) post = do
 -- GENERATION OF STATEMENTS
 
 genStmt :: AS.Statement SS.Ann -> Instructions -> StateMonad ()
-genStmt stmt post = case stmt of
-    AS.StmtAss left right _ _ ->
-        -- Evaluate the first left expression, then the first right expression
-        -- then the seconds left expression and so on
-        mapM_ genAssign (zip left right)
-    AS.StmtRoutCall call ann -> if isFunction ann then
-            do
-                k <- newTmp
-                void $ genFunCall call ann k
-        else
-            genProcCall call ann
-    AS.StmtReturn val _ _-> do
-        addr <- genExprTmp val
-        -- Generate post-amble
-        unless (null post) $ out (Comment "Start of post-amble")
-        mapM_ outLabeled post
-        out (Return addr)
-    AS.StmtReturnEmpty _ _-> do
-        -- Generate post-amble
-        unless (null post) $ out (Comment "Start of post-amble")
-        mapM_ outLabeled post
-        out ReturnEmpty
-    AS.StmtLoop body exit _ _ -> do
-        newLoop
-        (loopStart, loopEnd) <- getLoopLabels
-        -- Generate first body
-        mapM_ (`genStmt` post) body
-        -- Generate the others (exit-condition, body) pairs
-        mapM_ (\(AS.LoopExit cond body _ _) -> do
-                genBoolExpIf cond (JumpTrue loopEnd)
-                mapM_ (`genStmt` post) body
-            ) exit
-        out (UnJump loopStart)
-        endLoop
-    AS.StmtContinue _ _ -> do
-        (loopStart, _) <- getLoopLabels
-        out (UnJump loopStart)
-    AS.StmtIf cond body _ _ -> do
-        endLabel <- newLabel
-        genBoolExpIf cond (JumpFalse endLabel)
-        mapM_ (`genStmt` post) body
-        attachToNext endLabel
-    AS.StmtIfElse cond bodyT bodyF _ _ -> do
-        elseLabel <- newLabel
-        endLabel <- newLabel
-        genBoolExpIf cond (JumpFalse elseLabel)
-        mapM_ (`genStmt` post) bodyT
-        out (UnJump endLabel)
-        attachToNext elseLabel
-        mapM_ (`genStmt` post) bodyF
-        attachToNext endLabel
+genStmt stmt post = do
+    -- don't generate unreachable code
+    when (SS.unreachable $ AS.annot stmt) (return ())
 
--- TODO: this is a temporary implementation, it should be replaced with a proper check
-isFunction :: SS.Ann -> Bool
-isFunction _ = False
+    case stmt of
+        AS.StmtAss left right _ _ ->
+            -- Evaluate the first left expression, then the first right expression
+            -- then the seconds left expression and so on
+            mapM_ genAssign (zip left right)
+        AS.StmtRoutCall call ann -> if fromJust $ SS.isFunction ann then
+                do
+                    k <- newTmp
+                    void $ genFunCall call ann k
+            else
+                genProcCall call ann
+        AS.StmtReturn val _ _-> do
+            addr <- genExprTmp val
+            -- Generate post-amble
+            unless (null post) $ out (Comment "Start of post-amble")
+            mapM_ outLabeled post
+            out (Return addr)
+        AS.StmtReturnEmpty _ _-> do
+            -- Generate post-amble
+            unless (null post) $ out (Comment "Start of post-amble")
+            mapM_ outLabeled post
+            out ReturnEmpty
+        AS.StmtLoop body exit _ _ -> do
+            newLoop
+            (loopStart, loopEnd) <- getLoopLabels
+            -- Generate first body
+            mapM_ (`genStmt` post) body
+            -- Generate the others (exit-condition, body) pairs
+            mapM_ (\(AS.LoopExit cond body _ _) -> do
+                    genBoolExpIf cond (JumpTrue loopEnd)
+                    mapM_ (`genStmt` post) body
+                ) exit
+            out (UnJump loopStart)
+            endLoop
+        AS.StmtContinue _ _ -> do
+            (loopStart, _) <- getLoopLabels
+            out (UnJump loopStart)
+        AS.StmtIf cond body _ _ -> do
+            endLabel <- newLabel
+            genBoolExpIf cond (JumpFalse endLabel)
+            mapM_ (`genStmt` post) body
+            attachToNext endLabel
+        AS.StmtIfElse cond bodyT bodyF _ _ -> do
+            elseLabel <- newLabel
+            endLabel <- newLabel
+            genBoolExpIf cond (JumpFalse elseLabel)
+            mapM_ (`genStmt` post) bodyT
+            out (UnJump endLabel)
+            attachToNext elseLabel
+            mapM_ (`genStmt` post) bodyF
+            attachToNext endLabel
 
 
 -- GENERATION OF ASSIGNMENTS
