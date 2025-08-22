@@ -216,7 +216,7 @@ annRoutBody env AS.RoutBody {
     declsAnn = annDecls env decls
     declEnv = bindings $ AS.declsAnnot declsAnn
     -- Annotate the statements with the environment of the declarations.
-    (stmtsAnn, alwaysExits, alwaysReturns) = annStmts declEnv stmts
+    (stmtsAnn, _, alwaysReturns) = annStmts declEnv stmts
     -- Errs from the declarations.
     declErrs = errs $ AS.declsAnnot declsAnn
     -- Errs from the statements.
@@ -226,6 +226,6 @@ annRoutBody env AS.RoutBody {
         errs = declErrs ++ stmtsErrs,
         -- Check if at least a statement always returns.
         alwaysReturn = alwaysReturns,
-        alwaysExits = alwaysExits,
+        canExit = False,
         unreachable = isUnreachable env
     }
