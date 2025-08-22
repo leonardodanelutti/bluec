@@ -140,7 +140,7 @@ annStmtReturn env AS.StmtReturn {
     -- Check if the return keyword is present.
     (returnType, returnErr) = case returnEntry of
         Just (Return (Just t)) -> (Just t, [])
-        Just (Return Nothing) -> (Nothing, [E.err pos "Procedures cannot return a value."]) -- TODO: forse non si capisce bene l'errore
+        Just (Return Nothing) -> (Nothing, [E.err pos "Procedures (i.e. routines without return value) cannot return a value."])
         _ -> (Nothing, [E.err pos "Return keyword is not permitted outside routines."])
     -- Cast the return value to the expected type.
     castedRet = case returnType of

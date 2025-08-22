@@ -253,7 +253,9 @@ $
 and \
 "mode" = "val" -> ("sup"(tau', tau) = tau and "env'" = "env") \
 and \
-"mode" != "val" -> (tau' = tau and "env'" = "env" union "\"LExp\"")
+"mode" != "val" -> (tau' = tau and "env'" = "env" union "\"LExp\"") \
+and
+"TODO: isNotConst"
 $
 
 *`SIGN`*
@@ -371,8 +373,6 @@ space space space space space space
 /
 ("env" ⊢""_E "Ref" { e = "exp" } : &tau)
 $
-
-FIXME: adesso le espressioni devono essere anche costanti per essere considerate LExp.
 
 *`DEREF`*
 
@@ -627,8 +627,7 @@ direttamente un puntatore a `Integer` ad un puntatore a `Real`.
 Nelle annotazioni delle espressioni un opportuno campo `ctVal` propaga finchè
 determinabile a tempo di analisi semantica statica il valore costante dell'espressione. In
 `blue` le costanti non possono essere array o reference, mentre sono permesse le reference
-a costanti (tramite l'introduzione di variabili temporanee nel TAC). FIXME: al momento per
-lo stesso problema sopra non si possono fare reference a costanti.
+a costanti (tramite l'introduzione di variabili temporanee nel TAC).
 
 == Altro che non so se è da dire
 - durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso

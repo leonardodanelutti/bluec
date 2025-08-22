@@ -51,7 +51,7 @@ cast env exp newType = case expType ann of
     oldType -> case T.sup pos oldType newType of
         err@T.TError {} -> AS.Cast { AS.e = exp, AS.expAnnot = ExpAnn { expType = err, ctVal = Nothing }, AS.expPos = pos }
         ty | ty == newType -> case (exp, valCast) of
-            (AS.Cast {}, _) -> exp { AS.expAnnot = castAnn' } -- Simplify cast chains. (FIXME: è giusto fare sta cosa?)
+            (AS.Cast {}, _) -> exp { AS.expAnnot = castAnn' } -- Simplify cast chains.
             _ -> AS.Cast { AS.e = exp, AS.expAnnot = castAnn', AS.expPos = pos }
         _ -> AS.Cast {
             AS.e = exp,

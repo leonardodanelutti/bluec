@@ -134,7 +134,6 @@ data Ann
     = ExpAnn {
         expType :: T.Type,
         ctVal :: Maybe CTValue
-        -- TODO: other fileds
     }
     | ExpFunCallAnn {
         expType :: T.Type,
