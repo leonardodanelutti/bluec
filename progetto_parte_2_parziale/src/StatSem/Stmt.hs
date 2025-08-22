@@ -299,7 +299,7 @@ annStmtLoop env AS.StmtLoop {
     -- Get the errors from the body.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Annotate the exit.
-    (annExit, exitAlwaysReturn) = annLoopExits env' exit
+    (annExit, exitCanExit, exitAlwaysReturn) = annLoopExits env' exit
     -- Get the errors from the exit.
     exitErrs = concatMap (errs . AS.loopExitAnnot) annExit
     -- Get only the reachable statements.
@@ -313,7 +313,7 @@ annStmtLoop env AS.StmtLoop {
     -- Create the annotation.
     ann = StmtAnn {
         errs = bodyErrs ++ exitErrs,
-        alwaysReturn = bodyAlwaysReturn || (exitAlwaysReturn && not bodyCanExit),
+        alwaysReturn = bodyAlwaysReturn || (exitAlwaysReturn && not bodyCanExit) || not (bodyCanExit || exitCanExit), -- Looping forever is admissible (so is considered as "returning")
         canExit = False,
         unreachable = isUnreachable env
     }
@@ -323,19 +323,20 @@ annStmtLoop _ _ = error "Unreachable: `annStmtLoop` called with non-`StmtLoop` e
 --
 -- Returns:
 -- - the annotated exit statements;
+-- - a bool indicating if the list can exit (even with a continue);
 -- - a bool indicating if the list always returns.
-annLoopExits :: Env -> [AS.Exit ()] -> ([AS.Exit Ann], Bool)
-annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, thisAlwaysReturn)
-    where thisAlwaysReturn = case xExits of
+annLoopExits :: Env -> [AS.Exit ()] -> ([AS.Exit Ann], Bool, Bool)
+annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, thisCanExit, thisAlwaysReturn)
+    where (thisCanExit, thisAlwaysReturn) = case xExits of
             -- If x can exit, then there is no guarantee that the next elements are
             -- reachable.
-            True -> False
+            True -> (True, False)
             -- If x cannot exit, the body is always reached. So the list in input always
             -- returns if the current exit does, or if the rest of the list does.
-            False -> alwaysReturn (AS.loopExitAnnot xAnn) || xsReturns
+            False -> (xsExits, alwaysReturn (AS.loopExitAnnot xAnn) || xsReturns)
           (xAnn, xExits, env') = annLoopExit env x
-          (xsAnn, xsReturns) = annLoopExits env' xs
-annLoopExits _ [] = ([], False) -- If there are no exits, the list never returns.
+          (xsAnn, xsExits, xsReturns) = annLoopExits env' xs
+annLoopExits _ [] = ([], False, False) -- If there are no exits, the list never returns and cannot exit.
 
 -- Annotate an exit statement.
 --
@@ -372,8 +373,8 @@ annLoopExit env AS.LoopExit {
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Determine if this statement always returns and can exits.
     (thisCanExit, thisAlwaysReturn) = case condCTVal of
-            Just (CTVBoolean v) -> ((not v) && bodyCanExit, (not v) && bodyAlwaysReturn)
-            Nothing -> (bodyCanExit, False)
+            Just (CTVBoolean v) -> (v || bodyCanExit, (not v) && bodyAlwaysReturn)
+            Nothing -> (True, False)
             _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {

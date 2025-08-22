@@ -160,7 +160,6 @@ annExpIdent env AS.ExpIdent {
             }
             ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
             expectedLExpErr = E.err pos "Left-hand side expression required, but found constant."
-        -- TODO: the case in which the ambiguity can be resolved by the type
         -- Ambiguous case.
         _ -> ExpIdentAnn {
             expType = T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ PP.identPrinter ident] },
@@ -508,7 +507,7 @@ annExpArrayIndex env AS.ArrayIndex {
         }
     ann = ExpAnn {
         expType = ty,
-        ctVal = Nothing -- Constants cannot be arrays. TODO: potremmo permettere che lo siano sostituendo i valori a compile time.
+        ctVal = Nothing -- Constants cannot be arrays.
     }
 annExpArrayIndex _ _ = error "Unreachable: `annExpArrayIndex` called with non-`ArrayIndex` expression."
 
@@ -530,7 +529,7 @@ annExpArray env AS.Array {
     elementTypes = map (expType . AS.expAnnot) annElements
     -- Get the super type of all the elements.
     supType = case elementTypes of
-        [] -> T.TError { T.msgs = [E.err pos "Cannot create an empty array."] } -- TODO: forse è meglio mettere non-empty direttamente nella grammatica?
+        [] -> T.TError { T.msgs = [E.err pos "Cannot create an empty array."] }
         t:ts -> foldr (T.sup pos) t ts
     castedElements = map (\e -> cast (doNotRequireLExp env) e supType) annElements -- Cast all elements to the super type.
     -- Create the annotation.
@@ -541,7 +540,7 @@ annExpArray env AS.Array {
                 T.elementsType = supType,
                 T.size = length elements
             },
-        ctVal = Nothing -- Constants cannot be arrays. TODO: potremmo permettere che lo siano sostituendo i valori a compile time.
+        ctVal = Nothing -- Constants cannot be arrays.
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann

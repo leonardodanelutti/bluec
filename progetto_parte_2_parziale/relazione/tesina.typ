@@ -192,8 +192,6 @@ il namespace è considerato come unico. Le eventuali ambiguità generano errori 
 gestite usando il contesto (in alcuni casi sono permesse solo left-hand side expression, e
 quindi non le chiamate a routine).
 
-TODO: gestirle usando il tipo. non lo facciamo ancora
-
 === Espressioni
 
 Di seguito le regole di annotazione delle espressioni. Si noti che i nodi interni
@@ -390,8 +388,6 @@ $
 
 Nell'accesso agli array l'indice è vincolato ad essere un tipo convertibile ad intero, e
 l'array dev'essere un'espressione di tipo left-hand side.
-
-FIXME: adesso per lo stesso bug di sopra dev'essere anche costante?
 
 $
 ("env'" ⊢""_E "exp" : "Array"<tau, n> and "env'" = "env" union "\"LExp\""
@@ -628,7 +624,11 @@ direttamente un puntatore a `Integer` ad un puntatore a `Real`.
     - left-hand side di assegnamenti e dichiarazioni (utile perchè le funzioni possono essere chiamate senza parentesi -> quindi il parser non da errore)
 
 == Costanti
-calcolo di valori costanti dove possibile
+Nelle annotazioni delle espressioni un opportuno campo `ctVal` propaga finchè
+determinabile a tempo di analisi semantica statica il valore costante dell'espressione. In
+`blue` le costanti non possono essere array o reference, mentre sono permesse le reference
+a costanti (tramite l'introduzione di variabili temporanee nel TAC). FIXME: al momento per
+lo stesso problema sopra non si possono fare reference a costanti.
 
 == Altro che non so se è da dire
 - durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso
