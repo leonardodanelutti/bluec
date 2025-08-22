@@ -79,17 +79,6 @@ par(
   Per lo stesso motivo è stato aggiunto un ";" anche nell'exit dei loop.
 
 
-= Cose da controllare durante l'analisi semantica statica
-
-- Controllo tipi
-- durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso (Si può fare anche nel parser)
-- Il numero di argomenti della funzione deve essere giusto
-- Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale
-- sostituire le costanti (da fare nel TAC?)
-- nelle call delle routine annotare la lista dei parametri coi tipi, modalità e nomi.
-- Controllare che nessuna costante sia a sinistra di un assegnamento O in un parametro ref o valres
-
-
 
 = Definizione del linguaggio: scelte di design e risoluzione dei conflitti
 Il linguaggio definito per questo progetto è un linguaggio di programmazione imperativo con scoping statico. La sua grammatica si basa sulla sintassi concreta del linguaggio Blue.
@@ -340,7 +329,23 @@ $
 
 === ArrayIndex
 
+$
+("env" ⊢""_E "exp" : "Array"<tau, n> and "isLExp(exp)"
+space space space space space space
+"env" ⊢""_E "idx" : tau' and "sup"(tau', "Integer") == "Integer")
+/
+("env" ⊢""_E "ArrayIndex" { e = "exp", "index" = "idx" } : tau)
+$
+
 === Array
+
+$
+(forall i = 1, ..., n ("env" ⊢""_E e_i : tau'_i)
+and
+tau_1 = tau'_1 and forall i = 2, ..., n  (tau_i = "sup"(tau_(i-1), tau'_i)))
+/
+("env" ⊢""_E "Array" { "elements" = [e_1, ..., e_n] } : "Array"<tau_n, n>)
+$
 
 SBAGLIATE
 $
@@ -353,7 +358,81 @@ $
 ("env" ⊢ e : "*"T) /("env" ⊢ "Deref" { "exp" = e } : T)
 $
 
+== Statements
+
+
 = Analisi Semantica Statica
+L'analisi semantica statica è implementato nel modulo `StatSem`. Più nello specifico è
+diviso in 4 sotto-moduli: `Exp`, `Decl` e `Stmt` rispettivamente responsabili
+dell'annotazione delle espressioni, delle dichiarazione e degli statement, e `Utils` in
+cui sono definite utility e tipi di dato usati in tutto il modulo, tra cui le annotazioni,
+l'environment ed il casting.
+
+== Type-checker
+Annotazione che segue il type system definito sopra.
+
+== Errori
+
+=== Propagazione degli errori
+- Espressioni con errori hanno il tipo `TError`. Un espressione ha questo tipo se:
+    - c'è un errore nell'annotazione di quell'espressione. Quindi si crea un nuovo errore
+      con un messaggio di errore opportuno;
+    - c'è un errore in una sotto espressione. In questo caso si propaga l'errore. Nel caso
+      di nodi con sottoespressioni di tipo `TError` > 1, tutti gli errori vengono
+      propagati (per questo il tipo `TError` ha una lista di `String`).
+- Statement e dichiarazioni non hanno tipo. Per questto motivo nelle loro annotazioni c'è
+  un campo `errs :: [String]` contenente gli errori generati durante l'annotazione del
+  nodo in questione e dei sotto-nodi (possibilmente delle espressioni).
+
+=== Routine parziali
+In `blue` la definizione di routine parziali è vietata dal modulo di analisi semantica
+statica. In particolare viene controllato che per ogni flusso di esecuzione del `body`
+delle routine ci sia un `return _`.
+
+A tal fine è presente un campo `alwaysReturn :: Bool` nelle annotazioni degli statement.
+Questo campo prende significato solo per statement annidati dentro funzioni, e, come
+suggerisce il nome:
+- è vero se ritorna per ogni esecuzione dello statement. Ad esempio:
+  ```
+  if true then
+    return 1;
+  end if
+  ```
+- è falso altrimenti. Ad esempio se `a` è una variabile booleana:
+  ```
+  if a then
+    return 1;
+  end if
+  ```
+Chiaramente il controllo è conservativo: nell'esempio sopra se `a` assume sempre valore
+`true` per qualunque esecuzione, non è possibile saperlo durante l'analisi semantica
+statica.
+
+L'annotazione di `alwaysReturn` procede dalle foglie fino alla radice dell'AST:
+- l'unica foglia con `alwaysReturn = true` è la keyword `return _`;
+- i nodi interni dell'AST sono annotati in base a come controllano il flusso di
+  esecuzione. TODO: magari è da scrivere nelle regole del type system
+
+Nelle annotazioni degli statement:
+- unreachable: vero se lo statement è irraggiungibile durante l'esecuzione
+- alwaysReturn: ha senso solo per gli statement dentro le procedure. è vero se lo
+  statement contiene sempre un return per ogni "flusso"
+- alwaysExits
+
+=== Dangling references
+Per evitarele si è vietato il return di reference.
+
+=== Presenza del main
+
+== Espressioni left-hand side
+
+- durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso (Si può fare anche nel parser)
+- Il numero di argomenti della funzione deve essere giusto
+- Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale
+- sostituire le costanti (da fare nel TAC?)
+- nelle call delle routine annotare la lista dei parametri coi tipi, modalità e nomi.
+- Controllare che nessuna costante sia a sinistra di un assegnamento O in un parametro ref o valres
+
 - type system sopra
 - calcolo di valori costanti dove possibile
 - propagazione degli errori (e come vengono evitati errori annidati)
