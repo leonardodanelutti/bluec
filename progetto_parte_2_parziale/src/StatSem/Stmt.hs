@@ -22,8 +22,7 @@ type AnnStmt = AS.Statement Ann
 -- - a bool indicating if it can exits;
 -- - a bool indicating if it always returns.
 annStmts :: Env -> [Stmt] -> ([AnnStmt], Bool, Bool)
--- Note that when we check if xsReturns we do not have to check whether x does not exit
--- because the only way it exits is with a return statement.
+-- TODO: unreachability
 annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || ((not xExits) && xsReturns))
     where (xsAnn, xsExits, xsReturns) = annStmts env xs
           xReturns = alwaysReturn (AS.annot xAnn)
@@ -200,8 +199,8 @@ annStmtContinue env AS.StmtContinue {
     -- Create the annotation.
     ann = StmtAnn {
         errs = continueErr,
-        alwaysReturn = False,
-        canExit = True,
+        alwaysReturn = True,
+        canExit = False,
         unreachable = isUnreachable env
     }
 annStmtContinue _ _ = error "Unreachable: `annStmtContinue` called with non-`StmtContinue` expression."
@@ -338,8 +337,8 @@ annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, thisAlwaysReturn)
             -- If x cannot exit, the body is always reached. So the list in input always
             -- returns if the current exit does, or if the rest of the list does.
             False -> alwaysReturn (AS.loopExitAnnot xAnn) || xsReturns
-          (xAnn, xExits) = annLoopExit env x
-          (xsAnn, xsReturns) = annLoopExits env xs
+          (xAnn, xExits, env') = annLoopExit env x
+          (xsAnn, xsReturns) = annLoopExits env' xs
 annLoopExits _ [] = ([], False) -- If there are no exits, the list never returns.
 
 -- Annotate an exit statement.
@@ -347,7 +346,8 @@ annLoopExits _ [] = ([], False) -- If there are no exits, the list never returns
 -- Returns:
 -- - the annotated exit statement;
 -- - a bool indicating if it can exit (even with a continue).
-annLoopExit :: Env -> AS.Exit () -> (AS.Exit Ann, Bool)
+-- - the environment (useful to propagate unreachability)
+annLoopExit :: Env -> AS.Exit () -> (AS.Exit Ann, Bool, Env)
 annLoopExit env AS.LoopExit {
     AS.loopCond = cond,
     AS.loopBody = body,
@@ -357,7 +357,7 @@ annLoopExit env AS.LoopExit {
     AS.loopBody = annBody,
     AS.loopExitAnnot = ann,
     AS.loopExitPos = pos
-}, thisCanExit) where
+}, thisCanExit, env') where
     -- Annotate the condition.
     annCond = SSE.annExp (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
