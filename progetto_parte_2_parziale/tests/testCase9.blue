@@ -1,4 +1,4 @@
--- This example have an error but ideally should have none.
+-- This example should have no errors.
 --
 -- What does this example test:
 -- - The return presence in every flow of control.
@@ -13,11 +13,8 @@ routines
             if e = 33
             then
                 -- Inserting a return here without any exit on the loop guarantees that
-                -- loops until it returns (potentially forever). The return presence Check
-                -- cannot detect this and returns an error. This is not a big deal because
-                -- it is just needed to add a uncomment the return at line 22.
+                -- loops until it returns (potentially forever).
                 return;
             end if
         end loop
-        -- return;
 	end main

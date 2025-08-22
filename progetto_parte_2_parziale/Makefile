@@ -82,7 +82,7 @@ demo: bluec
 		./bluec tests/testCase8.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo8_output.txt
 	@{ \
-		echo "example 9: testing the limit of checking presence of the return statement in every flow of control"; \
+		echo "example 9: testing the checking of the presence of the return statement in every flow of control"; \
 		echo ""; \
 		./bluec tests/testCase9.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo9_output.txt

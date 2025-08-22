@@ -1,5 +1,35 @@
-example 9: testing the limit of checking presence of the return statement in every flow of control
+example 9: testing the checking of the presence of the return statement in every flow of control
 
 
-Static Semantics Analysis Failed:
-tests/testCase9.blue:7:5-23:17: ERROR: The procedure "main" does not contain a return statement for every flow of control.
+[Pretty-Print of source]
+
+routines
+	main() is
+	var
+		e : Real := 33;
+	do
+		loop
+			e := readReal();
+		if (e = 33) then
+			return;
+		end if
+		end loop
+	end
+	main
+
+
+
+[Generated TAC]
+
+
+EntryPoint:
+      pcall main, 0
+      END_PROGRAM
+
+main@7:5:
+      e@9:9 =(float) 33.0
+L0:   e@9:9 =(float) fcall readReal@0:0, 0
+      if e@9:9 !=(float) 33.0 goto L2
+      return
+L2:   goto L0
+

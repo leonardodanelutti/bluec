@@ -60,11 +60,10 @@ annStmtAss env AS.StmtAss {
     numberErr = if length left /= length right
                 then [E.err pos "The number of identifiers does not match number of values."]
                 else []
-    -- Check whether the left expressions aren't constants.
-    leftConstErr = concat $ map (\a -> case getCTValue (AS.expAnnot a) of -- TODO: is this enough to be sure that the left is not a constant?
+    -- Check whether the left expressions are constants.
+    leftConstErr = concat $ map (\a -> case getCTValue (AS.expAnnot a) of
         Just _ -> [E.err (AS.expPos a) "Cannot assign a value to a constant. Suggested fix: make " ++ PP.expPrinter a ++ " a variable."]
         _ -> []) annLeft
-    -- TODO: check that the left is a LExp? Forse è sufficiente checkare che non abbia valore costante perchè tanto si preoccupa il parser di controllare che sia una LExp?
     -- Get expected types from the left expressions.
     leftTypes = map (expType . AS.expAnnot) annLeft
     -- Cast the right expressions to the expected types (when the expected type are non-errors).
