@@ -32,7 +32,7 @@ castAddressToProgramName _ = error "Expected a ProgramName address"
 
 -- Possible kinds of coercions
 data Coercion
-    = BoolToInt
+    = IntToBool
     | IntToDouble
     | CharToInt
 

@@ -182,7 +182,7 @@ genUnknownExpr exp addrIn = do
             let oldType = SS.expType $ AS.expAnnot e
                 newType = SS.expType ann
                 cast = case (oldType, newType) of
-                    (T.TBoolean, T.TInteger) -> BoolToInt
+                    (T.TInteger, T.TBoolean) -> IntToBool
                     (T.TInteger, T.TReal)    -> IntToDouble
                     (T.TChar, T.TInteger)    -> CharToInt
                     _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType

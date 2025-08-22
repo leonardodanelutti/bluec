@@ -106,7 +106,7 @@ instance Show UnaryOp where
     show (Coer c) = show c
 
 instance Show Coercion where
-    show BoolToInt = "boolToInt"
+    show IntToBool = "intToBool"
     show IntToDouble = "intToDouble"
     show CharToInt = "charToInt"
 
