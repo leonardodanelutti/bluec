@@ -373,7 +373,7 @@ annExpNot env AS.BoolNeg {
 } where
     -- Call recursive annotation.
     annE = annExp (doNotRequireLExp env) e
-    -- Cast both expressions to the expected type (TBoolean).
+    -- Cast the expression to the expected type (TBoolean).
     castedE = cast (doNotRequireLExp env) annE T.TBoolean
     castedTypeE = expType $ AS.expAnnot castedE
     castedValE = getCTValue $ AS.expAnnot castedE

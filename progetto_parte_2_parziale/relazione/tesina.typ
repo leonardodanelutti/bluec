@@ -181,7 +181,25 @@ Per definire il tipo di ogni nodo dell'albero di sintassi astratta, sono state d
 
 Di seguito sono riportate le regole formali utilizzate per definire tali tipi.
 
+L'environemnt, oltre al suo normale scopo, viene usato paer propagare la necessità che
+un'espressione sia di tipo left-hand side. Nelle regole viene omesso, ma tutte le
+espressioni non-left-hand side tornano un errore se nel loro environment è presente la
+keyword `LExp`.
+
+Inoltre, come spiegato nel paragrafo @ty-check_env, nell'environemnt i namespace di
+simboli e routine sono separati. Per semplicità di scrittura nelle regole del type-system
+il namespace è considerato come unico. Le eventuali ambiguità generano errori o sono
+gestite usando il contesto (in alcuni casi sono permesse solo left-hand side expression, e
+quindi non le chiamate a routine).
+
+TODO: gestirle usando il tipo. non lo facciamo ancora
+
 === Espressioni
+
+Di seguito le regole di annotazione delle espressioni. Si noti che i nodi interni
+propagano sempre gli errori senza greare "tipi composti da errori" per evitare errori
+annidati indotti da errori precedenti. Per semplicità di notazione tale processo è omesso
+nelle seguenti regole.
 
 *`LITERAL`*
 
@@ -209,14 +227,7 @@ Anche gli ident sono foglie dell'AST. Possono essere:
 - variabili;
 - costanti;
 - chiamate a funzioni senza parametri.
-In tutti i casi assumono il tipo associato al loro nome nell'ambiente. Come spiegato nel
-paragrafo @ty-check_env, i namespace di simboli e routine sono separati. Per semplicità di
-scrittura nelle regole del type-system il namespace è considerato come unico.
-
-Le eventuali ambiguità generano errori o sono gestite usando il contesto (in alcuni casi
-sono permesse solo left-hand side expression, e quindi non le chiamate a routine).
-
-TODO: gestirle usando il tipo. non lo facciamo ancora
+In tutti i casi assumono il tipo associato al loro nome nell'ambiente.
 
 $
 space/ ("env" ⊢""_E "ExpIdent" { "name" = id } : "env"(id))
@@ -225,60 +236,108 @@ $
 *`FUNCALL`*
 
 Le chiamate di funzione prendono il tipo dall'environment. Gli argomenti supportano il
-casting implicito solo se passati per valore.
+casting implicito solo se passati per valore. Inoltre se usano un metodo di passaggio
+diverso da quello per valore devono essere espressioni left-hand side non costanti.
 
 $
 ("env"(id) : "mode"_1 tau_1 times ... times "mode"_n tau_n ⊢""_E tau
 space space space space space space
-forall i = 1, ..., n ("env" ⊢""_E e_i : tau'_i) and ("mode"_i == "val" -> "sup"(tau'_i, tau_i) == tau_i) and ("mode"_i == "val" -> tau'_i == tau_i))
+forall i = 1, ..., n "checkArg"("env", e_i, tau'_i, tau_i, "mode"_i))
 /
 ("env" ⊢""_E "FunCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } : "env"(id))
 $
 
-Chiamate di funzione con mdalità di passaggio per reference o valore-risultato (senza casting):
+dove:
 $
-("env"(id) : mu_1 tau_1 x ... x mu_n tau_n ⊢""_E tau
-space space space space space space
-forall i = 1, ..., n ("env" ⊢""_E e_i : tau_i))
-/
-("env" ⊢""_E "FunCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } : "env"(id))
+"checkArg"("env", e, tau', tau, "mode") \
+= \
+"env'" ⊢""_E e : tau' \
+and \
+"mode" = "val" -> ("sup"(tau', tau) = tau and "env'" = "env") \
+and \
+"mode" != "val" -> (tau' = tau and "env'" = "env" union "\"LExp\"")
 $
 
 *`SIGN`*
 
-In ordine la prima che matcha:
+Il segno prevede un'espressione numerica: un Integer o un Real. Siccome
+`sup(Integer, Real) = Real` (come definito in @sup), si prova prima a convertire `e` ad
+`Integer`:
 
 $
 ("env" ⊢""_E "exp" : tau'
 space space space space space space
-"sup"(tau', "Integer") == "Integer")
+"sup"(tau', "Integer") = "Integer")
 /
 ("env" ⊢""_E "Sign" { e = "exp" } : "Integer")
 $
 
+Se `sup(tau', Integer) != Integer` si prova a convertire `e` a `Real`:
+
 $
 ("env" ⊢""_E "exp" : tau'
 space space space space space space
-"sup"(tau', "Real") == "Real")
+"sup"(tau', "Real") = "Real" and "sup"(tau', "Integer") != "Integer")
 /
 ("env" ⊢""_E "Sign" { e = "exp" } : "Real")
 $
 
-altrimenti errore.
-
 *`BINOP`*
 
-$
-("env" ⊢""_E e_1 : tau_1 and sup(tau_1, "Boolean") == "Boolean"
-space space space space space space
-"env" ⊢""_E e_2 : tau_2 and sup(tau_2, "Boolean") == "Boolean")
-/
-("env" ⊢""_E "BinOp" { "binOp" = "AND", "e1" = e_1, "e2" = e_2 } : "Boolean")
-$
-
-TODO: le altre binop sono simili
+Le operazioni binarie supportate da `blue` si dividono in 4 categorie:
+- le operazioni booleane:
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Boolean") = "Boolean"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "AND", "e1" = e_1, "e2" = e_2 } : "Boolean")
+  $
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Boolean") = "Boolean"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "OR", "e1" = e_1, "e2" = e_2 } : "Boolean")
+  $
+- le operazioni aritmetiche intere:
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Integer") = "Integer"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "DIVINT", "e1" = e_1, "e2" = e_2 } : "Integer")
+  $
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Integer") = "Integer"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "MOD", "e1" = e_1, "e2" = e_2 } : "Integer")
+  $
+- le operazioni aritmetiche reali:
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Real") = "Real"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "DIV", "e1" = e_1, "e2" = e_2 } : "Real")
+  $
+- le operazioni aritmetiche intere e reali:
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Real") = "Real"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "ADD", "e1" = e_1, "e2" = e_2 } : sup(sup(tau_1, tau_2), "Integer"))
+  $
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Real") = "Real"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "SUB", "e1" = e_1, "e2" = e_2 } : sup(sup(tau_1, tau_2), "Integer"))
+  $
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Real") = "Real"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "MUL", "e1" = e_1, "e2" = e_2 } : sup(sup(tau_1, tau_2), "Integer"))
+  $
+  $
+  (forall i = 1,2 ("env" ⊢""_E e_i : tau_i and sup(tau_i, "Real") = "Real"))
+  /
+  ("env" ⊢""_E "BinOp" { "binOp" = "POW", "e1" = e_1, "e2" = e_2 } : sup(sup(tau_1, tau_2), "Integer"))
+  $
 
 *`BOOLNEG`*
+
+La negazione prevede un'espressione booleana:
 
 $
 ("env" ⊢""_E "exp" : tau
@@ -290,50 +349,63 @@ $
 
 *`RELOP`*
 
+Le operazioni relazioni supportate sono quelle di uguaglianza e di confronto. Sono
+supportate da tutti i tipi, purchè convertibili allo stesso supertipo.
+
 $
 ("env" ⊢""_E e_1 : tau_1
 space space space space space space
 "env" ⊢""_E e_2 : tau_2
 space space space space space space
-sup(tau_1, tau_2) == tau)
+sup(tau_1, tau_2) = tau)
 /
 ("env" ⊢""_E "RelOp" { "e1" = e_1, "e2" = e_2 } : tau)
 $
 
 *`REF`*
 
+È consentito creare reference soltanto di espressioni di tipo left-hand side.
+
 $
-("env" ⊢""_E "exp" : tau
+("env'" ⊢""_E "exp" : tau
 space space space space space space
-"isLExp"(exp))
+"env'" = "env" union "\"LExp\"")
 /
 ("env" ⊢""_E "Ref" { e = "exp" } : &tau)
 $
 
-TODO: è giusto me chiamata a funzioni
-- va scritto come funziona
-ttere isLExp? Se sì:
-- va aggiunto nella
+FIXME: adesso le espressioni devono essere anche costanti per essere considerate LExp.
 
 *`DEREF`*
 
+Nei nodi dereference si controlla che l'espressione dereferenziata sia di tipo $\&tau$.
+
 $
-("env" ⊢""_E "exp" : &tau)
+("env" ⊢""_E "exp" : \&tau)
 /
 ("env" ⊢""_E "Deref" { e = "exp" } : tau)
 $
 
 *`ARRAYINDEX`*
 
+Nell'accesso agli array l'indice è vincolato ad essere un tipo convertibile ad intero, e
+l'array dev'essere un'espressione di tipo left-hand side.
+
+FIXME: adesso per lo stesso bug di sopra dev'essere anche costante?
+
 $
-("env" ⊢""_E "exp" : "Array"<tau, n> and "isLExp(exp)"
+("env'" ⊢""_E "exp" : "Array"<tau, n> and "env'" = "env" union "\"LExp\""
 space space space space space space
-"env" ⊢""_E "idx" : tau' and "sup"(tau', "Integer") == "Integer")
+"env" ⊢""_E "idx" : tau' and "sup"(tau', "Integer") = "Integer")
 /
 ("env" ⊢""_E "ArrayIndex" { e = "exp", "index" = "idx" } : tau)
 $
 
 *`ARRAY`*
+
+Per creare un nodo array tutti gli elementi dell'array devono avere tipi compatibili tra
+loro. Il tipo finale contine la grandezza dell'array ed il least common ancestor tra tutti
+gli elementi.
 
 $
 (forall i = 1, ..., n ("env" ⊢""_E e_i : tau'_i)
@@ -343,6 +415,7 @@ tau_1 = tau'_1 and forall i = 2, ..., n  (tau_i = "sup"(tau_(i-1), tau'_i)))
 ("env" ⊢""_E "Array" { "elements" = [e_1, ..., e_n] } : "Array"<tau_n, n>)
 $
 
+/*
 SBAGLIATE
 $
 ("env" ⊢ e : "BOOL")/("env" ⊢ "Not" { "exp" = e } : "BOOL")
@@ -353,6 +426,7 @@ $
 $
 ("env" ⊢ e : "*"T) /("env" ⊢ "Deref" { "exp" = e } : T)
 $
+*/
 
 == Statements
 
