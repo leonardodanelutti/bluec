@@ -1,0 +1,18 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - tries compatibility between bool and integer
+
+var
+    s: Boolean := true;
+    c: Integer := 2;
+
+routines
+    main() is
+        var
+            x: Integer := s + c;
+        do
+            
+            return;
+        end
+    main

@@ -42,6 +42,18 @@ sup :: LG.Posn -> Type -> Type -> Type
 sup _ t1 t2 | t1 == t2 = t1
 sup _ TInteger TReal = TReal
 sup _ TReal TInteger = TReal
+sup _ TBoolean TInteger = TInteger
+sup _ TInteger TBoolean = TInteger
+sup _ TChar TInteger = TInteger
+sup _ TInteger TChar = TInteger
+
+--SERVE?
+sup _ TBoolean TReal = TReal
+sup _ TReal TBoolean = TReal
+sup _ TChar TReal = TReal
+sup _ TReal TChar = TReal
+
+
 -- TODO: implement the supertype relation
 -- Error cases.
 sup _ TError { msgs = msgs1 } TError { msgs = msgs2 } = 

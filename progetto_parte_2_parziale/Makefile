@@ -136,6 +136,11 @@ demo: bluec
 		echo ""; \
 		./bluec tests/testCase19.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo19_output.txt
+	@{ \
+		echo "example 20: Types compatibility"; \
+		echo ""; \
+		./bluec tests/testCase20.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo20_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

@@ -1,0 +1,33 @@
+example 20: Types compatibility
+
+
+[Pretty-Print of source]
+
+var
+	s : Boolean := true;
+	c : Integer := 2;
+routines
+	main() is
+	var
+		x : Integer := (s + c);
+	do
+		return;
+	end
+	main
+
+
+
+[Generated TAC]
+
+
+EntryPoint:
+      s@7:5 =(bool) True
+      c@8:5 =(int) 2
+      pcall main, 0
+      END_PROGRAM
+
+main@11:5:
+      t0 =(int) boolToInt s@7:5
+      x@13:13 =(int) t0 +(int) c@8:5
+      return
+
