@@ -40,9 +40,9 @@ run :: Verbosity -> ParseFun (AS.Declarations ()) -> String -> Maybe FilePath ->
 run v p s f =
     case p ts of
         Left err -> do
-            putStrLn "\nParse              Failed...\n"
-            putStrV v "Tokens:"
-            mapM_ (putStrV v . showPosToken . mkPosToken) ts
+            putStrLn "\nParse failed.\n"
+            -- putStrV v "Tokens:"
+            -- mapM_ (putStrV v . showPosToken . mkPosToken) ts
             putStrLn err
             exitFailure
         Right tree -> do

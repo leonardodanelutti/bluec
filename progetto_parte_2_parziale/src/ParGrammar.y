@@ -454,11 +454,11 @@ mergeExpPos e1 e2 = mergePos (A.expPos e1) (A.expPos e2)
   
 happyError :: [Token] -> Err a
 happyError ts = Left $
-  "syntax error at " ++ tokenPos ts ++
+    "SYNTAX ERROR" ++
   case ts of
-    []      -> []
-    [Err _] -> " due to lexer error"
-    t:_     -> " before `" ++ (prToken t) ++ "'"
+    []      -> ": Unexpected end of file."
+    [Err _] -> " due to lexer error at " ++ (tokenPos ts) ++ "."
+    t:_     -> " before `" ++ (prToken t) ++ "' at " ++  (tokenPos ts) ++ "."
 
 myLexer :: String -> [Token]
 myLexer = tokens

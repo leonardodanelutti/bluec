@@ -10,7 +10,7 @@ var
 routines
     main() is
         var
-            x: Integer := s + c;
+            x: Boolean := s and c;
         do
             
             return;

@@ -9,7 +9,7 @@ var
 routines
 	main() is
 	var
-		x : Integer := (s + c);
+		x : Boolean := (s and c);
 	do
 		return;
 	end
@@ -19,15 +19,11 @@ routines
 
 [Generated TAC]
 
+bluec: Unsupported cast from Integer to Boolean
+CallStack (from HasCallStack):
+  error, called at src/TAC/Gen.hs:188:26 in main:TAC.Gen
+HasCallStack backtrace:
+  collectBacktraces, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:92:13 in ghc-internal:GHC.Internal.Exception
+  toExceptionWithBacktrace, called at libraries/ghc-internal/src/GHC/Internal/Exception.hs:128:3 in ghc-internal:GHC.Internal.Exception
 
-EntryPoint:
-      s@7:5 =(bool) True
-      c@8:5 =(int) 2
-      pcall main, 0
-      END_PROGRAM
-
-main@11:5:
-      t0 =(int) boolToInt s@7:5
-      x@13:13 =(int) t0 +(int) c@8:5
-      return
 

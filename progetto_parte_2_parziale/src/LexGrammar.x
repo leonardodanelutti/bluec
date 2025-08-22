@@ -113,7 +113,6 @@ data Token
 printPosn :: Posn -> String
 printPosn (Pn (PnS _ fL fC) (PnS _ lL lC)) 
   = "line " ++ show fL ++ ", column " ++ show fC
-    ++ " to line " ++ show lL ++ ", column " ++ show lC
 
 -- | Pretty print the position of the first token in the list.
 tokenPos :: [Token] -> String

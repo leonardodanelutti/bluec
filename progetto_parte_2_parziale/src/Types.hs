@@ -40,18 +40,21 @@ data TypePos = TypePos
 -- Supertype relation for automatic type casting.
 sup :: LG.Posn -> Type -> Type -> Type
 sup _ t1 t2 | t1 == t2 = t1
+-- Integer -> Real
 sup _ TInteger TReal = TReal
 sup _ TReal TInteger = TReal
-sup _ TBoolean TInteger = TInteger
-sup _ TInteger TBoolean = TInteger
+-- Integer -> Boolean
+sup _ TBoolean TInteger = TBoolean
+sup _ TInteger TBoolean = TBoolean
+-- Char -> Integer
 sup _ TChar TInteger = TInteger
 sup _ TInteger TChar = TInteger
-
---SERVE?
-sup _ TBoolean TReal = TReal
-sup _ TReal TBoolean = TReal
+-- Char -> Real
 sup _ TChar TReal = TReal
 sup _ TReal TChar = TReal
+-- Char -> Boolean
+sup _ TChar TBoolean = TBoolean
+sup _ TBoolean TChar = TBoolean
 
 
 -- TODO: implement the supertype relation

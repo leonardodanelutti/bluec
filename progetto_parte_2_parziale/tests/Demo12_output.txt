@@ -1,33 +1,6 @@
 example 12: testing annidated exit on
 
 
-Parse              Failed...
+Parse failed.
 
-Tokens:
-5:1	"routines"
-6:5	"main"
-6:9	"("
-6:10	")"
-6:12	"is"
-7:9	"do"
-8:9	"loop"
-9:13	"if"
-9:16	"e"
-9:18	"then"
-10:17	"return"
-10:23	";"
-11:13	"else"
-12:17	"exit"
-12:22	"on"
-12:25	"not"
-12:29	"e"
-12:30	";"
-13:17	"return"
-13:23	";"
-14:13	"end"
-14:17	"if"
-15:9	"end"
-15:13	"loop"
-16:9	"end"
-16:13	"main"
-syntax error at line 12, column 17 to line 12, column 21 before `exit'
+SYNTAX ERROR before `exit' at line 12, column 17.
