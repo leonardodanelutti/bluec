@@ -30,10 +30,6 @@ annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || ((not xExits
           xAnn = annStmt env x
 annStmts _ [] = ([], False, False)
 
--- From a list of annotated statements take only the first that are reachable.
-takeWhileReachable :: [AnnStmt] -> [AnnStmt]
-takeWhileReachable = takeWhile (not . unreachable . AS.annot)
-
 -- Annotate a statement node.
 annStmt :: Env -> Stmt -> AnnStmt
 annStmt env stmt@AS.StmtAss{} = annStmtAss env stmt

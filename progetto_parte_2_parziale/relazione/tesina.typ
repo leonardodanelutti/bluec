@@ -93,32 +93,6 @@ Sono inoltre supportati gli array che sono dichiarati utilizzando nel modo segue
 Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:
 #image("img/types.jpg", width: 100%)
 
-
-==== Expression
-
-===== Literal
-
-$
-space/ ("env" ⊢ "Literal" { "val" = "LitInt" {"intVal" = e} } : "INT")
-$
-$
-space/ ("env" ⊢ "Literal" { "val" = "LitChar" {"charVal" = e} } : "CHAR")
-$
-$
-space/ ("env" ⊢ "Literal" { "val" = "LitString" {"stringVal" = e} } : "STRING")
-$
-$
-space/ ("env" ⊢ "Literal" { "val" = "LitBool" {"boolVal" = e} } : "BOOL")
-$
-$
-space/ ("env" ⊢ "Literal" { "val" = "LitDouble" {"doubleVal" = e} } : "REAL")
-$
-
-===== Ident
-$
-space/ ("env" ⊢ "ExpIdent" { "name" = id } : "env"(id))
-$
-
 == Variabili
 Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo o di tipo array. Non è consentito dichiarare variabili senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
 == Costanti
@@ -207,9 +181,11 @@ Per definire il tipo di ogni nodo dell'albero di sintassi astratta, sono state d
 
 Di seguito sono riportate le regole formali utilizzate per definire tali tipi.
 
-=== Expression
+=== Espressioni
 
-=== Literal
+*`LITERAL`*
+
+I literal sono foglie dell'AST. Il loro tipo dipende solo dal tipo di nodo.
 
 $
 space/ ("env" ⊢""_E "Literal" { "val" = "LitInt" {"intVal" = e} } : "INT")
@@ -227,17 +203,34 @@ $
 space/ ("env" ⊢""_E "Literal" { "val" = "LitDouble" {"doubleVal" = e} } : "REAL")
 $
 
-=== Ident
+*`IDENT`*
+
+Anche gli ident sono foglie dell'AST. Possono essere:
+- variabili;
+- costanti;
+- chiamate a funzioni senza parametri.
+In tutti i casi assumono il tipo associato al loro nome nell'ambiente. Come spiegato nel
+paragrafo @ty-check_env, i namespace di simboli e routine sono separati. Per semplicità di
+scrittura nelle regole del type-system il namespace è considerato come unico.
+
+Le eventuali ambiguità generano errori o sono gestite usando il contesto (in alcuni casi
+sono permesse solo left-hand side expression, e quindi non le chiamate a routine).
+
+TODO: gestirle usando il tipo. non lo facciamo ancora
+
 $
 space/ ("env" ⊢""_E "ExpIdent" { "name" = id } : "env"(id))
 $
 
-=== FunCall
-Chiamate di funzione con mdalità di passaggio per valore (con casting):
+*`FUNCALL`*
+
+Le chiamate di funzione prendono il tipo dall'environment. Gli argomenti supportano il
+casting implicito solo se passati per valore.
+
 $
-("env"(id) : mu_1 tau_1 x ... x mu_n tau_n ⊢""_E tau
+("env"(id) : "mode"_1 tau_1 times ... times "mode"_n tau_n ⊢""_E tau
 space space space space space space
-forall i = 1, ..., n ("env" ⊢""_E e_i : tau'_i) and "sup"(tau'_i, tau_i) == tau_i)
+forall i = 1, ..., n ("env" ⊢""_E e_i : tau'_i) and ("mode"_i == "val" -> "sup"(tau'_i, tau_i) == tau_i) and ("mode"_i == "val" -> tau'_i == tau_i))
 /
 ("env" ⊢""_E "FunCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } : "env"(id))
 $
@@ -251,7 +244,7 @@ forall i = 1, ..., n ("env" ⊢""_E e_i : tau_i))
 ("env" ⊢""_E "FunCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } : "env"(id))
 $
 
-=== Sign
+*`SIGN`*
 
 In ordine la prima che matcha:
 
@@ -273,7 +266,7 @@ $
 
 altrimenti errore.
 
-=== BinOp
+*`BINOP`*
 
 $
 ("env" ⊢""_E e_1 : tau_1 and sup(tau_1, "Boolean") == "Boolean"
@@ -285,7 +278,7 @@ $
 
 TODO: le altre binop sono simili
 
-=== BoolNeg
+*`BOOLNEG`*
 
 $
 ("env" ⊢""_E "exp" : tau
@@ -295,7 +288,7 @@ space space space space space space
 ("env" ⊢""_E "BoolNeg" { e = "exp" } : "Boolean")
 $
 
-=== RelOp
+*`RELOP`*
 
 $
 ("env" ⊢""_E e_1 : tau_1
@@ -307,7 +300,7 @@ sup(tau_1, tau_2) == tau)
 ("env" ⊢""_E "RelOp" { "e1" = e_1, "e2" = e_2 } : tau)
 $
 
-=== Ref
+*`REF`*
 
 $
 ("env" ⊢""_E "exp" : tau
@@ -321,7 +314,8 @@ TODO: è giusto me chiamata a funzioni
 - va scritto come funziona
 ttere isLExp? Se sì:
 - va aggiunto nella
-=== Deref
+
+*`DEREF`*
 
 $
 ("env" ⊢""_E "exp" : &tau)
@@ -329,7 +323,7 @@ $
 ("env" ⊢""_E "Deref" { e = "exp" } : tau)
 $
 
-=== ArrayIndex
+*`ARRAYINDEX`*
 
 $
 ("env" ⊢""_E "exp" : "Array"<tau, n> and "isLExp(exp)"
@@ -339,7 +333,7 @@ space space space space space space
 ("env" ⊢""_E "ArrayIndex" { e = "exp", "index" = "idx" } : tau)
 $
 
-=== Array
+*`ARRAY`*
 
 $
 (forall i = 1, ..., n ("env" ⊢""_E e_i : tau'_i)
@@ -362,6 +356,87 @@ $
 
 == Statements
 
+*`STMTASS`*
+
+Negli assegnamenti viene controllato che:
+- l'espressione a sinistra sia un'espressione left-hand side;
+- l'espressione a destra possa essere convertita al tipo dell'espressione a sinistra.
+
+$
+("env" ⊢""_S l : tau_l and "isLExp"(l) and "isNotConst"(l)
+space space space space space space
+"env" ⊢""_S r : tau_r
+space space space space space space
+"sup"(tau_l, tau_r) == tau_l)
+/
+("env" ⊢""_S "StmtAss" { "left" = l , "right" = r } : nothing)
+$
+
+*`STMTROUTCALL`*
+
+TODO: finire
+
+$
+()
+/
+("env" ⊢""_S "StmtRoutCall" { "call" = "RoutineCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } } : nothing)
+$
+
+*`STMTRETRUN`* e *`STMTRETRUNEMPTY`*
+
+Per la keyword `return` si controlla il tipo (se presente) che ha nell'environment.
+
+$
+("env" ⊢""_E e : tau and sup(tau, "env"("return")) == "env"("return"))
+/
+("env" ⊢""_S "StmtReturn" { "valReturn" = e } : nothing)
+$
+
+$
+space
+("env"("return") : nothing)
+/
+("env" ⊢""_S "StmtReturnEmpty" { } : nothing)
+$
+
+*`STMTCONTINUE`*
+
+Per la keyword `continue` si controlla che sia presente nell'environment.
+
+$
+space
+("env"("continue") : nothing)
+/
+("env" ⊢""_S "annStmtContinue" { } : nothing)
+$
+
+*`STMTIF`* e *`STMTIFELSE`*
+
+$
+space
+("env" ⊢""_E e : tau and "sup"(tau, "Boolean") == "Boolean") "TODO: va aggiunto per s_1, s_n?"
+/
+("env" ⊢""_S "StmtIf" { "cond" = e, "body" = [s_1, ..., s_n] } : nothing)
+$
+
+$
+space
+("env" ⊢""_E e : tau and "sup"(tau, "Boolean") == "Boolean") "TODO: va aggiunto per s_t1, s_tn e s_f1, s_fn?"
+/
+("env" ⊢""_S "StmtIfElse" { "cond" = e, "bodyT" = [s_"t1", ..., s_"tn"] "bodyT" = [s_"f1", ..., s_"fn"] } : nothing)
+$
+
+*`STMTLOOP`* and *`STMTLOOPEXIT`*
+
+== Dichiarazioni
+
+*`PROGRAMDECL`*
+
+*`CONSTASS`*
+
+*`VARASS`*
+
+*`FUNCTION`* e *`PROCEDURE`* e *`ROUTBODY`*
 
 = Analisi Semantica Statica
 L'analisi semantica statica è implementata nel modulo `StatSem`. Più nello specifico è
@@ -370,7 +445,7 @@ dell'annotazione delle espressioni, delle dichiarazione e degli statement, e `Ut
 cui sono definite utility e tipi di dato usati in tutto il modulo, tra cui le annotazioni,
 l'environment ed il casting.
 
-== Type-checker ed environment
+== Type-checker ed environment <ty-check_env>
 L'annotazione dei tipi delle espressioni segue le regole del type system definito sopra.
 
 Per poter annotare correttamente i tipi viene propagato un environment a partire dal nodo
