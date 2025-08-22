@@ -197,7 +197,9 @@ Il parser è stato modificato in modo da utilizzare la sintassi astratta da noi 
 = Definizione del Type system
 == Gerargia dei tipi
 Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:\ \
-#image("img/types.jpg", width: 100%, )
+#figure(
+    image("img/types.jpg", width: 100%, ),
+    caption: "Gerarchia dei tipi.")<sup>
 
 == Regole formali per il type system
 Per definire il tipo di ogni nodo dell'albero di sintassi astratta, sono state definite delle regole formali. Queste regole sono utilizzate per determinare il tipo di espressioni, letterali e identificatori, in base all'ambiente corrente e ai tipi associati.
@@ -362,27 +364,49 @@ $
 
 
 = Analisi Semantica Statica
-L'analisi semantica statica è implementato nel modulo `StatSem`. Più nello specifico è
+L'analisi semantica statica è implementata nel modulo `StatSem`. Più nello specifico è
 diviso in 4 sotto-moduli: `Exp`, `Decl` e `Stmt` rispettivamente responsabili
 dell'annotazione delle espressioni, delle dichiarazione e degli statement, e `Utils` in
 cui sono definite utility e tipi di dato usati in tutto il modulo, tra cui le annotazioni,
 l'environment ed il casting.
 
-== Type-checker
-Annotazione che segue il type system definito sopra.
+== Type-checker ed environment
+L'annotazione dei tipi delle espressioni segue le regole del type system definito sopra.
+
+Per poter annotare correttamente i tipi viene propagato un environment a partire dal nodo
+radice alle foglie (al contrario rispetto a come procede l'annotazione). Il namespace tra
+routine e simboli (variabili e costanti) è separato. Questo talvolta causa possibili
+problemi di ambiguità perchè le routine senza parametri possono essere chiamate anche
+senza `()` (scrivere `main` è zucchero sintattico per `main()`) come nella sintassi
+concreta di `blue`.
+
+Inoltre è stato aggiunto il namespace `keyword` in cui, oltre a segnalare la possibilità
+di usare le keyword `return` e `continue`, si può richiedere che l'espressione sia di tipo
+left-hand side. Quindi quando un nodo viene annotato controlla nel proprio ambiente la
+necessità o meno di essere un'espressione left-hand side.
+
+L'ambiente iniziale in cui è eseguito il programma contiene le funzioni predefinite.
+
+TODO: merge di environemnt (probabilmente da mettere nel type system).
 
 == Errori
+Il modulo di analisi semantica statica gestisce tutti gli errori a compile-time e
+garantisce al modulo di generazione del codice TAC un AST privo di errori.
 
 === Propagazione degli errori
-- Espressioni con errori hanno il tipo `TError`. Un espressione ha questo tipo se:
+Gli errori vengono propagati fino alla radice dell'AST. Se la radice non è priva di errori
+il codice non viene tradotto in TAC. Gli errori sono gestiti in due modi diversi in base
+al tipo di nodo:
+- le espressioni che presentano errori hanno il tipo `TError`. In particolare può capitare
+  che un'espressione abbia questo tipo in due casi:
     - c'è un errore nell'annotazione di quell'espressione. Quindi si crea un nuovo errore
       con un messaggio di errore opportuno;
-    - c'è un errore in una sotto espressione. In questo caso si propaga l'errore. Nel caso
-      di nodi con sottoespressioni di tipo `TError` > 1, tutti gli errori vengono
-      propagati (per questo il tipo `TError` ha una lista di `String`).
-- Statement e dichiarazioni non hanno tipo. Per questto motivo nelle loro annotazioni c'è
-  un campo `errs :: [String]` contenente gli errori generati durante l'annotazione del
-  nodo in questione e dei sotto-nodi (possibilmente delle espressioni).
+    - c'è un errore in una o più sotto-espressioni. In questo caso si propagano gli errori
+      (per questo il tipo `TError` ha una lista di `String`).
+  TODO: dire come vengono evitati gli errori annidati indotti?
+- gli statement e le dichiarazioni non hanno tipo. Per questto motivo nelle loro
+  annotazioni c'è un campo `errs :: [String]` contenente gli errori generati durante
+  l'annotazione del nodo in questione e dei sotto-nodi.
 
 === Routine parziali
 In `blue` la definizione di routine parziali è vietata dal modulo di analisi semantica
@@ -409,38 +433,58 @@ Chiaramente il controllo è conservativo: nell'esempio sopra se `a` assume sempr
 statica.
 
 L'annotazione di `alwaysReturn` procede dalle foglie fino alla radice dell'AST:
-- l'unica foglia con `alwaysReturn = true` è la keyword `return _`;
+- le uniche foglie con `alwaysReturn = true` sono le keyword `return _` e `continue` (
+  quest'ultima perchè è permesso ciclare all'infinito senza ritornare);
 - i nodi interni dell'AST sono annotati in base a come controllano il flusso di
   esecuzione. TODO: magari è da scrivere nelle regole del type system
 
-Nelle annotazioni degli statement:
-- unreachable: vero se lo statement è irraggiungibile durante l'esecuzione
-- alwaysReturn: ha senso solo per gli statement dentro le procedure. è vero se lo
-  statement contiene sempre un return per ogni "flusso"
-- alwaysExits
+Per compilare correttamente il campo `alwaysReturn` è stato aggiunto un campo `canExit`.
+In generale questo campo è vero se lo statement può impedire l'esecuzione degli eventuali
+statement che lo seguono (allo stesso livello). Ci sono due "eccezioni":
+- il return ha `canExit = false` perchè ci interessano solo i flussi che non ritornano;
+- il continue ha `canExit = false` perchè, come specificato sopra, `continue` è
+  considerato come una foglia che ritorna.
+
+TODO: unreachable. Forse è meglio toglierlo
 
 === Dangling references
-Per evitarele si è vietato il return di reference.
+Per evitare puntatori pendenti a variabili deallocate si è deciso di vietare il return di
+reference.
 
 === Presenza del main
+'Blue' esegue la routine `main`. In particolare dev'essere una procedura senza parametri
+in input. Se tale routine non è presente nella dichiarazione più esterna del programma,
+viene ritornato un opportuno errore.
+
+== Casting
+In `blue` è permesso il casting implicito. Il modulo di analisi semantica statica lo rende
+esplicito per la successiva traduzione in codice TAC.
+
+Per farlo è stata implementata una funzione di supertipo `sup` che, dati due tipi, ritorna
+il least common ancestor in @sup. Il casting da $tau$ a $tau'$ è supportato sse
+$"sup"(tau,tau') = tau'$. Tale regola vale dappertutto dove il casting è supportato (si
+noti che il casting non è supportato per le modalità di passaggio per riferimento e per
+value-result, in quanto richiedono delle espressioni di tipo left-hand side).
+
+Il casting delle costanti avviene durante l'analisi semantica statica per risparmiare
+tempo a run-time.
+
+Il casting non è esteso ai tipi composti: ad esempio non è possibile convertire
+direttamente un puntatore a `Integer` ad un puntatore a `Real`.
 
 == Espressioni left-hand side
-
-- durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso (Si può fare anche nel parser)
-- Il numero di argomenti della funzione deve essere giusto
-- Il numero di L-expr e il numero di tipi di ritorno nelle espressioni "x1, x2, .. = fun(p1, p2, ..)" deve essere uguale
-- sostituire le costanti (da fare nel TAC?)
-- nelle call delle routine annotare la lista dei parametri coi tipi, modalità e nomi.
-- Controllare che nessuna costante sia a sinistra di un assegnamento O in un parametro ref o valres
-
-- type system sopra
-- calcolo di valori costanti dove possibile
-- propagazione degli errori (e come vengono evitati errori annidati)
-- casting. vale solo al primo livello, i.e. non per tipi composti (tipo &Int non può essere castato a &Real)
 - distinzione LExp e RExp:
     - per le reference
     - i parametri passati con Ref e valres
     - left-hand side di assegnamenti e dichiarazioni (utile perchè le funzioni possono essere chiamate senza parentesi -> quindi il parser non da errore)
+
+== Costanti
+calcolo di valori costanti dove possibile
+
+== Altro che non so se è da dire
+- durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso
+- Il numero di argomenti della funzione deve essere giusto
+- Controllare che nessuna costante sia a sinistra di un assegnamento O in un parametro ref o valres
 
 = Generazione del Three Address Code (TAC)
 
