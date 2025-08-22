@@ -8,7 +8,7 @@ import Prelude
   ( ($), (.)
   , Either(..), Maybe(..)
   , Int, (>)
-  , String, (++), concat, unlines
+  , String, (++), unlines
   , Show, show
   , IO, (>>=), mapM_, putStrLn
   , FilePath
@@ -18,7 +18,7 @@ import System.Environment ( getArgs )
 import System.Exit        ( exitFailure )
 import Control.Monad      ( when, unless )
 
-import LexGrammar   ( Token, mkPosToken )
+import LexGrammar   ( Token)
 import ParGrammar   ( pDeclarations, myLexer )
 import PrettyPrinter  ( Print(..) )
 import qualified StatSem.Mod as SS
@@ -59,7 +59,6 @@ run v p s f =
             print (TAC.genProgram annTree)
     where
         ts = myLexer s
-        showPosToken ((l,c, _, _),t) = concat [ show l, ":", show c, "\t", show t ]
 
 showTree :: (Show a, Print a) => Int -> a -> IO ()
 showTree v tree = do
