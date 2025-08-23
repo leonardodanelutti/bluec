@@ -96,28 +96,61 @@ Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:
 #image("img/types.png", width: 100%)
 */
 
-== Variabili
-Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo o di tipo array. Non è consentito dichiarare variabili senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
 == Costanti
-Le costanti sono dichiarate con la keyword `const` e possono essere di tipo primitivo (non devono allocare spazio in memoria). Anche in questo caso non è consentito dichiarare costanti senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
+Le costanti sono dichiarate con la keyword `const` e possono essere solo di tipo primitivo (non devono allocare spazio in memoria). Anche in questo caso non è consentito dichiarare costanti senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
+
+```blue
+const
+	a, b : Integer := 0, 1;
+```
+
+== Variabili
+Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo, di tipo array o di tipo reference. Non è consentito dichiarare variabili senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
+
+```blue
+var
+	c : Real := 1.0;
+```
 
 == Loop
 Per il nostro linguaggio sono previste le forme di iterazione non determinata `while-do` e `do-while`. Entrambe le strutture sono naturalmente implementate dall'elemento `loop-exit on` della sintassi concreta di Blue.
 
+```blue
+-- Simulazione di while-do
+loop
+    exit on _;
+    _
+end loop
+
+-- Simulazione di do-while
+loop
+    _
+    exit on _;
+end loop
+```
+
 == Condizionali
 Il linguaggio immplementa le strutture condizionali semplici `if-then` e `if-then-else`, che permettono di eseguire blocchi di codice in base a condizioni specifiche.
 
-== Routine
-Le routine comprendono sia funzioni che procedure. Una funzione senza parametri può essere invocata sia con la sintassi completa `function()` sia in forma abbreviata `function`, che è semplicemente zucchero sintattico per la prima. Rispetto alla sintassi concreta del linguaggio Blue, sono rimosse pre e post-condizioni; inoltre i parametri di ritorno non vengono nominati esplicitamente nella dichiarazione: si specificano solamente i tipi restituiti mediante la notazione `-> Type`. Si nota che non è possibile restituire tuple. Per gestire il ritorno esplicito dei valori, è stato introdotto il costrutto `return`.
-Le dichiarazioni di funzioni, in ogni ambiente, devono essere precedute dalla keyword `routines`, in modo simile a quanto avviene in Blue per le dichiarazioni delle routine nelle classi. Questo è necessario per evitare ambiguità, come nel seguente esempio:
-  ``` Blue
-  var
-    a: Integer := b
-  main ...
-  ```
-  dove `main` potrebbe rappresentare sia il nome di una funzione che il nome di una variabile.
+```blue
+if _ then
+    _
+else
+    _
+end if
+```
 
-Quando si invoca una funzione è possibile specificare la modalità di passaggio dei parametri in ingresso (`val` , `valres` e `ref`).
+== Routine
+Le routine comprendono sia funzioni che procedure. Una funzione senza parametri può essere invocata sia con la sintassi completa `function()` sia in forma abbreviata `function`, che è semplicemente zucchero sintattico per la prima. Rispetto alla sintassi concreta del linguaggio Blue, sono rimosse pre e post-condizioni; inoltre i parametri di ritorno non vengono nominati esplicitamente nella dichiarazione: si specificano solamente i tipi restituiti mediante la notazione `-> Type`. Si noti che non è possibile restituire tuple. Per gestire il ritorno esplicito dei valori, è stato introdotto il costrutto `return`.
+Le dichiarazioni di funzioni, in ogni ambiente, devono essere precedute dalla keyword `routines`, in modo simile a quanto avviene in Blue per le dichiarazioni delle routine nelle classi. Questo è necessario per evitare ambiguità, come nel seguente esempio:
+```blue
+var
+    a: Integer := b
+main ...
+```
+dove `main` potrebbe rappresentare sia il nome di una funzione che il nome di una variabile.
+
+Quando si invoca una funzione è possibile specificare la modalità di passaggio dei parametri in ingresso : `val` (il default), `valres` e `ref`.
 Infine, poiché il linguaggio non prevede il concetto di classi, le funzioni non possono essere invocate con la notazione a punto, come `.function()`.
 
 == Commenti
@@ -150,8 +183,8 @@ Ad esempio:
 
 
 == Risoluzione conflitti rimanenti
-La grammatica definita presenta un solo conflitto, che si verifica nello stato 104, tra le produzioni di `LExp` e `RExp`.
-Questo conflitto non crea problemi per l'analisi sintattica, dal momento che le `LExp` sono un sottoinsieme delle `RExp`. 
+La grammatica definita presenta un solo conflitto, che si verifica nello stato 105, tra le produzioni di `LExp` e `RExp`.
+Questo conflitto è di tipo shift/reduce e non crea problemi dal momento che le `LExp` sono un sottoinsieme delle `RExp`. 
 Pertanto, è sufficiente scegliere sempre l'azione di shift.
 
 
@@ -161,7 +194,7 @@ Pertanto, è sufficiente scegliere sempre l'azione di shift.
 Lexer e Parser sono stati realizzati modificando i file-prototipo generati automaticamente da BNFC, in modo tale da adattarli alle specifiche della consegna. La grammatica utilizzata per la costruzione di lexer e parser è quella presente nel file `grammar.cf` e genera il linguaggio descritto in precedenza.
 
 == Modifiche al lexer
-- Oltre la posizione iniziale di un token è stata aggiunta anche la sua posizione finale, in modo da poter generare errori più precisi.
+Oltre la posizione iniziale di un token è stata aggiunta anche la sua posizione finale, in modo da poter generare errori più precisi.
 
 == Modifiche al Parser
 Il parser è stato modificato in modo da utilizzare la sintassi astratta da noi definita nel file `AbsSyn.hs` (a differenza di quella generata da BNFC). La struttura delle regole non è stata alterata.
@@ -185,9 +218,9 @@ riportate le regole formali del type system.
 
 Alcune note:
 - L'environemnt, oltre al suo normale scopo, viene usato per propagare la necessità che
-  un'espressione sia di tipo left-hand side. Nelle regole viene omesso, ma tutte le
-  espressioni non-left-hand side tornano un errore se nel loro environment è presente la
-  keyword `LExp`.
+  un'espressione sia di tipo left-hand side. Nelle regole viene omesso per semplificare la
+  notazione, ma tutte le espressioni non-left-hand side tornano un errore se nel loro
+  environment è presente la keyword `LExp`.
 - Come spiegato nel paragrafo @ty-check_env, nell'environemnt i namespace di simboli e
   routine sono separati. Per semplicità di scrittura nelle regole del type-system il
   namespace è considerato come unico. Le eventuali ambiguità generano errori o sono
