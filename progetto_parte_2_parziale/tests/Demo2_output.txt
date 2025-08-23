@@ -48,7 +48,6 @@ routines
 
 $0 = "Hello world\NUL"
 $1 = "\NUL"
-$2 = "\NUL"
 
 EntryPoint:
       b@4:9 =(float) 1.0
@@ -75,5 +74,4 @@ __util__@29:1:
       return $0
       goto L4
 L3:   return $1
-L4:   return $2
 

@@ -700,9 +700,9 @@ genRoutineBody (AS.RoutBody decls stmts _) post = do
 genStmt :: AS.Statement SS.Ann -> Instructions -> StateMonad ()
 genStmt stmt post = do
     -- don't generate unreachable code
-    when (SS.unreachable $ AS.annot stmt) (return ())
-
-    case stmt of
+    if SS.unreachable $ AS.annot stmt then
+        return ()
+    else case stmt of
         AS.StmtAss left right _ _ ->
             -- Evaluate the first left expression, then the first right expression
             -- then the seconds left expression and so on
@@ -730,7 +730,11 @@ genStmt stmt post = do
             -- Generate first body
             mapM_ (`genStmt` post) body
             -- Generate the others (exit-condition, body) pairs
-            mapM_ (\(AS.LoopExit cond body _ _) -> do
+            mapM_ (\exit@(AS.LoopExit cond body _ _) -> do
+                -- don't generate unreachable exits
+                if SS.unreachable $ AS.loopExitAnnot exit then
+                    return ()
+                else do
                     genBoolExpIf cond (JumpTrue loopEnd)
                     mapM_ (`genStmt` post) body
                 ) exit
