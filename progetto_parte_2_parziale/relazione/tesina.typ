@@ -18,6 +18,7 @@ par(
 }
 #set strike(stroke: 1.5pt + red)
 
+/*
 = Scelte di design (Integrate nella definizione del linguaggio)
 - Le dichiarazioni di variabili contengono obbligatoriamente l'assegnamento (motivazione:
   vedi pagina 3 punto 2 `implementazione-compilatori-imperativi.pdf`).
@@ -78,7 +79,7 @@ par(
   dove "\*" potrebbe essere sia un deref che una moltiplicazione.
   Per lo stesso motivo è stato aggiunto un ";" anche nell'exit dei loop.
 
-
+*/
 
 = Definizione del linguaggio: scelte di design e risoluzione dei conflitti
 Il linguaggio definito per questo progetto è un linguaggio di programmazione imperativo con scoping statico. La sua grammatica si basa sulla sintassi concreta del linguaggio Blue.
@@ -89,9 +90,11 @@ Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzional
 Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String`#footnote[#cite( <implementazione-compilatori-imperativi>, form:"full" ), p. 3.3] e `Char`.
 Sono inoltre supportati gli array che sono dichiarati utilizzando nel modo seguente: `Array<Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array. Infine vi sono i puntatori, che sono dichiarati con la sintassi `&Type`.
 
+/*
 === Type system (MEGLIO SOTTO)
 Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:
 #image("img/types.png", width: 100%)
+*/
 
 == Variabili
 Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo o di tipo array. Non è consentito dichiarare variabili senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
@@ -163,10 +166,10 @@ Lexer e Parser sono stati realizzati modificando i file-prototipo generati autom
 == Modifiche al Parser
 Il parser è stato modificato in modo da utilizzare la sintassi astratta da noi definita nel file `AbsSyn.hs` (a differenza di quella generata da BNFC). La struttura delle regole non è stata alterata.
 
-
+/*
 = TODO:
 - [ ] disambiguare funzioni con lo stesso nome nel tac
-
+*/
 
 = Definizione del Type system
 == Gerargia dei tipi
@@ -410,19 +413,6 @@ tau_1 = tau'_1 and forall i = 2, ..., n  (tau_i = "sup"(tau_(i-1), tau'_i)))
 /
 ("env" ⊢""_E "Array" { "elements" = [e_1, ..., e_n] } : "Array"<tau_n, n>)
 $
-
-/*
-SBAGLIATE
-$
-("env" ⊢ e : "BOOL")/("env" ⊢ "Not" { "exp" = e } : "BOOL")
-$
-$
-("env" ⊢ e : T)/("env" ⊢ "Ref" { "exp" = e } : "&"T) ?
-$
-$
-("env" ⊢ e : "*"T) /("env" ⊢ "Deref" { "exp" = e } : T)
-$
-*/
 
 === Statements
 
@@ -760,12 +750,6 @@ Alcuni aspetti rilevanti sono i seguenti:
 - Le espressioni e i parametri sono generati da sinistra verso destra.
 - Gli assegnamenti multipli rappresentano, di fatto, zucchero sintattico per assegnamenti su più linee; di conseguenza, il codice TAC risultante è equivalente a quello generato da assegnamenti singoli consecutivi. Per esempio:
 
-/*
-Altro da dire:
-- Le stringhe (letterali) vengono allocate in una sezione statica, e sono accessibili tramite un indirizzo statico.
-- Le espressioni e i parametri vengono generate da sinistra a destra (perché più intuitivo di destra verso sinistra?). Invece gli assegnamenti multipli vengono trattati come zucchero sintattico di assegnamenti "su più linee", ad esempio:
-*/
-
 ```
 x, y, z := 0, 1, 2;
 ```
@@ -806,7 +790,7 @@ Il modulo di generazione del TAC (reperibile nella cartella `TAC`) utilizza una 
 Nel file `TAC/State.hs`, oltre alla definizione dello stato appena descritto, sono presenti anche funzioni di supporto per la gestione dello stato.
 
 == Pretty printer
-Il pretty printer del TAC utilizza le seguenti notazioni:
+Il pretty printer del TAC utilizza la seguente notazione:
 - Gli identificatori e i nomi di variabili sono annotati con la posizione nel file originale secondo la sintassi: `<ident>@<line>:<column>`;
 - I commenti sono preceduti da `#`;
 - Le copie locali dei parametri passati per `valres` hanno il nome del parametro seguito da un apice `param'`;
