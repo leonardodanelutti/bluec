@@ -39,15 +39,16 @@ data RoutEntry
     | Proc LG.Posn [AS.Param]
     deriving (Show)
 
+-- Position of a `RoutEntry`.
 pos :: RoutEntry -> LG.Posn
 pos (Fun p _ _) = p
 pos (Proc p _)  = p
 
--- Keyword bindings:
--- - `Return (Just ty)` is present inside a function with returning type `ty`;
--- - `Return Nothing` is present inside procedures.
+-- Keyword bindings.
 data KeywordEntry
-    -- Allowed inside functions to allow returning.
+    -- Allowed inside routines to allow returning:
+    -- - `Return (Just ty)` is present inside a function with returning type `ty`;
+    -- - `Return Nothing` is present inside procedures.
     = Return (Maybe T.Type)
     -- Allowed inside loops to allow skipping to the next iteration.
     | Continue
@@ -95,30 +96,39 @@ mergeEnv (Env s1 r1 k1) (Env s2 r2 k2) = (Env s r k, errs)
             Just _  -> accErr ++ [E.err (pos value) "A routine with the same name `" ++ PP.identPrinter key ++ "` is already defined at " ++ show (pos $ Maybe.fromJust $ Map.lookup key r1) ++ "."]
             _       -> accErr
 
+-- Creates an environment from symbol bindings.
 envFromSymbolBindings :: [(AS.Ident, SymbolEntry)] -> Env
 envFromSymbolBindings bindings = Env (Map.fromList bindings) Map.empty Map.empty
 
+-- Creates an environment from routine bindings.
 envFromRoutBindings :: [(AS.Ident, RoutEntry)] -> Env
 envFromRoutBindings bindings = Env Map.empty (Map.fromList bindings) Map.empty
 
+-- Adds a `continue` keyword to the environment, used inside loops.
 addContinue :: Env -> Env
 addContinue env = env { keywords = Map.insert "continue" Continue (keywords env) }
 
+-- Adds a `return` keyword to the environment, used inside routines.
 addReturn :: Env -> Maybe T.Type -> Env
 addReturn env mType = env { keywords = Map.insert "return" (Return mType) (keywords env) }
 
+-- Sets the `unreachable` keyword in the environment, used inside unreachable statements.
 setUnreachable :: Env -> Env
 setUnreachable env = env { keywords = Map.insert "unreachable" Unreachable (keywords env) }
 
+-- Query if the statement is unreachable.
 isUnreachable :: Env -> Bool
 isUnreachable env = Map.member "unreachable" (keywords env)
 
+-- Require the expression to be of left-hand side type.
 requireLExp :: Env -> Env
 requireLExp env = env { keywords = Map.insert "LExp" LExp (keywords env) }
 
+-- Query if the expression must be of left-hand side type.
 mustBeLExp :: Env -> Bool
 mustBeLExp env = Map.member "LExp" (keywords env)
 
+-- Remove the left-hand side requirement.
 doNotRequireLExp :: Env -> Env
 doNotRequireLExp env = env { keywords = Map.delete "LExp" (keywords env) }
 

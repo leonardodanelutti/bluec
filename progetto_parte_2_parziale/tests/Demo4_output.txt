@@ -1,4 +1,4 @@
-example 1: generic test
+example 4: generic test
 
 
 Static Semantics Analysis Failed:

@@ -80,7 +80,7 @@ annStmtAss env AS.StmtAss {
     }
 annStmtAss _ _ = error "Unreachable: `annStmtAss` called with non-`StmtAss` expression."
 
--- Annotate a routine call statement. SSE.annRoutCall
+-- Annotate a routine call statement.
 annStmtRoutCall :: Env -> Stmt -> AnnStmt
 annStmtRoutCall env AS.StmtRoutCall {
     AS.call = rc@AS.RoutineCall {
@@ -98,7 +98,7 @@ annStmtRoutCall env AS.StmtRoutCall {
 } where
     -- Params.
     (params, lookupErrs, declPos, isFunction) = case Map.lookup ident (routines env) of
-        Just (Fun declPos params _) -> (Just params, [], Just declPos, Just True) -- (Just params, [E.err pos "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."], Just declPos, Just True) -- TODO: maybe make it a warning?
+        Just (Fun declPos params _) -> (Just params, [], Just declPos, Just True) -- Future improvement: warn "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."
         Just (Proc declPos params) -> (Just params, [], Just declPos, Just False)
         Nothing -> (Nothing, [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing)
     -- Cast the arguments to the expected types.
@@ -120,6 +120,7 @@ annStmtRoutCall env AS.StmtRoutCall {
     }
 annStmtRoutCall _ _ = error "Unreachable: `annStmtRoutCall` called with non-`StmtRoutCall` expression."
 
+-- Annotate a return statement.
 annStmtReturn :: Env -> Stmt -> AnnStmt
 annStmtReturn env AS.StmtReturn {
     AS.valReturn = ret,
@@ -153,6 +154,7 @@ annStmtReturn env AS.StmtReturn {
     }
 annStmtReturn _ _ = error "Unreachable: `annStmtReturn` called with non-`StmtReturn` expression."
 
+-- Annotate a return statement without a value.
 annStmtReturnEmpty :: Env -> Stmt -> AnnStmt
 annStmtReturnEmpty env AS.StmtReturnEmpty {
     AS.pos = pos
@@ -176,6 +178,7 @@ annStmtReturnEmpty env AS.StmtReturnEmpty {
     }
 annStmtReturnEmpty _ _ = error "Unreachable: `annStmtReturnEmpty` called with non-`StmtReturnEmpty` expression."
 
+-- Annotate a continue statement.
 annStmtContinue :: Env -> Stmt -> AnnStmt
 annStmtContinue env AS.StmtContinue {
     AS.pos = pos
@@ -196,6 +199,7 @@ annStmtContinue env AS.StmtContinue {
     }
 annStmtContinue _ _ = error "Unreachable: `annStmtContinue` called with non-`StmtContinue` expression."
 
+-- Annotate an if statement.
 annStmtIf :: Env -> Stmt -> AnnStmt
 annStmtIf env AS.StmtIf {
     AS.cond = cond,
@@ -237,6 +241,7 @@ annStmtIf env AS.StmtIf {
     }
 annStmtIf _ _ = error "Unreachable: `annStmtIf` called with non-`StmtIf` expression."
 
+-- Annotate an if-else statement.
 annStmtIfElse :: Env -> Stmt -> AnnStmt
 annStmtIfElse env AS.StmtIfElse {
     AS.cond = cond,

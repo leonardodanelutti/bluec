@@ -1,4 +1,4 @@
-example 1: generic test
+example 2: generic test
 
 
 [Pretty-Print of source]
@@ -50,26 +50,26 @@ $0 = "Hello world\NUL"
 $1 = "\NUL"
 
 EntryPoint:
-      b@4:9 =(float) 1.0
-      x@5:9 =(int) 42
-      p@6:9 = &x@5:9
-      y@7:9 =(int) *p@6:9
+      b@9:9 =(float) 1.0
+      x@10:9 =(int) 42
+      p@11:9 = &x@10:9
+      y@12:9 =(int) *p@11:9
       pcall main, 0
       END_PROGRAM
 
-main@9:9:
-      a@11:17 =(int) 1
-      if a@11:17 <=(int) 0 goto L0
-      a@11:17 =(int) 0
-      b@4:9 =(float) 1.0
-L0:   if a@11:17 <=(int) 0 goto L1
-      x@5:9 =(int) 0
-L1:   if a@11:17 !=(int) 1 goto L2
-      a@11:17 =(int) 2
+main@14:9:
+      a@16:17 =(int) 1
+      if a@16:17 <=(int) 0 goto L0
+      a@16:17 =(int) 0
+      b@9:9 =(float) 1.0
+L0:   if a@16:17 <=(int) 0 goto L1
+      x@10:9 =(int) 0
+L1:   if a@16:17 !=(int) 1 goto L2
+      a@16:17 =(int) 2
 L2:   return
 
-__util__@29:1:
-      t0 =(bool) *b@29:14
+__util__@34:1:
+      t0 =(bool) *b@34:14
       ifFalse t0 goto L3
       return $0
       goto L4

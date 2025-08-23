@@ -239,19 +239,6 @@ annAndCastRoutArgs env (arg : args) (AS.Param { AS.mode = mode, AS.paramType = T
 annAndCastRoutArgs _ [] [] = []
 annAndCastRoutArgs _ _ _ = error "Unreachable: `annRoutArgs` called with different number of parameters and arguments."
 
--- Try to cast the actual parameters (arguments) to the formal parameters types.
---
--- Preconditions:
--- - The number of actual parameters must match the number of formal parameters.
--- - The `Param`s must have a valid type (not `TError`).
--- castParamTypes :: Env -> [AS.Param] -> [AS.Exp Ann] -> [AS.Exp Ann]
--- castParamTypes _ [] [] = []
--- castParamTypes _ (AS.Param { AS.paramType = T.TypePos { T.type_ = T.TError {} } } : _) _ =
---     error "Unreachable: `castParamTypes` called with an error type in the parameter list." -- Unreachable if Param comes from the parser.
--- castParamTypes env (AS.Param { AS.paramType = T.TypePos { T.type_ = paramType } } : ps) (arg : args) =
---     cast env arg paramType : castParamTypes env ps args
--- castParamTypes _ _ _ = error "Unreachable: `castParamTypes` called with different number of parameters and arguments."
-
 -- Sign expressions.
 -- Rule: RExpSign.
 annExpSign :: Env -> Exp -> AnnExp

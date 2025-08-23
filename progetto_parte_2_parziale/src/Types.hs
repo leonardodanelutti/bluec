@@ -30,7 +30,6 @@ instance Show Type where
     show (TReference { refType = ty }) = "&" ++ show ty
     show TError { msgs = msgs } = "Error: " ++ unwords msgs
 
--- TODO: Cosi non possiamo sapere la posizione dei tipi più interni
 data TypePos = TypePos
   { type_ :: Type,
     typePosn :: LG.Posn
