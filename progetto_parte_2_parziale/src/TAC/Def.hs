@@ -35,6 +35,7 @@ data Coercion
     = IntToBool
     | IntToDouble
     | CharToInt
+    | CharToReal
 
 -- Types used in TAC
 data TACType = TInteger | TReal | TChar | TBoolean | Addr

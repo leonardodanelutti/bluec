@@ -458,7 +458,7 @@ happyError ts = Left $
   case ts of
     []      -> ": Unexpected end of file."
     [Err _] -> " due to lexer error at " ++ (tokenPos ts) ++ "."
-    t:_     -> " before `" ++ (prToken t) ++ "' at " ++  (tokenPos ts) ++ "."
+    t:_     -> " before '" ++ (prToken t) ++ "' at " ++  (tokenPos ts) ++ "."
 
 myLexer :: String -> [Token]
 myLexer = tokens

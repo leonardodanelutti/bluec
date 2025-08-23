@@ -93,12 +93,14 @@ genUnknownExpr exp addrIn = do
 
         AS.BinOp AS.Or e1 e2 _ _ -> do
             addrOut <- getOutAddr addrIn
-            genBoolExp AS.Or addrOut e1 e2
+            label <- genBoolExp AS.Or addrOut e1 e2
+            attachToNext label
             return addrOut
 
         AS.BinOp AS.And e1 e2 _ _ -> do
             addrOut <- getOutAddr addrIn
-            genBoolExp AS.And addrOut e1 e2
+            label <- genBoolExp AS.And addrOut e1 e2
+            attachToNext label
             return addrOut
 
         AS.BinOp binOp e1 e2 ann _ -> do
@@ -185,6 +187,7 @@ genUnknownExpr exp addrIn = do
                     (T.TInteger, T.TBoolean) -> IntToBool
                     (T.TInteger, T.TReal)    -> IntToDouble
                     (T.TChar, T.TInteger)    -> CharToInt
+                    (T.TChar, T.TReal)       -> CharToReal
                     _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
                 newTypeTAC = castTypeToTACType newType
             out (UOp addrOut (Coer cast) addr newTypeTAC)

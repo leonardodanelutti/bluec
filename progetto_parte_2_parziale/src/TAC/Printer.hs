@@ -109,6 +109,7 @@ instance Show Coercion where
     show IntToBool = "intToBool"
     show IntToDouble = "intToDouble"
     show CharToInt = "charToInt"
+    show CharToReal = "charToReal"
 
 instance Show Label where
     show (Loc n) = "L" ++ show n

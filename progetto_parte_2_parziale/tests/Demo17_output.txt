@@ -30,7 +30,7 @@ EntryPoint:
 L1:   x@9:5 =(bool) b@8:9
       ifFalse x@9:5 goto L2
       x@9:5 =(bool) c@7:9 !=(int) 10
-L2:   pcall main, 0
+L0, L2: pcall main, 0
       END_PROGRAM
 
 main@13:1:

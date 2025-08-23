@@ -30,5 +30,5 @@ main@11:5:
       x@13:13 =(bool) s@7:5
       ifFalse x@13:13 goto L0
       x@13:13 =(bool) intToBool c@8:5
-      return
+L0:   return
 

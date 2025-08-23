@@ -3,4 +3,4 @@ example 12: testing annidated exit on
 
 Parse failed.
 
-SYNTAX ERROR before `exit' at line 12, column 17.
+SYNTAX ERROR before 'exit' at line 12, column 17.
