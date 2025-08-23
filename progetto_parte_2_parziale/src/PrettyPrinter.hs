@@ -8,7 +8,6 @@ import Data.Char (toLower)
 class Print a where
   prt :: a -> String
 
--- TODO: pretty printer
 instance (Show a) => Print (Declarations a) where
   prt = printer
 

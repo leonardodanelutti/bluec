@@ -185,44 +185,58 @@ Type
 
 FunD :: { A.Routine () }
 FunD
-  : BlueIdent '(' ListParam ')' '->' Type RoutBody BlueIdent { A.Function {
-    {- TODO: return an error if the two idents differ -}
-      A.routName = $1,
-      A.params = $3,
-      A.returnType = $6,
-      A.routBody = $7,
-      A.routAnnot = (),
-      {- TODO: posizione di tutta la funzione o solo della dichiarazione? (vedi anche le regole dopo) -}
-      A.routPos = mergePos (A.identPos $1) (A.identPos $8)
-    }
+  : BlueIdent '(' ListParam ')' '->' Type RoutBody BlueIdent {% 
+    if $1 /= $8 then 
+      Left $ "SYNTAX ERROR: function " ++ (A.identName $1) ++ " not closed properly at " ++ show (A.identPos $8) ++ "."
+    else
+      return A.Function {
+        A.routName = $1,
+        A.params = $3,
+        A.returnType = $6,
+        A.routBody = $7,
+        A.routAnnot = (),
+        A.routPos = mergePos (A.identPos $1) (A.identPos $8)
+      }
   }
-  | BlueIdent '->' Type RoutBody BlueIdent { A.Function {
-      A.routName = $1,
-      A.params = [],
-      A.returnType = $3,
-      A.routBody = $4,
-      A.routAnnot = (),
-      A.routPos = mergePos (A.identPos $1) (A.identPos $5)
-    }
+  | BlueIdent '->' Type RoutBody BlueIdent {% 
+    if $1 /= $5 then 
+      Left $ "SYNTAX ERROR: function " ++ (A.identName $1) ++ " not closed properly at " ++ show (A.identPos $5) ++ "."
+    else
+      return A.Function {
+        A.routName = $1,
+        A.params = [],
+        A.returnType = $3,
+        A.routBody = $4,
+        A.routAnnot = (),
+        A.routPos = mergePos (A.identPos $1) (A.identPos $5)
+      }
   }
 
 ProcD :: { A.Routine () }
 ProcD
-  : BlueIdent '(' ListParam ')' RoutBody BlueIdent { A.Procedure {
-      A.routName = $1,
-      A.params = $3,
-      A.routBody = $5,
-      A.routAnnot = (),
-      A.routPos = mergePos (A.identPos $1) (A.identPos $6)
-    }
+  : BlueIdent '(' ListParam ')' RoutBody BlueIdent {%
+    if $1 /= $6 then 
+      Left $ "SYNTAX ERROR: procedure " ++ (A.identName $1) ++ " not closed properly at " ++ show (A.identPos $6) ++ "."
+    else
+      return A.Procedure {
+        A.routName = $1,
+        A.params = $3,
+        A.routBody = $5,
+        A.routAnnot = (),
+        A.routPos = mergePos (A.identPos $1) (A.identPos $6)
+      }
   }
-  | BlueIdent RoutBody BlueIdent { A.Procedure {
-      A.routName = $1,
-      A.params = [],
-      A.routBody = $2,
-      A.routAnnot = (),
-      A.routPos = mergePos (A.identPos $1) (A.identPos $3)
-    }
+  | BlueIdent RoutBody BlueIdent {% 
+  if $1 /= $3 then 
+      Left $ "SYNTAX ERROR: procedure " ++ (A.identName $1) ++ " not closed properly at " ++ show (A.identPos $3) ++ "."
+    else
+      return A.Procedure {
+        A.routName = $1,
+        A.params = [],
+        A.routBody = $2,
+        A.routAnnot = (),
+        A.routPos = mergePos (A.identPos $1) (A.identPos $3)
+      }
   }
 
 Param :: { A.Param }
