@@ -87,7 +87,7 @@ Il linguaggio definito per questo progetto è un linguaggio di programmazione im
 Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzionalità richieste dalla consegna, come per esempio il dereferenziamento, sono stati introdotti alcuni elementi. Tuttavia, non sono presenti né classi né interfacce.
 
 == Tipi
-Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String`#footnote[#cite( <implementazione-compilatori-imperativi>, form:"full" ), p. 3.3] e `Char`.
+Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String`#footnote[Front-end di un compilatore per un linguaggio imperativo: note generali (p. 3, par. 3)] e `Char`.
 Sono inoltre supportati gli array che sono dichiarati utilizzando nel modo seguente: `Array<Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array. Infine vi sono i puntatori, che sono dichiarati con la sintassi `&Type`.
 
 /*
@@ -97,7 +97,7 @@ Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:
 */
 
 == Costanti
-Le costanti sono dichiarate con la keyword `const` e possono essere solo di tipo primitivo (non devono allocare spazio in memoria). Anche in questo caso non è consentito dichiarare costanti senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
+Le costanti sono dichiarate con la keyword `const` e possono essere solo di tipo primitivo (non devono allocare spazio in memoria). Anche in questo caso non è consentito dichiarare costanti senza assegnamento #footnote[Front-end di un compilatore per un linguaggio imperativo: note generali (p. 3, par. 2)].
 
 ```blue
 const
@@ -105,7 +105,7 @@ const
 ```
 
 == Variabili
-Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo, di tipo array o di tipo reference. Non è consentito dichiarare variabili senza assegnamento #footnote[#cite( <implementazione-compilatori-imperativi>, form:"normal" ), p. 3.2].
+Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primitivo, di tipo array o di tipo reference. Non è consentito dichiarare variabili senza assegnamento#footnote[Front-end di un compilatore per un linguaggio imperativo: note generali (p. 3, par. 2)].
 
 ```blue
 var
@@ -781,7 +781,7 @@ Oltre alle istruzioni presentate durante le lezioni, sono state introdotte le se
 Alcuni aspetti rilevanti sono i seguenti:
 - Le stringhe (Literal) vengono allocate in una sezione statica e sono accessibili mediante un indirizzo statico.
 - Le espressioni e i parametri sono generati da sinistra verso destra.
-- Gli assegnamenti multipli rappresentano, di fatto, zucchero sintattico per assegnamenti su più linee; di conseguenza, il codice TAC risultante è equivalente a quello generato da assegnamenti singoli consecutivi. Per esempio:
+- Gli assegnamenti multipli rappresentano, nel TAC, zucchero sintattico per assegnamenti su più linee; di conseguenza, il codice TAC risultante è equivalente a quello generato da assegnamenti singoli consecutivi. Per esempio:
 
 ```
 x, y, z := 0, 1, 2;
@@ -792,6 +792,11 @@ x := 0;
 y := 1;
 z := 2;
 ```
+
+È importante osservare che, durante l'analisi semantica statica, l'environment non viene propagato nella stessa dichiarazione. Per questo motivo assegnamenti come:
+
+`x, y, z := 0, 1, x;`
+non risultano validi.
 \
 
 == Passaggio dei parametri
@@ -836,5 +841,3 @@ Il pretty printer del TAC utilizza la seguente notazione:
 // - loop determinato
 // - array checked
 // - try/catch
-
-#bibliography("bibliografia.bib", title: "Bibliografia" , style: "ieee")
