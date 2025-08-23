@@ -240,8 +240,6 @@ data CTValue
     | CTVString String
     | CTVBoolean Bool
     | CTVReal Double
-    | CTVRef CTValue
-    -- | CTVArray [CTValue]
     deriving (Show)
 
 -- Convert a compile-time value to a literal.
@@ -252,7 +250,6 @@ ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
     Just (CTVString v)  -> Left $ AS.LitString v pos
     Just (CTVBoolean v) -> Left $ AS.LitBool v pos
     Just (CTVReal v)    -> Left $ AS.LitDouble v pos
-    Just (CTVRef v)     -> Right [E.err pos $ "constants cannot be references: " ++ show v ++ "."]
     Nothing             -> case AS.expAnnot exp of
         ExpAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
         ExpIdentAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
@@ -306,7 +303,6 @@ applyRelOp f (CTVReal v1) (CTVReal v2) = funRelOp f v1 v2
 applyRelOp f (CTVChar v1) (CTVChar v2) = funRelOp f v1 v2
 applyRelOp f (CTVString v1) (CTVString v2) = funRelOp f v1 v2
 applyRelOp f (CTVBoolean v1) (CTVBoolean v2) = funRelOp f v1 v2
-applyRelOp f (CTVRef v1) (CTVRef v2) = applyRelOp f v1 v2
 applyRelOp _ _ _ = error "Invalid arguments for compile-time relational operation"
 
 -- Function to apply a relational operation.

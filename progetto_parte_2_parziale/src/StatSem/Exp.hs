@@ -122,7 +122,7 @@ annExpIdent env AS.ExpIdent {
             declPos = Just varPos
         }
         -- Const identifier.
-        (Just (Const constPos val), Nothing) -> ann
+        (Just (Const constPos val), Nothing) -> ann'
             where
             (identType, identVal) = getTypeAndValue val
             ann = ExpIdentAnn {
@@ -132,6 +132,8 @@ annExpIdent env AS.ExpIdent {
                 mode = Nothing,
                 declPos = Just constPos
             }
+            ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
+            expectedLExpErr = E.err pos "Left-hand side expression required, but found constant."
         -- Routine identifier.
         (Nothing, Just _) -> ann
             where (ann, _) = annRoutineCall env ident [] pos
@@ -146,7 +148,7 @@ annExpIdent env AS.ExpIdent {
         }
         -- Const identifier (the ambiguity is resolved because function calls cannot be
         -- LExp).
-        (Just (Const constPos val), _) | mustBeLExp env -> ann
+        (Just (Const constPos val), _) | mustBeLExp env -> ann'
             where
             (identType, identVal) = getTypeAndValue val
             ann = ExpIdentAnn {
@@ -156,6 +158,8 @@ annExpIdent env AS.ExpIdent {
                 mode = Nothing,
                 declPos = Just constPos
             }
+            ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
+            expectedLExpErr = E.err pos "Left-hand side expression required, but found constant."
         -- Ambiguous case.
         _ -> ExpIdentAnn {
             expType = T.TError { T.msgs = [E.err pos "Ambiguous identifier: " ++ PP.identPrinter ident] },
@@ -225,21 +229,13 @@ annAndCastRoutArgs :: Env -> [Exp] -> [AS.Param] -> [AnnExp]
 annAndCastRoutArgs _ _ (AS.Param { AS.paramType = T.TypePos { T.type_ = T.TError {} } } : _) =
     error "Unreachable: `castParamTypes` called with an error type in the parameter list." -- Unreachable if Param comes from the parser.
 annAndCastRoutArgs env (arg : args) (AS.Param { AS.mode = mode, AS.paramType = T.TypePos { T.type_ = paramType } } : params) =
-    castedArgWErr : annAndCastRoutArgs env args params
+    castedArg : annAndCastRoutArgs env args params
     where
-        (castedArg, castedArgWErr) = case mode of
+        castedArg = case mode of
             -- Arguments passed by value do not need to be LExp.
-            AS.Mval -> (e, e) where e = cast (doNotRequireLExp env) (annExp (doNotRequireLExp env) arg) paramType
+            AS.Mval -> cast (doNotRequireLExp env) (annExp (doNotRequireLExp env) arg) paramType
             -- Arguments passed by value-result and reference must be LExp and must be non-constant.
-            _       -> (e, e')
-                where e = cast (requireLExp env) (annExp (requireLExp env) arg) paramType
-                      e' = case constErr of
-                            "" -> castedArg
-                            errMsg -> castedArg { AS.expAnnot = addErr (AS.expAnnot castedArg) errMsg }
-        -- Check whether arg is a constant.
-        constErr = case getCTValue (AS.expAnnot castedArg) of
-            Just _ -> E.err (AS.expPos arg) "Cannot pass by " ++ PP.modePrinter mode ++ "a constant value."
-            _ -> ""
+            _       -> cast (requireLExp env) (annExp (requireLExp env) arg) paramType
 annAndCastRoutArgs _ [] [] = []
 annAndCastRoutArgs _ _ _ = error "Unreachable: `annRoutArgs` called with different number of parameters and arguments."
 
@@ -452,9 +448,7 @@ annExpRef env AS.Ref {
         expType = case refType of
             e@T.TError {} -> e
             _ -> T.TReference refType,
-        ctVal = case getCTValue $ AS.expAnnot annE of
-            Just ctv -> Just (CTVRef ctv)
-            Nothing -> Nothing
+        ctVal = Nothing
     }
     refType = expType $ AS.expAnnot annE
     expectedLExpErr = E.err pos "Reference is forbidden in left-hand side expressions."
@@ -480,9 +474,7 @@ annExpDeref env AS.Deref {
             _ -> T.TError {
                 T.msgs = [E.err pos "Cannot dereference expression of type " ++ show (expType $ AS.expAnnot annE) ++ "."]
             },
-        ctVal = case getCTValue $ AS.expAnnot annE of
-            Just (CTVRef v) -> Just v
-            _ -> Nothing
+        ctVal = Nothing
     }
 annExpDeref _ _ = error "Unreachable: `annExpDeref` called with non-`Deref` expression."
 

@@ -60,10 +60,6 @@ annStmtAss env AS.StmtAss {
     numberErr = if length left /= length right
                 then [E.err pos "The number of identifiers does not match number of values."]
                 else []
-    -- Check whether the left expressions are constants.
-    leftConstErr = concat $ map (\a -> case getCTValue (AS.expAnnot a) of
-        Just _ -> [E.err (AS.expPos a) "Cannot assign a value to a constant. Suggested fix: make " ++ PP.expPrinter a ++ " a variable."]
-        _ -> []) annLeft
     -- Get expected types from the left expressions.
     leftTypes = map (expType . AS.expAnnot) annLeft
     -- Cast the right expressions to the expected types (when the expected type are non-errors).
@@ -74,7 +70,7 @@ annStmtAss env AS.StmtAss {
     -- Get errors.
     rightErrs = T.getErrs $ map (expType . AS.expAnnot) castedRight
     leftErrs = T.getErrs $ map (expType . AS.expAnnot) annLeft
-    errs = leftErrs ++ rightErrs ++ numberErr ++ leftConstErr -- Errors are printed in the order of evaluation (l-value is evaluated before r-value).
+    errs = leftErrs ++ rightErrs ++ numberErr -- -- Errors are printed in the order of evaluation (l-value is evaluated before r-value).
     -- Create the annotation.
     ann = StmtAnn {
         errs = errs,
