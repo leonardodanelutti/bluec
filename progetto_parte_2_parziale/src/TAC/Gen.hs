@@ -55,23 +55,23 @@ genExpr :: AS.Exp SS.Ann -> Maybe Address -> StateMonad Address
 genExpr exp addrIn = do
     case AS.expAnnot exp of
         -- Handle expressions with known values
-        SS.ExpAnn { SS.ctVal = Just val } -> genLit val
-        SS.ExpIdentAnn { SS.ctVal = Just val } -> genLit val
+        SS.ExpAnn { SS.ctVal = Just val } -> genLit val addrIn
+        SS.ExpIdentAnn { SS.ctVal = Just val } -> genLit val addrIn
         -- Handle expressions with no known values
         _ -> genUnknownExpr exp addrIn
     where
-        genLit :: SS.CTValue -> StateMonad Address
-        genLit (SS.CTVInteger v) = returnAddr addrIn (Lit (LitInt  v)) TInteger
-        genLit (SS.CTVReal v)    = returnAddr addrIn (Lit (LitReal v)) TReal
-        genLit (SS.CTVChar v)    = returnAddr addrIn (Lit (LitChar v)) TChar
-        genLit (SS.CTVBoolean v) = returnAddr addrIn (Lit (LitBool v)) TBoolean
+        genLit :: SS.CTValue -> Maybe Address -> StateMonad Address
+        genLit (SS.CTVInteger v) addrIn = returnAddr addrIn (Lit (LitInt  v)) TInteger
+        genLit (SS.CTVReal v)    addrIn = returnAddr addrIn (Lit (LitReal v)) TReal
+        genLit (SS.CTVChar v)    addrIn = returnAddr addrIn (Lit (LitChar v)) TChar
+        genLit (SS.CTVBoolean v) addrIn = returnAddr addrIn (Lit (LitBool v)) TBoolean
         -- Put strings in static data
-        genLit (SS.CTVString v)  = do
+        genLit (SS.CTVString v)  addrIn = do
             stringAddr <- outStatic (STVString (v ++ "\0"))
             returnAddr addrIn stringAddr Addr
-        genLit (SS.CTVRef v)     = do
+        genLit (SS.CTVRef v)     addrIn = do
             k <- getOutAddr addrIn
-            lit <- genLit v
+            lit <- genLit v Nothing
             out (Ref k lit)
             return k
 
