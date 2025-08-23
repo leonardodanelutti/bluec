@@ -362,7 +362,7 @@ space space space space space space
 space space space space space space
 sup(tau_1, tau_2) = tau)
 /
-("env" ⊢""_E "RelOp" { "e1" = e_1, "e2" = e_2 } : tau)
+("env" ⊢""_E "RelOp" { "e1" = e_1, "e2" = e_2 } : "Boolean")
 $
 
 \ *`REF`*
@@ -374,7 +374,7 @@ $
 space space space space space space
 "env'" = "env" union "\"LExp\"")
 /
-("env" ⊢""_E "Ref" { e = "exp" } : &tau)
+("env" ⊢""_E "Ref" { e = "exp" } : \&tau)
 $
 
 \ *`DEREF`*
@@ -508,11 +508,11 @@ semantica statica la possibilità di usare tale keyword.
 
 $
 space
-("env" union "\"continue\"" ⊢""_S s_1, ..., s_n
+("env" union "\"continue\"" ⊢""_S s_1, ..., s_n_s
 space space space space space space
-"env" union "\"continue\"" ⊢""_S e_1, ..., e_n)
+"env" union "\"continue\"" ⊢""_S e_1, ..., e_n_e)
 /
-("env" ⊢""_S "StmtLoop" { "body" = [s_1, ..., s_n], "exit" = [e_1, ..., e_n] } : nothing)
+("env" ⊢""_S "StmtLoop" { "body" = [s_1, ..., s_n_s], "exit" = [e_1, ..., e_n_e] } : nothing)
 $
 
 Nelle condizioni di uscita dai loop si controlla che la condizione sia compatibile con i

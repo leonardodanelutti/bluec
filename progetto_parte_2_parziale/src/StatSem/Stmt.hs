@@ -21,14 +21,14 @@ type AnnStmt = AS.Statement Ann
 -- - a list of annotated statements;
 -- - a bool indicating if it can exits;
 -- - a bool indicating if it always returns.
-annStmts :: Env -> [Stmt] -> ([AnnStmt], Bool, Bool)
-annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || ((not xExits) && xsReturns))
-    where (xsAnn, xsExits, xsReturns) = annStmts env' xs
+annStmts :: Env -> [Stmt] -> ([AnnStmt], Bool, Bool, Env)
+annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || ((not xExits) && xsReturns), env'')
+    where (xsAnn, xsExits, xsReturns, env'') = annStmts env' xs
           xReturns = alwaysReturn (AS.annot xAnn)
           xExits = canExit (AS.annot xAnn)
           xAnn = annStmt env x
           env' = if alwaysReturn (AS.annot xAnn) then setUnreachable env else env -- works because in a normal list of statements a stmt cannot always exit without returning
-annStmts _ [] = ([], False, False)
+annStmts env [] = ([], False, False, env)
 
 -- Annotate a statement node.
 annStmt :: Env -> Stmt -> AnnStmt
@@ -216,7 +216,7 @@ annStmtIf env AS.StmtIf {
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the body.
-    (annBody, bodyCanExits, bodyAlwaysReturn) = annStmts env' body -- TODO: from the return we can output a warning if there are unreachable statements.
+    (annBody, bodyCanExits, bodyAlwaysReturn, _) = annStmts env' body -- TODO: from the return we can output a warning if there are unreachable statements.
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- If the condition has a compile-time value, we can determine if the statement always returns.
@@ -259,9 +259,9 @@ annStmtIfElse env AS.StmtIfElse {
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the true branch.
-    (annBodyT, bodyTCanExit, bodyTAlwaysReturn) = annStmts envT bodyT
+    (annBodyT, bodyTCanExit, bodyTAlwaysReturn, _) = annStmts envT bodyT
     -- Annotate the false branch.
-    (annBodyF, bodyFCanExit, bodyFAlwaysReturn) = annStmts envF bodyF
+    (annBodyF, bodyFCanExit, bodyFAlwaysReturn, _) = annStmts envF bodyF
     -- Body errors.
     bodyTErrs = concatMap (errs . AS.annot) annBodyT
     bodyFErrs = concatMap (errs . AS.annot) annBodyF
@@ -301,11 +301,11 @@ annStmtLoop env AS.StmtLoop {
     -- Add the `continue` keyword to the environment.
     env' = addContinue env
     -- Annotate the body.
-    (annBody, bodyCanExit, bodyAlwaysReturn) = annStmts env' body
+    (annBody, bodyCanExit, bodyAlwaysReturn, env'') = annStmts env' body
     -- Get the errors from the body.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Annotate the exit.
-    (annExit, exitCanExit, exitAlwaysReturn) = annLoopExits env' exit
+    (annExit, exitCanExit, exitAlwaysReturn) = annLoopExits env'' exit
     -- Get the errors from the exit.
     exitErrs = concatMap (errs . AS.loopExitAnnot) annExit
     -- Create the annotation.
@@ -352,7 +352,7 @@ annLoopExit env AS.LoopExit {
     AS.loopBody = annBody,
     AS.loopExitAnnot = ann,
     AS.loopExitPos = pos
-}, thisCanExit, env') where
+}, thisCanExit, env'') where
     -- Annotate the condition.
     annCond = SSE.annExp (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
@@ -366,7 +366,7 @@ annLoopExit env AS.LoopExit {
         Just (CTVBoolean True) -> setUnreachable env
         _ -> env
     -- Annotate the body.
-    (annBody, bodyCanExit, bodyAlwaysReturn) = annStmts env' body
+    (annBody, bodyCanExit, bodyAlwaysReturn, env'') = annStmts env' body
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Determine if this statement always returns and can exits.
@@ -379,5 +379,6 @@ annLoopExit env AS.LoopExit {
         errs = condErrs ++ bodyErrs,
         alwaysReturn = thisAlwaysReturn,
         canExit = thisCanExit,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env--a
     }
+    a = if isUnreachable env then error "true" else error "false"

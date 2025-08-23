@@ -53,7 +53,9 @@ terminator Statement "";
 rules Mode ::= "val" | "valres" | "ref" | {- empty -};
 
 RoutineCall.                    RoutCall ::= BlueIdent "(" [RExp] ")";
--- RoutineCallEmpty.               RoutCall ::= BlueIdent; TODO: this was removed because it is unused (RExpr can be a BlueIdent and RoutCall can only be a RExpr)
+-- RoutCall can be a BlueIdent but the rule below is redoundant because RExpr can be a
+-- BlueIdent and RoutCall can only be a RExpr.
+-- RoutineCallEmpty.               RoutCall ::= BlueIdent;
 
 -- STATEMENTS
 StatementAss.                   Statement ::= [LExp] ":=" [RExpNE] ";";

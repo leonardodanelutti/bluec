@@ -216,7 +216,7 @@ annRoutBody env AS.RoutBody {
     declsAnn = annDecls env decls
     declEnv = bindings $ AS.declsAnnot declsAnn
     -- Annotate the statements with the environment of the declarations.
-    (stmtsAnn, _, alwaysReturns) = annStmts declEnv stmts
+    (stmtsAnn, _, alwaysReturns, _) = annStmts declEnv stmts
     -- Errs from the declarations.
     declErrs = errs $ AS.declsAnnot declsAnn
     -- Errs from the statements.
