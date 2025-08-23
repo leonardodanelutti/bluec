@@ -176,21 +176,23 @@ Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:\ \
     caption: "Gerarchia dei tipi.")<sup>
 
 == Regole formali per il type system
-Per definire il tipo di ogni nodo dell'albero di sintassi astratta, sono state definite delle regole formali. Queste regole sono utilizzate per determinare il tipo di espressioni, letterali e identificatori, in base all'ambiente corrente e ai tipi associati.
-\ \
 
-Di seguito sono riportate le regole formali utilizzate per definire tali tipi.
+Per definire il tipo di ogni nodo dell'albero di sintassi astratta, di seguito sono
+riportate le regole formali del type system.
 
-L'environemnt, oltre al suo normale scopo, viene usato paer propagare la necessità che
-un'espressione sia di tipo left-hand side. Nelle regole viene omesso, ma tutte le
-espressioni non-left-hand side tornano un errore se nel loro environment è presente la
-keyword `LExp`.
-
-Inoltre, come spiegato nel paragrafo @ty-check_env, nell'environemnt i namespace di
-simboli e routine sono separati. Per semplicità di scrittura nelle regole del type-system
-il namespace è considerato come unico. Le eventuali ambiguità generano errori o sono
-gestite usando il contesto (in alcuni casi sono permesse solo left-hand side expression, e
-quindi non le chiamate a routine).
+Alcune note:
+- L'environemnt, oltre al suo normale scopo, viene usato per propagare la necessità che
+  un'espressione sia di tipo left-hand side. Nelle regole viene omesso, ma tutte le
+  espressioni non-left-hand side tornano un errore se nel loro environment è presente la
+  keyword `LExp`.
+- Come spiegato nel paragrafo @ty-check_env, nell'environemnt i namespace di simboli e
+  routine sono separati. Per semplicità di scrittura nelle regole del type-system il
+  namespace è considerato come unico. Le eventuali ambiguità generano errori o sono
+  gestite usando il contesto (in alcuni casi sono permesse solo left-hand side expression,
+  e quindi non le chiamate a routine).
+- Ci sono due modalità con cui vengono mergiati due envirnoment $a$ e $b$:
+    - $a union b$: i binding di $b$ sovrascrivono quelli di $a$;
+    - $a union.plus b$: in caso di clash viene generato un errore.
 
 === Espressioni
 
@@ -238,7 +240,7 @@ casting implicito solo se passati per valore. Inoltre se usano un metodo di pass
 diverso da quello per valore devono essere espressioni left-hand side.
 
 $
-("env"(id) : "mode"_1 tau_1 times ... times "mode"_n tau_n ⊢""_E tau
+("env"(id) : "mode"_1 tau_1 times ... times "mode"_n tau_n -> tau
 space space space space space space
 forall i = 1, ..., n "checkArg"("env", e_i, tau_i, "mode"_i))
 /
@@ -446,10 +448,11 @@ $
 \ *`STMTROUTCALL`*
 
 Gli statement chiamate di routine vengono annotati come le espressioni chiamate di
-funzione.
+funzione. Il tipo di ritorno è inserito tra parentesi per indicare la compatibilità della
+regola sia per chiamate a procedure che funzioni.
 
 $
-("env"(id) : "mode"_1 tau_1 times ... times "mode"_n tau_n ⊢""_E tau
+("env"(id) : "mode"_1 tau_1 times ... times "mode"_n tau_n (-> tau)
 space space space space space space
 forall i = 1, ..., n "checkArg"("env", e_i, tau_i, "mode"_i))
 /
@@ -509,13 +512,15 @@ $
 
 \ *`STMTLOOP`* and *`STMTLOOPEXIT`*
 
-I loop chiamano ricorsviamente l'annotazione del body e delle condizioni di uscita.
+I loop chiamano ricorsivamente l'annotazione del body e delle condizioni di uscita. Viene
+aggiunta all'environment la keyword "continue" per segnalare al modulo di analisi
+semantica statica la possibilità di usare tale keyword.
 
 $
 space
-("env" ⊢""_S s_1, ..., s_n
+("env" union "\"continue\"" ⊢""_S s_1, ..., s_n
 space space space space space space
-"env" ⊢""_S e_1, ..., e_n)
+"env" union "\"continue\"" ⊢""_S e_1, ..., e_n)
 /
 ("env" ⊢""_S "StmtLoop" { "body" = [s_1, ..., s_n], "exit" = [e_1, ..., e_n] } : nothing)
 $
@@ -536,11 +541,85 @@ $
 
 \ *`PROGRAMDECL`*
 
+Un blocco `ProgramDecl` introduce nuove dichiarazioni di costanti, variabili e routine.
+I binding delle routine sono visibili in tutto il blocco, e segnalano errore in presenza
+di conflitti ($union.plus$). La dichiarazione di costanti e variabile procede in ordine
+mascherando eventuali conflitti ($union$). L'ordine di merge tra simboli (costanti e
+variabili) e routine non è importante in quanto namespace separati.
+
+$
+space
+(forall i=1,...,n_c (("env" union.plus "env"_r) union union_0^(i-1) "env"_c_i ⊢""_D c_i: "env"_c_i) \
+space space space space space space
+forall i=1,...,n_v ((("env" union.plus "env"_r) union "env"_c) union union_0^(i-1) "env"_v_i ⊢""_D v_i: "env"_c_i) \
+space space space space space space
+forall i=1,...,n_r ((("env" union.plus "env"_r) union "env"_c) union "env"_v ⊢""_D r_i: "env"_c_i))
+/
+("env" ⊢""_D "ProgramDecl" { "consts" = [c_1, ..., c_n_c], "vars" = [v_1, ..., v_n_v],\
+"routines" = [r_1, ..., r_n_r] } : "env"_c union "env"_v union "env"_r)
+$
+
+dove:
+- $"env"_c_0$, $"env"_v_0$ e $"env"_r_0$ sono envirnoment vuoti (senza binding);
+- $"env"_c = union_1^n "env"_c_i$, $"env"_v = union_1^n "env"_v_i$ e $"env"_r = union_1^n "env"_r_i$.
+
 \ *`CONSTASS`*
+
+Nelle dichiarazioni di costanti si possono dichiarare più costanti assieme. L'environment
+non viene propagato perchè è come se venissero dichiarate "contemporaneamente".
+
+$
+(forall i=1,...,n ("env" ⊢""_E e_i: tau_i and sup(tau, tau_i) = tau))
+/
+("env" ⊢""_D "ConstAss" {"constIdents" = [id_1, ..., id_n], "constType" = tau,\
+"constValues" = [e_1, ..., e_n] } : {id_1: tau_1,...,id_n: tau_n})
+$
 
 \ *`VARASS`*
 
+Nelle dichiarazioni di variabili si possono dichiarare più variabili assieme. L'environment
+non viene propagato perchè è come se venissero dichiarate "contemporaneamente".
+
+$
+(forall i=1,...,n ("env" ⊢""_E e_i: tau_i and sup(tau, tau_i) = tau))
+/
+("env" ⊢""_D "ConstAss" {"varIdents" = [id_1, ..., id_n], "varType" = tau, "varValues" = [e_1, ..., e_n] }\ : {id_1: tau_1,...,id_n: tau_n})
+$
+
 \ *`FUNCTION`* e *`PROCEDURE`* e *`ROUTBODY`*
+
+Le funzioni e le procedure vengono annotate all stesso modo. In entrambi i casi viene
+aggiunta all'environment la keyword "return" per segnalare al modulo di analisi semantica
+statica la possibilità di usare tale keyword (nel caso delle funzioni alla keyword è
+associato il tipo di ritorno).
+
+$
+("env'" ⊢""_D b
+space space space space space space
+"env'" = "env" union {id_1: tau_1, ..., id_n: tau_n} union {"\"return\"": tau})
+/
+("env" ⊢""_D "Function" { "routName" = id, "params" = [ id_1: "mode"_1 tau_1, ..., id_n: "mode"_n tau_n],\
+"returnType" = tau, "body" = b } : {id : "mode"_1 tau_1 times ... times "mode"_n tau_n -> tau})
+$
+
+$
+("env'" ⊢""_D b
+space space space space space space
+"env'" = "env" union {id_1: tau_1, ..., id_n: tau_n} union {"\"return\""})
+/
+("env" ⊢""_D "Procedure" { "routName" = id, "params" = [ id_1: "mode"_1 tau_1, ..., id_n: "mode"_n tau_n],\
+"body" = b } : {id : "mode"_1 tau_1 times ... times "mode"_n tau_n})
+$
+
+Il boby delle dichiarazioni di routine
+
+$
+("env" ⊢""_D d : "env'"
+space space space space space space
+"env'" ⊢""_S s )
+/
+("env" ⊢""_S "RoutBody" { "declarations" = d, "statements" = [ s_1, ..., s_n], } : nothing)
+$
 
 = Analisi Semantica Statica
 L'analisi semantica statica è implementata nel modulo `StatSem`. Più nello specifico è
