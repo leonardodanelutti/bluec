@@ -29,12 +29,12 @@ data Env = Env {
 data SymbolEntry
     -- Posn refers of the whole declaration (meaning that different symbols can have the
     -- same Posn if they are declared together).
-    = Var LG.Posn T.TypePos (Maybe AS.Mode) -- TODO: a cosa serve Posn per var? Perchè TypePos e non Type?
+    = Var LG.Posn T.TypePos (Maybe AS.Mode)
     | Const LG.Posn AS.Literal
     deriving (Show)
 
 -- Function or procedure bindings.
-data RoutEntry -- TODO: serve la posizione?
+data RoutEntry
     = Fun LG.Posn [AS.Param] T.TypePos
     | Proc LG.Posn [AS.Param]
     deriving (Show)
@@ -266,7 +266,6 @@ ctCast (Just (CTVInteger v)) toType = case toType of
     _          -> Nothing
 ctCast (Just (CTVChar v)) toType = case toType of
     T.TChar    -> Just (CTVChar v)
-    T.TString  -> Just (CTVString [v]) -- FIXME: vogliamo mettere la compatibilità tra Char e String?
     T.TBoolean -> Just (CTVBoolean (v /= '\0'))
     T.TInteger -> Just (CTVInteger (fromEnum v))
     T.TReal    -> Just (CTVReal (fromIntegral (fromEnum v)))
@@ -312,40 +311,3 @@ funRelOp AS.Lt = (<)
 funRelOp AS.Le = (<=)
 funRelOp AS.Gt = (>)
 funRelOp AS.Ge = (>=)
-
------------------
--- OTHER UTILS --
------------------
-
--- Check if an expression is a valid l-value (left-hand side of an assignment).
--- isLExp :: AS.Exp Ann -> Bool
--- isLExp exp = case AS.expAnnot exp of
---     AS.Var _ -> True
---     AS.Deref _ -> True
---     _ -> False
-
--- Check that expressions passed to routines comply to modality requirements.
--- In particular checks that, if a parameter is passed by reference or by value-result it
--- is a non-constant l-expr.
---
--- Input:
--- - the parameter;
--- - the passed argument already annotated and casted (if needed).
--- Output:
--- - the argument checked (if does not comply, an error is raised).
--- checkPassingMode :: AS.Param -> AS.Exp Ann -> AS.Exp Ann
--- checkPassingMode param arg = case mode of 
---     AS.Mval -> arg
---     _ -> 
---     where
---         mode = AS.mode param
---         expPos = AS.expPos arg
---         expAnnot = AS.expAnnot arg
---         expCTV = getCTValue expAnnot
---         isConstantErr = case expCTV of
---             Just _ -> [E.err expPos "Cannot pass constant expression with mode " ++ show mode ++ "."]
---             _      -> []
---         -- Checking it is a LExp. An LExp can be:
---         -- -
---         isNotLExprErr = case expAnnot of
---             AS.Deref

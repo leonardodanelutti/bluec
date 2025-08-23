@@ -424,7 +424,7 @@ $
 $
 */
 
-== Statements
+=== Statements
 
 In `blue` gli statements sono separati dalle dichiarazioni. Quindi non introducono nuovi
 binding.
@@ -537,7 +537,7 @@ space space space space space space
 ("env" ⊢""_S "LoopExit" { "cons" = e, "body" = [s_1, ..., s_n] } : nothing)
 $
 
-== Dichiarazioni
+=== Dichiarazioni
 
 \ *`PROGRAMDECL`*
 
@@ -645,8 +645,6 @@ necessità o meno di essere un'espressione left-hand side.
 
 L'ambiente iniziale in cui è eseguito il programma contiene le funzioni predefinite.
 
-TODO: merge di environemnt (probabilmente da mettere nel type system).
-
 == Errori
 Il modulo di analisi semantica statica gestisce tutti gli errori a compile-time e
 garantisce al modulo di generazione del codice TAC un AST privo di errori.
@@ -660,16 +658,16 @@ al tipo di nodo:
     - c'è un errore nell'annotazione di quell'espressione. Quindi si crea un nuovo errore
       con un messaggio di errore opportuno;
     - c'è un errore in una o più sotto-espressioni. In questo caso si propagano gli errori
-      (per questo il tipo `TError` ha una lista di `String`).
-  TODO: dire come vengono evitati gli errori annidati indotti?
+      (per questo il tipo `TError` ha una lista di `String`) evitando di generare nuovi
+      errori annidati indotti (dagli errori precedenti).
 - gli statement e le dichiarazioni non hanno tipo. Per questto motivo nelle loro
   annotazioni c'è un campo `errs :: [String]` contenente gli errori generati durante
   l'annotazione del nodo in questione e dei sotto-nodi.
 
 === Routine parziali
-In `blue` la definizione di routine parziali è vietata dal modulo di analisi semantica
-statica. In particolare viene controllato che per ogni flusso di esecuzione del `body`
-delle routine ci sia un `return _`.
+La definizione di routine parziali è vietata dal modulo di analisi semantica statica. In
+particolare è garantito che ogni flusso di esecuzione del `body` delle routine esegua
+indefinitivamente o incontri un `return _`.
 
 A tal fine è presente un campo `alwaysReturn :: Bool` nelle annotazioni degli statement.
 Questo campo prende significato solo per statement annidati dentro funzioni, e, come
@@ -687,36 +685,38 @@ suggerisce il nome:
   end if
   ```
 Chiaramente il controllo è conservativo: nell'esempio sopra se `a` assume sempre valore
-`true` per qualunque esecuzione, non è possibile saperlo durante l'analisi semantica
-statica.
+`true` per qualunque esecuzione (ma è una variabile), non è possibile saperlo durante
+l'analisi semantica statica.
 
 L'annotazione di `alwaysReturn` procede dalle foglie fino alla radice dell'AST:
 - le uniche foglie con `alwaysReturn = true` sono le keyword `return _` e `continue` (
   quest'ultima perchè è permesso ciclare all'infinito senza ritornare);
 - i nodi interni dell'AST sono annotati in base a come controllano il flusso di
-  esecuzione. TODO: magari è da scrivere nelle regole del type system
+  esecuzione. // TODO: magari è da scrivere nelle regole del type system
 
 Per compilare correttamente il campo `alwaysReturn` è stato aggiunto un campo `canExit`.
 In generale questo campo è vero se lo statement può impedire l'esecuzione degli eventuali
 statement che lo seguono (allo stesso livello). Ci sono due "eccezioni":
-- il return ha `canExit = false` perchè ci interessano solo i flussi che non ritornano;
+- il return ha `canExit = false` perchè ci interessano solo i flussi che escono senza
+  ritornare;
 - il continue ha `canExit = false` perchè, come specificato sopra, `continue` è
   considerato come una foglia che ritorna.
 
-TODO: unreachable. Forse è meglio toglierlo
+La stessa logica di controllo del flusso è stata usata per annotare un campo `unreachable`
+utile per evitare di generare codice inutile in TAC. // TODO: al momento non funziona per gli exit?
 
 === Dangling references
 Per evitare puntatori pendenti a variabili deallocate si è deciso di vietare il return di
-reference.
+reference nelle routine.
 
 === Presenza del main
-'Blue' esegue la routine `main`. In particolare dev'essere una procedura senza parametri
-in input. Se tale routine non è presente nella dichiarazione più esterna del programma,
-viene ritornato un opportuno errore.
+L'esecuzione del programma corrisponde all'esecuzione della routine `main`. In particolare
+dev'essere una procedura senza parametri in input. Se tale routine non è presente nella
+dichiarazione più esterna del programma, viene generato un opportuno errore.
 
 == Casting
-In `blue` è permesso il casting implicito. Il modulo di analisi semantica statica lo rende
-esplicito per la successiva traduzione in codice TAC.
+È permesso il casting implicito. Il modulo di analisi semantica statica lo rende esplicito
+per la successiva traduzione in codice TAC.
 
 Per farlo è stata implementata una funzione di supertipo `sup` che, dati due tipi, ritorna
 il least common ancestor in @sup. Il casting da $tau$ a $tau'$ è supportato sse
@@ -730,22 +730,17 @@ tempo a run-time.
 Il casting non è esteso ai tipi composti: ad esempio non è possibile convertire
 direttamente un puntatore a `Integer` ad un puntatore a `Real`.
 
-== Espressioni left-hand side
-- distinzione LExp e RExp:
-    - per le reference
-    - i parametri passati con Ref e valres
-    - left-hand side di assegnamenti e dichiarazioni (utile perchè le funzioni possono essere chiamate senza parentesi -> quindi il parser non da errore)
-
 == Costanti
 Nelle annotazioni delle espressioni un opportuno campo `ctVal` propaga finchè
-determinabile a tempo di analisi semantica statica il valore costante dell'espressione. In
-`blue` le costanti non possono essere array o reference, mentre sono permesse le reference
-a costanti (tramite l'introduzione di variabili temporanee nel TAC).
+determinabile a tempo di analisi semantica statica il valore costante dell'espressione. Le
+costanti non possono essere array o reference.
 
+/*
 == Altro che non so se è da dire
 - durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso
 - Il numero di argomenti della funzione deve essere giusto
 - Controllare che nessuna costante sia a sinistra di un assegnamento O in un parametro ref o valres
+*/
 
 = Generazione del Three Address Code (TAC)
 

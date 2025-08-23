@@ -22,12 +22,12 @@ type AnnStmt = AS.Statement Ann
 -- - a bool indicating if it can exits;
 -- - a bool indicating if it always returns.
 annStmts :: Env -> [Stmt] -> ([AnnStmt], Bool, Bool)
--- TODO: unreachability
 annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || ((not xExits) && xsReturns))
-    where (xsAnn, xsExits, xsReturns) = annStmts env xs
+    where (xsAnn, xsExits, xsReturns) = annStmts env' xs
           xReturns = alwaysReturn (AS.annot xAnn)
           xExits = canExit (AS.annot xAnn)
           xAnn = annStmt env x
+          env' = if alwaysReturn (AS.annot xAnn) then setUnreachable env else env -- works because in a normal list of statements a stmt cannot always exit without returning
 annStmts _ [] = ([], False, False)
 
 -- Annotate a statement node.
@@ -98,7 +98,7 @@ annStmtRoutCall env AS.StmtRoutCall {
 } where
     -- Params.
     (params, lookupErrs, declPos, isFunction) = case Map.lookup ident (routines env) of
-        Just (Fun declPos params _) -> (Just params, [E.err pos "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."], Just declPos, Just True) -- TODO: maybe make it a warning?
+        Just (Fun declPos params _) -> (Just params, [], Just declPos, Just True) -- (Just params, [E.err pos "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."], Just declPos, Just True) -- TODO: maybe make it a warning?
         Just (Proc declPos params) -> (Just params, [], Just declPos, Just False)
         Nothing -> (Nothing, [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing)
     -- Cast the arguments to the expected types.
@@ -216,7 +216,7 @@ annStmtIf env AS.StmtIf {
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the body.
-    (annBody, bodyCanExits, bodyAlwaysReturn) = annStmts env body -- TODO: from the return we can output a warning if there are unreachable statements.
+    (annBody, bodyCanExits, bodyAlwaysReturn) = annStmts env' body -- TODO: from the return we can output a warning if there are unreachable statements.
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- If the condition has a compile-time value, we can determine if the statement always returns.
@@ -224,6 +224,10 @@ annStmtIf env AS.StmtIf {
         Just (CTVBoolean v) -> (v && bodyAlwaysReturn, v && bodyCanExits) -- TODO: maybe warn that the `If` statement is useless because the condition is always true or false.
         Nothing -> (False, bodyCanExits)
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
+    -- Set the environment for the body.
+    env' = case condCTVal of
+        Just (CTVBoolean False) -> setUnreachable env
+        _ -> env
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
@@ -255,9 +259,9 @@ annStmtIfElse env AS.StmtIfElse {
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the true branch.
-    (annBodyT, bodyTCanExit, bodyTAlwaysReturn) = annStmts env bodyT
+    (annBodyT, bodyTCanExit, bodyTAlwaysReturn) = annStmts envT bodyT
     -- Annotate the false branch.
-    (annBodyF, bodyFCanExit, bodyFAlwaysReturn) = annStmts env bodyF
+    (annBodyF, bodyFCanExit, bodyFAlwaysReturn) = annStmts envF bodyF
     -- Body errors.
     bodyTErrs = concatMap (errs . AS.annot) annBodyT
     bodyFErrs = concatMap (errs . AS.annot) annBodyF
@@ -266,6 +270,13 @@ annStmtIfElse env AS.StmtIfElse {
         Just (CTVBoolean v) -> ((v && bodyTAlwaysReturn) || ((not v) && bodyFAlwaysReturn), (v && bodyTCanExit) || ((not v) && bodyFCanExit)) -- TODO: warn that the `If` or `Else` are unreachable if the condition is constant.
         Nothing -> (bodyTAlwaysReturn && bodyFAlwaysReturn, bodyTCanExit || bodyFCanExit)
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
+    -- Set the environment for the body.
+    envT = case condCTVal of
+        Just (CTVBoolean False) -> setUnreachable env
+        _ -> env
+    envF = case condCTVal of
+        Just (CTVBoolean True) -> setUnreachable env
+        _ -> env
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyTErrs ++ bodyFErrs,
