@@ -199,7 +199,7 @@ propagano sempre gli errori senza greare "tipi composti da errori" per evitare e
 annidati indotti da errori precedenti. Per semplicità di notazione tale processo è omesso
 nelle seguenti regole.
 
-*`LITERAL`*
+\ *`LITERAL`*
 
 I literal sono foglie dell'AST. Il loro tipo dipende solo dal tipo di nodo.
 
@@ -219,7 +219,7 @@ $
 space/ ("env" ⊢""_E "Literal" { "val" = "LitDouble" {"doubleVal" = e} } : "REAL")
 $
 
-*`IDENT`*
+\ *`IDENT`*
 
 Anche gli ident sono foglie dell'AST. Possono essere:
 - variabili;
@@ -231,34 +231,32 @@ $
 space/ ("env" ⊢""_E "ExpIdent" { "name" = id } : "env"(id))
 $
 
-*`FUNCALL`*
+\ *`FUNCALL`*
 
 Le chiamate di funzione prendono il tipo dall'environment. Gli argomenti supportano il
 casting implicito solo se passati per valore. Inoltre se usano un metodo di passaggio
-diverso da quello per valore devono essere espressioni left-hand side non costanti.
+diverso da quello per valore devono essere espressioni left-hand side.
 
 $
 ("env"(id) : "mode"_1 tau_1 times ... times "mode"_n tau_n ⊢""_E tau
 space space space space space space
-forall i = 1, ..., n "checkArg"("env", e_i, tau'_i, tau_i, "mode"_i))
+forall i = 1, ..., n "checkArg"("env", e_i, tau_i, "mode"_i))
 /
 ("env" ⊢""_E "FunCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } : "env"(id))
 $
 
 dove:
 $
-"checkArg"("env", e, tau', tau, "mode") \
+"checkArg"("env", e, tau, "mode") \
 = \
 "env'" ⊢""_E e : tau' \
 and \
 "mode" = "val" -> ("sup"(tau', tau) = tau and "env'" = "env") \
 and \
-"mode" != "val" -> (tau' = tau and "env'" = "env" union "\"LExp\"") \
-and
-"TODO: isNotConst"
+"mode" != "val" -> (tau' = tau and "env'" = "env" union "\"LExp\"")
 $
 
-*`SIGN`*
+\ *`SIGN`*
 
 Il segno prevede un'espressione numerica: un Integer o un Real. Siccome
 `sup(Integer, Real) = Real` (come definito in @sup), si prova prima a convertire `e` ad
@@ -282,7 +280,7 @@ space space space space space space
 ("env" ⊢""_E "Sign" { e = "exp" } : "Real")
 $
 
-*`BINOP`*
+\ *`BINOP`*
 
 Le operazioni binarie supportate da `blue` si dividono in 4 categorie:
 - le operazioni booleane:
@@ -335,7 +333,7 @@ Le operazioni binarie supportate da `blue` si dividono in 4 categorie:
   ("env" ⊢""_E "BinOp" { "binOp" = "POW", "e1" = e_1, "e2" = e_2 } : sup(sup(tau_1, tau_2), "Integer"))
   $
 
-*`BOOLNEG`*
+\ *`BOOLNEG`*
 
 La negazione prevede un'espressione booleana:
 
@@ -347,7 +345,7 @@ space space space space space space
 ("env" ⊢""_E "BoolNeg" { e = "exp" } : "Boolean")
 $
 
-*`RELOP`*
+\ *`RELOP`*
 
 Le operazioni relazioni supportate sono quelle di uguaglianza e di confronto. Sono
 supportate da tutti i tipi, purchè convertibili allo stesso supertipo.
@@ -362,7 +360,7 @@ sup(tau_1, tau_2) = tau)
 ("env" ⊢""_E "RelOp" { "e1" = e_1, "e2" = e_2 } : tau)
 $
 
-*`REF`*
+\ *`REF`*
 
 È consentito creare reference soltanto di espressioni di tipo left-hand side.
 
@@ -374,7 +372,7 @@ space space space space space space
 ("env" ⊢""_E "Ref" { e = "exp" } : &tau)
 $
 
-*`DEREF`*
+\ *`DEREF`*
 
 Nei nodi dereference si controlla che l'espressione dereferenziata sia di tipo $\&tau$.
 
@@ -384,7 +382,7 @@ $
 ("env" ⊢""_E "Deref" { e = "exp" } : tau)
 $
 
-*`ARRAYINDEX`*
+\ *`ARRAYINDEX`*
 
 Nell'accesso agli array l'indice è vincolato ad essere un tipo convertibile ad intero, e
 l'array dev'essere un'espressione di tipo left-hand side.
@@ -397,7 +395,7 @@ space space space space space space
 ("env" ⊢""_E "ArrayIndex" { e = "exp", "index" = "idx" } : tau)
 $
 
-*`ARRAY`*
+\ *`ARRAY`*
 
 Per creare un nodo array tutti gli elementi dell'array devono avere tipi compatibili tra
 loro. Il tipo finale contine la grandezza dell'array ed il least common ancestor tra tutti
@@ -426,7 +424,10 @@ $
 
 == Statements
 
-*`STMTASS`*
+In `blue` gli statements sono separati dalle dichiarazioni. Quindi non introducono nuovi
+binding.
+
+\ *`STMTASS`*
 
 Negli assegnamenti viene controllato che:
 - l'espressione a sinistra sia un'espressione left-hand side;
@@ -442,17 +443,20 @@ space space space space space space
 ("env" ⊢""_S "StmtAss" { "left" = l , "right" = r } : nothing)
 $
 
-*`STMTROUTCALL`*
+\ *`STMTROUTCALL`*
 
-TODO: finire
+Gli statement chiamate di routine vengono annotati come le espressioni chiamate di
+funzione.
 
 $
-()
+("env"(id) : "mode"_1 tau_1 times ... times "mode"_n tau_n ⊢""_E tau
+space space space space space space
+forall i = 1, ..., n "checkArg"("env", e_i, tau_i, "mode"_i))
 /
 ("env" ⊢""_S "StmtRoutCall" { "call" = "RoutineCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } } : nothing)
 $
 
-*`STMTRETRUN`* e *`STMTRETRUNEMPTY`*
+\ *`STMTRETRUN`*, *`STMTRETRUNEMPTY`* e *`STMTCONTINUE`*
 
 Per la keyword `return` si controlla il tipo (se presente) che ha nell'environment.
 
@@ -469,8 +473,6 @@ space
 ("env" ⊢""_S "StmtReturnEmpty" { } : nothing)
 $
 
-*`STMTCONTINUE`*
-
 Per la keyword `continue` si controlla che sia presente nell'environment.
 
 $
@@ -480,38 +482,70 @@ space
 ("env" ⊢""_S "annStmtContinue" { } : nothing)
 $
 
-*`STMTIF`* e *`STMTIFELSE`*
+\ *`STMTIF`* e *`STMTIFELSE`*
+
+Negli statement `if _ then _` e `if _ then _ else _` si controlla che la condizione sia
+compatibile con i booleani.
 
 $
 space
-("env" ⊢""_E e : tau and "sup"(tau, "Boolean") == "Boolean") "TODO: va aggiunto per s_1, s_n?"
+("env" ⊢""_E e : tau and "sup"(tau, "Boolean") == "Boolean"
+space space space space space space
+"env" ⊢""_S s_1, ..., s_n)
 /
 ("env" ⊢""_S "StmtIf" { "cond" = e, "body" = [s_1, ..., s_n] } : nothing)
 $
 
 $
 space
-("env" ⊢""_E e : tau and "sup"(tau, "Boolean") == "Boolean") "TODO: va aggiunto per s_t1, s_tn e s_f1, s_fn?"
+("env" ⊢""_E e : tau and "sup"(tau, "Boolean") == "Boolean"
+space space space space space space
+"env" ⊢""_S s_"t1", ..., s_"tn"
+space space space space space space
+"env" ⊢""_S s_"f1", ..., s_"fn")
 /
 ("env" ⊢""_S "StmtIfElse" { "cond" = e, "bodyT" = [s_"t1", ..., s_"tn"] "bodyT" = [s_"f1", ..., s_"fn"] } : nothing)
 $
 
-*`STMTLOOP`* and *`STMTLOOPEXIT`*
+\ *`STMTLOOP`* and *`STMTLOOPEXIT`*
+
+I loop chiamano ricorsviamente l'annotazione del body e delle condizioni di uscita.
+
+$
+space
+("env" ⊢""_S s_1, ..., s_n
+space space space space space space
+"env" ⊢""_S e_1, ..., e_n)
+/
+("env" ⊢""_S "StmtLoop" { "body" = [s_1, ..., s_n], "exit" = [e_1, ..., e_n] } : nothing)
+$
+
+Nelle condizioni di uscita dai loop si controlla che la condizione sia compatibile con i
+booleani.
+
+$
+space
+("env" ⊢""_E e : tau and "sup"(tau, "Boolean") == "Boolean"
+space space space space space space
+"env" ⊢""_S s_1, ..., s_n)
+/
+("env" ⊢""_S "LoopExit" { "cons" = e, "body" = [s_1, ..., s_n] } : nothing)
+$
 
 == Dichiarazioni
 
-*`PROGRAMDECL`*
+\ *`PROGRAMDECL`*
 
-*`CONSTASS`*
+\ *`CONSTASS`*
 
-*`VARASS`*
+\ *`VARASS`*
 
-*`FUNCTION`* e *`PROCEDURE`* e *`ROUTBODY`*
+\ *`FUNCTION`* e *`PROCEDURE`* e *`ROUTBODY`*
 
 = Analisi Semantica Statica
 L'analisi semantica statica è implementata nel modulo `StatSem`. Più nello specifico è
 diviso in 4 sotto-moduli: `Exp`, `Decl` e `Stmt` rispettivamente responsabili
-dell'annotazione delle espressioni, delle dichiarazione e degli statement, e `Utils` in
+dell'annotazione delle espressioni, delle dichiarazioni e degli statement, e `Utils` in
 cui sono definite utility e tipi di dato usati in tutto il modulo, tra cui le annotazioni,
 l'environment ed il casting.
 

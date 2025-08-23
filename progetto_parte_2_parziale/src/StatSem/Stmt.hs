@@ -297,14 +297,6 @@ annStmtLoop env AS.StmtLoop {
     (annExit, exitCanExit, exitAlwaysReturn) = annLoopExits env' exit
     -- Get the errors from the exit.
     exitErrs = concatMap (errs . AS.loopExitAnnot) annExit
-    -- Get only the reachable statements.
-    -- reachableStmts = takeWhileReachable exitResults
-    -- -- Get only the statements before the first exit whose condition is always false (i.e. take while conditions are true).
-    -- neverExits = map fst $ takeWhile (\(_, condCTValBool) -> case condCTValBool of
-    --     Just False -> True
-    --     _ -> False) reachableStmts
-    -- Check if the exit always returns.
-    -- exitAlwaysReturn = any (alwaysReturn . AS.loopExitAnnot) neverExits
     -- Create the annotation.
     ann = StmtAnn {
         errs = bodyErrs ++ exitErrs,
