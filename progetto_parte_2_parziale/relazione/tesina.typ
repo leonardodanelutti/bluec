@@ -550,8 +550,8 @@ forall i=1,...,n_r ((("env" union.plus "env"_r) union "env"_c) union "env"_v ⊢
 $
 
 dove:
-- $"env"_c_0$, $"env"_v_0$ e $"env"_r_0$ sono envirnoment vuoti (senza binding);
-- $"env"_c = union_1^n "env"_c_i$, $"env"_v = union_1^n "env"_v_i$ e $"env"_r = union_1^n "env"_r_i$.
+- $"env"_c_0$, $"env"_v_0$ e $"env"_r_0$ sono environment vuoti (senza binding);
+- $"env"_c = union_1^n_c "env"_c_i$, $"env"_v = union_1^n_v "env"_v_i$ e $"env"_r = union_1^n_r "env"_r_i$.
 
 \ *`CONSTASS`*
 
@@ -606,7 +606,7 @@ Il boby delle dichiarazioni di routine
 $
 ("env" ⊢""_D d : "env'"
 space space space space space space
-"env'" ⊢""_S s )
+"env'" ⊢""_S s_1,...,s_n )
 /
 ("env" ⊢""_S "RoutBody" { "declarations" = d, "statements" = [ s_1, ..., s_n], } : nothing)
 $

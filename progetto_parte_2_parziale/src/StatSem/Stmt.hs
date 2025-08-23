@@ -216,12 +216,12 @@ annStmtIf env AS.StmtIf {
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the body.
-    (annBody, bodyCanExits, bodyAlwaysReturn, _) = annStmts env' body -- TODO: from the return we can output a warning if there are unreachable statements.
+    (annBody, bodyCanExits, bodyAlwaysReturn, _) = annStmts env' body
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- If the condition has a compile-time value, we can determine if the statement always returns.
     (thisAlwaysReturn, thisCanExit) = case condCTVal of
-        Just (CTVBoolean v) -> (v && bodyAlwaysReturn, v && bodyCanExits) -- TODO: maybe warn that the `If` statement is useless because the condition is always true or false.
+        Just (CTVBoolean v) -> (v && bodyAlwaysReturn, v && bodyCanExits)
         Nothing -> (False, bodyCanExits)
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Set the environment for the body.
@@ -267,7 +267,7 @@ annStmtIfElse env AS.StmtIfElse {
     bodyFErrs = concatMap (errs . AS.annot) annBodyF
     -- If the condition has a compile-time value, we can determine if the statement always returns.
     (thisAlwaysReturn, thisCanExit) = case condCTVal of
-        Just (CTVBoolean v) -> ((v && bodyTAlwaysReturn) || ((not v) && bodyFAlwaysReturn), (v && bodyTCanExit) || ((not v) && bodyFCanExit)) -- TODO: warn that the `If` or `Else` are unreachable if the condition is constant.
+        Just (CTVBoolean v) -> ((v && bodyTAlwaysReturn) || ((not v) && bodyFAlwaysReturn), (v && bodyTCanExit) || ((not v) && bodyFCanExit))
         Nothing -> (bodyTAlwaysReturn && bodyFAlwaysReturn, bodyTCanExit || bodyFCanExit)
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Set the environment for the body.
@@ -379,6 +379,5 @@ annLoopExit env AS.LoopExit {
         errs = condErrs ++ bodyErrs,
         alwaysReturn = thisAlwaysReturn,
         canExit = thisCanExit,
-        unreachable = isUnreachable env--a
+        unreachable = isUnreachable env
     }
-    a = if isUnreachable env then error "true" else error "false"

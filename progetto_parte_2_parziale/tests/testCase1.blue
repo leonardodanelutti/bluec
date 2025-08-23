@@ -1,6 +1,11 @@
--- wrong call function;
--- missing return statements;
--- uninitialized variables;
+-- This example should have some errors.
+--
+-- What does this example test:
+-- - access to unbounded variables;
+-- - assignments to constants;
+-- - wrong function calls;
+-- - missing return statements;
+-- - comments.
 
 const
     a, d: Integer := 0, 1;

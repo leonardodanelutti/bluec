@@ -47,17 +47,17 @@ demo: bluec
 		./bluec tests/testCase1.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo1_output.txt
 	@{ \
-		echo "example 1: generic test"; \
+		echo "example 2: generic test"; \
 		echo ""; \
 		./bluec tests/testCase2.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo2_output.txt
 	@{ \
-		echo "example 1: generic test"; \
+		echo "example 3: generic test"; \
 		echo ""; \
 		./bluec tests/testCase3.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo3_output.txt
 	@{ \
-		echo "example 1: generic test"; \
+		echo "example 4: generic test"; \
 		echo ""; \
 		./bluec tests/testCase4.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo4_output.txt

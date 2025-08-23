@@ -1,3 +1,8 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - a generic program.
+
 const
 	a, d : Integer := 0, 1;
 var

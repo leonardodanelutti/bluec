@@ -1,3 +1,8 @@
+-- This example should have an error.
+--
+-- What does this example test:
+-- - missing the main procedure check;
+-- - array initialization and access.
 
 var
     A: Array<Integer; 3> := [1, 2, 3];

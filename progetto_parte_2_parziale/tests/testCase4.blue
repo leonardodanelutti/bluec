@@ -1,3 +1,9 @@
+-- This example should have an error.
+--
+-- What does this example test:
+-- - missing the main procedure check;
+-- - compound types.
+
 var
     A: Array<Integer; 3> := [1, 2, 3];
     B: Array<Array<Integer; 2>; 2> := [[10, 20], [30, 40]];
