@@ -172,7 +172,7 @@ Il parser è stato modificato in modo da utilizzare la sintassi astratta da noi 
 == Gerargia dei tipi
 Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:\ \
 #figure(
-    image("img/types.jpg", width: 100%, ),
+    image("img/types.png", width: 100%, ),
     caption: "Gerarchia dei tipi.")<sup>
 
 == Regole formali per il type system
