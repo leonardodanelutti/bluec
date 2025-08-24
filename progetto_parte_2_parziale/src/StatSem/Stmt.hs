@@ -22,7 +22,7 @@ type AnnStmt = AS.Statement Ann
 -- - a bool indicating if it can exits;
 -- - a bool indicating if it always returns.
 annStmts :: Env -> [Stmt] -> ([AnnStmt], Bool, Bool, Env)
-annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || ((not xExits) && xsReturns), env'')
+annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || (not xExits && xsReturns), env'')
     where (xsAnn, xsExits, xsReturns, env'') = annStmts env' xs
           xReturns = alwaysReturn (AS.annot xAnn)
           xExits = canExit (AS.annot xAnn)
@@ -57,13 +57,11 @@ annStmtAss env AS.StmtAss {
     annLeft = map (SSE.annExp (requireLExp env)) left
     annRight = map (SSE.annExp (doNotRequireLExp env)) right
     -- Check that the left and right expressions have the same number of elements.
-    numberErr = if length left /= length right
-                then [E.err pos "The number of identifiers does not match number of values."]
-                else []
+    numberErr = [E.err pos "The number of identifiers does not match number of values." | length left /= length right]
     -- Get expected types from the left expressions.
     leftTypes = map (expType . AS.expAnnot) annLeft
     -- Cast the right expressions to the expected types (when the expected type are non-errors).
-    castedRight = zipWith (\a -> \t -> case t of
+    castedRight = zipWith (\ a t -> case t of
         T.TError _ -> a -- If the expected type is an error, keep the original expression.
         _ -> SSE.cast (doNotRequireLExp env) a t
         ) annRight leftTypes
@@ -97,9 +95,9 @@ annStmtRoutCall env AS.StmtRoutCall {
     AS.annot = ann
 } where
     -- Params.
-    (params, lookupErrs, declPos, isFunction) = case Map.lookup ident (routines env) of
-        Just (Fun declPos params _) -> (Just params, [], Just declPos, Just True) -- Future improvement: warn "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."
-        Just (Proc declPos params) -> (Just params, [], Just declPos, Just False)
+    (params, lookupErrs, declPos, returnType) = case Map.lookup ident (routines env) of
+        Just (Fun declPos params ty) -> (Just params, [], Just declPos, Just $ T.type_ ty ) -- Future improvement: warn "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."
+        Just (Proc declPos params) -> (Just params, [], Just declPos, Nothing)
         Nothing -> (Nothing, [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing)
     -- Cast the arguments to the expected types.
     (castedArgs, numberErr) = case params of
@@ -116,7 +114,7 @@ annStmtRoutCall env AS.StmtRoutCall {
         unreachable = isUnreachable env,
         params,
         declPos,
-        isFunction
+        returnType
     }
 annStmtRoutCall _ _ = error "Unreachable: `annStmtRoutCall` called with non-`StmtRoutCall` expression."
 
@@ -144,7 +142,7 @@ annStmtReturn env AS.StmtReturn {
         Just t -> SSE.cast (doNotRequireLExp env) annRet t
         Nothing -> annRet   -- If there was an error in the retrival of the return type,
                             -- keep the original expression.
-    expErrs = T.getErrs $ [expType (AS.expAnnot castedRet)]
+    expErrs = T.getErrs [expType (AS.expAnnot castedRet)]
     -- Create the annotation.
     ann = StmtAnn {
         errs = returnErr ++ expErrs,
@@ -216,7 +214,7 @@ annStmtIf env AS.StmtIf {
     -- Cast the condition to a boolean type.
     castedCond = SSE.cast (doNotRequireLExp env) annCond T.TBoolean
     -- Get the errors from the condition.
-    condErrs = T.getErrs $ [expType (AS.expAnnot castedCond)]
+    condErrs = T.getErrs [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the body.
@@ -260,7 +258,7 @@ annStmtIfElse env AS.StmtIfElse {
     -- Cast the condition to a boolean type.
     castedCond = SSE.cast (doNotRequireLExp env) annCond T.TBoolean
     -- Get the errors from the condition.
-    condErrs = T.getErrs $ [expType (AS.expAnnot castedCond)]
+    condErrs = T.getErrs [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- Annotate the true branch.
@@ -272,7 +270,7 @@ annStmtIfElse env AS.StmtIfElse {
     bodyFErrs = concatMap (errs . AS.annot) annBodyF
     -- If the condition has a compile-time value, we can determine if the statement always returns.
     (thisAlwaysReturn, thisCanExit) = case condCTVal of
-        Just (CTVBoolean v) -> ((v && bodyTAlwaysReturn) || ((not v) && bodyFAlwaysReturn), (v && bodyTCanExit) || ((not v) && bodyFCanExit))
+        Just (CTVBoolean v) -> ((v && bodyTAlwaysReturn) || (not v && bodyFAlwaysReturn), (v && bodyTCanExit) || (not v && bodyFCanExit))
         Nothing -> (bodyTAlwaysReturn && bodyFAlwaysReturn, bodyTCanExit || bodyFCanExit)
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Set the environment for the body.
@@ -330,13 +328,13 @@ annStmtLoop _ _ = error "Unreachable: `annStmtLoop` called with non-`StmtLoop` e
 -- - a bool indicating if the list always returns.
 annLoopExits :: Env -> [AS.Exit ()] -> ([AS.Exit Ann], Bool, Bool)
 annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, thisCanExit, thisAlwaysReturn)
-    where (thisCanExit, thisAlwaysReturn) = case xExits of
+    where (thisCanExit, thisAlwaysReturn) = if xExits then
             -- If x can exit, then there is no guarantee that the next elements are
             -- reachable.
-            True -> (True, False)
+            (True, False)
             -- If x cannot exit, the body is always reached. So the list in input always
             -- returns if the current exit does, or if the rest of the list does.
-            False -> (xsExits, alwaysReturn (AS.loopExitAnnot xAnn) || xsReturns)
+            else (xsExits, alwaysReturn (AS.loopExitAnnot xAnn) || xsReturns)
           (xAnn, xExits, env') = annLoopExit env x
           (xsAnn, xsExits, xsReturns) = annLoopExits env' xs
 annLoopExits _ [] = ([], False, False) -- If there are no exits, the list never returns and cannot exit.
@@ -376,7 +374,7 @@ annLoopExit env AS.LoopExit {
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Determine if this statement always returns and can exits.
     (thisCanExit, thisAlwaysReturn) = case condCTVal of
-            Just (CTVBoolean v) -> (v || bodyCanExit, (not v) && bodyAlwaysReturn)
+            Just (CTVBoolean v) -> (v || bodyCanExit, not v && bodyAlwaysReturn)
             Nothing -> (True, False)
             _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
