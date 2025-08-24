@@ -7,7 +7,9 @@ const
 var
     b: &Integer := &a;
 routines
-    main() -> Boolean is
+    main() is
+    var
+        c: Boolean := b = 1;
 	do
-        return b = 1;
+        return;
 	end main
