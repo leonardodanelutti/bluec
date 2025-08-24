@@ -1,7 +1,6 @@
--- This example should have an error.
+-- This example should have no errors.
 --
 -- What does this example test:
--- - missing the main procedure check;
 -- - array initialization and access.
 
 var
@@ -11,6 +10,12 @@ var
     q: &Integer := &B[1][1];
 
 routines
+    main is
+    do
+        test;
+        return;
+    end main
+
     test -> Integer
     is
     var

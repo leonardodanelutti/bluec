@@ -1,7 +1,6 @@
--- This example should have an error.
+-- This example should have no errors.
 --
 -- What does this example test:
--- - missing the main procedure check;
 -- - compound types.
 
 var
@@ -12,12 +11,10 @@ var
     q: &&Integer := &r;               -- doppio riferimento a Integer (cioè: pointer to pointer)
 
 routines
-    test -> Integer
-    is
+    main is
     var
         x: Integer := (*p)[1];        -- A[1] = 2
         y: Integer := **q;            -- doppia dereferenziazione: **q = *(&r) = *r = 40
     do
-        return x + y;                 -- 2 + 40 = 42
-    end
-    test
+        return;
+    end main

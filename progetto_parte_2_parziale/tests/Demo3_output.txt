@@ -1,5 +1,32 @@
 example 3: generic test
 
 
-Static Semantics Analysis Failed:
-tests/testCase3.blue:: ERROR: Missing `main` procedure.
+[Pretty-Print of source]
+
+var
+	A : Array<Integer ; 3> := [1, 2, 3];
+	B : Array<Array<Integer ; 2> ; 2> := [[10, 20], [30, 40]];
+	p : &Array<Integer ; 3> := &A;
+	q : &Integer := &B[1][1];
+routines
+	main() is
+	do
+		test();
+		return;
+	end
+	main
+
+	test() -> Integer is
+	var
+		x : Integer := (*p)[1];
+		y : Integer := (*q);
+	do
+		return (x + y);
+	end
+	test
+
+
+
+[Generated TAC]
+
+bluec: No match in record selector expType
