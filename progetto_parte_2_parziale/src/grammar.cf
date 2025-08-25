@@ -65,6 +65,7 @@ StatementReturn.                Statement ::= "return" RExp ";";
 StatementReturnEmpty.           Statement ::= "return" ";";
 StatementContinue.              Statement ::= "continue" ";";
 StatementIf.                    Statement ::= If "end" "if";
+StatementCase.                  Statement ::= Case "end" "case";
 StatementLoop.                  Statement ::= Loop "end" "loop";
 
 separator RExp ",";
@@ -75,6 +76,15 @@ separator nonempty RExpNE ",";
 -- CONDITIONALS
 CondIf.                         If ::= "if" RExp "then" [Statement];
 CondIfElse.                     If ::= "if" RExp "then" [Statement] "else" [Statement];
+
+-- CASE
+CaseSimple.                     Case ::= "case" RExp "of" [CaseLabel];
+CaseElse.                       Case ::= "case" RExp "of" [CaseLabel] "else" [Statement];
+
+-- TODO: Handle ranges or sets?
+CaseLabelInstructions.          CaseLabel ::= RExp ":" [Statement];
+
+terminator nonempty CaseLabel "";
 
 -- INDETERMINATE ITERATION
 LoopEntry.                      Loop ::= "loop" [Statement] [Exit];
