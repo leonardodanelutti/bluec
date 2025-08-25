@@ -1,9 +1,7 @@
 -- | The abstract syntax of language grammar.
 module AbsSyn where
 
-import GHC.Err (error)
 import LexGrammar (Posn)
-import Prelude (Bool, Char, Double, Int, Show, String, Eq, Ord, (==), compare)
 import qualified Types as Ty
 
 data Declarations a = ProgramDecl
@@ -122,6 +120,7 @@ data Statement a
   | StmtIf          { cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
   | StmtIfElse      { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }
   | StmtLoop        { body :: [Statement a], exit :: [Exit a], annot :: a, pos :: Posn }
+  | StmtCase        { cond :: Exp a, cases :: [(Exp a, [Statement a])], def :: Maybe [Statement a], annot :: a, pos :: Posn }
   deriving (Show)
 
 data RoutineCall a = RoutineCall

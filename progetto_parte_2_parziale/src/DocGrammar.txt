@@ -40,13 +40,13 @@ The set of reserved words is the set of terminals appearing in the grammar. Thos
 
 The reserved words used in grammar are the following:
   | ``Array`` | ``Boolean`` | ``Char`` | ``Integer``
-  | ``Real`` | ``String`` | ``and`` | ``const``
-  | ``continue`` | ``div`` | ``do`` | ``else``
-  | ``end`` | ``exit`` | ``false`` | ``if``
-  | ``is`` | ``loop`` | ``mod`` | ``not``
-  | ``on`` | ``or`` | ``ref`` | ``return``
-  | ``routines`` | ``then`` | ``true`` | ``val``
-  | ``valres`` | ``var`` |  |
+  | ``Real`` | ``String`` | ``and`` | ``case``
+  | ``const`` | ``continue`` | ``div`` | ``do``
+  | ``else`` | ``end`` | ``exit`` | ``false``
+  | ``if`` | ``is`` | ``loop`` | ``mod``
+  | ``not`` | ``of`` | ``on`` | ``or``
+  | ``ref`` | ``return`` | ``routines`` | ``then``
+  | ``true`` | ``val`` | ``valres`` | ``var``
 
 The symbols used in grammar are the following:
   | : | := | ; | ,
@@ -117,6 +117,7 @@ All other symbols are terminals.
   |  |  **|**  | ``return`` ``;``
   |  |  **|**  | ``continue`` ``;``
   |  |  **|**  | //If// ``end`` ``if``
+  |  |  **|**  | //Case// ``end`` ``case``
   |  |  **|**  | //Loop// ``end`` ``loop``
   | //[RExp]// | -> | **eps**
   |  |  **|**  | //RExp//
@@ -129,6 +130,11 @@ All other symbols are terminals.
   |  |  **|**  | //RExpNE// ``,`` //[RExpNE]//
   | //If// | -> | ``if`` //RExp// ``then`` //[Statement]//
   |  |  **|**  | ``if`` //RExp// ``then`` //[Statement]// ``else`` //[Statement]//
+  | //Case// | -> | ``case`` //RExp// ``of`` //[CaseLabel]//
+  |  |  **|**  | ``case`` //RExp// ``of`` //[CaseLabel]// ``else`` //[Statement]//
+  | //CaseLabel// | -> | //RExp// ``:`` //[Statement]//
+  | //[CaseLabel]// | -> | //CaseLabel//
+  |  |  **|**  | //CaseLabel// //[CaseLabel]//
   | //Loop// | -> | ``loop`` //[Statement]// //[Exit]//
   | //Exit// | -> | ``exit`` ``on`` //RExp// ``;`` //[Statement]//
   | //[Exit]// | -> | **eps**
