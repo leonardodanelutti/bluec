@@ -52,29 +52,31 @@ import LexGrammar
   ']'         { PT _ (TS _ 26)        }
   '^'         { PT _ (TS _ 27)        }
   'and'       { PT _ (TS _ 28)        }
-  'const'     { PT _ (TS _ 29)        }
-  'continue'  { PT _ (TS _ 30)        }
-  'div'       { PT _ (TS _ 31)        }
-  'do'        { PT _ (TS _ 32)        }
-  'else'      { PT _ (TS _ 33)        }
-  'end'       { PT _ (TS _ 34)        }
-  'exit'      { PT _ (TS _ 35)        }
-  'false'     { PT _ (TS _ 36)        }
-  'if'        { PT _ (TS _ 37)        }
-  'is'        { PT _ (TS _ 38)        }
-  'loop'      { PT _ (TS _ 39)        }
-  'mod'       { PT _ (TS _ 40)        }
-  'not'       { PT _ (TS _ 41)        }
-  'on'        { PT _ (TS _ 42)        }
-  'or'        { PT _ (TS _ 43)        }
-  'ref'       { PT _ (TS _ 44)        }
-  'return'    { PT _ (TS _ 45)        }
-  'routines'  { PT _ (TS _ 46)        }
-  'then'      { PT _ (TS _ 47)        }
-  'true'      { PT _ (TS _ 48)        }
-  'val'       { PT _ (TS _ 49)        }
-  'valres'    { PT _ (TS _ 50)        }
-  'var'       { PT _ (TS _ 51)        }
+  'catch'     { PT _ (TS _ 29)        }
+  'const'     { PT _ (TS _ 30)        }
+  'continue'  { PT _ (TS _ 31)        }
+  'div'       { PT _ (TS _ 32)        }
+  'do'        { PT _ (TS _ 33)        }
+  'else'      { PT _ (TS _ 34)        }
+  'end'       { PT _ (TS _ 35)        }
+  'exit'      { PT _ (TS _ 36)        }
+  'false'     { PT _ (TS _ 37)        }
+  'if'        { PT _ (TS _ 38)        }
+  'is'        { PT _ (TS _ 39)        }
+  'loop'      { PT _ (TS _ 40)        }
+  'mod'       { PT _ (TS _ 41)        }
+  'not'       { PT _ (TS _ 42)        }
+  'on'        { PT _ (TS _ 43)        }
+  'or'        { PT _ (TS _ 44)        }
+  'ref'       { PT _ (TS _ 45)        }
+  'return'    { PT _ (TS _ 46)        }
+  'routines'  { PT _ (TS _ 47)        }
+  'then'      { PT _ (TS _ 48)        }
+  'true'      { PT _ (TS _ 49)        }
+  'try'       { PT _ (TS _ 50)        }
+  'val'       { PT _ (TS _ 51)        }
+  'valres'    { PT _ (TS _ 52)        }
+  'var'       { PT _ (TS _ 53)        }
   L_charac    { PT _ (TC _)           }
   L_doubl     { PT _ (TD _)           }
   L_integ     { PT _ (TI _)           }
@@ -314,6 +316,14 @@ Statement
   }
   | If 'end' 'if'                  { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
   | Loop 'end' 'loop'              { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
+  | 'try' ListStatement 'catch' ListStatement 'end' 'try' { 
+    A.StmtTryCatch {
+      A.try = $2,
+      A.catch = $4,
+      A.annot = (),
+      A.pos = (mergeTokenPos $1 $6)
+    }
+  }
 
 ListRExp :: { [A.Exp ()] }
 ListRExp

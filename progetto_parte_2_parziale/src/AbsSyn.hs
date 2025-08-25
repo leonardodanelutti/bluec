@@ -122,6 +122,7 @@ data Statement a
   | StmtIf          { cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
   | StmtIfElse      { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }
   | StmtLoop        { body :: [Statement a], exit :: [Exit a], annot :: a, pos :: Posn }
+  | StmtTryCatch    { try :: [Statement a], catch :: [Statement a], annot :: a, pos :: Posn }
   deriving (Show)
 
 data RoutineCall a = RoutineCall
