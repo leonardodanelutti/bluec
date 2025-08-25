@@ -125,9 +125,9 @@ genUnknownExpr exp addrIn = do
         -- Already handled by genExpr
         AS.Literal {} -> error "genUnknownExpr: Literal expressions should be handled by genExpr"
 
-        AS.FunCall call ann@(SS.ExpFunCallAnn {}) _ -> do
+        AS.FunCall call ann@(SS.ExpFunCallAnn {SS.expType = returnType}) _ -> do
             addrOut <- getOutAddr addrIn
-            genFunCall call ann addrOut
+            genFunCall call ann returnType addrOut
 
         AS.FunCall {} -> error "genUnknownExpr: FunCall without ExpFunCallAnn annotation is unreachable"
 
@@ -160,9 +160,9 @@ genUnknownExpr exp addrIn = do
 
                 Nothing -> returnAddr addrIn identName tyTAC
 
-        AS.ExpIdent ident ann@(SS.ExpFunCallAnn {}) _ -> do
+        AS.ExpIdent ident ann@(SS.ExpFunCallAnn {SS.expType = returnType}) _ -> do
             addrOut <- getOutAddr addrIn
-            genFunCall (AS.callFromIdent ident) ann addrOut
+            genFunCall (AS.callFromIdent ident) ann returnType addrOut
 
         AS.ExpIdent {} -> error "genUnknownExpr: ExpIdent with unexpected annotation type"
 
@@ -573,11 +573,10 @@ genArray elements k offset = do
 
 -- GENERATION OF ROUTINE CALLS
 
-genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> Address -> StateMonad Address
-genFunCall (AS.RoutineCall routName args _) ann addrOut = do
+genFunCall :: AS.RoutineCall SS.Ann -> SS.Ann -> T.Type -> Address -> StateMonad Address
+genFunCall (AS.RoutineCall routName args _) ann returnType addrOut = do
     genActualParams args ann
-    let returnType = SS.expType ann
-        definitionPos = fromJust $ SS.declPos ann
+    let definitionPos = fromJust $ SS.declPos ann
         routLab = Function $ ProgramName (AS.identName routName) definitionPos
         numArgs = length args
         ty = castTypeToTACType returnType
@@ -707,11 +706,11 @@ genStmt stmt post = do
             -- Evaluate the first left expression, then the first right expression
             -- then the seconds left expression and so on
             mapM_ genAssign (zip left right)
-        AS.StmtRoutCall call ann -> if fromJust $ SS.isFunction ann then
-                do
-                    k <- newTmp
-                    void $ genFunCall call ann k
-            else
+        AS.StmtRoutCall call ann -> case SS.returnType ann of
+            Just returnType -> do -- Function call
+                k <- newTmp
+                void $ genFunCall call ann returnType k
+            Nothing ->  -- Procedure call
                 genProcCall call ann
         AS.StmtReturn val _ _-> do
             addr <- genExprTmp val

@@ -204,9 +204,10 @@ data Ann
         -- position if they are declared together).
         -- Nothing if the identifier is not found in the environment.
         declPos :: Maybe LG.Posn,
-        -- Just True: the routine call is a function call. Just False: the routine call is
-        -- a procedure call. Nothing if the identifier is not found in the environment.
-        isFunction :: Maybe Bool
+        -- The return type of the routine. 
+        -- Just ty if it is a function returning type `ty`, 
+        -- Nothing if it is a procedure or the identifier is not found in the environment.
+        returnType :: Maybe T.Type
     }
     deriving (Show)
 

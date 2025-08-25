@@ -1,5 +1,59 @@
 example 3: generic test
 
 
-Static Semantics Analysis Failed:
-tests/testCase3.blue:: ERROR: Missing `main` procedure.
+[Pretty-Print of source]
+
+var
+	A : Array<Integer ; 3> := [1, 2, 3];
+	B : Array<Array<Integer ; 2> ; 2> := [[10, 20], [30, 40]];
+	p : &Array<Integer ; 3> := &A;
+	q : &Integer := &B[1][1];
+routines
+	main() is
+	do
+		test();
+		return;
+	end
+	main
+
+	test() -> Integer is
+	var
+		x : Integer := (*p)[1];
+		y : Integer := (*q);
+	do
+		return (x + y);
+	end
+	test
+
+
+
+[Generated TAC]
+
+
+EntryPoint:
+      arraygen A@7:5, 12
+      A@7:5[0] =(int) 1
+      A@7:5[4] =(int) 2
+      A@7:5[8] =(int) 3
+      arraygen B@8:5, 16
+      B@8:5[0] =(int) 10
+      B@8:5[4] =(int) 20
+      B@8:5[8] =(int) 30
+      B@8:5[12] =(int) 40
+      p@9:5 = &A@7:5
+      t0 =(int) B@8:5[12]
+      q@10:5 = &t0
+      pcall main, 0
+      END_PROGRAM
+
+main@13:5:
+      t2 =(int) fcall test@19:5, 0
+      return
+
+test@19:5:
+      t3 =(addr) *p@9:5
+      x@22:9 =(int) t3[4]
+      y@23:9 =(int) *q@10:5
+      t5 =(int) x@22:9 +(int) y@23:9
+      return t5
+
