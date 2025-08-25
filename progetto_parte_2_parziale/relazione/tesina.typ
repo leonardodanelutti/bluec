@@ -81,6 +81,22 @@ par(
 
 */
 
+#colorbox(
+    title: "Versioni",
+    color: "gray",
+    radius: 2pt,
+    width: auto,
+)[
+    Di seguito le versioni degli strumenti utilizzati per realizzare questo
+    progetto:
+    + `BNFC`: 2.9.5;
+    + `Happy`: 2.1.5;
+    + `Alex`: 3.5.3.0;
+    + `GHC`: 9.10.1.
+
+    È fornito un `Dockerfile` con le versioni usate per semplificare l'uso del progetto.
+]
+
 = Definizione del linguaggio: scelte di design e risoluzione dei conflitti
 Il linguaggio definito per questo progetto è un linguaggio di programmazione imperativo con scoping statico. La sua grammatica si basa sulla sintassi concreta del linguaggio Blue.
 
