@@ -62,6 +62,12 @@ instance Show Instruction where
             "return " ++ show r
         ArrayGen id size ->
             "arraygen " ++ show id ++ ", " ++ show size
+        PushExceptionHandler to ->
+            "pushHandler " ++ show to
+        PopExceptionHandler ->
+            "popHandler"
+        Throw ->
+            "throw"
         Custom str ->
             str
         Comment str ->
