@@ -431,7 +431,7 @@ annStmtCase _ _ = error "Unreachable: `annStmtCase` called with non-`StmtCase` e
 annCaseBranches :: Env -> [AS.CaseBranch ()] -> Maybe [Stmt] -> Maybe CTValue -> ([AS.CaseBranch Ann], Maybe [AnnStmt], Bool, Bool)
 annCaseBranches _ [] Nothing _ = ([], Nothing, False, False)
 annCaseBranches env [] (Just defStmts) _ = ([], Just annDef, bodyCanExit, bodyAlwaysReturn) where
-    (annDef, bodyCanExit, bodyAlwaysReturn, env') = annStmts env defStmts
+    (annDef, bodyCanExit, bodyAlwaysReturn, _) = annStmts env defStmts
 annCaseBranches env (x:xs) def scrutinee = (xAnn : xsAnn, defAnn, thisCanExit, thisAlwaysReturn) where
     -- Annotate the first branch.
     (xAnn, xCtExecuted) = annCaseBranch env x scrutinee
@@ -482,7 +482,7 @@ annCaseBranch env AS.CaseBranch {
     patternConst = getCTValue (AS.expAnnot annPattern)
     -- The pattern must be a constant.
     patternNonConstantErr = case patternConst of
-        Just v -> []
+        Just _ -> []
         _ -> [E.err patternPos "The case branch pattern must be a constant."]
     -- Check if the pattern always matches.
     (env', ctExecuted) = case scrutinee of
@@ -490,7 +490,7 @@ annCaseBranch env AS.CaseBranch {
         Just _ -> (setUnreachable env, Just False)
         _ -> (env, Nothing)
     -- Annotate the body.
-    (annBody, bodyCanExit, bodyAlwaysReturn, env'') = annStmts env' body
+    (annBody, bodyCanExit, bodyAlwaysReturn, _) = annStmts env' body
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Annotation.
     -- It is annotated as a stand-alone block of statements: it this branch never matches
