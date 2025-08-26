@@ -380,25 +380,25 @@ ListExit : {- empty -} { [] } | Exit ListExit { $1 : $2 }
 Case :: { A.Statement () }
 Case
   : 'case' RExp 'of' ListCaseLabel { A.StmtCase {
-    A.cond = $2,
+    A.scrutinee = $2,
     A.cases = $4,
     A.def = Nothing,
     A.annot = (),
-    A.pos = mergePos (tokenPosn $1) (A.pos $ last $ snd $ last $4)
+    A.pos = mergePos (tokenPosn $1) (A.branchPos $ last $4)
   } }
   | 'case' RExp 'of' ListCaseLabel 'else' ListStatement { A.StmtCase {
-    A.cond = $2,
+    A.scrutinee = $2,
     A.cases = $4,
     A.def = Just $6,
     A.annot = (),
     A.pos = mergePos (tokenPosn $1) (A.pos $ last $6)
   } }
 
-CaseLabel :: { (A.Exp (), [A.Statement ()]) }
+CaseLabel :: { A.CaseBranch () }
 CaseLabel
-  : RExp ':' ListStatement { ($1, $3) }
+  : RExp ':' ListStatement { A.CaseBranch { A.pattern = $1, A.branchBody = $3, A.branchAnnot = (), A.branchPos = mergePos (A.expPos $1) (A.pos $ last $3) } }
 
-ListCaseLabel :: { [(A.Exp (), [A.Statement ()])] }
+ListCaseLabel :: { [A.CaseBranch ()] }
 ListCaseLabel
   : CaseLabel { [$1] } | CaseLabel ListCaseLabel { $1 : $2 }
 

@@ -40,6 +40,7 @@ annStmt env stmt@AS.StmtContinue{} = annStmtContinue env stmt
 annStmt env stmt@AS.StmtIf{} = annStmtIf env stmt
 annStmt env stmt@AS.StmtIfElse{} = annStmtIfElse env stmt
 annStmt env stmt@AS.StmtLoop{} = annStmtLoop env stmt
+annStmt env stmt@AS.StmtCase{} = annStmtCase env stmt
 
 -- Annotate an assignment statement.
 annStmtAss :: Env -> Stmt -> AnnStmt
@@ -382,5 +383,123 @@ annLoopExit env AS.LoopExit {
         errs = condErrs ++ bodyErrs,
         alwaysReturn = thisAlwaysReturn,
         canExit = thisCanExit,
+        unreachable = isUnreachable env
+    }
+
+
+-- Annotate a case statement.
+annStmtCase :: Env -> Stmt -> AnnStmt
+annStmtCase env AS.StmtCase {
+    AS.scrutinee = scrutinee,
+    AS.cases = branches,
+    AS.def = def,
+    AS.pos = pos
+} = AS.StmtCase {
+    AS.scrutinee = annScrutinee,
+    AS.cases = annBranches,
+    AS.def = annDef,
+    AS.annot = ann,
+    AS.pos = pos
+} where
+    -- Annotate the scrutinee.
+    annScrutinee = SSE.annExp (doNotRequireLExp env) scrutinee
+    -- Scrutinee compile-time value.
+    scrutineeCTVal = getCTValue (AS.expAnnot annScrutinee)
+    -- Annotate the branches.
+    (annBranches, annDef, thisCanExit, thisAlwaysReturn) = annCaseBranches env branches def scrutineeCTVal
+    -- Errors.
+    branchErrs = concatMap (errs . AS.branchAnnot) annBranches
+    defErrs = case annDef of
+        Just annDefUnwrap -> concatMap (errs . AS.annot) annDefUnwrap
+        Nothing -> []
+    -- Annotation.
+    ann = StmtAnn {
+        errs = branchErrs ++ defErrs,
+        alwaysReturn = thisAlwaysReturn,
+        canExit = thisCanExit,
+        unreachable = isUnreachable env
+    }
+annStmtCase _ _ = error "Unreachable: `annStmtCase` called with non-`StmtCase` expression."
+
+-- Annotate a list of case branches.
+--
+-- Returns:
+-- - the annotated case branches;
+-- - the annotated default branch;
+-- - whether it can exit;
+-- - whether it always returns.
+annCaseBranches :: Env -> [AS.CaseBranch ()] -> Maybe [Stmt] -> Maybe CTValue -> ([AS.CaseBranch Ann], Maybe [AnnStmt], Bool, Bool)
+annCaseBranches _ [] Nothing _ = ([], Nothing, False, False)
+annCaseBranches env [] (Just defStmts) _ = ([], Just annDef, bodyCanExit, bodyAlwaysReturn) where
+    (annDef, bodyCanExit, bodyAlwaysReturn, env') = annStmts env defStmts
+annCaseBranches env (x:xs) def scrutinee = (xAnn : xsAnn, defAnn, thisCanExit, thisAlwaysReturn) where
+    -- Annotate the first branch.
+    (xAnn, xCtExecuted) = annCaseBranch env x scrutinee
+    -- Get useful fields.
+    xAnnot = AS.branchAnnot xAnn
+    xCanExit = canExit xAnnot
+    xAlwaysReturn = alwaysReturn xAnnot
+    -- Check if its execution is known at compile-time.
+    (env', xAlwaysExecuted, xNeverExecuted) = case xCtExecuted of
+        Just True -> (setUnreachable env, True, False)
+        Just False -> (env, False, True)
+        Nothing -> (env, False, False)
+    -- Annotate the rest of the branches with the new env.
+    (xsAnn, defAnn, xsCanExit, xsAlwaysReturn) = annCaseBranches env' xs def scrutinee
+    -- This branch can exit if either:
+    -- - it can exit and it can be executed;
+    -- - the next branches can exit and they can be executed.
+    thisCanExit = (xCanExit && (not xNeverExecuted)) || (xsCanExit && (not xAlwaysExecuted))
+    -- This branch always returns if either:
+    -- - it always returns and it is always executed;
+    -- - the next branches always return and this branch is never executed.
+    thisAlwaysReturn = (xAlwaysReturn && xAlwaysExecuted) || (xsAlwaysReturn && xNeverExecuted)
+
+-- Annotate a case branch.
+--
+-- Returns:
+-- - The annotated case branch.
+-- - Whether it is know at compile-time if the branch is executed:
+--   - Just True -> always executed (so the next branches are never);
+--   - Just False -> never executed;
+--   - Nothing -> unknown at compile-time.
+annCaseBranch :: Env -> AS.CaseBranch () -> Maybe CTValue -> (AS.CaseBranch Ann, Maybe Bool)
+annCaseBranch env AS.CaseBranch {
+    AS.pattern = pattern,
+    AS.branchBody = body,
+    AS.branchPos = branchPos
+} scrutinee = (AS.CaseBranch {
+    AS.pattern = annPattern,
+    AS.branchBody = annBody,
+    AS.branchAnnot = ann,
+    AS.branchPos = branchPos
+}, ctExecuted) where
+    -- Annotate the pattern.
+    annPattern = SSE.annExp (doNotRequireLExp env) pattern
+    -- Get the pattern position.
+    patternPos = AS.expPos annPattern
+    -- The pattern constant value.
+    patternConst = getCTValue (AS.expAnnot annPattern)
+    -- The pattern must be a constant.
+    patternNonConstantErr = case patternConst of
+        Just v -> []
+        _ -> [E.err patternPos "The case branch pattern must be a constant."]
+    -- Check if the pattern always matches.
+    (env', ctExecuted) = case scrutinee of
+        Just _ | scrutinee == patternConst -> (env, Just True)
+        Just _ -> (setUnreachable env, Just False)
+        _ -> (env, Nothing)
+    -- Annotate the body.
+    (annBody, bodyCanExit, bodyAlwaysReturn, env'') = annStmts env' body
+    bodyErrs = concatMap (errs . AS.annot) annBody
+    -- Annotation.
+    -- It is annotated as a stand-alone block of statements: it this branch never matches
+    -- it will not affect the fields alwaysReturn and canExit. The responsibility of
+    -- checking the control flow of the case statement is of the function
+    -- `annCaseBranches`.
+    ann = StmtAnn {
+        errs = patternNonConstantErr ++ bodyErrs,
+        alwaysReturn = bodyAlwaysReturn,
+        canExit = bodyCanExit,
         unreachable = isUnreachable env
     }

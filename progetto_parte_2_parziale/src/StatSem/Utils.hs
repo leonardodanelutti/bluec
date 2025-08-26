@@ -251,7 +251,7 @@ data CTValue
     | CTVString String
     | CTVBoolean Bool
     | CTVReal Double
-    deriving (Show)
+    deriving (Show, Eq)
 
 -- Convert a compile-time value to a literal.
 ctvToLiteral :: AS.Exp Ann -> Either AS.Literal [String]
