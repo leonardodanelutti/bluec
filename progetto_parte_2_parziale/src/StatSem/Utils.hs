@@ -177,24 +177,12 @@ data Ann
     | StmtAnn {
         -- Errors of the tree rooted by the node with this annotation.
         errs :: [String],
-        -- True if for each flow of control inside the node there is a return statement.
-        alwaysReturn :: Bool,
-        -- True if the node can use a return, continue or an exit on to exit a list of
-        -- statements.
-        canExit :: Bool,
         -- True if the node is unreachable (e.g. after a return statement).
         unreachable :: Bool
     }
     | StmtRoutCallAnn {
          -- Errors of the tree rooted by the node with this annotation.
         errs :: [String],
-        -- True if for each flow of control inside the node there is a return statement.
-        alwaysReturn :: Bool,
-        -- True if the node can use a continue or an exit on to exit a list of statements.
-        -- Also the return can be used to exit a list of statements, but it is not
-        -- considered in this case because we are checking wheter a stmt can exit to
-        -- control that each flow returns.
-        canExit :: Bool,
         -- True if the node is unreachable (e.g. after a return statement).
         unreachable :: Bool,
         -- Parameters passed to the function call. Nothing if the identifier is not found
