@@ -157,14 +157,14 @@ annRoutine env AS.Function {
         _ -> []
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
     paramEnv = envFromSymbolBindings paramBindings
-    newEnv = addReturn (fst $ mergeEnv env paramEnv) (Just (T.type_ ty))
+    env' = addReturn (fst $ mergeEnv env paramEnv) (Just (T.type_ ty))
     -- Annotate the body with the new environment.
-    bodyAnn = annRoutBody newEnv body
+    (bodyAnn, env'') = annRoutBody env' body
     -- Get the body errors.
     bodyErrs = errs $ AS.routBodyAnnot bodyAnn
-    -- Check if the routine body contains a return statement for every flow of control.
-    thisAlwaysReturn = alwaysReturn $ AS.routBodyAnnot bodyAnn
-    doNotAlwaysReturnErr = if thisAlwaysReturn
+    -- Check if the routine body contains a return statement for every flow of control
+    -- (i.e. at the end of the RoutBody the environment is unreachable)
+    doNotAlwaysReturnErr = if isUnreachable env''
         then []
         else [E.err pos "The function \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
     -- Create the annotation.
@@ -186,14 +186,14 @@ annRoutine env AS.Procedure {
 } where
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
     paramEnv = envFromSymbolBindings paramBindings
-    newEnv = addReturn (fst $ mergeEnv env paramEnv) Nothing
+    env' = addReturn (fst $ mergeEnv env paramEnv) Nothing
     -- Annotate the body with the new environment.
-    bodyAnn = annRoutBody newEnv body
+    (bodyAnn, env'') = annRoutBody env' body
     -- Get the body errors.
     bodyErrs = errs $ AS.routBodyAnnot bodyAnn
-    -- Check if the routine body contains a return statement for every flow of control.
-    thsAlwaysReturn = any (alwaysReturn . AS.annot) (AS.statements bodyAnn)
-    doNotAlwaysReturnErr = if thsAlwaysReturn
+    -- Check if the routine body contains a return statement for every flow of control
+    -- (i.e. at the end of the RoutBody the environment is unreachable)
+    doNotAlwaysReturnErr = if isUnreachable env''
         then []
         else [E.err pos "The procedure \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
     -- Create the annotation.
@@ -203,20 +203,20 @@ annRoutine env AS.Procedure {
     }
 
 -- Annotate a routine body.
-annRoutBody :: Env -> AS.RoutBody () -> AS.RoutBody Ann
+annRoutBody :: Env -> AS.RoutBody () -> (AS.RoutBody Ann, Env)
 annRoutBody env AS.RoutBody {
     AS.declarations = decls,
     AS.statements = stmts
-} = AS.RoutBody {
+} = (AS.RoutBody {
     AS.declarations = declsAnn,
     AS.statements = stmtsAnn,
     AS.routBodyAnnot = ann
-} where
+}, env') where
     -- Annotate the declarations and get the environment.
     declsAnn = annDecls env decls
     declEnv = bindings $ AS.declsAnnot declsAnn
     -- Annotate the statements with the environment of the declarations.
-    (stmtsAnn, _, alwaysReturns, _) = annStmts declEnv stmts
+    (stmtsAnn, env') = annStmts declEnv stmts
     -- Errs from the declarations.
     declErrs = errs $ AS.declsAnnot declsAnn
     -- Errs from the statements.
@@ -224,8 +224,5 @@ annRoutBody env AS.RoutBody {
     -- Create the annotation.
     ann = StmtAnn {
         errs = declErrs ++ stmtsErrs,
-        -- Check if at least a statement always returns.
-        alwaysReturn = alwaysReturns,
-        canExit = False,
         unreachable = isUnreachable env
     }

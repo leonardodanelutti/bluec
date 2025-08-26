@@ -21,22 +21,21 @@ type AnnStmt = AS.Statement Ann
 -- - a list of annotated statements;
 -- - a bool indicating if it can exits;
 -- - a bool indicating if it always returns.
-annStmts :: Env -> [Stmt] -> ([AnnStmt], Bool, Bool, Env)
-annStmts env (x:xs) = (xAnn : xsAnn, xExits || xsExits, xReturns || (not xExits && xsReturns), env'')
-    where (xsAnn, xsExits, xsReturns, env'') = annStmts env' xs
-          xReturns = alwaysReturn (AS.annot xAnn)
-          xExits = canExit (AS.annot xAnn)
-          xAnn = annStmt env x
-          env' = if alwaysReturn (AS.annot xAnn) then setUnreachable env else env -- works because in a normal list of statements a stmt cannot always exit without returning
-annStmts env [] = ([], False, False, env)
+annStmts :: Env -> [Stmt] -> ([AnnStmt], Env)
+annStmts env (x:xs) = (xAnn : xsAnn, env'')
+    where (xAnn, env') = annStmt env x
+          (xsAnn, env'') = annStmts env' xs
+          --env' = if alwaysReturn (AS.annot xAnn) then setUnreachable env else env -- works because in a normal list of statements a stmt cannot always exit without returning
+annStmts env [] = ([], env)
 
 -- Annotate a statement node.
-annStmt :: Env -> Stmt -> AnnStmt
-annStmt env stmt@AS.StmtAss{} = annStmtAss env stmt
-annStmt env stmt@AS.StmtRoutCall{} = annStmtRoutCall env stmt
-annStmt env stmt@AS.StmtReturn{} = annStmtReturn env stmt
-annStmt env stmt@AS.StmtReturnEmpty{} = annStmtReturnEmpty env stmt
-annStmt env stmt@AS.StmtContinue{} = annStmtContinue env stmt
+-- The environment is propagated because statements can make the next ones unreachable.
+annStmt :: Env -> Stmt -> (AnnStmt, Env)
+annStmt env stmt@AS.StmtAss{} = (annStmtAss env stmt, env)
+annStmt env stmt@AS.StmtRoutCall{} = (annStmtRoutCall env stmt, env)
+annStmt env stmt@AS.StmtReturn{} = (annStmtReturn env stmt, setUnreachable env)
+annStmt env stmt@AS.StmtReturnEmpty{} = (annStmtReturnEmpty env stmt, setUnreachable env)
+annStmt env stmt@AS.StmtContinue{} = (annStmtContinue env stmt, setUnreachable env)
 annStmt env stmt@AS.StmtIf{} = annStmtIf env stmt
 annStmt env stmt@AS.StmtIfElse{} = annStmtIfElse env stmt
 annStmt env stmt@AS.StmtLoop{} = annStmtLoop env stmt
@@ -72,8 +71,6 @@ annStmtAss env AS.StmtAss {
     -- Create the annotation.
     ann = StmtAnn {
         errs = errs,
-        alwaysReturn = False,
-        canExit = False,
         unreachable = isUnreachable env
     }
 annStmtAss _ _ = error "Unreachable: `annStmtAss` called with non-`StmtAss` expression."
@@ -109,8 +106,6 @@ annStmtRoutCall env AS.StmtRoutCall {
     -- Create the annotation.
     ann = StmtRoutCallAnn {
         errs = lookupErrs ++ argErrs ++ numberErr,
-        alwaysReturn = False,
-        canExit = False,
         unreachable = isUnreachable env,
         params,
         declPos,
@@ -146,8 +141,6 @@ annStmtReturn env AS.StmtReturn {
     -- Create the annotation.
     ann = StmtAnn {
         errs = returnErr ++ expErrs,
-        alwaysReturn = True,
-        canExit = False,
         unreachable = isUnreachable env
     }
 annStmtReturn _ _ = error "Unreachable: `annStmtReturn` called with non-`StmtReturn` expression."
@@ -170,8 +163,6 @@ annStmtReturnEmpty env AS.StmtReturnEmpty {
     -- Create the annotation.
     ann = StmtAnn {
         errs = returnErr,
-        alwaysReturn = True,
-        canExit = False,
         unreachable = isUnreachable env
     }
 annStmtReturnEmpty _ _ = error "Unreachable: `annStmtReturnEmpty` called with non-`StmtReturnEmpty` expression."
@@ -191,24 +182,22 @@ annStmtContinue env AS.StmtContinue {
     -- Create the annotation.
     ann = StmtAnn {
         errs = continueErr,
-        alwaysReturn = True,
-        canExit = False,
         unreachable = isUnreachable env
     }
 annStmtContinue _ _ = error "Unreachable: `annStmtContinue` called with non-`StmtContinue` expression."
 
 -- Annotate an if statement.
-annStmtIf :: Env -> Stmt -> AnnStmt
+annStmtIf :: Env -> Stmt -> (AnnStmt, Env)
 annStmtIf env AS.StmtIf {
     AS.cond = cond,
     AS.body = body,
     AS.pos = pos
-} = AS.StmtIf {
+} = (AS.StmtIf {
     AS.cond = castedCond,
     AS.body = annBody,
     AS.annot = ann,
     AS.pos = pos
-} where
+}, env''') where
     -- Annotate the condition.
     annCond = SSE.annExp (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
@@ -217,42 +206,39 @@ annStmtIf env AS.StmtIf {
     condErrs = T.getErrs [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
-    -- Annotate the body.
-    (annBody, bodyCanExits, bodyAlwaysReturn, _) = annStmts env' body
-    -- Body errors.
-    bodyErrs = concatMap (errs . AS.annot) annBody
-    -- If the condition has a compile-time value, we can determine if the statement always returns.
-    (thisAlwaysReturn, thisCanExit) = case condCTVal of
-        Just (CTVBoolean v) -> (v && bodyAlwaysReturn, v && bodyCanExits)
-        Nothing -> (False, bodyCanExits)
-        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Set the environment for the body.
     env' = case condCTVal of
         Just (CTVBoolean False) -> setUnreachable env
         _ -> env
+    -- Annotate the body.
+    (annBody, env'') = annStmts env' body
+    -- Body errors.
+    bodyErrs = concatMap (errs . AS.annot) annBody
+    -- If the body is always executed the propagate the body environment.
+    env''' = case condCTVal of
+        Just (CTVBoolean True) -> env''
+        _ -> env'
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
-        alwaysReturn = thisAlwaysReturn,
-        canExit = thisCanExit,
         unreachable = isUnreachable env
     }
 annStmtIf _ _ = error "Unreachable: `annStmtIf` called with non-`StmtIf` expression."
 
 -- Annotate an if-else statement.
-annStmtIfElse :: Env -> Stmt -> AnnStmt
+annStmtIfElse :: Env -> Stmt -> (AnnStmt, Env)
 annStmtIfElse env AS.StmtIfElse {
     AS.cond = cond,
     AS.bodyT = bodyT,
     AS.bodyF = bodyF,
     AS.pos = pos
-} = AS.StmtIfElse {
+} = (AS.StmtIfElse {
     AS.cond = castedCond,
     AS.bodyT = annBodyT,
     AS.bodyF = annBodyF,
     AS.annot = ann,
     AS.pos = pos
-} where
+}, env'') where
     -- Annotate the condition.
     annCond = SSE.annExp (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
@@ -261,18 +247,6 @@ annStmtIfElse env AS.StmtIfElse {
     condErrs = T.getErrs [expType (AS.expAnnot castedCond)]
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
-    -- Annotate the true branch.
-    (annBodyT, bodyTCanExit, bodyTAlwaysReturn, _) = annStmts envT bodyT
-    -- Annotate the false branch.
-    (annBodyF, bodyFCanExit, bodyFAlwaysReturn, _) = annStmts envF bodyF
-    -- Body errors.
-    bodyTErrs = concatMap (errs . AS.annot) annBodyT
-    bodyFErrs = concatMap (errs . AS.annot) annBodyF
-    -- If the condition has a compile-time value, we can determine if the statement always returns.
-    (thisAlwaysReturn, thisCanExit) = case condCTVal of
-        Just (CTVBoolean v) -> ((v && bodyTAlwaysReturn) || (not v && bodyFAlwaysReturn), (v && bodyTCanExit) || (not v && bodyFCanExit))
-        Nothing -> (bodyTAlwaysReturn && bodyFAlwaysReturn, bodyTCanExit || bodyFCanExit)
-        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Set the environment for the body.
     envT = case condCTVal of
         Just (CTVBoolean False) -> setUnreachable env
@@ -280,42 +254,55 @@ annStmtIfElse env AS.StmtIfElse {
     envF = case condCTVal of
         Just (CTVBoolean True) -> setUnreachable env
         _ -> env
+    -- Annotate the true branch.
+    (annBodyT, envT') = annStmts envT bodyT
+    -- Annotate the false branch.
+    (annBodyF, envF') = annStmts envF bodyF
+    -- Body errors.
+    bodyTErrs = concatMap (errs . AS.annot) annBodyT
+    bodyFErrs = concatMap (errs . AS.annot) annBodyF
+    -- If the condition has a compile-time value, we can propagate the respective
+    -- environments.
+    env'' = case condCTVal of
+        Just (CTVBoolean True) -> envT'
+        Just (CTVBoolean False) -> envF'
+        Nothing | isUnreachable envF' && isUnreachable envT' -> setUnreachable env
+        Nothing -> env
+        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyTErrs ++ bodyFErrs,
-        alwaysReturn = thisAlwaysReturn,
-        canExit = thisCanExit,
         unreachable = isUnreachable env
     }
 annStmtIfElse _ _ = error "Unreachable: `annStmtIfElse` called with non-`StmtIfElse` expression."
 
 -- Annotate a loop statement.
-annStmtLoop :: Env -> Stmt -> AnnStmt
+annStmtLoop :: Env -> Stmt -> (AnnStmt, Env)
 annStmtLoop env AS.StmtLoop {
     AS.body = body,
     AS.exit = exit,
     AS.pos = pos
-} = AS.StmtLoop {
+} = (AS.StmtLoop {
     AS.body = annBody,
     AS.exit = annExit,
     AS.annot = ann,
     AS.pos = pos
-} where
+}, env'''') where
     -- Add the `continue` keyword to the environment.
     env' = addContinue env
     -- Annotate the body.
-    (annBody, bodyCanExit, bodyAlwaysReturn, env'') = annStmts env' body
+    (annBody, env'') = annStmts env' body
     -- Get the errors from the body.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Annotate the exit.
-    (annExit, exitCanExit, exitAlwaysReturn) = annLoopExits env'' exit
+    (annExit, _, canExit) = annLoopExits env'' exit
+    -- If the loop cannot exit the environment after the loop is unreachable.
+    env'''' = if canExit then env else setUnreachable env
     -- Get the errors from the exit.
     exitErrs = concatMap (errs . AS.loopExitAnnot) annExit
     -- Create the annotation.
     ann = StmtAnn {
         errs = bodyErrs ++ exitErrs,
-        alwaysReturn = bodyAlwaysReturn || (exitAlwaysReturn && not bodyCanExit) || not (bodyCanExit || exitCanExit), -- Looping forever is admissible (so is considered as "returning")
-        canExit = False,
         unreachable = isUnreachable env
     }
 annStmtLoop _ _ = error "Unreachable: `annStmtLoop` called with non-`StmtLoop` expression."
@@ -324,28 +311,23 @@ annStmtLoop _ _ = error "Unreachable: `annStmtLoop` called with non-`StmtLoop` e
 --
 -- Returns:
 -- - the annotated exit statements;
--- - a bool indicating if the list can exit (even with a continue);
--- - a bool indicating if the list always returns.
-annLoopExits :: Env -> [AS.Exit ()] -> ([AS.Exit Ann], Bool, Bool)
-annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, thisCanExit, thisAlwaysReturn)
-    where (thisCanExit, thisAlwaysReturn) = if xExits then
-            -- If x can exit, then there is no guarantee that the next elements are
-            -- reachable.
-            (True, False)
-            -- If x cannot exit, the body is always reached. So the list in input always
-            -- returns if the current exit does, or if the rest of the list does.
-            else (xsExits, alwaysReturn (AS.loopExitAnnot xAnn) || xsReturns)
-          (xAnn, xExits, env') = annLoopExit env x
-          (xsAnn, xsExits, xsReturns) = annLoopExits env' xs
-annLoopExits _ [] = ([], False, False) -- If there are no exits, the list never returns and cannot exit.
+-- - the updated environment;
+-- - a bool indicating if the list can exit.
+annLoopExits :: Env -> [AS.Exit ()] -> ([AS.Exit Ann], Env, Bool)
+annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, env'', canExit)
+    where
+        (xAnn, env', xcanExit) = annLoopExit env x
+        (xsAnn, env'', xscanExit) = annLoopExits env' xs
+        canExit = xcanExit || xscanExit
+annLoopExits env [] = ([], env, False) -- If there are no exits, the list never returns and cannot exit.
 
 -- Annotate an exit statement.
 --
 -- Returns:
 -- - the annotated exit statement;
--- - a bool indicating if it can exit (even with a continue).
--- - the environment (useful to propagate unreachability)
-annLoopExit :: Env -> AS.Exit () -> (AS.Exit Ann, Bool, Env)
+-- - the updated environment;
+-- - a bool indicating if it can exit.
+annLoopExit :: Env -> AS.Exit () -> (AS.Exit Ann, Env, Bool)
 annLoopExit env AS.LoopExit {
     AS.loopCond = cond,
     AS.loopBody = body,
@@ -355,7 +337,7 @@ annLoopExit env AS.LoopExit {
     AS.loopBody = annBody,
     AS.loopExitAnnot = ann,
     AS.loopExitPos = pos
-}, thisCanExit, env'') where
+}, env'', canExit) where
     -- Annotate the condition.
     annCond = SSE.annExp (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
@@ -365,22 +347,17 @@ annLoopExit env AS.LoopExit {
     -- Condition compile-time value.
     condCTVal = getCTValue $ AS.expAnnot castedCond
     -- If the condition is always true the body is unreachable.
-    env' = case condCTVal of
-        Just (CTVBoolean True) -> setUnreachable env
-        _ -> env
+    (env', canExit) = case condCTVal of
+        Just (CTVBoolean True) -> (setUnreachable env, True)
+        Just (CTVBoolean False) -> (env, False)
+        Nothing -> (env, True)
+        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Annotate the body.
-    (annBody, bodyCanExit, bodyAlwaysReturn, env'') = annStmts env' body
+    (annBody, env'') = annStmts env' body
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
-    -- Determine if this statement always returns and can exits.
-    (thisCanExit, thisAlwaysReturn) = case condCTVal of
-            Just (CTVBoolean v) -> (v || bodyCanExit, not v && bodyAlwaysReturn)
-            Nothing -> (True, False)
-            _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
-        alwaysReturn = thisAlwaysReturn,
-        canExit = thisCanExit,
         unreachable = isUnreachable env
     }
