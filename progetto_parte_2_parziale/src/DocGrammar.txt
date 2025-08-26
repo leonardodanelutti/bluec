@@ -54,7 +54,7 @@ The symbols used in grammar are the following:
   | ) | -> | >= | <=
   | = | <> | + | -
   | * | / | ^ | [
-  | ] |  |  |
+  | ] | | |  |
 
 ===Comments===
 Single-line comments begin with --.Multiple-line comments are  enclosed with /* and */.
@@ -167,12 +167,14 @@ All other symbols are terminals.
   |  |  **|**  | //RoutCall//
   |  |  **|**  | //LExp//
   |  |  **|**  | ``[`` //[RExp]// ``]``
+  |  |  **|**  | ``|`` //[RExp]// ``|``
   | //Bool// | -> | ``true``
   |  |  **|**  | ``false``
   | //LExp// | -> | //LExp1//
   |  |  **|**  | ``*`` //LExp//
   | //LExp1// | -> | ``(`` //LExp// ``)``
   |  |  **|**  | //LExp1// ``[`` //RExp// ``]``
+  |  |  **|**  | //LExp1// ``|`` //RExp// ``|``
   |  |  **|**  | //BlueIdent//
 
 

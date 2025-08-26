@@ -70,7 +70,7 @@ data Exp a
   | Literal    { val :: Literal, expAnnot :: a, expPos :: Posn }
   | FunCall    { expCall :: RoutineCall a, expAnnot :: a, expPos :: Posn }
   | Deref      { e :: Exp a, expAnnot :: a, expPos :: Posn }
-  | ArrayIndex { e :: Exp a, index :: Exp a, expAnnot :: a, expPos :: Posn }
+  | ArrayIndex { e :: Exp a, index :: Exp a, checked :: Bool, expAnnot :: a, expPos :: Posn }
   | ExpIdent   { name :: Ident, expAnnot :: a, expPos :: Posn }
   | Array      { elements :: [Exp a], expAnnot :: a, expPos :: Posn }
   | Cast       { e :: Exp a, expAnnot :: a, expPos :: Posn }
