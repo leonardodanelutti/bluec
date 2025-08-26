@@ -246,29 +246,29 @@ data IfJump
     = JumpTrue Label
     | JumpFalse Label
 
--- Generate a boolean expression inside an "if" condition 
-genBoolExpIf :: AS.Exp SS.Ann -> IfJump -> StateMonad ()
-genBoolExpIf (AS.BinOp AS.Or e1 e2 _ _) jump = do
+-- Generate a boolean expression inside a guard
+genBoolExpGuard :: AS.Exp SS.Ann -> IfJump -> StateMonad ()
+genBoolExpGuard (AS.BinOp AS.Or e1 e2 _ _) jump = do
     case jump of
         JumpTrue _ -> do
-            genBoolExpIf e1 jump
-            genBoolExpIf e2 jump
+            genBoolExpGuard e1 jump
+            genBoolExpGuard e2 jump
         JumpFalse _ -> do
             label <- newLabel
-            genBoolExpIf e1 (JumpTrue label)
-            genBoolExpIf e2 jump
+            genBoolExpGuard e1 (JumpTrue label)
+            genBoolExpGuard e2 jump
             attachToNext label
-genBoolExpIf (AS.BinOp AS.And e1 e2 _ _) jump = do
+genBoolExpGuard (AS.BinOp AS.And e1 e2 _ _) jump = do
     case jump of
         JumpTrue _ -> do
             label <- newLabel
-            genBoolExpIf e1 (JumpFalse label)
-            genBoolExpIf e2 jump
+            genBoolExpGuard e1 (JumpFalse label)
+            genBoolExpGuard e2 jump
             attachToNext label
         JumpFalse _ -> do
-            genBoolExpIf e1 jump
-            genBoolExpIf e2 jump
-genBoolExpIf (AS.RelOp op e1 e2 _ _) jump = do
+            genBoolExpGuard e1 jump
+            genBoolExpGuard e2 jump
+genBoolExpGuard (AS.RelOp op e1 e2 _ _) jump = do
     addr1 <- genExprTmp e1
     addr2 <- genExprTmp e2
     let opTAC = castRelOpToTACRelOp op (SS.expType $ AS.expAnnot e1)
@@ -276,7 +276,7 @@ genBoolExpIf (AS.RelOp op e1 e2 _ _) jump = do
             JumpTrue label -> (opTAC, label)
             JumpFalse label -> (negateRelOp opTAC, label)
     out (RelJump opIf addr1 addr2 label)
-genBoolExpIf e jump = do
+genBoolExpGuard e jump = do
     a <- genExprTmp e
     case jump of
         JumpTrue label -> out (BoolJumpT a label)
@@ -734,7 +734,7 @@ genStmt stmt post = do
                 if SS.unreachable $ AS.loopExitAnnot exit then
                     return ()
                 else do
-                    genBoolExpIf cond (JumpTrue loopEnd)
+                    genBoolExpGuard cond (JumpTrue loopEnd)
                     mapM_ (`genStmt` post) body
                 ) exit
             out (UnJump loopStart)
@@ -744,18 +744,69 @@ genStmt stmt post = do
             out (UnJump loopStart)
         AS.StmtIf cond body _ _ -> do
             endLabel <- newLabel
-            genBoolExpIf cond (JumpFalse endLabel)
+            genBoolExpGuard cond (JumpFalse endLabel)
             mapM_ (`genStmt` post) body
             attachToNext endLabel
         AS.StmtIfElse cond bodyT bodyF _ _ -> do
             elseLabel <- newLabel
             endLabel <- newLabel
-            genBoolExpIf cond (JumpFalse elseLabel)
+            genBoolExpGuard cond (JumpFalse elseLabel)
             mapM_ (`genStmt` post) bodyT
             out (UnJump endLabel)
             attachToNext elseLabel
             mapM_ (`genStmt` post) bodyF
             attachToNext endLabel
+        AS.StmtCase scrutinee cases def _ _ -> do
+            endLabel <- newLabel
+            let exprAnn = AS.expAnnot scrutinee
+                ty = SS.expType exprAnn
+                tyTAC = castTypeToTACType ty
+            exprAddr <- genExprTmp scrutinee
+
+            -- Generate equalities for the patterns and the label of the body
+            caseLabels <- mapM (\(AS.CaseBranch pattern _ _ _) -> do
+                    patternAddr <- genExprTmp pattern
+                    bodyLabel <- newLabel
+                    if isComplexType ty then do
+                        -- Complex types cannot be compared directly
+                        resAddr <- newTmp
+                        genRepOp resAddr AS.Eq exprAddr patternAddr ty
+                        out (BoolJumpT resAddr bodyLabel)
+                    else do
+                        out (RelJump (RelEq tyTAC) exprAddr patternAddr bodyLabel)
+
+                    return bodyLabel
+                ) cases
+
+            -- Generate default case
+            case def of
+                -- Fallthrough to default case
+                Just defBody -> do
+                    mapM_ (`genStmt` post) defBody
+                    out (UnJump endLabel)
+                -- No default case: jump to instruction after the case
+                Nothing -> do
+                    out (UnJump endLabel)
+
+            -- Generate case bodies
+            out (Comment "Start of case bodies")
+
+            mapM_ (\(AS.CaseBranch _ body _ _, label) -> do
+                attachToNext label
+                mapM_ (`genStmt` post) body
+                out (UnJump endLabel)
+                ) (zip cases caseLabels)
+
+            out (Comment "End of case bodies")
+
+            attachToNext endLabel
+            where
+                isComplexType :: T.Type -> Bool
+                isComplexType ty = case ty of
+                    T.TArray {}     -> True
+                    T.TString {}    -> True
+                    T.TReference {} -> True
+                    _               -> False
 
 
 -- GENERATION OF ASSIGNMENTS
