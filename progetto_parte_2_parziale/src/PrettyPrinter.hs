@@ -132,6 +132,11 @@ statementPrinter stm = "\t" ++
         StmtLoop body exits _ _ ->
             "loop\n\t" ++ statementsPrinter body ++
             (if null exits then "" else "\n\t" ++ exitsPrinter exits) ++ "\n\tend loop"
+        StmtTryCatch try catch _ _ ->
+            "try\n\t" ++ statementPrinter try ++
+            "\ncatch\n\t" ++ statementPrinter catch ++ "\nend try"
+        StmtThrow _ _ ->
+            "throw error;"
 
 
 -- Tipi

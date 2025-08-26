@@ -59,24 +59,26 @@ import LexGrammar
   'do'        { PT _ (TS _ 33)        }
   'else'      { PT _ (TS _ 34)        }
   'end'       { PT _ (TS _ 35)        }
-  'exit'      { PT _ (TS _ 36)        }
-  'false'     { PT _ (TS _ 37)        }
-  'if'        { PT _ (TS _ 38)        }
-  'is'        { PT _ (TS _ 39)        }
-  'loop'      { PT _ (TS _ 40)        }
-  'mod'       { PT _ (TS _ 41)        }
-  'not'       { PT _ (TS _ 42)        }
-  'on'        { PT _ (TS _ 43)        }
-  'or'        { PT _ (TS _ 44)        }
-  'ref'       { PT _ (TS _ 45)        }
-  'return'    { PT _ (TS _ 46)        }
-  'routines'  { PT _ (TS _ 47)        }
-  'then'      { PT _ (TS _ 48)        }
-  'true'      { PT _ (TS _ 49)        }
-  'try'       { PT _ (TS _ 50)        }
-  'val'       { PT _ (TS _ 51)        }
-  'valres'    { PT _ (TS _ 52)        }
-  'var'       { PT _ (TS _ 53)        }
+  'error'     { PT _ (TS _ 36)        }
+  'exit'      { PT _ (TS _ 37)        }
+  'false'     { PT _ (TS _ 38)        }
+  'if'        { PT _ (TS _ 39)        }
+  'is'        { PT _ (TS _ 40)        }
+  'loop'      { PT _ (TS _ 41)        }
+  'mod'       { PT _ (TS _ 42)        }
+  'not'       { PT _ (TS _ 43)        }
+  'on'        { PT _ (TS _ 44)        }
+  'or'        { PT _ (TS _ 45)        }
+  'ref'       { PT _ (TS _ 46)        }
+  'return'    { PT _ (TS _ 47)        }
+  'routines'  { PT _ (TS _ 48)        }
+  'then'      { PT _ (TS _ 49)        }
+  'throw'     { PT _ (TS _ 50)        }
+  'true'      { PT _ (TS _ 51)        }
+  'try'       { PT _ (TS _ 52)        }
+  'val'       { PT _ (TS _ 53)        }
+  'valres'    { PT _ (TS _ 54)        }
+  'var'       { PT _ (TS _ 55)        }
   L_charac    { PT _ (TC _)           }
   L_doubl     { PT _ (TD _)           }
   L_integ     { PT _ (TI _)           }
@@ -316,12 +318,17 @@ Statement
   }
   | If 'end' 'if'                  { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
   | Loop 'end' 'loop'              { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
-  | 'try' ListStatement 'catch' ListStatement 'end' 'try' { 
+  | 'try' Statement 'catch' Statement 'end' 'try' { 
     A.StmtTryCatch {
       A.try = $2,
       A.catch = $4,
       A.annot = (),
       A.pos = (mergeTokenPos $1 $6)
+    }
+  }
+  | 'throw' 'error' ';'            { A.StmtContinue { 
+      A.annot = (),
+      A.pos = (mergeTokenPos $1 $3) 
     }
   }
 
