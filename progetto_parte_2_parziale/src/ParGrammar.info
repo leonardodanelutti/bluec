@@ -66,62 +66,63 @@ Grammar
 	Statement -> 'continue' ';'                        (56)
 	Statement -> If 'end' 'if'                         (57)
 	Statement -> Loop 'end' 'loop'                     (58)
-	ListRExp ->                                        (59)
-	ListRExp -> RExp                                   (60)
-	ListRExp -> RExp ',' ListRExp                      (61)
-	ListLExp ->                                        (62)
-	ListLExp -> LExp                                   (63)
-	ListLExp -> LExp ',' ListLExp                      (64)
-	RExpNE -> RExp                                     (65)
-	ListRExpNE -> RExpNE                               (66)
-	ListRExpNE -> RExpNE ',' ListRExpNE                (67)
-	If -> 'if' RExp 'then' ListStatement               (68)
-	If -> 'if' RExp 'then' ListStatement 'else' ListStatement   (69)
-	Loop -> 'loop' ListStatement ListExit              (70)
-	Exit -> 'exit' 'on' RExp ';' ListStatement         (71)
-	ListExit ->                                        (72)
-	ListExit -> Exit ListExit                          (73)
-	RExp -> RExp1                                      (74)
-	RExp -> RExp 'or' RExp1                            (75)
-	RExp1 -> RExp2                                     (76)
-	RExp1 -> RExp1 'and' RExp2                         (77)
-	RExp2 -> RExp3                                     (78)
-	RExp2 -> RExp3 '>' RExp3                           (79)
-	RExp2 -> RExp3 '<' RExp3                           (80)
-	RExp2 -> RExp3 '>=' RExp3                          (81)
-	RExp2 -> RExp3 '<=' RExp3                          (82)
-	RExp2 -> RExp3 '=' RExp3                           (83)
-	RExp2 -> RExp3 '<>' RExp3                          (84)
-	RExp3 -> RExp4                                     (85)
-	RExp3 -> RExp3 '+' RExp4                           (86)
-	RExp3 -> RExp3 '-' RExp4                           (87)
-	RExp4 -> RExp5                                     (88)
-	RExp4 -> RExp4 '*' RExp5                           (89)
-	RExp4 -> RExp4 '/' RExp5                           (90)
-	RExp4 -> RExp4 'div' RExp5                         (91)
-	RExp4 -> RExp4 'mod' RExp5                         (92)
-	RExp5 -> RExp6                                     (93)
-	RExp5 -> RExp5 '^' RExp6                           (94)
-	RExp6 -> RExp7                                     (95)
-	RExp6 -> '-' RExp7                                 (96)
-	RExp6 -> 'not' RExp7                               (97)
-	RExp6 -> '&' LExp                                  (98)
-	RExp7 -> '(' RExp ')'                              (99)
-	RExp7 -> Integer                                   (100)
-	RExp7 -> Char                                      (101)
-	RExp7 -> String                                    (102)
-	RExp7 -> Bool                                      (103)
-	RExp7 -> Double                                    (104)
-	RExp7 -> RoutCall                                  (105)
-	RExp7 -> LExp                                      (106)
-	RExp7 -> '[' ListRExp ']'                          (107)
-	Bool -> 'true'                                     (108)
-	Bool -> 'false'                                    (109)
-	LExp -> LExp1                                      (110)
-	LExp -> '*' LExp                                   (111)
-	LExp1 -> '(' LExp ')'                              (112)
-	LExp1 -> LExp1 '[' RExp ']'                        (113)
-	LExp1 -> BlueIdent                                 (114)
+	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' 'for'   (59)
+	ListRExp ->                                        (60)
+	ListRExp -> RExp                                   (61)
+	ListRExp -> RExp ',' ListRExp                      (62)
+	ListLExp ->                                        (63)
+	ListLExp -> LExp                                   (64)
+	ListLExp -> LExp ',' ListLExp                      (65)
+	RExpNE -> RExp                                     (66)
+	ListRExpNE -> RExpNE                               (67)
+	ListRExpNE -> RExpNE ',' ListRExpNE                (68)
+	If -> 'if' RExp 'then' ListStatement               (69)
+	If -> 'if' RExp 'then' ListStatement 'else' ListStatement   (70)
+	Loop -> 'loop' ListStatement ListExit              (71)
+	Exit -> 'exit' 'on' RExp ';' ListStatement         (72)
+	ListExit ->                                        (73)
+	ListExit -> Exit ListExit                          (74)
+	RExp -> RExp1                                      (75)
+	RExp -> RExp 'or' RExp1                            (76)
+	RExp1 -> RExp2                                     (77)
+	RExp1 -> RExp1 'and' RExp2                         (78)
+	RExp2 -> RExp3                                     (79)
+	RExp2 -> RExp3 '>' RExp3                           (80)
+	RExp2 -> RExp3 '<' RExp3                           (81)
+	RExp2 -> RExp3 '>=' RExp3                          (82)
+	RExp2 -> RExp3 '<=' RExp3                          (83)
+	RExp2 -> RExp3 '=' RExp3                           (84)
+	RExp2 -> RExp3 '<>' RExp3                          (85)
+	RExp3 -> RExp4                                     (86)
+	RExp3 -> RExp3 '+' RExp4                           (87)
+	RExp3 -> RExp3 '-' RExp4                           (88)
+	RExp4 -> RExp5                                     (89)
+	RExp4 -> RExp4 '*' RExp5                           (90)
+	RExp4 -> RExp4 '/' RExp5                           (91)
+	RExp4 -> RExp4 'div' RExp5                         (92)
+	RExp4 -> RExp4 'mod' RExp5                         (93)
+	RExp5 -> RExp6                                     (94)
+	RExp5 -> RExp5 '^' RExp6                           (95)
+	RExp6 -> RExp7                                     (96)
+	RExp6 -> '-' RExp7                                 (97)
+	RExp6 -> 'not' RExp7                               (98)
+	RExp6 -> '&' LExp                                  (99)
+	RExp7 -> '(' RExp ')'                              (100)
+	RExp7 -> Integer                                   (101)
+	RExp7 -> Char                                      (102)
+	RExp7 -> String                                    (103)
+	RExp7 -> Bool                                      (104)
+	RExp7 -> Double                                    (105)
+	RExp7 -> RoutCall                                  (106)
+	RExp7 -> LExp                                      (107)
+	RExp7 -> '[' ListRExp ']'                          (108)
+	Bool -> 'true'                                     (109)
+	Bool -> 'false'                                    (110)
+	LExp -> LExp1                                      (111)
+	LExp -> '*' LExp                                   (112)
+	LExp1 -> '(' LExp ')'                              (113)
+	LExp1 -> LExp1 '[' RExp ']'                        (114)
+	LExp1 -> BlueIdent                                 (115)
 
 -----------------------------------------------------------------------------
 Terminals
@@ -162,21 +163,23 @@ Terminals
 	'end'          { PT _ (TS _ 34) }
 	'exit'         { PT _ (TS _ 35) }
 	'false'        { PT _ (TS _ 36) }
-	'if'           { PT _ (TS _ 37) }
-	'is'           { PT _ (TS _ 38) }
-	'loop'         { PT _ (TS _ 39) }
-	'mod'          { PT _ (TS _ 40) }
-	'not'          { PT _ (TS _ 41) }
-	'on'           { PT _ (TS _ 42) }
-	'or'           { PT _ (TS _ 43) }
-	'ref'          { PT _ (TS _ 44) }
-	'return'       { PT _ (TS _ 45) }
-	'routines'     { PT _ (TS _ 46) }
-	'then'         { PT _ (TS _ 47) }
-	'true'         { PT _ (TS _ 48) }
-	'val'          { PT _ (TS _ 49) }
-	'valres'       { PT _ (TS _ 50) }
-	'var'          { PT _ (TS _ 51) }
+	'for'          { PT _ (TS _ 37) }
+	'if'           { PT _ (TS _ 38) }
+	'in'           { PT _ (TS _ 39) }
+	'is'           { PT _ (TS _ 40) }
+	'loop'         { PT _ (TS _ 41) }
+	'mod'          { PT _ (TS _ 42) }
+	'not'          { PT _ (TS _ 43) }
+	'on'           { PT _ (TS _ 44) }
+	'or'           { PT _ (TS _ 45) }
+	'ref'          { PT _ (TS _ 46) }
+	'return'       { PT _ (TS _ 47) }
+	'routines'     { PT _ (TS _ 48) }
+	'then'         { PT _ (TS _ 49) }
+	'true'         { PT _ (TS _ 50) }
+	'val'          { PT _ (TS _ 51) }
+	'valres'       { PT _ (TS _ 52) }
+	'var'          { PT _ (TS _ 53) }
 	L_charac       { PT _ (TC _) }
 	L_doubl        { PT _ (TD _) }
 	L_integ        { PT _ (TI _) }
@@ -214,26 +217,26 @@ Non-terminals
 	ListStatement   rules 44, 45
 	Mode            rules 46, 47, 48, 49
 	RoutCall        rule  50
-	Statement       rules 51, 52, 53, 54, 55, 56, 57, 58
-	ListRExp        rules 59, 60, 61
-	ListLExp        rules 62, 63, 64
-	RExpNE          rule  65
-	ListRExpNE      rules 66, 67
-	If              rules 68, 69
-	Loop            rule  70
-	Exit            rule  71
-	ListExit        rules 72, 73
-	RExp            rules 74, 75
-	RExp1           rules 76, 77
-	RExp2           rules 78, 79, 80, 81, 82, 83, 84
-	RExp3           rules 85, 86, 87
-	RExp4           rules 88, 89, 90, 91, 92
-	RExp5           rules 93, 94
-	RExp6           rules 95, 96, 97, 98
-	RExp7           rules 99, 100, 101, 102, 103, 104, 105, 106, 107
-	Bool            rules 108, 109
-	LExp            rules 110, 111
-	LExp1           rules 112, 113, 114
+	Statement       rules 51, 52, 53, 54, 55, 56, 57, 58, 59
+	ListRExp        rules 60, 61, 62
+	ListLExp        rules 63, 64, 65
+	RExpNE          rule  66
+	ListRExpNE      rules 67, 68
+	If              rules 69, 70
+	Loop            rule  71
+	Exit            rule  72
+	ListExit        rules 73, 74
+	RExp            rules 75, 76
+	RExp1           rules 77, 78
+	RExp2           rules 79, 80, 81, 82, 83, 84, 85
+	RExp3           rules 86, 87, 88
+	RExp4           rules 89, 90, 91, 92, 93
+	RExp5           rules 94, 95
+	RExp6           rules 96, 97, 98, 99
+	RExp7           rules 100, 101, 102, 103, 104, 105, 106, 107, 108
+	Bool            rules 109, 110
+	LExp            rules 111, 112
+	LExp1           rules 113, 114, 115
 
 -----------------------------------------------------------------------------
 States
@@ -278,6 +281,7 @@ State 2
 	'^'            reduce using rule 1
 	'and'          reduce using rule 1
 	'div'          reduce using rule 1
+	'do'           reduce using rule 1
 	'mod'          reduce using rule 1
 	'or'           reduce using rule 1
 	'then'         reduce using rule 1
@@ -511,6 +515,7 @@ State 23
 	','            reduce using rule 26
 	':='           reduce using rule 26
 	';'            reduce using rule 26
+	'in'           reduce using rule 26
 	'is'           reduce using rule 26
 
 
@@ -522,6 +527,7 @@ State 24
 	','            reduce using rule 30
 	':='           reduce using rule 30
 	';'            reduce using rule 30
+	'in'           reduce using rule 30
 	'is'           reduce using rule 30
 
 
@@ -533,6 +539,7 @@ State 25
 	','            reduce using rule 27
 	':='           reduce using rule 27
 	';'            reduce using rule 27
+	'in'           reduce using rule 27
 	'is'           reduce using rule 27
 
 
@@ -544,6 +551,7 @@ State 26
 	','            reduce using rule 28
 	':='           reduce using rule 28
 	';'            reduce using rule 28
+	'in'           reduce using rule 28
 	'is'           reduce using rule 28
 
 
@@ -555,6 +563,7 @@ State 27
 	','            reduce using rule 29
 	':='           reduce using rule 29
 	';'            reduce using rule 29
+	'in'           reduce using rule 29
 	'is'           reduce using rule 29
 
 
@@ -670,6 +679,7 @@ State 37
 	','            reduce using rule 33
 	':='           reduce using rule 33
 	';'            reduce using rule 33
+	'in'           reduce using rule 33
 	'is'           reduce using rule 33
 
 
@@ -681,6 +691,7 @@ State 38
 	','            reduce using rule 34
 	':='           reduce using rule 34
 	';'            reduce using rule 34
+	'in'           reduce using rule 34
 	'is'           reduce using rule 34
 
 
@@ -813,85 +824,7 @@ State 47
 
 State 48
 
-	RExp7 -> Char .                                     (rule 101)
-
-	')'            reduce using rule 101
-	'*'            reduce using rule 101
-	'+'            reduce using rule 101
-	','            reduce using rule 101
-	'-'            reduce using rule 101
-	'/'            reduce using rule 101
-	';'            reduce using rule 101
-	'<'            reduce using rule 101
-	'<='           reduce using rule 101
-	'<>'           reduce using rule 101
-	'='            reduce using rule 101
-	'>'            reduce using rule 101
-	'>='           reduce using rule 101
-	']'            reduce using rule 101
-	'^'            reduce using rule 101
-	'and'          reduce using rule 101
-	'div'          reduce using rule 101
-	'mod'          reduce using rule 101
-	'or'           reduce using rule 101
-	'then'         reduce using rule 101
-
-
-State 49
-
-	RExp7 -> Double .                                   (rule 104)
-
-	')'            reduce using rule 104
-	'*'            reduce using rule 104
-	'+'            reduce using rule 104
-	','            reduce using rule 104
-	'-'            reduce using rule 104
-	'/'            reduce using rule 104
-	';'            reduce using rule 104
-	'<'            reduce using rule 104
-	'<='           reduce using rule 104
-	'<>'           reduce using rule 104
-	'='            reduce using rule 104
-	'>'            reduce using rule 104
-	'>='           reduce using rule 104
-	']'            reduce using rule 104
-	'^'            reduce using rule 104
-	'and'          reduce using rule 104
-	'div'          reduce using rule 104
-	'mod'          reduce using rule 104
-	'or'           reduce using rule 104
-	'then'         reduce using rule 104
-
-
-State 50
-
-	RExp7 -> Integer .                                  (rule 100)
-
-	')'            reduce using rule 100
-	'*'            reduce using rule 100
-	'+'            reduce using rule 100
-	','            reduce using rule 100
-	'-'            reduce using rule 100
-	'/'            reduce using rule 100
-	';'            reduce using rule 100
-	'<'            reduce using rule 100
-	'<='           reduce using rule 100
-	'<>'           reduce using rule 100
-	'='            reduce using rule 100
-	'>'            reduce using rule 100
-	'>='           reduce using rule 100
-	']'            reduce using rule 100
-	'^'            reduce using rule 100
-	'and'          reduce using rule 100
-	'div'          reduce using rule 100
-	'mod'          reduce using rule 100
-	'or'           reduce using rule 100
-	'then'         reduce using rule 100
-
-
-State 51
-
-	RExp7 -> String .                                   (rule 102)
+	RExp7 -> Char .                                     (rule 102)
 
 	')'            reduce using rule 102
 	'*'            reduce using rule 102
@@ -910,43 +843,15 @@ State 51
 	'^'            reduce using rule 102
 	'and'          reduce using rule 102
 	'div'          reduce using rule 102
+	'do'           reduce using rule 102
 	'mod'          reduce using rule 102
 	'or'           reduce using rule 102
 	'then'         reduce using rule 102
 
 
-State 52
+State 49
 
-	RoutCall -> BlueIdent . '(' ListRExp ')'            (rule 50)
-	LExp1 -> BlueIdent .                                (rule 114)
-
-	'('            shift, and enter state 124
-	')'            reduce using rule 114
-	'*'            reduce using rule 114
-	'+'            reduce using rule 114
-	','            reduce using rule 114
-	'-'            reduce using rule 114
-	'/'            reduce using rule 114
-	';'            reduce using rule 114
-	'<'            reduce using rule 114
-	'<='           reduce using rule 114
-	'<>'           reduce using rule 114
-	'='            reduce using rule 114
-	'>'            reduce using rule 114
-	'>='           reduce using rule 114
-	'['            reduce using rule 114
-	']'            reduce using rule 114
-	'^'            reduce using rule 114
-	'and'          reduce using rule 114
-	'div'          reduce using rule 114
-	'mod'          reduce using rule 114
-	'or'           reduce using rule 114
-	'then'         reduce using rule 114
-
-
-State 53
-
-	RExp7 -> RoutCall .                                 (rule 105)
+	RExp7 -> Double .                                   (rule 105)
 
 	')'            reduce using rule 105
 	'*'            reduce using rule 105
@@ -965,204 +870,42 @@ State 53
 	'^'            reduce using rule 105
 	'and'          reduce using rule 105
 	'div'          reduce using rule 105
+	'do'           reduce using rule 105
 	'mod'          reduce using rule 105
 	'or'           reduce using rule 105
 	'then'         reduce using rule 105
 
 
-State 54
+State 50
 
-	ListRExpNE -> RExpNE .                              (rule 66)
-	ListRExpNE -> RExpNE . ',' ListRExpNE               (rule 67)
+	RExp7 -> Integer .                                  (rule 101)
 
-	','            shift, and enter state 123
-	';'            reduce using rule 66
-
-
-State 55
-
-	ConstA -> ListBlueIdent ':' PType ':=' ListRExpNE .    (rule 23)
-
-	';'            reduce using rule 23
-
-
-State 56
-
-	RExpNE -> RExp .                                    (rule 65)
-	RExp -> RExp . 'or' RExp1                           (rule 75)
-
-	','            reduce using rule 65
-	';'            reduce using rule 65
-	'or'           shift, and enter state 122
-
-
-State 57
-
-	RExp -> RExp1 .                                     (rule 74)
-	RExp1 -> RExp1 . 'and' RExp2                        (rule 77)
-
-	')'            reduce using rule 74
-	','            reduce using rule 74
-	';'            reduce using rule 74
-	']'            reduce using rule 74
-	'and'          shift, and enter state 121
-	'or'           reduce using rule 74
-	'then'         reduce using rule 74
+	')'            reduce using rule 101
+	'*'            reduce using rule 101
+	'+'            reduce using rule 101
+	','            reduce using rule 101
+	'-'            reduce using rule 101
+	'/'            reduce using rule 101
+	';'            reduce using rule 101
+	'<'            reduce using rule 101
+	'<='           reduce using rule 101
+	'<>'           reduce using rule 101
+	'='            reduce using rule 101
+	'>'            reduce using rule 101
+	'>='           reduce using rule 101
+	']'            reduce using rule 101
+	'^'            reduce using rule 101
+	'and'          reduce using rule 101
+	'div'          reduce using rule 101
+	'do'           reduce using rule 101
+	'mod'          reduce using rule 101
+	'or'           reduce using rule 101
+	'then'         reduce using rule 101
 
 
-State 58
+State 51
 
-	RExp1 -> RExp2 .                                    (rule 76)
-
-	')'            reduce using rule 76
-	','            reduce using rule 76
-	';'            reduce using rule 76
-	']'            reduce using rule 76
-	'and'          reduce using rule 76
-	'or'           reduce using rule 76
-	'then'         reduce using rule 76
-
-
-State 59
-
-	RExp2 -> RExp3 .                                    (rule 78)
-	RExp2 -> RExp3 . '>' RExp3                          (rule 79)
-	RExp2 -> RExp3 . '<' RExp3                          (rule 80)
-	RExp2 -> RExp3 . '>=' RExp3                         (rule 81)
-	RExp2 -> RExp3 . '<=' RExp3                         (rule 82)
-	RExp2 -> RExp3 . '=' RExp3                          (rule 83)
-	RExp2 -> RExp3 . '<>' RExp3                         (rule 84)
-	RExp3 -> RExp3 . '+' RExp4                          (rule 86)
-	RExp3 -> RExp3 . '-' RExp4                          (rule 87)
-
-	')'            reduce using rule 78
-	'+'            shift, and enter state 113
-	','            reduce using rule 78
-	'-'            shift, and enter state 114
-	';'            reduce using rule 78
-	'<'            shift, and enter state 115
-	'<='           shift, and enter state 116
-	'<>'           shift, and enter state 117
-	'='            shift, and enter state 118
-	'>'            shift, and enter state 119
-	'>='           shift, and enter state 120
-	']'            reduce using rule 78
-	'and'          reduce using rule 78
-	'or'           reduce using rule 78
-	'then'         reduce using rule 78
-
-
-State 60
-
-	RExp3 -> RExp4 .                                    (rule 85)
-	RExp4 -> RExp4 . '*' RExp5                          (rule 89)
-	RExp4 -> RExp4 . '/' RExp5                          (rule 90)
-	RExp4 -> RExp4 . 'div' RExp5                        (rule 91)
-	RExp4 -> RExp4 . 'mod' RExp5                        (rule 92)
-
-	')'            reduce using rule 85
-	'*'            shift, and enter state 109
-	'+'            reduce using rule 85
-	','            reduce using rule 85
-	'-'            reduce using rule 85
-	'/'            shift, and enter state 110
-	';'            reduce using rule 85
-	'<'            reduce using rule 85
-	'<='           reduce using rule 85
-	'<>'           reduce using rule 85
-	'='            reduce using rule 85
-	'>'            reduce using rule 85
-	'>='           reduce using rule 85
-	']'            reduce using rule 85
-	'and'          reduce using rule 85
-	'div'          shift, and enter state 111
-	'mod'          shift, and enter state 112
-	'or'           reduce using rule 85
-	'then'         reduce using rule 85
-
-
-State 61
-
-	RExp4 -> RExp5 .                                    (rule 88)
-	RExp5 -> RExp5 . '^' RExp6                          (rule 94)
-
-	')'            reduce using rule 88
-	'*'            reduce using rule 88
-	'+'            reduce using rule 88
-	','            reduce using rule 88
-	'-'            reduce using rule 88
-	'/'            reduce using rule 88
-	';'            reduce using rule 88
-	'<'            reduce using rule 88
-	'<='           reduce using rule 88
-	'<>'           reduce using rule 88
-	'='            reduce using rule 88
-	'>'            reduce using rule 88
-	'>='           reduce using rule 88
-	']'            reduce using rule 88
-	'^'            shift, and enter state 108
-	'and'          reduce using rule 88
-	'div'          reduce using rule 88
-	'mod'          reduce using rule 88
-	'or'           reduce using rule 88
-	'then'         reduce using rule 88
-
-
-State 62
-
-	RExp5 -> RExp6 .                                    (rule 93)
-
-	')'            reduce using rule 93
-	'*'            reduce using rule 93
-	'+'            reduce using rule 93
-	','            reduce using rule 93
-	'-'            reduce using rule 93
-	'/'            reduce using rule 93
-	';'            reduce using rule 93
-	'<'            reduce using rule 93
-	'<='           reduce using rule 93
-	'<>'           reduce using rule 93
-	'='            reduce using rule 93
-	'>'            reduce using rule 93
-	'>='           reduce using rule 93
-	']'            reduce using rule 93
-	'^'            reduce using rule 93
-	'and'          reduce using rule 93
-	'div'          reduce using rule 93
-	'mod'          reduce using rule 93
-	'or'           reduce using rule 93
-	'then'         reduce using rule 93
-
-
-State 63
-
-	RExp6 -> RExp7 .                                    (rule 95)
-
-	')'            reduce using rule 95
-	'*'            reduce using rule 95
-	'+'            reduce using rule 95
-	','            reduce using rule 95
-	'-'            reduce using rule 95
-	'/'            reduce using rule 95
-	';'            reduce using rule 95
-	'<'            reduce using rule 95
-	'<='           reduce using rule 95
-	'<>'           reduce using rule 95
-	'='            reduce using rule 95
-	'>'            reduce using rule 95
-	'>='           reduce using rule 95
-	']'            reduce using rule 95
-	'^'            reduce using rule 95
-	'and'          reduce using rule 95
-	'div'          reduce using rule 95
-	'mod'          reduce using rule 95
-	'or'           reduce using rule 95
-	'then'         reduce using rule 95
-
-
-State 64
-
-	RExp7 -> Bool .                                     (rule 103)
+	RExp7 -> String .                                   (rule 103)
 
 	')'            reduce using rule 103
 	'*'            reduce using rule 103
@@ -1181,14 +924,45 @@ State 64
 	'^'            reduce using rule 103
 	'and'          reduce using rule 103
 	'div'          reduce using rule 103
+	'do'           reduce using rule 103
 	'mod'          reduce using rule 103
 	'or'           reduce using rule 103
 	'then'         reduce using rule 103
 
 
-State 65
+State 52
 
-	RExp7 -> LExp .                                     (rule 106)
+	RoutCall -> BlueIdent . '(' ListRExp ')'            (rule 50)
+	LExp1 -> BlueIdent .                                (rule 115)
+
+	'('            shift, and enter state 124
+	')'            reduce using rule 115
+	'*'            reduce using rule 115
+	'+'            reduce using rule 115
+	','            reduce using rule 115
+	'-'            reduce using rule 115
+	'/'            reduce using rule 115
+	';'            reduce using rule 115
+	'<'            reduce using rule 115
+	'<='           reduce using rule 115
+	'<>'           reduce using rule 115
+	'='            reduce using rule 115
+	'>'            reduce using rule 115
+	'>='           reduce using rule 115
+	'['            reduce using rule 115
+	']'            reduce using rule 115
+	'^'            reduce using rule 115
+	'and'          reduce using rule 115
+	'div'          reduce using rule 115
+	'do'           reduce using rule 115
+	'mod'          reduce using rule 115
+	'or'           reduce using rule 115
+	'then'         reduce using rule 115
+
+
+State 53
+
+	RExp7 -> RoutCall .                                 (rule 106)
 
 	')'            reduce using rule 106
 	'*'            reduce using rule 106
@@ -1207,43 +981,296 @@ State 65
 	'^'            reduce using rule 106
 	'and'          reduce using rule 106
 	'div'          reduce using rule 106
+	'do'           reduce using rule 106
 	'mod'          reduce using rule 106
 	'or'           reduce using rule 106
 	'then'         reduce using rule 106
 
 
+State 54
+
+	ListRExpNE -> RExpNE .                              (rule 67)
+	ListRExpNE -> RExpNE . ',' ListRExpNE               (rule 68)
+
+	','            shift, and enter state 123
+	';'            reduce using rule 67
+
+
+State 55
+
+	ConstA -> ListBlueIdent ':' PType ':=' ListRExpNE .    (rule 23)
+
+	';'            reduce using rule 23
+
+
+State 56
+
+	RExpNE -> RExp .                                    (rule 66)
+	RExp -> RExp . 'or' RExp1                           (rule 76)
+
+	','            reduce using rule 66
+	';'            reduce using rule 66
+	'or'           shift, and enter state 122
+
+
+State 57
+
+	RExp -> RExp1 .                                     (rule 75)
+	RExp1 -> RExp1 . 'and' RExp2                        (rule 78)
+
+	')'            reduce using rule 75
+	','            reduce using rule 75
+	';'            reduce using rule 75
+	']'            reduce using rule 75
+	'and'          shift, and enter state 121
+	'do'           reduce using rule 75
+	'or'           reduce using rule 75
+	'then'         reduce using rule 75
+
+
+State 58
+
+	RExp1 -> RExp2 .                                    (rule 77)
+
+	')'            reduce using rule 77
+	','            reduce using rule 77
+	';'            reduce using rule 77
+	']'            reduce using rule 77
+	'and'          reduce using rule 77
+	'do'           reduce using rule 77
+	'or'           reduce using rule 77
+	'then'         reduce using rule 77
+
+
+State 59
+
+	RExp2 -> RExp3 .                                    (rule 79)
+	RExp2 -> RExp3 . '>' RExp3                          (rule 80)
+	RExp2 -> RExp3 . '<' RExp3                          (rule 81)
+	RExp2 -> RExp3 . '>=' RExp3                         (rule 82)
+	RExp2 -> RExp3 . '<=' RExp3                         (rule 83)
+	RExp2 -> RExp3 . '=' RExp3                          (rule 84)
+	RExp2 -> RExp3 . '<>' RExp3                         (rule 85)
+	RExp3 -> RExp3 . '+' RExp4                          (rule 87)
+	RExp3 -> RExp3 . '-' RExp4                          (rule 88)
+
+	')'            reduce using rule 79
+	'+'            shift, and enter state 113
+	','            reduce using rule 79
+	'-'            shift, and enter state 114
+	';'            reduce using rule 79
+	'<'            shift, and enter state 115
+	'<='           shift, and enter state 116
+	'<>'           shift, and enter state 117
+	'='            shift, and enter state 118
+	'>'            shift, and enter state 119
+	'>='           shift, and enter state 120
+	']'            reduce using rule 79
+	'and'          reduce using rule 79
+	'do'           reduce using rule 79
+	'or'           reduce using rule 79
+	'then'         reduce using rule 79
+
+
+State 60
+
+	RExp3 -> RExp4 .                                    (rule 86)
+	RExp4 -> RExp4 . '*' RExp5                          (rule 90)
+	RExp4 -> RExp4 . '/' RExp5                          (rule 91)
+	RExp4 -> RExp4 . 'div' RExp5                        (rule 92)
+	RExp4 -> RExp4 . 'mod' RExp5                        (rule 93)
+
+	')'            reduce using rule 86
+	'*'            shift, and enter state 109
+	'+'            reduce using rule 86
+	','            reduce using rule 86
+	'-'            reduce using rule 86
+	'/'            shift, and enter state 110
+	';'            reduce using rule 86
+	'<'            reduce using rule 86
+	'<='           reduce using rule 86
+	'<>'           reduce using rule 86
+	'='            reduce using rule 86
+	'>'            reduce using rule 86
+	'>='           reduce using rule 86
+	']'            reduce using rule 86
+	'and'          reduce using rule 86
+	'div'          shift, and enter state 111
+	'do'           reduce using rule 86
+	'mod'          shift, and enter state 112
+	'or'           reduce using rule 86
+	'then'         reduce using rule 86
+
+
+State 61
+
+	RExp4 -> RExp5 .                                    (rule 89)
+	RExp5 -> RExp5 . '^' RExp6                          (rule 95)
+
+	')'            reduce using rule 89
+	'*'            reduce using rule 89
+	'+'            reduce using rule 89
+	','            reduce using rule 89
+	'-'            reduce using rule 89
+	'/'            reduce using rule 89
+	';'            reduce using rule 89
+	'<'            reduce using rule 89
+	'<='           reduce using rule 89
+	'<>'           reduce using rule 89
+	'='            reduce using rule 89
+	'>'            reduce using rule 89
+	'>='           reduce using rule 89
+	']'            reduce using rule 89
+	'^'            shift, and enter state 108
+	'and'          reduce using rule 89
+	'div'          reduce using rule 89
+	'do'           reduce using rule 89
+	'mod'          reduce using rule 89
+	'or'           reduce using rule 89
+	'then'         reduce using rule 89
+
+
+State 62
+
+	RExp5 -> RExp6 .                                    (rule 94)
+
+	')'            reduce using rule 94
+	'*'            reduce using rule 94
+	'+'            reduce using rule 94
+	','            reduce using rule 94
+	'-'            reduce using rule 94
+	'/'            reduce using rule 94
+	';'            reduce using rule 94
+	'<'            reduce using rule 94
+	'<='           reduce using rule 94
+	'<>'           reduce using rule 94
+	'='            reduce using rule 94
+	'>'            reduce using rule 94
+	'>='           reduce using rule 94
+	']'            reduce using rule 94
+	'^'            reduce using rule 94
+	'and'          reduce using rule 94
+	'div'          reduce using rule 94
+	'do'           reduce using rule 94
+	'mod'          reduce using rule 94
+	'or'           reduce using rule 94
+	'then'         reduce using rule 94
+
+
+State 63
+
+	RExp6 -> RExp7 .                                    (rule 96)
+
+	')'            reduce using rule 96
+	'*'            reduce using rule 96
+	'+'            reduce using rule 96
+	','            reduce using rule 96
+	'-'            reduce using rule 96
+	'/'            reduce using rule 96
+	';'            reduce using rule 96
+	'<'            reduce using rule 96
+	'<='           reduce using rule 96
+	'<>'           reduce using rule 96
+	'='            reduce using rule 96
+	'>'            reduce using rule 96
+	'>='           reduce using rule 96
+	']'            reduce using rule 96
+	'^'            reduce using rule 96
+	'and'          reduce using rule 96
+	'div'          reduce using rule 96
+	'do'           reduce using rule 96
+	'mod'          reduce using rule 96
+	'or'           reduce using rule 96
+	'then'         reduce using rule 96
+
+
+State 64
+
+	RExp7 -> Bool .                                     (rule 104)
+
+	')'            reduce using rule 104
+	'*'            reduce using rule 104
+	'+'            reduce using rule 104
+	','            reduce using rule 104
+	'-'            reduce using rule 104
+	'/'            reduce using rule 104
+	';'            reduce using rule 104
+	'<'            reduce using rule 104
+	'<='           reduce using rule 104
+	'<>'           reduce using rule 104
+	'='            reduce using rule 104
+	'>'            reduce using rule 104
+	'>='           reduce using rule 104
+	']'            reduce using rule 104
+	'^'            reduce using rule 104
+	'and'          reduce using rule 104
+	'div'          reduce using rule 104
+	'do'           reduce using rule 104
+	'mod'          reduce using rule 104
+	'or'           reduce using rule 104
+	'then'         reduce using rule 104
+
+
+State 65
+
+	RExp7 -> LExp .                                     (rule 107)
+
+	')'            reduce using rule 107
+	'*'            reduce using rule 107
+	'+'            reduce using rule 107
+	','            reduce using rule 107
+	'-'            reduce using rule 107
+	'/'            reduce using rule 107
+	';'            reduce using rule 107
+	'<'            reduce using rule 107
+	'<='           reduce using rule 107
+	'<>'           reduce using rule 107
+	'='            reduce using rule 107
+	'>'            reduce using rule 107
+	'>='           reduce using rule 107
+	']'            reduce using rule 107
+	'^'            reduce using rule 107
+	'and'          reduce using rule 107
+	'div'          reduce using rule 107
+	'do'           reduce using rule 107
+	'mod'          reduce using rule 107
+	'or'           reduce using rule 107
+	'then'         reduce using rule 107
+
+
 State 66
 
-	LExp -> LExp1 .                                     (rule 110)
-	LExp1 -> LExp1 . '[' RExp ']'                       (rule 113)
+	LExp -> LExp1 .                                     (rule 111)
+	LExp1 -> LExp1 . '[' RExp ']'                       (rule 114)
 
-	')'            reduce using rule 110
-	'*'            reduce using rule 110
-	'+'            reduce using rule 110
-	','            reduce using rule 110
-	'-'            reduce using rule 110
-	'/'            reduce using rule 110
-	':='           reduce using rule 110
-	';'            reduce using rule 110
-	'<'            reduce using rule 110
-	'<='           reduce using rule 110
-	'<>'           reduce using rule 110
-	'='            reduce using rule 110
-	'>'            reduce using rule 110
-	'>='           reduce using rule 110
+	')'            reduce using rule 111
+	'*'            reduce using rule 111
+	'+'            reduce using rule 111
+	','            reduce using rule 111
+	'-'            reduce using rule 111
+	'/'            reduce using rule 111
+	':='           reduce using rule 111
+	';'            reduce using rule 111
+	'<'            reduce using rule 111
+	'<='           reduce using rule 111
+	'<>'           reduce using rule 111
+	'='            reduce using rule 111
+	'>'            reduce using rule 111
+	'>='           reduce using rule 111
 	'['            shift, and enter state 107
-	']'            reduce using rule 110
-	'^'            reduce using rule 110
-	'and'          reduce using rule 110
-	'div'          reduce using rule 110
-	'mod'          reduce using rule 110
-	'or'           reduce using rule 110
-	'then'         reduce using rule 110
+	']'            reduce using rule 111
+	'^'            reduce using rule 111
+	'and'          reduce using rule 111
+	'div'          reduce using rule 111
+	'do'           reduce using rule 111
+	'mod'          reduce using rule 111
+	'or'           reduce using rule 111
+	'then'         reduce using rule 111
 
 
 State 67
 
-	RExp6 -> '&' . LExp                                 (rule 98)
+	RExp6 -> '&' . LExp                                 (rule 99)
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
@@ -1255,8 +1282,8 @@ State 67
 
 State 68
 
-	RExp7 -> '(' . RExp ')'                             (rule 99)
-	LExp1 -> '(' . LExp ')'                             (rule 112)
+	RExp7 -> '(' . RExp ')'                             (rule 100)
+	LExp1 -> '(' . LExp ')'                             (rule 113)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -1292,7 +1319,7 @@ State 68
 
 State 69
 
-	LExp -> '*' . LExp                                  (rule 111)
+	LExp -> '*' . LExp                                  (rule 112)
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
@@ -1304,7 +1331,7 @@ State 69
 
 State 70
 
-	RExp6 -> '-' . RExp7                                (rule 96)
+	RExp6 -> '-' . RExp7                                (rule 97)
 
 	'('            shift, and enter state 68
 	'*'            shift, and enter state 69
@@ -1330,14 +1357,14 @@ State 70
 
 State 71
 
-	RExp7 -> '[' . ListRExp ']'                         (rule 107)
+	RExp7 -> '[' . ListRExp ']'                         (rule 108)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
 	'*'            shift, and enter state 69
 	'-'            shift, and enter state 70
 	'['            shift, and enter state 71
-	']'            reduce using rule 59
+	']'            reduce using rule 60
 	'false'        shift, and enter state 72
 	'not'          shift, and enter state 73
 	'true'         shift, and enter state 74
@@ -1368,33 +1395,34 @@ State 71
 
 State 72
 
-	Bool -> 'false' .                                   (rule 109)
+	Bool -> 'false' .                                   (rule 110)
 
-	')'            reduce using rule 109
-	'*'            reduce using rule 109
-	'+'            reduce using rule 109
-	','            reduce using rule 109
-	'-'            reduce using rule 109
-	'/'            reduce using rule 109
-	';'            reduce using rule 109
-	'<'            reduce using rule 109
-	'<='           reduce using rule 109
-	'<>'           reduce using rule 109
-	'='            reduce using rule 109
-	'>'            reduce using rule 109
-	'>='           reduce using rule 109
-	']'            reduce using rule 109
-	'^'            reduce using rule 109
-	'and'          reduce using rule 109
-	'div'          reduce using rule 109
-	'mod'          reduce using rule 109
-	'or'           reduce using rule 109
-	'then'         reduce using rule 109
+	')'            reduce using rule 110
+	'*'            reduce using rule 110
+	'+'            reduce using rule 110
+	','            reduce using rule 110
+	'-'            reduce using rule 110
+	'/'            reduce using rule 110
+	';'            reduce using rule 110
+	'<'            reduce using rule 110
+	'<='           reduce using rule 110
+	'<>'           reduce using rule 110
+	'='            reduce using rule 110
+	'>'            reduce using rule 110
+	'>='           reduce using rule 110
+	']'            reduce using rule 110
+	'^'            reduce using rule 110
+	'and'          reduce using rule 110
+	'div'          reduce using rule 110
+	'do'           reduce using rule 110
+	'mod'          reduce using rule 110
+	'or'           reduce using rule 110
+	'then'         reduce using rule 110
 
 
 State 73
 
-	RExp6 -> 'not' . RExp7                              (rule 97)
+	RExp6 -> 'not' . RExp7                              (rule 98)
 
 	'('            shift, and enter state 68
 	'*'            shift, and enter state 69
@@ -1420,28 +1448,29 @@ State 73
 
 State 74
 
-	Bool -> 'true' .                                    (rule 108)
+	Bool -> 'true' .                                    (rule 109)
 
-	')'            reduce using rule 108
-	'*'            reduce using rule 108
-	'+'            reduce using rule 108
-	','            reduce using rule 108
-	'-'            reduce using rule 108
-	'/'            reduce using rule 108
-	';'            reduce using rule 108
-	'<'            reduce using rule 108
-	'<='           reduce using rule 108
-	'<>'           reduce using rule 108
-	'='            reduce using rule 108
-	'>'            reduce using rule 108
-	'>='           reduce using rule 108
-	']'            reduce using rule 108
-	'^'            reduce using rule 108
-	'and'          reduce using rule 108
-	'div'          reduce using rule 108
-	'mod'          reduce using rule 108
-	'or'           reduce using rule 108
-	'then'         reduce using rule 108
+	')'            reduce using rule 109
+	'*'            reduce using rule 109
+	'+'            reduce using rule 109
+	','            reduce using rule 109
+	'-'            reduce using rule 109
+	'/'            reduce using rule 109
+	';'            reduce using rule 109
+	'<'            reduce using rule 109
+	'<='           reduce using rule 109
+	'<>'           reduce using rule 109
+	'='            reduce using rule 109
+	'>'            reduce using rule 109
+	'>='           reduce using rule 109
+	']'            reduce using rule 109
+	'^'            reduce using rule 109
+	'and'          reduce using rule 109
+	'div'          reduce using rule 109
+	'do'           reduce using rule 109
+	'mod'          reduce using rule 109
+	'or'           reduce using rule 109
+	'then'         reduce using rule 109
 
 
 State 75
@@ -1465,6 +1494,7 @@ State 75
 	'^'            reduce using rule 2
 	'and'          reduce using rule 2
 	'div'          reduce using rule 2
+	'do'           reduce using rule 2
 	'mod'          reduce using rule 2
 	'or'           reduce using rule 2
 	'then'         reduce using rule 2
@@ -1491,6 +1521,7 @@ State 76
 	'^'            reduce using rule 3
 	'and'          reduce using rule 3
 	'div'          reduce using rule 3
+	'do'           reduce using rule 3
 	'mod'          reduce using rule 3
 	'or'           reduce using rule 3
 	'then'         reduce using rule 3
@@ -1517,6 +1548,7 @@ State 77
 	'^'            reduce using rule 4
 	'and'          reduce using rule 4
 	'div'          reduce using rule 4
+	'do'           reduce using rule 4
 	'mod'          reduce using rule 4
 	'or'           reduce using rule 4
 	'then'         reduce using rule 4
@@ -1616,6 +1648,7 @@ State 88
 	','            reduce using rule 32
 	':='           reduce using rule 32
 	';'            reduce using rule 32
+	'in'           reduce using rule 32
 	'is'           reduce using rule 32
 
 
@@ -1668,14 +1701,14 @@ State 91
 
 	CType -> 'Array' '<' Type . ';' Integer '>'         (rule 31)
 
-	';'            shift, and enter state 164
+	';'            shift, and enter state 165
 
 
 State 92
 
 	Param -> Mode BlueIdent . ':' Type                  (rule 39)
 
-	':'            shift, and enter state 163
+	':'            shift, and enter state 164
 
 
 State 93
@@ -1683,10 +1716,10 @@ State 93
 	FunD -> BlueIdent '(' ListParam ')' . '->' Type RoutBody BlueIdent    (rule 35)
 	ProcD -> BlueIdent '(' ListParam ')' . RoutBody BlueIdent    (rule 37)
 
-	'->'           shift, and enter state 162
+	'->'           shift, and enter state 163
 	'is'           shift, and enter state 46
 
-	RoutBody       goto state 161
+	RoutBody       goto state 162
 
 State 94
 
@@ -1699,7 +1732,7 @@ State 94
 	L_BlueIdent    reduce using rule 49
 
 	Param          goto state 80
-	ListParam      goto state 160
+	ListParam      goto state 161
 	Mode           goto state 82
 
 State 95
@@ -1708,7 +1741,7 @@ State 95
 
 	L_BlueIdent    shift, and enter state 10
 
-	BlueIdent      goto state 159
+	BlueIdent      goto state 160
 
 State 96
 
@@ -1716,12 +1749,13 @@ State 96
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
-	':='           reduce using rule 62
+	':='           reduce using rule 63
 	'continue'     shift, and enter state 155
 	'end'          reduce using rule 44
-	'if'           shift, and enter state 156
-	'loop'         shift, and enter state 157
-	'return'       shift, and enter state 158
+	'for'          shift, and enter state 156
+	'if'           shift, and enter state 157
+	'loop'         shift, and enter state 158
+	'return'       shift, and enter state 159
 	L_BlueIdent    shift, and enter state 10
 
 	BlueIdent      goto state 148
@@ -1735,179 +1769,7 @@ State 96
 
 State 97
 
-	RExp6 -> 'not' RExp7 .                              (rule 97)
-
-	')'            reduce using rule 97
-	'*'            reduce using rule 97
-	'+'            reduce using rule 97
-	','            reduce using rule 97
-	'-'            reduce using rule 97
-	'/'            reduce using rule 97
-	';'            reduce using rule 97
-	'<'            reduce using rule 97
-	'<='           reduce using rule 97
-	'<>'           reduce using rule 97
-	'='            reduce using rule 97
-	'>'            reduce using rule 97
-	'>='           reduce using rule 97
-	']'            reduce using rule 97
-	'^'            reduce using rule 97
-	'and'          reduce using rule 97
-	'div'          reduce using rule 97
-	'mod'          reduce using rule 97
-	'or'           reduce using rule 97
-	'then'         reduce using rule 97
-
-
-State 98
-
-	RExp7 -> '[' ListRExp . ']'                         (rule 107)
-
-	']'            shift, and enter state 147
-
-
-State 99
-
-	ListRExp -> RExp .                                  (rule 60)
-	ListRExp -> RExp . ',' ListRExp                     (rule 61)
-	RExp -> RExp . 'or' RExp1                           (rule 75)
-
-	')'            reduce using rule 60
-	','            shift, and enter state 146
-	']'            reduce using rule 60
-	'or'           shift, and enter state 122
-
-
-State 100
-
-	RExp6 -> '-' RExp7 .                                (rule 96)
-
-	')'            reduce using rule 96
-	'*'            reduce using rule 96
-	'+'            reduce using rule 96
-	','            reduce using rule 96
-	'-'            reduce using rule 96
-	'/'            reduce using rule 96
-	';'            reduce using rule 96
-	'<'            reduce using rule 96
-	'<='           reduce using rule 96
-	'<>'           reduce using rule 96
-	'='            reduce using rule 96
-	'>'            reduce using rule 96
-	'>='           reduce using rule 96
-	']'            reduce using rule 96
-	'^'            reduce using rule 96
-	'and'          reduce using rule 96
-	'div'          reduce using rule 96
-	'mod'          reduce using rule 96
-	'or'           reduce using rule 96
-	'then'         reduce using rule 96
-
-
-State 101
-
-	LExp1 -> BlueIdent .                                (rule 114)
-
-	')'            reduce using rule 114
-	'*'            reduce using rule 114
-	'+'            reduce using rule 114
-	','            reduce using rule 114
-	'-'            reduce using rule 114
-	'/'            reduce using rule 114
-	':='           reduce using rule 114
-	';'            reduce using rule 114
-	'<'            reduce using rule 114
-	'<='           reduce using rule 114
-	'<>'           reduce using rule 114
-	'='            reduce using rule 114
-	'>'            reduce using rule 114
-	'>='           reduce using rule 114
-	'['            reduce using rule 114
-	']'            reduce using rule 114
-	'^'            reduce using rule 114
-	'and'          reduce using rule 114
-	'div'          reduce using rule 114
-	'mod'          reduce using rule 114
-	'or'           reduce using rule 114
-	'then'         reduce using rule 114
-
-
-State 102
-
-	LExp -> '*' LExp .                                  (rule 111)
-
-	')'            reduce using rule 111
-	'*'            reduce using rule 111
-	'+'            reduce using rule 111
-	','            reduce using rule 111
-	'-'            reduce using rule 111
-	'/'            reduce using rule 111
-	':='           reduce using rule 111
-	';'            reduce using rule 111
-	'<'            reduce using rule 111
-	'<='           reduce using rule 111
-	'<>'           reduce using rule 111
-	'='            reduce using rule 111
-	'>'            reduce using rule 111
-	'>='           reduce using rule 111
-	']'            reduce using rule 111
-	'^'            reduce using rule 111
-	'and'          reduce using rule 111
-	'div'          reduce using rule 111
-	'mod'          reduce using rule 111
-	'or'           reduce using rule 111
-	'then'         reduce using rule 111
-
-
-State 103
-
-	LExp1 -> '(' . LExp ')'                             (rule 112)
-
-	'('            shift, and enter state 103
-	'*'            shift, and enter state 69
-	L_BlueIdent    shift, and enter state 10
-
-	BlueIdent      goto state 101
-	LExp           goto state 145
-	LExp1          goto state 66
-
-State 104
-
-	RExp -> RExp . 'or' RExp1                           (rule 75)
-	RExp7 -> '(' RExp . ')'                             (rule 99)
-
-	')'            shift, and enter state 144
-	'or'           shift, and enter state 122
-
-
-State 105
-
-	RExp7 -> LExp .                                     (rule 106)
-	LExp1 -> '(' LExp . ')'                             (rule 112)
-
-	')'            shift, and enter state 143
-			(reduce using rule 106)
-
-	'*'            reduce using rule 106
-	'+'            reduce using rule 106
-	'-'            reduce using rule 106
-	'/'            reduce using rule 106
-	'<'            reduce using rule 106
-	'<='           reduce using rule 106
-	'<>'           reduce using rule 106
-	'='            reduce using rule 106
-	'>'            reduce using rule 106
-	'>='           reduce using rule 106
-	'^'            reduce using rule 106
-	'and'          reduce using rule 106
-	'div'          reduce using rule 106
-	'mod'          reduce using rule 106
-	'or'           reduce using rule 106
-
-
-State 106
-
-	RExp6 -> '&' LExp .                                 (rule 98)
+	RExp6 -> 'not' RExp7 .                              (rule 98)
 
 	')'            reduce using rule 98
 	'*'            reduce using rule 98
@@ -1926,14 +1788,191 @@ State 106
 	'^'            reduce using rule 98
 	'and'          reduce using rule 98
 	'div'          reduce using rule 98
+	'do'           reduce using rule 98
 	'mod'          reduce using rule 98
 	'or'           reduce using rule 98
 	'then'         reduce using rule 98
 
 
+State 98
+
+	RExp7 -> '[' ListRExp . ']'                         (rule 108)
+
+	']'            shift, and enter state 147
+
+
+State 99
+
+	ListRExp -> RExp .                                  (rule 61)
+	ListRExp -> RExp . ',' ListRExp                     (rule 62)
+	RExp -> RExp . 'or' RExp1                           (rule 76)
+
+	')'            reduce using rule 61
+	','            shift, and enter state 146
+	']'            reduce using rule 61
+	'or'           shift, and enter state 122
+
+
+State 100
+
+	RExp6 -> '-' RExp7 .                                (rule 97)
+
+	')'            reduce using rule 97
+	'*'            reduce using rule 97
+	'+'            reduce using rule 97
+	','            reduce using rule 97
+	'-'            reduce using rule 97
+	'/'            reduce using rule 97
+	';'            reduce using rule 97
+	'<'            reduce using rule 97
+	'<='           reduce using rule 97
+	'<>'           reduce using rule 97
+	'='            reduce using rule 97
+	'>'            reduce using rule 97
+	'>='           reduce using rule 97
+	']'            reduce using rule 97
+	'^'            reduce using rule 97
+	'and'          reduce using rule 97
+	'div'          reduce using rule 97
+	'do'           reduce using rule 97
+	'mod'          reduce using rule 97
+	'or'           reduce using rule 97
+	'then'         reduce using rule 97
+
+
+State 101
+
+	LExp1 -> BlueIdent .                                (rule 115)
+
+	')'            reduce using rule 115
+	'*'            reduce using rule 115
+	'+'            reduce using rule 115
+	','            reduce using rule 115
+	'-'            reduce using rule 115
+	'/'            reduce using rule 115
+	':='           reduce using rule 115
+	';'            reduce using rule 115
+	'<'            reduce using rule 115
+	'<='           reduce using rule 115
+	'<>'           reduce using rule 115
+	'='            reduce using rule 115
+	'>'            reduce using rule 115
+	'>='           reduce using rule 115
+	'['            reduce using rule 115
+	']'            reduce using rule 115
+	'^'            reduce using rule 115
+	'and'          reduce using rule 115
+	'div'          reduce using rule 115
+	'do'           reduce using rule 115
+	'mod'          reduce using rule 115
+	'or'           reduce using rule 115
+	'then'         reduce using rule 115
+
+
+State 102
+
+	LExp -> '*' LExp .                                  (rule 112)
+
+	')'            reduce using rule 112
+	'*'            reduce using rule 112
+	'+'            reduce using rule 112
+	','            reduce using rule 112
+	'-'            reduce using rule 112
+	'/'            reduce using rule 112
+	':='           reduce using rule 112
+	';'            reduce using rule 112
+	'<'            reduce using rule 112
+	'<='           reduce using rule 112
+	'<>'           reduce using rule 112
+	'='            reduce using rule 112
+	'>'            reduce using rule 112
+	'>='           reduce using rule 112
+	']'            reduce using rule 112
+	'^'            reduce using rule 112
+	'and'          reduce using rule 112
+	'div'          reduce using rule 112
+	'do'           reduce using rule 112
+	'mod'          reduce using rule 112
+	'or'           reduce using rule 112
+	'then'         reduce using rule 112
+
+
+State 103
+
+	LExp1 -> '(' . LExp ')'                             (rule 113)
+
+	'('            shift, and enter state 103
+	'*'            shift, and enter state 69
+	L_BlueIdent    shift, and enter state 10
+
+	BlueIdent      goto state 101
+	LExp           goto state 145
+	LExp1          goto state 66
+
+State 104
+
+	RExp -> RExp . 'or' RExp1                           (rule 76)
+	RExp7 -> '(' RExp . ')'                             (rule 100)
+
+	')'            shift, and enter state 144
+	'or'           shift, and enter state 122
+
+
+State 105
+
+	RExp7 -> LExp .                                     (rule 107)
+	LExp1 -> '(' LExp . ')'                             (rule 113)
+
+	')'            shift, and enter state 143
+			(reduce using rule 107)
+
+	'*'            reduce using rule 107
+	'+'            reduce using rule 107
+	'-'            reduce using rule 107
+	'/'            reduce using rule 107
+	'<'            reduce using rule 107
+	'<='           reduce using rule 107
+	'<>'           reduce using rule 107
+	'='            reduce using rule 107
+	'>'            reduce using rule 107
+	'>='           reduce using rule 107
+	'^'            reduce using rule 107
+	'and'          reduce using rule 107
+	'div'          reduce using rule 107
+	'mod'          reduce using rule 107
+	'or'           reduce using rule 107
+
+
+State 106
+
+	RExp6 -> '&' LExp .                                 (rule 99)
+
+	')'            reduce using rule 99
+	'*'            reduce using rule 99
+	'+'            reduce using rule 99
+	','            reduce using rule 99
+	'-'            reduce using rule 99
+	'/'            reduce using rule 99
+	';'            reduce using rule 99
+	'<'            reduce using rule 99
+	'<='           reduce using rule 99
+	'<>'           reduce using rule 99
+	'='            reduce using rule 99
+	'>'            reduce using rule 99
+	'>='           reduce using rule 99
+	']'            reduce using rule 99
+	'^'            reduce using rule 99
+	'and'          reduce using rule 99
+	'div'          reduce using rule 99
+	'do'           reduce using rule 99
+	'mod'          reduce using rule 99
+	'or'           reduce using rule 99
+	'then'         reduce using rule 99
+
+
 State 107
 
-	LExp1 -> LExp1 '[' . RExp ']'                       (rule 113)
+	LExp1 -> LExp1 '[' . RExp ']'                       (rule 114)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -1969,7 +2008,7 @@ State 107
 
 State 108
 
-	RExp5 -> RExp5 '^' . RExp6                          (rule 94)
+	RExp5 -> RExp5 '^' . RExp6                          (rule 95)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -1999,7 +2038,7 @@ State 108
 
 State 109
 
-	RExp4 -> RExp4 '*' . RExp5                          (rule 89)
+	RExp4 -> RExp4 '*' . RExp5                          (rule 90)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2030,7 +2069,7 @@ State 109
 
 State 110
 
-	RExp4 -> RExp4 '/' . RExp5                          (rule 90)
+	RExp4 -> RExp4 '/' . RExp5                          (rule 91)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2061,7 +2100,7 @@ State 110
 
 State 111
 
-	RExp4 -> RExp4 'div' . RExp5                        (rule 91)
+	RExp4 -> RExp4 'div' . RExp5                        (rule 92)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2092,7 +2131,7 @@ State 111
 
 State 112
 
-	RExp4 -> RExp4 'mod' . RExp5                        (rule 92)
+	RExp4 -> RExp4 'mod' . RExp5                        (rule 93)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2123,7 +2162,7 @@ State 112
 
 State 113
 
-	RExp3 -> RExp3 '+' . RExp4                          (rule 86)
+	RExp3 -> RExp3 '+' . RExp4                          (rule 87)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2155,7 +2194,7 @@ State 113
 
 State 114
 
-	RExp3 -> RExp3 '-' . RExp4                          (rule 87)
+	RExp3 -> RExp3 '-' . RExp4                          (rule 88)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2187,7 +2226,7 @@ State 114
 
 State 115
 
-	RExp2 -> RExp3 '<' . RExp3                          (rule 80)
+	RExp2 -> RExp3 '<' . RExp3                          (rule 81)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2220,7 +2259,7 @@ State 115
 
 State 116
 
-	RExp2 -> RExp3 '<=' . RExp3                         (rule 82)
+	RExp2 -> RExp3 '<=' . RExp3                         (rule 83)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2253,7 +2292,7 @@ State 116
 
 State 117
 
-	RExp2 -> RExp3 '<>' . RExp3                         (rule 84)
+	RExp2 -> RExp3 '<>' . RExp3                         (rule 85)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2286,7 +2325,7 @@ State 117
 
 State 118
 
-	RExp2 -> RExp3 '=' . RExp3                          (rule 83)
+	RExp2 -> RExp3 '=' . RExp3                          (rule 84)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2319,7 +2358,7 @@ State 118
 
 State 119
 
-	RExp2 -> RExp3 '>' . RExp3                          (rule 79)
+	RExp2 -> RExp3 '>' . RExp3                          (rule 80)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2352,7 +2391,7 @@ State 119
 
 State 120
 
-	RExp2 -> RExp3 '>=' . RExp3                         (rule 81)
+	RExp2 -> RExp3 '>=' . RExp3                         (rule 82)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2385,7 +2424,7 @@ State 120
 
 State 121
 
-	RExp1 -> RExp1 'and' . RExp2                        (rule 77)
+	RExp1 -> RExp1 'and' . RExp2                        (rule 78)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2419,7 +2458,7 @@ State 121
 
 State 122
 
-	RExp -> RExp 'or' . RExp1                           (rule 75)
+	RExp -> RExp 'or' . RExp1                           (rule 76)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2454,7 +2493,7 @@ State 122
 
 State 123
 
-	ListRExpNE -> RExpNE ',' . ListRExpNE               (rule 67)
+	ListRExpNE -> RExpNE ',' . ListRExpNE               (rule 68)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -2496,7 +2535,7 @@ State 124
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
-	')'            reduce using rule 59
+	')'            reduce using rule 60
 	'*'            shift, and enter state 69
 	'-'            shift, and enter state 70
 	'['            shift, and enter state 71
@@ -2532,116 +2571,50 @@ State 125
 
 	RoutCall -> BlueIdent '(' ListRExp . ')'            (rule 50)
 
-	')'            shift, and enter state 184
+	')'            shift, and enter state 186
 
 
 State 126
 
-	ListRExpNE -> RExpNE ',' ListRExpNE .               (rule 67)
+	ListRExpNE -> RExpNE ',' ListRExpNE .               (rule 68)
 
-	';'            reduce using rule 67
+	';'            reduce using rule 68
 
 
 State 127
 
-	RExp -> RExp 'or' RExp1 .                           (rule 75)
-	RExp1 -> RExp1 . 'and' RExp2                        (rule 77)
+	RExp -> RExp 'or' RExp1 .                           (rule 76)
+	RExp1 -> RExp1 . 'and' RExp2                        (rule 78)
 
-	')'            reduce using rule 75
-	','            reduce using rule 75
-	';'            reduce using rule 75
-	']'            reduce using rule 75
+	')'            reduce using rule 76
+	','            reduce using rule 76
+	';'            reduce using rule 76
+	']'            reduce using rule 76
 	'and'          shift, and enter state 121
-	'or'           reduce using rule 75
-	'then'         reduce using rule 75
+	'do'           reduce using rule 76
+	'or'           reduce using rule 76
+	'then'         reduce using rule 76
 
 
 State 128
 
-	RExp1 -> RExp1 'and' RExp2 .                        (rule 77)
+	RExp1 -> RExp1 'and' RExp2 .                        (rule 78)
 
-	')'            reduce using rule 77
-	','            reduce using rule 77
-	';'            reduce using rule 77
-	']'            reduce using rule 77
-	'and'          reduce using rule 77
-	'or'           reduce using rule 77
-	'then'         reduce using rule 77
+	')'            reduce using rule 78
+	','            reduce using rule 78
+	';'            reduce using rule 78
+	']'            reduce using rule 78
+	'and'          reduce using rule 78
+	'do'           reduce using rule 78
+	'or'           reduce using rule 78
+	'then'         reduce using rule 78
 
 
 State 129
 
-	RExp2 -> RExp3 '>=' RExp3 .                         (rule 81)
-	RExp3 -> RExp3 . '+' RExp4                          (rule 86)
-	RExp3 -> RExp3 . '-' RExp4                          (rule 87)
-
-	')'            reduce using rule 81
-	'+'            shift, and enter state 113
-	','            reduce using rule 81
-	'-'            shift, and enter state 114
-	';'            reduce using rule 81
-	']'            reduce using rule 81
-	'and'          reduce using rule 81
-	'or'           reduce using rule 81
-	'then'         reduce using rule 81
-
-
-State 130
-
-	RExp2 -> RExp3 '>' RExp3 .                          (rule 79)
-	RExp3 -> RExp3 . '+' RExp4                          (rule 86)
-	RExp3 -> RExp3 . '-' RExp4                          (rule 87)
-
-	')'            reduce using rule 79
-	'+'            shift, and enter state 113
-	','            reduce using rule 79
-	'-'            shift, and enter state 114
-	';'            reduce using rule 79
-	']'            reduce using rule 79
-	'and'          reduce using rule 79
-	'or'           reduce using rule 79
-	'then'         reduce using rule 79
-
-
-State 131
-
-	RExp2 -> RExp3 '=' RExp3 .                          (rule 83)
-	RExp3 -> RExp3 . '+' RExp4                          (rule 86)
-	RExp3 -> RExp3 . '-' RExp4                          (rule 87)
-
-	')'            reduce using rule 83
-	'+'            shift, and enter state 113
-	','            reduce using rule 83
-	'-'            shift, and enter state 114
-	';'            reduce using rule 83
-	']'            reduce using rule 83
-	'and'          reduce using rule 83
-	'or'           reduce using rule 83
-	'then'         reduce using rule 83
-
-
-State 132
-
-	RExp2 -> RExp3 '<>' RExp3 .                         (rule 84)
-	RExp3 -> RExp3 . '+' RExp4                          (rule 86)
-	RExp3 -> RExp3 . '-' RExp4                          (rule 87)
-
-	')'            reduce using rule 84
-	'+'            shift, and enter state 113
-	','            reduce using rule 84
-	'-'            shift, and enter state 114
-	';'            reduce using rule 84
-	']'            reduce using rule 84
-	'and'          reduce using rule 84
-	'or'           reduce using rule 84
-	'then'         reduce using rule 84
-
-
-State 133
-
-	RExp2 -> RExp3 '<=' RExp3 .                         (rule 82)
-	RExp3 -> RExp3 . '+' RExp4                          (rule 86)
-	RExp3 -> RExp3 . '-' RExp4                          (rule 87)
+	RExp2 -> RExp3 '>=' RExp3 .                         (rule 82)
+	RExp3 -> RExp3 . '+' RExp4                          (rule 87)
+	RExp3 -> RExp3 . '-' RExp4                          (rule 88)
 
 	')'            reduce using rule 82
 	'+'            shift, and enter state 113
@@ -2650,15 +2623,16 @@ State 133
 	';'            reduce using rule 82
 	']'            reduce using rule 82
 	'and'          reduce using rule 82
+	'do'           reduce using rule 82
 	'or'           reduce using rule 82
 	'then'         reduce using rule 82
 
 
-State 134
+State 130
 
-	RExp2 -> RExp3 '<' RExp3 .                          (rule 80)
-	RExp3 -> RExp3 . '+' RExp4                          (rule 86)
-	RExp3 -> RExp3 . '-' RExp4                          (rule 87)
+	RExp2 -> RExp3 '>' RExp3 .                          (rule 80)
+	RExp3 -> RExp3 . '+' RExp4                          (rule 87)
+	RExp3 -> RExp3 . '-' RExp4                          (rule 88)
 
 	')'            reduce using rule 80
 	'+'            shift, and enter state 113
@@ -2667,17 +2641,120 @@ State 134
 	';'            reduce using rule 80
 	']'            reduce using rule 80
 	'and'          reduce using rule 80
+	'do'           reduce using rule 80
 	'or'           reduce using rule 80
 	'then'         reduce using rule 80
 
 
+State 131
+
+	RExp2 -> RExp3 '=' RExp3 .                          (rule 84)
+	RExp3 -> RExp3 . '+' RExp4                          (rule 87)
+	RExp3 -> RExp3 . '-' RExp4                          (rule 88)
+
+	')'            reduce using rule 84
+	'+'            shift, and enter state 113
+	','            reduce using rule 84
+	'-'            shift, and enter state 114
+	';'            reduce using rule 84
+	']'            reduce using rule 84
+	'and'          reduce using rule 84
+	'do'           reduce using rule 84
+	'or'           reduce using rule 84
+	'then'         reduce using rule 84
+
+
+State 132
+
+	RExp2 -> RExp3 '<>' RExp3 .                         (rule 85)
+	RExp3 -> RExp3 . '+' RExp4                          (rule 87)
+	RExp3 -> RExp3 . '-' RExp4                          (rule 88)
+
+	')'            reduce using rule 85
+	'+'            shift, and enter state 113
+	','            reduce using rule 85
+	'-'            shift, and enter state 114
+	';'            reduce using rule 85
+	']'            reduce using rule 85
+	'and'          reduce using rule 85
+	'do'           reduce using rule 85
+	'or'           reduce using rule 85
+	'then'         reduce using rule 85
+
+
+State 133
+
+	RExp2 -> RExp3 '<=' RExp3 .                         (rule 83)
+	RExp3 -> RExp3 . '+' RExp4                          (rule 87)
+	RExp3 -> RExp3 . '-' RExp4                          (rule 88)
+
+	')'            reduce using rule 83
+	'+'            shift, and enter state 113
+	','            reduce using rule 83
+	'-'            shift, and enter state 114
+	';'            reduce using rule 83
+	']'            reduce using rule 83
+	'and'          reduce using rule 83
+	'do'           reduce using rule 83
+	'or'           reduce using rule 83
+	'then'         reduce using rule 83
+
+
+State 134
+
+	RExp2 -> RExp3 '<' RExp3 .                          (rule 81)
+	RExp3 -> RExp3 . '+' RExp4                          (rule 87)
+	RExp3 -> RExp3 . '-' RExp4                          (rule 88)
+
+	')'            reduce using rule 81
+	'+'            shift, and enter state 113
+	','            reduce using rule 81
+	'-'            shift, and enter state 114
+	';'            reduce using rule 81
+	']'            reduce using rule 81
+	'and'          reduce using rule 81
+	'do'           reduce using rule 81
+	'or'           reduce using rule 81
+	'then'         reduce using rule 81
+
+
 State 135
 
-	RExp3 -> RExp3 '-' RExp4 .                          (rule 87)
-	RExp4 -> RExp4 . '*' RExp5                          (rule 89)
-	RExp4 -> RExp4 . '/' RExp5                          (rule 90)
-	RExp4 -> RExp4 . 'div' RExp5                        (rule 91)
-	RExp4 -> RExp4 . 'mod' RExp5                        (rule 92)
+	RExp3 -> RExp3 '-' RExp4 .                          (rule 88)
+	RExp4 -> RExp4 . '*' RExp5                          (rule 90)
+	RExp4 -> RExp4 . '/' RExp5                          (rule 91)
+	RExp4 -> RExp4 . 'div' RExp5                        (rule 92)
+	RExp4 -> RExp4 . 'mod' RExp5                        (rule 93)
+
+	')'            reduce using rule 88
+	'*'            shift, and enter state 109
+	'+'            reduce using rule 88
+	','            reduce using rule 88
+	'-'            reduce using rule 88
+	'/'            shift, and enter state 110
+	';'            reduce using rule 88
+	'<'            reduce using rule 88
+	'<='           reduce using rule 88
+	'<>'           reduce using rule 88
+	'='            reduce using rule 88
+	'>'            reduce using rule 88
+	'>='           reduce using rule 88
+	']'            reduce using rule 88
+	'and'          reduce using rule 88
+	'div'          shift, and enter state 111
+	'do'           reduce using rule 88
+	'mod'          shift, and enter state 112
+	'or'           reduce using rule 88
+	'then'         reduce using rule 88
+
+
+State 136
+
+	RExp3 -> RExp3 '+' RExp4 .                          (rule 87)
+	RExp4 -> RExp4 . '*' RExp5                          (rule 90)
+	RExp4 -> RExp4 . '/' RExp5                          (rule 91)
+	RExp4 -> RExp4 . 'div' RExp5                        (rule 92)
+	RExp4 -> RExp4 . 'mod' RExp5                        (rule 93)
 
 	')'            reduce using rule 87
 	'*'            shift, and enter state 109
@@ -2695,44 +2772,44 @@ State 135
 	']'            reduce using rule 87
 	'and'          reduce using rule 87
 	'div'          shift, and enter state 111
+	'do'           reduce using rule 87
 	'mod'          shift, and enter state 112
 	'or'           reduce using rule 87
 	'then'         reduce using rule 87
 
 
-State 136
-
-	RExp3 -> RExp3 '+' RExp4 .                          (rule 86)
-	RExp4 -> RExp4 . '*' RExp5                          (rule 89)
-	RExp4 -> RExp4 . '/' RExp5                          (rule 90)
-	RExp4 -> RExp4 . 'div' RExp5                        (rule 91)
-	RExp4 -> RExp4 . 'mod' RExp5                        (rule 92)
-
-	')'            reduce using rule 86
-	'*'            shift, and enter state 109
-	'+'            reduce using rule 86
-	','            reduce using rule 86
-	'-'            reduce using rule 86
-	'/'            shift, and enter state 110
-	';'            reduce using rule 86
-	'<'            reduce using rule 86
-	'<='           reduce using rule 86
-	'<>'           reduce using rule 86
-	'='            reduce using rule 86
-	'>'            reduce using rule 86
-	'>='           reduce using rule 86
-	']'            reduce using rule 86
-	'and'          reduce using rule 86
-	'div'          shift, and enter state 111
-	'mod'          shift, and enter state 112
-	'or'           reduce using rule 86
-	'then'         reduce using rule 86
-
-
 State 137
 
-	RExp4 -> RExp4 'mod' RExp5 .                        (rule 92)
-	RExp5 -> RExp5 . '^' RExp6                          (rule 94)
+	RExp4 -> RExp4 'mod' RExp5 .                        (rule 93)
+	RExp5 -> RExp5 . '^' RExp6                          (rule 95)
+
+	')'            reduce using rule 93
+	'*'            reduce using rule 93
+	'+'            reduce using rule 93
+	','            reduce using rule 93
+	'-'            reduce using rule 93
+	'/'            reduce using rule 93
+	';'            reduce using rule 93
+	'<'            reduce using rule 93
+	'<='           reduce using rule 93
+	'<>'           reduce using rule 93
+	'='            reduce using rule 93
+	'>'            reduce using rule 93
+	'>='           reduce using rule 93
+	']'            reduce using rule 93
+	'^'            shift, and enter state 108
+	'and'          reduce using rule 93
+	'div'          reduce using rule 93
+	'do'           reduce using rule 93
+	'mod'          reduce using rule 93
+	'or'           reduce using rule 93
+	'then'         reduce using rule 93
+
+
+State 138
+
+	RExp4 -> RExp4 'div' RExp5 .                        (rule 92)
+	RExp5 -> RExp5 . '^' RExp6                          (rule 95)
 
 	')'            reduce using rule 92
 	'*'            reduce using rule 92
@@ -2751,15 +2828,16 @@ State 137
 	'^'            shift, and enter state 108
 	'and'          reduce using rule 92
 	'div'          reduce using rule 92
+	'do'           reduce using rule 92
 	'mod'          reduce using rule 92
 	'or'           reduce using rule 92
 	'then'         reduce using rule 92
 
 
-State 138
+State 139
 
-	RExp4 -> RExp4 'div' RExp5 .                        (rule 91)
-	RExp5 -> RExp5 . '^' RExp6                          (rule 94)
+	RExp4 -> RExp4 '/' RExp5 .                          (rule 91)
+	RExp5 -> RExp5 . '^' RExp6                          (rule 95)
 
 	')'            reduce using rule 91
 	'*'            reduce using rule 91
@@ -2778,15 +2856,16 @@ State 138
 	'^'            shift, and enter state 108
 	'and'          reduce using rule 91
 	'div'          reduce using rule 91
+	'do'           reduce using rule 91
 	'mod'          reduce using rule 91
 	'or'           reduce using rule 91
 	'then'         reduce using rule 91
 
 
-State 139
+State 140
 
-	RExp4 -> RExp4 '/' RExp5 .                          (rule 90)
-	RExp5 -> RExp5 . '^' RExp6                          (rule 94)
+	RExp4 -> RExp4 '*' RExp5 .                          (rule 90)
+	RExp5 -> RExp5 . '^' RExp6                          (rule 95)
 
 	')'            reduce using rule 90
 	'*'            reduce using rule 90
@@ -2805,145 +2884,122 @@ State 139
 	'^'            shift, and enter state 108
 	'and'          reduce using rule 90
 	'div'          reduce using rule 90
+	'do'           reduce using rule 90
 	'mod'          reduce using rule 90
 	'or'           reduce using rule 90
 	'then'         reduce using rule 90
 
 
-State 140
-
-	RExp4 -> RExp4 '*' RExp5 .                          (rule 89)
-	RExp5 -> RExp5 . '^' RExp6                          (rule 94)
-
-	')'            reduce using rule 89
-	'*'            reduce using rule 89
-	'+'            reduce using rule 89
-	','            reduce using rule 89
-	'-'            reduce using rule 89
-	'/'            reduce using rule 89
-	';'            reduce using rule 89
-	'<'            reduce using rule 89
-	'<='           reduce using rule 89
-	'<>'           reduce using rule 89
-	'='            reduce using rule 89
-	'>'            reduce using rule 89
-	'>='           reduce using rule 89
-	']'            reduce using rule 89
-	'^'            shift, and enter state 108
-	'and'          reduce using rule 89
-	'div'          reduce using rule 89
-	'mod'          reduce using rule 89
-	'or'           reduce using rule 89
-	'then'         reduce using rule 89
-
-
 State 141
 
-	RExp5 -> RExp5 '^' RExp6 .                          (rule 94)
+	RExp5 -> RExp5 '^' RExp6 .                          (rule 95)
 
-	')'            reduce using rule 94
-	'*'            reduce using rule 94
-	'+'            reduce using rule 94
-	','            reduce using rule 94
-	'-'            reduce using rule 94
-	'/'            reduce using rule 94
-	';'            reduce using rule 94
-	'<'            reduce using rule 94
-	'<='           reduce using rule 94
-	'<>'           reduce using rule 94
-	'='            reduce using rule 94
-	'>'            reduce using rule 94
-	'>='           reduce using rule 94
-	']'            reduce using rule 94
-	'^'            reduce using rule 94
-	'and'          reduce using rule 94
-	'div'          reduce using rule 94
-	'mod'          reduce using rule 94
-	'or'           reduce using rule 94
-	'then'         reduce using rule 94
+	')'            reduce using rule 95
+	'*'            reduce using rule 95
+	'+'            reduce using rule 95
+	','            reduce using rule 95
+	'-'            reduce using rule 95
+	'/'            reduce using rule 95
+	';'            reduce using rule 95
+	'<'            reduce using rule 95
+	'<='           reduce using rule 95
+	'<>'           reduce using rule 95
+	'='            reduce using rule 95
+	'>'            reduce using rule 95
+	'>='           reduce using rule 95
+	']'            reduce using rule 95
+	'^'            reduce using rule 95
+	'and'          reduce using rule 95
+	'div'          reduce using rule 95
+	'do'           reduce using rule 95
+	'mod'          reduce using rule 95
+	'or'           reduce using rule 95
+	'then'         reduce using rule 95
 
 
 State 142
 
-	RExp -> RExp . 'or' RExp1                           (rule 75)
-	LExp1 -> LExp1 '[' RExp . ']'                       (rule 113)
+	RExp -> RExp . 'or' RExp1                           (rule 76)
+	LExp1 -> LExp1 '[' RExp . ']'                       (rule 114)
 
-	']'            shift, and enter state 183
+	']'            shift, and enter state 185
 	'or'           shift, and enter state 122
 
 
 State 143
 
-	LExp1 -> '(' LExp ')' .                             (rule 112)
+	LExp1 -> '(' LExp ')' .                             (rule 113)
 
-	')'            reduce using rule 112
-	'*'            reduce using rule 112
-	'+'            reduce using rule 112
-	','            reduce using rule 112
-	'-'            reduce using rule 112
-	'/'            reduce using rule 112
-	':='           reduce using rule 112
-	';'            reduce using rule 112
-	'<'            reduce using rule 112
-	'<='           reduce using rule 112
-	'<>'           reduce using rule 112
-	'='            reduce using rule 112
-	'>'            reduce using rule 112
-	'>='           reduce using rule 112
-	'['            reduce using rule 112
-	']'            reduce using rule 112
-	'^'            reduce using rule 112
-	'and'          reduce using rule 112
-	'div'          reduce using rule 112
-	'mod'          reduce using rule 112
-	'or'           reduce using rule 112
-	'then'         reduce using rule 112
+	')'            reduce using rule 113
+	'*'            reduce using rule 113
+	'+'            reduce using rule 113
+	','            reduce using rule 113
+	'-'            reduce using rule 113
+	'/'            reduce using rule 113
+	':='           reduce using rule 113
+	';'            reduce using rule 113
+	'<'            reduce using rule 113
+	'<='           reduce using rule 113
+	'<>'           reduce using rule 113
+	'='            reduce using rule 113
+	'>'            reduce using rule 113
+	'>='           reduce using rule 113
+	'['            reduce using rule 113
+	']'            reduce using rule 113
+	'^'            reduce using rule 113
+	'and'          reduce using rule 113
+	'div'          reduce using rule 113
+	'do'           reduce using rule 113
+	'mod'          reduce using rule 113
+	'or'           reduce using rule 113
+	'then'         reduce using rule 113
 
 
 State 144
 
-	RExp7 -> '(' RExp ')' .                             (rule 99)
+	RExp7 -> '(' RExp ')' .                             (rule 100)
 
-	')'            reduce using rule 99
-	'*'            reduce using rule 99
-	'+'            reduce using rule 99
-	','            reduce using rule 99
-	'-'            reduce using rule 99
-	'/'            reduce using rule 99
-	';'            reduce using rule 99
-	'<'            reduce using rule 99
-	'<='           reduce using rule 99
-	'<>'           reduce using rule 99
-	'='            reduce using rule 99
-	'>'            reduce using rule 99
-	'>='           reduce using rule 99
-	']'            reduce using rule 99
-	'^'            reduce using rule 99
-	'and'          reduce using rule 99
-	'div'          reduce using rule 99
-	'mod'          reduce using rule 99
-	'or'           reduce using rule 99
-	'then'         reduce using rule 99
+	')'            reduce using rule 100
+	'*'            reduce using rule 100
+	'+'            reduce using rule 100
+	','            reduce using rule 100
+	'-'            reduce using rule 100
+	'/'            reduce using rule 100
+	';'            reduce using rule 100
+	'<'            reduce using rule 100
+	'<='           reduce using rule 100
+	'<>'           reduce using rule 100
+	'='            reduce using rule 100
+	'>'            reduce using rule 100
+	'>='           reduce using rule 100
+	']'            reduce using rule 100
+	'^'            reduce using rule 100
+	'and'          reduce using rule 100
+	'div'          reduce using rule 100
+	'do'           reduce using rule 100
+	'mod'          reduce using rule 100
+	'or'           reduce using rule 100
+	'then'         reduce using rule 100
 
 
 State 145
 
-	LExp1 -> '(' LExp . ')'                             (rule 112)
+	LExp1 -> '(' LExp . ')'                             (rule 113)
 
 	')'            shift, and enter state 143
 
 
 State 146
 
-	ListRExp -> RExp ',' . ListRExp                     (rule 61)
+	ListRExp -> RExp ',' . ListRExp                     (rule 62)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
-	')'            reduce using rule 59
+	')'            reduce using rule 60
 	'*'            shift, and enter state 69
 	'-'            shift, and enter state 70
 	'['            shift, and enter state 71
-	']'            reduce using rule 59
+	']'            reduce using rule 60
 	'false'        shift, and enter state 72
 	'not'          shift, and enter state 73
 	'true'         shift, and enter state 74
@@ -2959,7 +3015,7 @@ State 146
 	String         goto state 51
 	BlueIdent      goto state 52
 	RoutCall       goto state 53
-	ListRExp       goto state 182
+	ListRExp       goto state 184
 	RExp           goto state 99
 	RExp1          goto state 57
 	RExp2          goto state 58
@@ -2974,48 +3030,49 @@ State 146
 
 State 147
 
-	RExp7 -> '[' ListRExp ']' .                         (rule 107)
+	RExp7 -> '[' ListRExp ']' .                         (rule 108)
 
-	')'            reduce using rule 107
-	'*'            reduce using rule 107
-	'+'            reduce using rule 107
-	','            reduce using rule 107
-	'-'            reduce using rule 107
-	'/'            reduce using rule 107
-	';'            reduce using rule 107
-	'<'            reduce using rule 107
-	'<='           reduce using rule 107
-	'<>'           reduce using rule 107
-	'='            reduce using rule 107
-	'>'            reduce using rule 107
-	'>='           reduce using rule 107
-	']'            reduce using rule 107
-	'^'            reduce using rule 107
-	'and'          reduce using rule 107
-	'div'          reduce using rule 107
-	'mod'          reduce using rule 107
-	'or'           reduce using rule 107
-	'then'         reduce using rule 107
+	')'            reduce using rule 108
+	'*'            reduce using rule 108
+	'+'            reduce using rule 108
+	','            reduce using rule 108
+	'-'            reduce using rule 108
+	'/'            reduce using rule 108
+	';'            reduce using rule 108
+	'<'            reduce using rule 108
+	'<='           reduce using rule 108
+	'<>'           reduce using rule 108
+	'='            reduce using rule 108
+	'>'            reduce using rule 108
+	'>='           reduce using rule 108
+	']'            reduce using rule 108
+	'^'            reduce using rule 108
+	'and'          reduce using rule 108
+	'div'          reduce using rule 108
+	'do'           reduce using rule 108
+	'mod'          reduce using rule 108
+	'or'           reduce using rule 108
+	'then'         reduce using rule 108
 
 
 State 148
 
 	Statement -> BlueIdent . '(' ListRExp ')' ';'       (rule 52)
 	Statement -> BlueIdent . ';'                        (rule 53)
-	LExp1 -> BlueIdent .                                (rule 114)
+	LExp1 -> BlueIdent .                                (rule 115)
 
-	'('            shift, and enter state 180
-	','            reduce using rule 114
-	':='           reduce using rule 114
-	';'            shift, and enter state 181
-	'['            reduce using rule 114
+	'('            shift, and enter state 182
+	','            reduce using rule 115
+	':='           reduce using rule 115
+	';'            shift, and enter state 183
+	'['            reduce using rule 115
 
 
 State 149
 
 	RoutBody -> 'is' Declarations 'do' ListStatement . 'end'    (rule 43)
 
-	'end'          shift, and enter state 179
+	'end'          shift, and enter state 181
 
 
 State 150
@@ -3024,18 +3081,19 @@ State 150
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
-	':='           reduce using rule 62
+	':='           reduce using rule 63
 	'continue'     shift, and enter state 155
 	'else'         reduce using rule 44
 	'end'          reduce using rule 44
 	'exit'         reduce using rule 44
-	'if'           shift, and enter state 156
-	'loop'         shift, and enter state 157
-	'return'       shift, and enter state 158
+	'for'          shift, and enter state 156
+	'if'           shift, and enter state 157
+	'loop'         shift, and enter state 158
+	'return'       shift, and enter state 159
 	L_BlueIdent    shift, and enter state 10
 
 	BlueIdent      goto state 148
-	ListStatement  goto state 178
+	ListStatement  goto state 180
 	Statement      goto state 150
 	ListLExp       goto state 151
 	If             goto state 152
@@ -3047,43 +3105,51 @@ State 151
 
 	Statement -> ListLExp . ':=' ListRExpNE ';'         (rule 51)
 
-	':='           shift, and enter state 177
+	':='           shift, and enter state 179
 
 
 State 152
 
 	Statement -> If . 'end' 'if'                        (rule 57)
 
-	'end'          shift, and enter state 176
+	'end'          shift, and enter state 178
 
 
 State 153
 
 	Statement -> Loop . 'end' 'loop'                    (rule 58)
 
-	'end'          shift, and enter state 175
+	'end'          shift, and enter state 177
 
 
 State 154
 
-	ListLExp -> LExp .                                  (rule 63)
-	ListLExp -> LExp . ',' ListLExp                     (rule 64)
+	ListLExp -> LExp .                                  (rule 64)
+	ListLExp -> LExp . ',' ListLExp                     (rule 65)
 
-	','            shift, and enter state 174
-	':='           reduce using rule 63
+	','            shift, and enter state 176
+	':='           reduce using rule 64
 
 
 State 155
 
 	Statement -> 'continue' . ';'                       (rule 56)
 
-	';'            shift, and enter state 173
+	';'            shift, and enter state 175
 
 
 State 156
 
-	If -> 'if' . RExp 'then' ListStatement              (rule 68)
-	If -> 'if' . RExp 'then' ListStatement 'else' ListStatement    (rule 69)
+	Statement -> 'for' . BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' 'for'    (rule 59)
+
+	L_BlueIdent    shift, and enter state 10
+
+	BlueIdent      goto state 174
+
+State 157
+
+	If -> 'if' . RExp 'then' ListStatement              (rule 69)
+	If -> 'if' . RExp 'then' ListStatement 'else' ListStatement    (rule 70)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -3105,7 +3171,7 @@ State 156
 	String         goto state 51
 	BlueIdent      goto state 52
 	RoutCall       goto state 53
-	RExp           goto state 172
+	RExp           goto state 173
 	RExp1          goto state 57
 	RExp2          goto state 58
 	RExp3          goto state 59
@@ -3117,23 +3183,24 @@ State 156
 	LExp           goto state 65
 	LExp1          goto state 66
 
-State 157
+State 158
 
-	Loop -> 'loop' . ListStatement ListExit             (rule 70)
+	Loop -> 'loop' . ListStatement ListExit             (rule 71)
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
-	':='           reduce using rule 62
+	':='           reduce using rule 63
 	'continue'     shift, and enter state 155
 	'end'          reduce using rule 44
 	'exit'         reduce using rule 44
-	'if'           shift, and enter state 156
-	'loop'         shift, and enter state 157
-	'return'       shift, and enter state 158
+	'for'          shift, and enter state 156
+	'if'           shift, and enter state 157
+	'loop'         shift, and enter state 158
+	'return'       shift, and enter state 159
 	L_BlueIdent    shift, and enter state 10
 
 	BlueIdent      goto state 148
-	ListStatement  goto state 171
+	ListStatement  goto state 172
 	Statement      goto state 150
 	ListLExp       goto state 151
 	If             goto state 152
@@ -3141,7 +3208,7 @@ State 157
 	LExp           goto state 154
 	LExp1          goto state 66
 
-State 158
+State 159
 
 	Statement -> 'return' . RExp ';'                    (rule 54)
 	Statement -> 'return' . ';'                         (rule 55)
@@ -3150,7 +3217,7 @@ State 158
 	'('            shift, and enter state 68
 	'*'            shift, and enter state 69
 	'-'            shift, and enter state 70
-	';'            shift, and enter state 170
+	';'            shift, and enter state 171
 	'['            shift, and enter state 71
 	'false'        shift, and enter state 72
 	'not'          shift, and enter state 73
@@ -3167,7 +3234,7 @@ State 158
 	String         goto state 51
 	BlueIdent      goto state 52
 	RoutCall       goto state 53
-	RExp           goto state 169
+	RExp           goto state 170
 	RExp1          goto state 57
 	RExp2          goto state 58
 	RExp3          goto state 59
@@ -3179,7 +3246,7 @@ State 158
 	LExp           goto state 65
 	LExp1          goto state 66
 
-State 159
+State 160
 
 	FunD -> BlueIdent '->' Type RoutBody BlueIdent .    (rule 36)
 
@@ -3188,22 +3255,22 @@ State 159
 	%eof           reduce using rule 36
 
 
-State 160
+State 161
 
 	ListParam -> Param ',' ListParam .                  (rule 42)
 
 	')'            reduce using rule 42
 
 
-State 161
+State 162
 
 	ProcD -> BlueIdent '(' ListParam ')' RoutBody . BlueIdent    (rule 37)
 
 	L_BlueIdent    shift, and enter state 10
 
-	BlueIdent      goto state 168
+	BlueIdent      goto state 169
 
-State 162
+State 163
 
 	FunD -> BlueIdent '(' ListParam ')' '->' . Type RoutBody BlueIdent    (rule 35)
 
@@ -3217,9 +3284,9 @@ State 162
 
 	PType          goto state 37
 	CType          goto state 38
-	Type           goto state 167
+	Type           goto state 168
 
-State 163
+State 164
 
 	Param -> Mode BlueIdent ':' . Type                  (rule 39)
 
@@ -3233,24 +3300,24 @@ State 163
 
 	PType          goto state 37
 	CType          goto state 38
-	Type           goto state 166
+	Type           goto state 167
 
-State 164
+State 165
 
 	CType -> 'Array' '<' Type ';' . Integer '>'         (rule 31)
 
 	L_integ        shift, and enter state 76
 
-	Integer        goto state 165
+	Integer        goto state 166
 
-State 165
+State 166
 
 	CType -> 'Array' '<' Type ';' Integer . '>'         (rule 31)
 
-	'>'            shift, and enter state 196
+	'>'            shift, and enter state 199
 
 
-State 166
+State 167
 
 	Param -> Mode BlueIdent ':' Type .                  (rule 39)
 
@@ -3258,15 +3325,15 @@ State 166
 	','            reduce using rule 39
 
 
-State 167
+State 168
 
 	FunD -> BlueIdent '(' ListParam ')' '->' Type . RoutBody BlueIdent    (rule 35)
 
 	'is'           shift, and enter state 46
 
-	RoutBody       goto state 195
+	RoutBody       goto state 198
 
-State 168
+State 169
 
 	ProcD -> BlueIdent '(' ListParam ')' RoutBody BlueIdent .    (rule 37)
 
@@ -3275,16 +3342,16 @@ State 168
 	%eof           reduce using rule 37
 
 
-State 169
+State 170
 
 	Statement -> 'return' RExp . ';'                    (rule 54)
-	RExp -> RExp . 'or' RExp1                           (rule 75)
+	RExp -> RExp . 'or' RExp1                           (rule 76)
 
-	';'            shift, and enter state 194
+	';'            shift, and enter state 197
 	'or'           shift, and enter state 122
 
 
-State 170
+State 171
 
 	Statement -> 'return' ';' .                         (rule 55)
 
@@ -3295,33 +3362,41 @@ State 170
 	'else'         reduce using rule 55
 	'end'          reduce using rule 55
 	'exit'         reduce using rule 55
+	'for'          reduce using rule 55
 	'if'           reduce using rule 55
 	'loop'         reduce using rule 55
 	'return'       reduce using rule 55
 	L_BlueIdent    reduce using rule 55
 
 
-State 171
-
-	Loop -> 'loop' ListStatement . ListExit             (rule 70)
-
-	'end'          reduce using rule 72
-	'exit'         shift, and enter state 193
-
-	Exit           goto state 191
-	ListExit       goto state 192
-
 State 172
 
-	If -> 'if' RExp . 'then' ListStatement              (rule 68)
-	If -> 'if' RExp . 'then' ListStatement 'else' ListStatement    (rule 69)
-	RExp -> RExp . 'or' RExp1                           (rule 75)
+	Loop -> 'loop' ListStatement . ListExit             (rule 71)
 
-	'or'           shift, and enter state 122
-	'then'         shift, and enter state 190
+	'end'          reduce using rule 73
+	'exit'         shift, and enter state 196
 
+	Exit           goto state 194
+	ListExit       goto state 195
 
 State 173
+
+	If -> 'if' RExp . 'then' ListStatement              (rule 69)
+	If -> 'if' RExp . 'then' ListStatement 'else' ListStatement    (rule 70)
+	RExp -> RExp . 'or' RExp1                           (rule 76)
+
+	'or'           shift, and enter state 122
+	'then'         shift, and enter state 193
+
+
+State 174
+
+	Statement -> 'for' BlueIdent . ':' Type 'in' RExp 'do' ListStatement 'end' 'for'    (rule 59)
+
+	':'            shift, and enter state 192
+
+
+State 175
 
 	Statement -> 'continue' ';' .                       (rule 56)
 
@@ -3332,41 +3407,42 @@ State 173
 	'else'         reduce using rule 56
 	'end'          reduce using rule 56
 	'exit'         reduce using rule 56
+	'for'          reduce using rule 56
 	'if'           reduce using rule 56
 	'loop'         reduce using rule 56
 	'return'       reduce using rule 56
 	L_BlueIdent    reduce using rule 56
 
 
-State 174
+State 176
 
-	ListLExp -> LExp ',' . ListLExp                     (rule 64)
+	ListLExp -> LExp ',' . ListLExp                     (rule 65)
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
-	':='           reduce using rule 62
+	':='           reduce using rule 63
 	L_BlueIdent    shift, and enter state 10
 
 	BlueIdent      goto state 101
-	ListLExp       goto state 189
+	ListLExp       goto state 191
 	LExp           goto state 154
 	LExp1          goto state 66
 
-State 175
+State 177
 
 	Statement -> Loop 'end' . 'loop'                    (rule 58)
 
-	'loop'         shift, and enter state 188
+	'loop'         shift, and enter state 190
 
 
-State 176
+State 178
 
 	Statement -> If 'end' . 'if'                        (rule 57)
 
-	'if'           shift, and enter state 187
+	'if'           shift, and enter state 189
 
 
-State 177
+State 179
 
 	Statement -> ListLExp ':=' . ListRExpNE ';'         (rule 51)
 
@@ -3391,7 +3467,7 @@ State 177
 	BlueIdent      goto state 52
 	RoutCall       goto state 53
 	RExpNE         goto state 54
-	ListRExpNE     goto state 186
+	ListRExpNE     goto state 188
 	RExp           goto state 56
 	RExp1          goto state 57
 	RExp2          goto state 58
@@ -3404,7 +3480,7 @@ State 177
 	LExp           goto state 65
 	LExp1          goto state 66
 
-State 178
+State 180
 
 	ListStatement -> Statement ListStatement .          (rule 45)
 
@@ -3413,20 +3489,20 @@ State 178
 	'exit'         reduce using rule 45
 
 
-State 179
+State 181
 
 	RoutBody -> 'is' Declarations 'do' ListStatement 'end' .    (rule 43)
 
 	L_BlueIdent    reduce using rule 43
 
 
-State 180
+State 182
 
 	Statement -> BlueIdent '(' . ListRExp ')' ';'       (rule 52)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
-	')'            reduce using rule 59
+	')'            reduce using rule 60
 	'*'            shift, and enter state 69
 	'-'            shift, and enter state 70
 	'['            shift, and enter state 71
@@ -3445,7 +3521,7 @@ State 180
 	String         goto state 51
 	BlueIdent      goto state 52
 	RoutCall       goto state 53
-	ListRExp       goto state 185
+	ListRExp       goto state 187
 	RExp           goto state 99
 	RExp1          goto state 57
 	RExp2          goto state 58
@@ -3458,7 +3534,7 @@ State 180
 	LExp           goto state 65
 	LExp1          goto state 66
 
-State 181
+State 183
 
 	Statement -> BlueIdent ';' .                        (rule 53)
 
@@ -3469,49 +3545,51 @@ State 181
 	'else'         reduce using rule 53
 	'end'          reduce using rule 53
 	'exit'         reduce using rule 53
+	'for'          reduce using rule 53
 	'if'           reduce using rule 53
 	'loop'         reduce using rule 53
 	'return'       reduce using rule 53
 	L_BlueIdent    reduce using rule 53
 
 
-State 182
-
-	ListRExp -> RExp ',' ListRExp .                     (rule 61)
-
-	')'            reduce using rule 61
-	']'            reduce using rule 61
-
-
-State 183
-
-	LExp1 -> LExp1 '[' RExp ']' .                       (rule 113)
-
-	')'            reduce using rule 113
-	'*'            reduce using rule 113
-	'+'            reduce using rule 113
-	','            reduce using rule 113
-	'-'            reduce using rule 113
-	'/'            reduce using rule 113
-	':='           reduce using rule 113
-	';'            reduce using rule 113
-	'<'            reduce using rule 113
-	'<='           reduce using rule 113
-	'<>'           reduce using rule 113
-	'='            reduce using rule 113
-	'>'            reduce using rule 113
-	'>='           reduce using rule 113
-	'['            reduce using rule 113
-	']'            reduce using rule 113
-	'^'            reduce using rule 113
-	'and'          reduce using rule 113
-	'div'          reduce using rule 113
-	'mod'          reduce using rule 113
-	'or'           reduce using rule 113
-	'then'         reduce using rule 113
-
-
 State 184
+
+	ListRExp -> RExp ',' ListRExp .                     (rule 62)
+
+	')'            reduce using rule 62
+	']'            reduce using rule 62
+
+
+State 185
+
+	LExp1 -> LExp1 '[' RExp ']' .                       (rule 114)
+
+	')'            reduce using rule 114
+	'*'            reduce using rule 114
+	'+'            reduce using rule 114
+	','            reduce using rule 114
+	'-'            reduce using rule 114
+	'/'            reduce using rule 114
+	':='           reduce using rule 114
+	';'            reduce using rule 114
+	'<'            reduce using rule 114
+	'<='           reduce using rule 114
+	'<>'           reduce using rule 114
+	'='            reduce using rule 114
+	'>'            reduce using rule 114
+	'>='           reduce using rule 114
+	'['            reduce using rule 114
+	']'            reduce using rule 114
+	'^'            reduce using rule 114
+	'and'          reduce using rule 114
+	'div'          reduce using rule 114
+	'do'           reduce using rule 114
+	'mod'          reduce using rule 114
+	'or'           reduce using rule 114
+	'then'         reduce using rule 114
+
+
+State 186
 
 	RoutCall -> BlueIdent '(' ListRExp ')' .            (rule 50)
 
@@ -3532,26 +3610,27 @@ State 184
 	'^'            reduce using rule 50
 	'and'          reduce using rule 50
 	'div'          reduce using rule 50
+	'do'           reduce using rule 50
 	'mod'          reduce using rule 50
 	'or'           reduce using rule 50
 	'then'         reduce using rule 50
 
 
-State 185
+State 187
 
 	Statement -> BlueIdent '(' ListRExp . ')' ';'       (rule 52)
 
-	')'            shift, and enter state 202
+	')'            shift, and enter state 206
 
 
-State 186
+State 188
 
 	Statement -> ListLExp ':=' ListRExpNE . ';'         (rule 51)
 
-	';'            shift, and enter state 201
+	';'            shift, and enter state 205
 
 
-State 187
+State 189
 
 	Statement -> If 'end' 'if' .                        (rule 57)
 
@@ -3562,13 +3641,14 @@ State 187
 	'else'         reduce using rule 57
 	'end'          reduce using rule 57
 	'exit'         reduce using rule 57
+	'for'          reduce using rule 57
 	'if'           reduce using rule 57
 	'loop'         reduce using rule 57
 	'return'       reduce using rule 57
 	L_BlueIdent    reduce using rule 57
 
 
-State 188
+State 190
 
 	Statement -> Loop 'end' 'loop' .                    (rule 58)
 
@@ -3579,37 +3659,55 @@ State 188
 	'else'         reduce using rule 58
 	'end'          reduce using rule 58
 	'exit'         reduce using rule 58
+	'for'          reduce using rule 58
 	'if'           reduce using rule 58
 	'loop'         reduce using rule 58
 	'return'       reduce using rule 58
 	L_BlueIdent    reduce using rule 58
 
 
-State 189
+State 191
 
-	ListLExp -> LExp ',' ListLExp .                     (rule 64)
+	ListLExp -> LExp ',' ListLExp .                     (rule 65)
 
-	':='           reduce using rule 64
+	':='           reduce using rule 65
 
 
-State 190
+State 192
 
-	If -> 'if' RExp 'then' . ListStatement              (rule 68)
-	If -> 'if' RExp 'then' . ListStatement 'else' ListStatement    (rule 69)
+	Statement -> 'for' BlueIdent ':' . Type 'in' RExp 'do' ListStatement 'end' 'for'    (rule 59)
+
+	'&'            shift, and enter state 40
+	'Array'        shift, and enter state 41
+	'Boolean'      shift, and enter state 23
+	'Char'         shift, and enter state 24
+	'Integer'      shift, and enter state 25
+	'Real'         shift, and enter state 26
+	'String'       shift, and enter state 27
+
+	PType          goto state 37
+	CType          goto state 38
+	Type           goto state 204
+
+State 193
+
+	If -> 'if' RExp 'then' . ListStatement              (rule 69)
+	If -> 'if' RExp 'then' . ListStatement 'else' ListStatement    (rule 70)
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
-	':='           reduce using rule 62
+	':='           reduce using rule 63
 	'continue'     shift, and enter state 155
 	'else'         reduce using rule 44
 	'end'          reduce using rule 44
-	'if'           shift, and enter state 156
-	'loop'         shift, and enter state 157
-	'return'       shift, and enter state 158
+	'for'          shift, and enter state 156
+	'if'           shift, and enter state 157
+	'loop'         shift, and enter state 158
+	'return'       shift, and enter state 159
 	L_BlueIdent    shift, and enter state 10
 
 	BlueIdent      goto state 148
-	ListStatement  goto state 200
+	ListStatement  goto state 203
 	Statement      goto state 150
 	ListLExp       goto state 151
 	If             goto state 152
@@ -3617,31 +3715,31 @@ State 190
 	LExp           goto state 154
 	LExp1          goto state 66
 
-State 191
-
-	ListExit -> Exit . ListExit                         (rule 73)
-
-	'end'          reduce using rule 72
-	'exit'         shift, and enter state 193
-
-	Exit           goto state 191
-	ListExit       goto state 199
-
-State 192
-
-	Loop -> 'loop' ListStatement ListExit .             (rule 70)
-
-	'end'          reduce using rule 70
-
-
-State 193
-
-	Exit -> 'exit' . 'on' RExp ';' ListStatement        (rule 71)
-
-	'on'           shift, and enter state 198
-
-
 State 194
+
+	ListExit -> Exit . ListExit                         (rule 74)
+
+	'end'          reduce using rule 73
+	'exit'         shift, and enter state 196
+
+	Exit           goto state 194
+	ListExit       goto state 202
+
+State 195
+
+	Loop -> 'loop' ListStatement ListExit .             (rule 71)
+
+	'end'          reduce using rule 71
+
+
+State 196
+
+	Exit -> 'exit' . 'on' RExp ';' ListStatement        (rule 72)
+
+	'on'           shift, and enter state 201
+
+
+State 197
 
 	Statement -> 'return' RExp ';' .                    (rule 54)
 
@@ -3652,21 +3750,22 @@ State 194
 	'else'         reduce using rule 54
 	'end'          reduce using rule 54
 	'exit'         reduce using rule 54
+	'for'          reduce using rule 54
 	'if'           reduce using rule 54
 	'loop'         reduce using rule 54
 	'return'       reduce using rule 54
 	L_BlueIdent    reduce using rule 54
 
 
-State 195
+State 198
 
 	FunD -> BlueIdent '(' ListParam ')' '->' Type RoutBody . BlueIdent    (rule 35)
 
 	L_BlueIdent    shift, and enter state 10
 
-	BlueIdent      goto state 197
+	BlueIdent      goto state 200
 
-State 196
+State 199
 
 	CType -> 'Array' '<' Type ';' Integer '>' .         (rule 31)
 
@@ -3674,10 +3773,11 @@ State 196
 	','            reduce using rule 31
 	':='           reduce using rule 31
 	';'            reduce using rule 31
+	'in'           reduce using rule 31
 	'is'           reduce using rule 31
 
 
-State 197
+State 200
 
 	FunD -> BlueIdent '(' ListParam ')' '->' Type RoutBody BlueIdent .    (rule 35)
 
@@ -3686,9 +3786,9 @@ State 197
 	%eof           reduce using rule 35
 
 
-State 198
+State 201
 
-	Exit -> 'exit' 'on' . RExp ';' ListStatement        (rule 71)
+	Exit -> 'exit' 'on' . RExp ';' ListStatement        (rule 72)
 
 	'&'            shift, and enter state 67
 	'('            shift, and enter state 68
@@ -3710,7 +3810,7 @@ State 198
 	String         goto state 51
 	BlueIdent      goto state 52
 	RoutCall       goto state 53
-	RExp           goto state 205
+	RExp           goto state 210
 	RExp1          goto state 57
 	RExp2          goto state 58
 	RExp3          goto state 59
@@ -3722,23 +3822,30 @@ State 198
 	LExp           goto state 65
 	LExp1          goto state 66
 
-State 199
+State 202
 
-	ListExit -> Exit ListExit .                         (rule 73)
+	ListExit -> Exit ListExit .                         (rule 74)
 
-	'end'          reduce using rule 73
-
-
-State 200
-
-	If -> 'if' RExp 'then' ListStatement .              (rule 68)
-	If -> 'if' RExp 'then' ListStatement . 'else' ListStatement    (rule 69)
-
-	'else'         shift, and enter state 204
-	'end'          reduce using rule 68
+	'end'          reduce using rule 74
 
 
-State 201
+State 203
+
+	If -> 'if' RExp 'then' ListStatement .              (rule 69)
+	If -> 'if' RExp 'then' ListStatement . 'else' ListStatement    (rule 70)
+
+	'else'         shift, and enter state 209
+	'end'          reduce using rule 69
+
+
+State 204
+
+	Statement -> 'for' BlueIdent ':' Type . 'in' RExp 'do' ListStatement 'end' 'for'    (rule 59)
+
+	'in'           shift, and enter state 208
+
+
+State 205
 
 	Statement -> ListLExp ':=' ListRExpNE ';' .         (rule 51)
 
@@ -3749,20 +3856,21 @@ State 201
 	'else'         reduce using rule 51
 	'end'          reduce using rule 51
 	'exit'         reduce using rule 51
+	'for'          reduce using rule 51
 	'if'           reduce using rule 51
 	'loop'         reduce using rule 51
 	'return'       reduce using rule 51
 	L_BlueIdent    reduce using rule 51
 
 
-State 202
+State 206
 
 	Statement -> BlueIdent '(' ListRExp ')' . ';'       (rule 52)
 
-	';'            shift, and enter state 203
+	';'            shift, and enter state 207
 
 
-State 203
+State 207
 
 	Statement -> BlueIdent '(' ListRExp ')' ';' .       (rule 52)
 
@@ -3773,28 +3881,66 @@ State 203
 	'else'         reduce using rule 52
 	'end'          reduce using rule 52
 	'exit'         reduce using rule 52
+	'for'          reduce using rule 52
 	'if'           reduce using rule 52
 	'loop'         reduce using rule 52
 	'return'       reduce using rule 52
 	L_BlueIdent    reduce using rule 52
 
 
-State 204
+State 208
 
-	If -> 'if' RExp 'then' ListStatement 'else' . ListStatement    (rule 69)
+	Statement -> 'for' BlueIdent ':' Type 'in' . RExp 'do' ListStatement 'end' 'for'    (rule 59)
+
+	'&'            shift, and enter state 67
+	'('            shift, and enter state 68
+	'*'            shift, and enter state 69
+	'-'            shift, and enter state 70
+	'['            shift, and enter state 71
+	'false'        shift, and enter state 72
+	'not'          shift, and enter state 73
+	'true'         shift, and enter state 74
+	L_charac       shift, and enter state 2
+	L_doubl        shift, and enter state 75
+	L_integ        shift, and enter state 76
+	L_quoted       shift, and enter state 77
+	L_BlueIdent    shift, and enter state 10
+
+	Char           goto state 48
+	Double         goto state 49
+	Integer        goto state 50
+	String         goto state 51
+	BlueIdent      goto state 52
+	RoutCall       goto state 53
+	RExp           goto state 213
+	RExp1          goto state 57
+	RExp2          goto state 58
+	RExp3          goto state 59
+	RExp4          goto state 60
+	RExp5          goto state 61
+	RExp6          goto state 62
+	RExp7          goto state 63
+	Bool           goto state 64
+	LExp           goto state 65
+	LExp1          goto state 66
+
+State 209
+
+	If -> 'if' RExp 'then' ListStatement 'else' . ListStatement    (rule 70)
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
-	':='           reduce using rule 62
+	':='           reduce using rule 63
 	'continue'     shift, and enter state 155
 	'end'          reduce using rule 44
-	'if'           shift, and enter state 156
-	'loop'         shift, and enter state 157
-	'return'       shift, and enter state 158
+	'for'          shift, and enter state 156
+	'if'           shift, and enter state 157
+	'loop'         shift, and enter state 158
+	'return'       shift, and enter state 159
 	L_BlueIdent    shift, and enter state 10
 
 	BlueIdent      goto state 148
-	ListStatement  goto state 207
+	ListStatement  goto state 212
 	Statement      goto state 150
 	ListLExp       goto state 151
 	If             goto state 152
@@ -3802,32 +3948,33 @@ State 204
 	LExp           goto state 154
 	LExp1          goto state 66
 
-State 205
+State 210
 
-	Exit -> 'exit' 'on' RExp . ';' ListStatement        (rule 71)
-	RExp -> RExp . 'or' RExp1                           (rule 75)
+	Exit -> 'exit' 'on' RExp . ';' ListStatement        (rule 72)
+	RExp -> RExp . 'or' RExp1                           (rule 76)
 
-	';'            shift, and enter state 206
+	';'            shift, and enter state 211
 	'or'           shift, and enter state 122
 
 
-State 206
+State 211
 
-	Exit -> 'exit' 'on' RExp ';' . ListStatement        (rule 71)
+	Exit -> 'exit' 'on' RExp ';' . ListStatement        (rule 72)
 
 	'('            shift, and enter state 103
 	'*'            shift, and enter state 69
-	':='           reduce using rule 62
+	':='           reduce using rule 63
 	'continue'     shift, and enter state 155
 	'end'          reduce using rule 44
 	'exit'         reduce using rule 44
-	'if'           shift, and enter state 156
-	'loop'         shift, and enter state 157
-	'return'       shift, and enter state 158
+	'for'          shift, and enter state 156
+	'if'           shift, and enter state 157
+	'loop'         shift, and enter state 158
+	'return'       shift, and enter state 159
 	L_BlueIdent    shift, and enter state 10
 
 	BlueIdent      goto state 148
-	ListStatement  goto state 208
+	ListStatement  goto state 215
 	Statement      goto state 150
 	ListLExp       goto state 151
 	If             goto state 152
@@ -3835,25 +3982,90 @@ State 206
 	LExp           goto state 154
 	LExp1          goto state 66
 
-State 207
+State 212
 
-	If -> 'if' RExp 'then' ListStatement 'else' ListStatement .    (rule 69)
+	If -> 'if' RExp 'then' ListStatement 'else' ListStatement .    (rule 70)
 
-	'end'          reduce using rule 69
+	'end'          reduce using rule 70
 
 
-State 208
+State 213
 
-	Exit -> 'exit' 'on' RExp ';' ListStatement .        (rule 71)
+	Statement -> 'for' BlueIdent ':' Type 'in' RExp . 'do' ListStatement 'end' 'for'    (rule 59)
+	RExp -> RExp . 'or' RExp1                           (rule 76)
 
-	'end'          reduce using rule 71
-	'exit'         reduce using rule 71
+	'do'           shift, and enter state 214
+	'or'           shift, and enter state 122
+
+
+State 214
+
+	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' . ListStatement 'end' 'for'    (rule 59)
+
+	'('            shift, and enter state 103
+	'*'            shift, and enter state 69
+	':='           reduce using rule 63
+	'continue'     shift, and enter state 155
+	'end'          reduce using rule 44
+	'for'          shift, and enter state 156
+	'if'           shift, and enter state 157
+	'loop'         shift, and enter state 158
+	'return'       shift, and enter state 159
+	L_BlueIdent    shift, and enter state 10
+
+	BlueIdent      goto state 148
+	ListStatement  goto state 216
+	Statement      goto state 150
+	ListLExp       goto state 151
+	If             goto state 152
+	Loop           goto state 153
+	LExp           goto state 154
+	LExp1          goto state 66
+
+State 215
+
+	Exit -> 'exit' 'on' RExp ';' ListStatement .        (rule 72)
+
+	'end'          reduce using rule 72
+	'exit'         reduce using rule 72
+
+
+State 216
+
+	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement . 'end' 'for'    (rule 59)
+
+	'end'          shift, and enter state 217
+
+
+State 217
+
+	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' . 'for'    (rule 59)
+
+	'for'          shift, and enter state 218
+
+
+State 218
+
+	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' 'for' .    (rule 59)
+
+	'('            reduce using rule 59
+	'*'            reduce using rule 59
+	':='           reduce using rule 59
+	'continue'     reduce using rule 59
+	'else'         reduce using rule 59
+	'end'          reduce using rule 59
+	'exit'         reduce using rule 59
+	'for'          reduce using rule 59
+	'if'           reduce using rule 59
+	'loop'         reduce using rule 59
+	'return'       reduce using rule 59
+	L_BlueIdent    reduce using rule 59
 
 
 -----------------------------------------------------------------------------
 Grammar Totals
 -----------------------------------------------------------------------------
-Number of rules: 115
-Number of terminals: 56
+Number of rules: 116
+Number of terminals: 58
 Number of non-terminals: 48
-Number of states: 209
+Number of states: 219

@@ -173,33 +173,35 @@ eitherResIdent tv s = treeFind resWords
 -- | The keywords and symbols of the language organized as binary search tree.
 resWords :: BTree
 resWords =
-  b "]" 26
-    (b "<" 13
+  b "^" 27
+    (b "<=" 14
        (b "-" 7
           (b "*" 4
              (b "(" 2 (b "&" 1 N N) (b ")" 3 N N)) (b "," 6 (b "+" 5 N N) N))
-          (b ":" 10 (b "/" 9 (b "->" 8 N N) N) (b ";" 12 (b ":=" 11 N N) N)))
-       (b "Boolean" 20
-          (b ">" 17
-             (b "<>" 15 (b "<=" 14 N N) (b "=" 16 N N))
-             (b "Array" 19 (b ">=" 18 N N) N))
-          (b "Real" 23
-             (b "Integer" 22 (b "Char" 21 N N) N)
-             (b "[" 25 (b "String" 24 N N) N))))
-    (b "loop" 39
-       (b "else" 33
-          (b "continue" 30
-             (b "and" 28 (b "^" 27 N N) (b "const" 29 N N))
-             (b "do" 32 (b "div" 31 N N) N))
-          (b "false" 36
-             (b "exit" 35 (b "end" 34 N N) N) (b "is" 38 (b "if" 37 N N) N)))
-       (b "routines" 46
-          (b "or" 43
-             (b "not" 41 (b "mod" 40 N N) (b "on" 42 N N))
-             (b "return" 45 (b "ref" 44 N N) N))
-          (b "val" 49
-             (b "true" 48 (b "then" 47 N N) N)
-             (b "var" 51 (b "valres" 50 N N) N))))
+          (b ":=" 11
+             (b "/" 9 (b "->" 8 N N) (b ":" 10 N N))
+             (b "<" 13 (b ";" 12 N N) N)))
+       (b "Char" 21
+          (b ">=" 18
+             (b "=" 16 (b "<>" 15 N N) (b ">" 17 N N))
+             (b "Boolean" 20 (b "Array" 19 N N) N))
+          (b "String" 24
+             (b "Real" 23 (b "Integer" 22 N N) N) (b "]" 26 (b "[" 25 N N) N))))
+    (b "loop" 41
+       (b "end" 34
+          (b "div" 31
+             (b "const" 29 (b "and" 28 N N) (b "continue" 30 N N))
+             (b "else" 33 (b "do" 32 N N) N))
+          (b "if" 38
+             (b "false" 36 (b "exit" 35 N N) (b "for" 37 N N))
+             (b "is" 40 (b "in" 39 N N) N)))
+       (b "routines" 48
+          (b "or" 45
+             (b "not" 43 (b "mod" 42 N N) (b "on" 44 N N))
+             (b "return" 47 (b "ref" 46 N N) N))
+          (b "val" 51
+             (b "true" 50 (b "then" 49 N N) N)
+             (b "var" 53 (b "valres" 52 N N) N))))
   where
   b s n = B bs (TS bs n)
     where
