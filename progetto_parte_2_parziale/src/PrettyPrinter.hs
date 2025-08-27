@@ -102,6 +102,13 @@ routineCallPrinter :: Show a => RoutineCall a -> String
 routineCallPrinter (RoutineCall ident args _) =
     identPrinter ident ++ "(" ++ expsPrinter args ++ ")"
 
+caseBranchPrinter :: Show a => CaseBranch a -> String
+caseBranchPrinter CaseBranch{pattern, branchBody} = 
+    expPrinter pattern ++ ":\n\t" ++ statementsPrinter branchBody
+
+caseBranchesPrinter :: Show a => [CaseBranch a] -> String
+caseBranchesPrinter caseBranches =
+    intercalate "\n" (map caseBranchPrinter caseBranches)
 
 -- Corpo della routine
 routineBodyPrinter :: Show a => RoutBody a -> String
@@ -129,6 +136,12 @@ statementPrinter stm = "\t" ++
         StmtIfElse cond bodyT bodyF _ _ ->
             "if " ++ expPrinter cond ++ " then\n\t" ++ statementsPrinter bodyT ++
             "\n\telse\n\t" ++ statementsPrinter bodyF ++ "\n\tend if"
+        StmtCase scrutinee cases def _ _ ->
+            let defPrint = case def of
+                    Just statements -> "\nelse\n\t" ++ statementsPrinter statements
+                    Nothing -> ""
+            in
+            "case " ++ expPrinter scrutinee ++ " of\n\t" ++ caseBranchesPrinter cases ++ defPrint ++ "\nend case"
         StmtLoop body exits _ _ ->
             "loop\n\t" ++ statementsPrinter body ++
             (if null exits then "" else "\n\t" ++ exitsPrinter exits) ++ "\n\tend loop"
