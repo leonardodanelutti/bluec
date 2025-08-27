@@ -739,6 +739,24 @@ genStmt stmt post = do
                 ) exit
             out (UnJump loopStart)
             endLoop
+        AS.StmtForEach varName varType arrayExp body _ _ -> do
+            let progName = PName $ ProgramName (AS.identName varName) (AS.identPos varName)
+                varType' = T.type_ varType
+                typeTAC = castTypeToTACType varType'
+                typeSize = T.getTypeSize varType'
+            arrAddr <- genExprTmp arrayExp
+            index <- newTmp
+            out (NOp index (Lit $ LitInt 0) TInteger)
+            -- Start loop
+            newLoop
+            (loopStart, _) <- getLoopLabels
+            out (IndexGet progName arrAddr index typeTAC)
+            -- Generate foreach body
+            mapM_ (`genStmt` post) body
+            -- Add array size to index
+            out (BOp index (Add TInteger) index (Lit $ LitInt typeSize) TInteger)
+            out (UnJump loopStart)
+            endLoop
         AS.StmtContinue _ _ -> do
             (loopStart, _) <- getLoopLabels
             out (UnJump loopStart)
