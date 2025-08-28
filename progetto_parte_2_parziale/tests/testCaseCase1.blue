@@ -1,0 +1,23 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - case statement
+
+var
+    s: Boolean := true;
+    c: Integer := 2;
+
+routines
+    main() is do
+        case c of
+            1:
+                c := c+1;
+            2:
+                c := c+2;
+            3:
+                c := c+3;
+            else
+                c := c+4;
+        end case
+        return;
+    end main

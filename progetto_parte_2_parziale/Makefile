@@ -141,6 +141,11 @@ demo: bluec
 		echo ""; \
 		./bluec tests/testCase20.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo20_output.txt
+	@{ \
+		echo "case example 1"; \
+		echo ""; \
+		./bluec tests/testCaseCase1.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoCase1_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
