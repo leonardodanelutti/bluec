@@ -28,7 +28,7 @@ $u = [. \n]          -- universal: any character
 
 -- Symbols and non-identifier-like reserved words
 
-@rsyms = \: | \: \= | \; | \, | \< | \> | \& | \( | \) | \- \> | \> \= | \< \= | \= | \< \> | \+ | \- | \* | \/ | \^ | \[ | \] | \|
+@rsyms = \: | \: \= | \; | \, | \< | \> | \& | \( | \) | \- \> | \> \= | \< \= | \= | \< \> | \+ | \- | \* | \/ | \^ | \[ | \] | \{ | \}
 
 :-
 
@@ -187,20 +187,20 @@ resWords =
              (b "Boolean" 20 (b "Array" 19 N N) N))
           (b "String" 24
              (b "Real" 23 (b "Integer" 22 N N) N) (b "]" 26 (b "[" 25 N N) N))))
-    (b "mod" 40
+    (b "not" 41
        (b "end" 34
           (b "div" 31
              (b "const" 29 (b "and" 28 N N) (b "continue" 30 N N))
              (b "else" 33 (b "do" 32 N N) N))
-          (b "if" 37
-             (b "false" 36 (b "exit" 35 N N) N)
-             (b "loop" 39 (b "is" 38 N N) N)))
-       (b "then" 47
-          (b "ref" 44
-             (b "on" 42 (b "not" 41 N N) (b "or" 43 N N))
-             (b "routines" 46 (b "return" 45 N N) N))
-          (b "valres" 50
-             (b "val" 49 (b "true" 48 N N) N) (b "|" 52 (b "var" 51 N N) N))))
+          (b "is" 38
+             (b "false" 36 (b "exit" 35 N N) (b "if" 37 N N))
+             (b "mod" 40 (b "loop" 39 N N) N)))
+       (b "true" 48
+          (b "return" 45
+             (b "or" 43 (b "on" 42 N N) (b "ref" 44 N N))
+             (b "then" 47 (b "routines" 46 N N) N))
+          (b "var" 51
+             (b "valres" 50 (b "val" 49 N N) N) (b "}" 53 (b "{" 52 N N) N))))
   where
   b s n = B bs (TS bs n)
     where

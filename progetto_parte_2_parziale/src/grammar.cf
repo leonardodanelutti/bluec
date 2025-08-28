@@ -122,5 +122,5 @@ coercions LExp 1;
 LExpDeref.                      LExp ::= "*" LExp;
 
 LExpArrayDeref.                 LExp1 ::= LExp1 "[" RExp "]";
-LExpArrayDerefChecked.          LExp1 ::= LExp1 "|" RExp "|";
+LExpArrayDerefChecked.          LExp1 ::= LExp1 "{" RExp "}";
 LExpBase.                       LExp1 ::= BlueIdent;

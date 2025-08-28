@@ -75,7 +75,8 @@ import LexGrammar
   'val'       { PT _ (TS _ 49)        }
   'valres'    { PT _ (TS _ 50)        }
   'var'       { PT _ (TS _ 51)        }
-  '|'         { PT _ (TS _ 52)        }
+  '{'         { PT _ (TS _ 52)        }
+  '}'         { PT _ (TS _ 53)        }
   L_charac    { PT _ (TC _)           }
   L_doubl     { PT _ (TD _)           }
   L_integ     { PT _ (TI _)           }
@@ -447,7 +448,7 @@ LExp1 :: { A.Exp () }
 LExp1
   : '(' LExp ')'       { $2 }
   | LExp1 '[' RExp ']' { A.ArrayIndex $1 $3 False () (mergePos (A.expPos $1) (tokenPosn $4)) }
-  | LExp1 '|' RExp '|' { A.ArrayIndex $1 $3 True  () (mergePos (A.expPos $1) (tokenPosn $4))}
+  | LExp1 '{' RExp '}' { A.ArrayIndex $1 $3 True  () (mergePos (A.expPos $1) (tokenPosn $4))}
   | BlueIdent          { A.ExpIdent $1 () (A.identPos $1) }
 
 {

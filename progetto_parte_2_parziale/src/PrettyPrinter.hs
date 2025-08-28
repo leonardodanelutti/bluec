@@ -66,7 +66,7 @@ expPrinter exp =
         Ref e _ _ -> "&" ++ expPrinter e
         Deref e _ _ -> "(*" ++ expPrinter e ++ ")"
         ArrayIndex e index False _ _ -> expPrinter e ++ "[" ++ expPrinter index ++ "]"
-        ArrayIndex e index True  _ _ -> expPrinter e ++ "|" ++ expPrinter index ++ "|"
+        ArrayIndex e index True  _ _ -> expPrinter e ++ "{" ++ expPrinter index ++ "}"
         Array e _ _ -> "[" ++ expsPrinter e ++ "]"
         FunCall call _ _ -> routineCallPrinter call
         Cast e _ _ -> expPrinter e
