@@ -44,9 +44,9 @@ The reserved words used in grammar are the following:
   | ``const`` | ``continue`` | ``div`` | ``do``
   | ``else`` | ``end`` | ``exit`` | ``false``
   | ``if`` | ``is`` | ``loop`` | ``mod``
-  | ``not`` | ``of`` | ``on`` | ``or``
-  | ``ref`` | ``return`` | ``routines`` | ``then``
-  | ``true`` | ``val`` | ``valres`` | ``var``
+  | ``not`` | ``on`` | ``or`` | ``ref``
+  | ``return`` | ``routines`` | ``then`` | ``true``
+  | ``val`` | ``valres`` | ``var`` | ``when``
 
 The symbols used in grammar are the following:
   | : | := | ; | ,
@@ -130,9 +130,9 @@ All other symbols are terminals.
   |  |  **|**  | //RExpNE// ``,`` //[RExpNE]//
   | //If// | -> | ``if`` //RExp// ``then`` //[Statement]//
   |  |  **|**  | ``if`` //RExp// ``then`` //[Statement]// ``else`` //[Statement]//
-  | //Case// | -> | ``case`` //RExp// ``of`` //[CaseLabel]//
-  |  |  **|**  | ``case`` //RExp// ``of`` //[CaseLabel]// ``else`` //[Statement]//
-  | //CaseLabel// | -> | //RExp// ``:`` //[Statement]//
+  | //Case// | -> | ``case`` //RExp// //[CaseLabel]//
+  |  |  **|**  | ``case`` //RExp// //[CaseLabel]// ``else`` //[Statement]//
+  | //CaseLabel// | -> | ``when`` //RExp// ``:`` //[Statement]//
   | //[CaseLabel]// | -> | //CaseLabel//
   |  |  **|**  | //CaseLabel// //[CaseLabel]//
   | //Loop// | -> | ``loop`` //[Statement]// //[Exit]//

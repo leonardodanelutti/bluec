@@ -104,7 +104,7 @@ routineCallPrinter (RoutineCall ident args _) =
 
 caseBranchPrinter :: Show a => CaseBranch a -> String
 caseBranchPrinter CaseBranch{pattern, branchBody} = 
-    expPrinter pattern ++ ":\n\t" ++ statementsPrinter branchBody
+    "when " ++ expPrinter pattern ++ ":\n\t" ++ statementsPrinter branchBody
 
 caseBranchesPrinter :: Show a => [CaseBranch a] -> String
 caseBranchesPrinter caseBranches =
@@ -141,7 +141,7 @@ statementPrinter stm = "\t" ++
                     Just statements -> "\nelse\n\t" ++ statementsPrinter statements
                     Nothing -> ""
             in
-            "case " ++ expPrinter scrutinee ++ " of\n\t" ++ caseBranchesPrinter cases ++ defPrint ++ "\nend case"
+            "case " ++ expPrinter scrutinee ++ "\n\t" ++ caseBranchesPrinter cases ++ defPrint ++ "\nend case"
         StmtLoop body exits _ _ ->
             "loop\n\t" ++ statementsPrinter body ++
             (if null exits then "" else "\n\t" ++ exitsPrinter exits) ++ "\n\tend loop"

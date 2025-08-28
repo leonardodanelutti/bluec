@@ -194,14 +194,14 @@ resWords =
              (b "do" 33 (b "div" 32 N N) N))
           (b "if" 38
              (b "exit" 36 (b "end" 35 N N) (b "false" 37 N N))
-             (b "loop" 40 (b "is" 39 N N) N)))
-       (b "routines" 48
-          (b "or" 45
-             (b "of" 43 (b "not" 42 N N) (b "on" 44 N N))
-             (b "return" 47 (b "ref" 46 N N) N))
-          (b "val" 51
-             (b "true" 50 (b "then" 49 N N) N)
-             (b "var" 53 (b "valres" 52 N N) N))))
+       (b "loop" 40 (b "is" 39 N N) N)))
+              (b "then" 48
+          (b "ref" 45
+             (b "on" 43 (b "not" 42 N N) (b "or" 44 N N))
+             (b "routines" 47 (b "return" 46 N N) N))
+          (b "valres" 51
+             (b "val" 50 (b "true" 49 N N) N)
+             (b "when" 53 (b "var" 52 N N) N))))
   where
   b s n = B bs (TS bs n)
     where

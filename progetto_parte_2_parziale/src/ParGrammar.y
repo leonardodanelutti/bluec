@@ -66,17 +66,17 @@ import LexGrammar
   'loop'      { PT _ (TS _ 40)        }
   'mod'       { PT _ (TS _ 41)        }
   'not'       { PT _ (TS _ 42)        }
-  'of'        { PT _ (TS _ 43)        }
-  'on'        { PT _ (TS _ 44)        }
-  'or'        { PT _ (TS _ 45)        }
-  'ref'       { PT _ (TS _ 46)        }
-  'return'    { PT _ (TS _ 47)        }
-  'routines'  { PT _ (TS _ 48)        }
-  'then'      { PT _ (TS _ 49)        }
-  'true'      { PT _ (TS _ 50)        }
-  'val'       { PT _ (TS _ 51)        }
-  'valres'    { PT _ (TS _ 52)        }
-  'var'       { PT _ (TS _ 53)        }
+  'on'        { PT _ (TS _ 43)        }
+  'or'        { PT _ (TS _ 44)        }
+  'ref'       { PT _ (TS _ 45)        }
+  'return'    { PT _ (TS _ 46)        }
+  'routines'  { PT _ (TS _ 47)        }
+  'then'      { PT _ (TS _ 48)        }
+  'true'      { PT _ (TS _ 49)        }
+  'val'       { PT _ (TS _ 50)        }
+  'valres'    { PT _ (TS _ 51)        }
+  'var'       { PT _ (TS _ 52)        }
+  'when'      { PT _ (TS _ 53)        }
   L_charac    { PT _ (TC _)           }
   L_doubl     { PT _ (TD _)           }
   L_integ     { PT _ (TI _)           }
@@ -379,24 +379,32 @@ ListExit : {- empty -} { [] } | Exit ListExit { $1 : $2 }
 
 Case :: { A.Statement () }
 Case
-  : 'case' RExp 'of' ListCaseLabel { A.StmtCase {
-    A.scrutinee = $2,
-    A.cases = $4,
-    A.def = Nothing,
-    A.annot = (),
-    A.pos = mergePos (tokenPosn $1) (A.branchPos $ last $4)
-  } }
-  | 'case' RExp 'of' ListCaseLabel 'else' ListStatement { A.StmtCase {
-    A.scrutinee = $2,
-    A.cases = $4,
-    A.def = Just $6,
-    A.annot = (),
-    A.pos = mergePos (tokenPosn $1) (A.pos $ last $6)
-  } }
+  : 'case' RExp ListCaseLabel { A.StmtCase {
+      A.scrutinee = $2,
+      A.cases = $3,
+      A.def = Nothing,
+      A.annot = (),
+      A.pos = mergePos (tokenPosn $1) (A.branchPos $ last $3)
+    }
+  }
+  | 'case' RExp ListCaseLabel 'else' ListStatement { A.StmtCase {
+      A.scrutinee = $2,
+      A.cases = $3,
+      A.def = Just $5,
+      A.annot = (),
+      A.pos = mergePos (tokenPosn $1) (A.pos $ last $5)
+    }
+  }
 
 CaseLabel :: { A.CaseBranch () }
 CaseLabel
-  : RExp ':' ListStatement { A.CaseBranch { A.pattern = $1, A.branchBody = $3, A.branchAnnot = (), A.branchPos = mergePos (A.expPos $1) (A.pos $ last $3) } }
+  : 'when' RExp ':' ListStatement { A.CaseBranch { 
+      A.pattern = $2,
+      A.branchBody = $4,
+      A.branchAnnot = (),
+      A.branchPos = mergePos (tokenPosn $1) (A.pos $ last $4) 
+    }
+  }
 
 ListCaseLabel :: { [A.CaseBranch ()] }
 ListCaseLabel

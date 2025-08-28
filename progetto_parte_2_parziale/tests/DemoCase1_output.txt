@@ -8,12 +8,12 @@ routines
 	var
 		c : Integer := 2;
 	do
-		case c of
-		1:
+		case c
+		when 1:
 			c := (c + 1);
-	2:
+	when (1 + 1):
 			c := (c + 2);
-	3:
+	when 3:
 			c := (c + 3);
 	else
 			c := (c + 4);

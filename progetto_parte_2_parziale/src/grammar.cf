@@ -78,11 +78,10 @@ CondIf.                         If ::= "if" RExp "then" [Statement];
 CondIfElse.                     If ::= "if" RExp "then" [Statement] "else" [Statement];
 
 -- CASE
-CaseSimple.                     Case ::= "case" RExp "of" [CaseLabel];
-CaseElse.                       Case ::= "case" RExp "of" [CaseLabel] "else" [Statement];
+CaseSimple.                     Case ::= "case" RExp [CaseLabel];
+CaseElse.                       Case ::= "case" RExp [CaseLabel] "else" [Statement];
 
--- TODO: Handle ranges or sets?
-CaseLabelInstructions.          CaseLabel ::= RExp ":" [Statement];
+CaseLabelInstructions.          CaseLabel ::= "when" RExp ":" [Statement];
 
 terminator nonempty CaseLabel "";
 
