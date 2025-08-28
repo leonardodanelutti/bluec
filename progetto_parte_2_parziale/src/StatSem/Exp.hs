@@ -330,8 +330,7 @@ annExpBinOp env AS.BinOp {
     getTypeAndVal [] [] [] [] [] = (T.TError { T.msgs = [E.err pos "Type mismatch: the binary operation " ++ show binOp ++ " expects operands to be compatible with one of the following types: " ++ show expectedTypes ++ ", but got " ++ show typeE1 ++ " and " ++ show typeE2 ++ " instead."] }, Nothing, last castedsE1, last castedsE2)
     getTypeAndVal (at:ats) (v1:vs1) (v2:vs2) (c1:cs1) (c2:cs2) = case (at, v1, v2) of
         (T.TError {}, _, _) -> getTypeAndVal ats vs1 vs2 cs1 cs2
-        (_, Just v1, Just v2) -> (at, Just $ applyBinOp binOp v1 v2, c1, c2)
-        _ -> (at, Nothing, c1, c2)
+        (_, v1, v2) -> (at, applyBinOpSC binOp v1 v2, c1, c2)
     getTypeAndVal _ _ _ _ _ = error "Unreachable: `getTypeAndVal` called with lists of different lengths."
     (newType, newVal, castedE1, castedE2) = case (typeE1, typeE2) of
         (T.TError { T.msgs = msgs1 }, T.TError { T.msgs = msgs2 }) -> (
