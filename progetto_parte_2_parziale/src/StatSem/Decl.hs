@@ -167,9 +167,11 @@ annRoutine env AS.Function {
     doNotAlwaysReturnErr = if isUnreachable env''
         then []
         else [E.err pos "The function \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
+    -- Function throws if its body throws.
+    funThrows = throws $ AS.routBodyAnnot bodyAnn
     -- Create the annotation.
     ann = DeclAnn {
-        bindings = envFromRoutBindings [(ident, Fun pos params ty)],
+        bindings = envFromRoutBindings [(ident, Fun pos params ty funThrows)],
         errs = returnRefErr ++ bodyErrs ++ doNotAlwaysReturnErr
     }
 annRoutine env AS.Procedure {
@@ -196,9 +198,11 @@ annRoutine env AS.Procedure {
     doNotAlwaysReturnErr = if isUnreachable env''
         then []
         else [E.err pos "The procedure \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
+    -- Procedure throws if its body throws.
+    procThrows = throws $ AS.routBodyAnnot bodyAnn
     -- Create the annotation.
     ann = DeclAnn {
-        bindings = envFromRoutBindings [(ident, Proc pos params)],
+        bindings = envFromRoutBindings [(ident, Proc pos params procThrows)],
         errs = bodyErrs ++ doNotAlwaysReturnErr
     }
 
@@ -221,8 +225,20 @@ annRoutBody env AS.RoutBody {
     declErrs = errs $ AS.declsAnnot declsAnn
     -- Errs from the statements.
     stmtsErrs = concatMap (errs . AS.annot) stmtsAnn
+    -- Stmts throws:
+    -- - Never if the reachable statements' throws field is always `Never` (or if there
+    --   are no reachable statement);
+    -- - Always if it exists a reachable statement whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    reachableStmts = filter (not . unreachable . AS.annot) stmtsAnn
+    stmtsThrows = if all (== Never) (map (throws . AS.annot) reachableStmts)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableStmts)
+        then Always
+        else Sometimes
     -- Create the annotation.
     ann = StmtAnn {
         errs = declErrs ++ stmtsErrs,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = stmtsThrows
     }

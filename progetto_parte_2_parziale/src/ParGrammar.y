@@ -326,7 +326,7 @@ Statement
       A.pos = (mergeTokenPos $1 $6)
     }
   }
-  | 'throw' 'error' ';'            { A.StmtContinue { 
+  | 'throw' 'error' ';'            { A.StmtThrow {
       A.annot = (),
       A.pos = (mergeTokenPos $1 $3) 
     }

@@ -19,12 +19,10 @@ routines
 
 [Generated TAC]
 
-
-EntryPoint:
-      s@7:5 =(bool) True
-      c@8:5 =(int) 2
-      pcall main, 0
-      END_PROGRAM
+$0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
+L0, EntryPoint: value@0:0 =(addr) $0
+      param(addr) value@0:0
+      pcall writeString@0:0, 1
 
 main@11:5:
       x@13:13 =(bool) s@7:5

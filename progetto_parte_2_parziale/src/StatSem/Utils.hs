@@ -35,14 +35,18 @@ data SymbolEntry
 
 -- Function or procedure bindings.
 data RoutEntry
-    = Fun LG.Posn [AS.Param] T.TypePos
-    | Proc LG.Posn [AS.Param]
+    -- - Position of definition;
+    -- - Parameters;
+    -- - Return type;
+    -- - When it throws.
+    = Fun LG.Posn [AS.Param] T.TypePos When
+    | Proc LG.Posn [AS.Param] When
     deriving (Show)
 
 -- Position of a `RoutEntry`.
 pos :: RoutEntry -> LG.Posn
-pos (Fun p _ _) = p
-pos (Proc p _)  = p
+pos (Fun p _ _ _) = p
+pos (Proc p _ _)  = p
 
 -- Keyword bindings.
 data KeywordEntry
@@ -66,14 +70,14 @@ emptyEnv = Env Map.empty Map.empty Map.empty
 -- Pre-defined routines.
 preludeRoutines :: [(AS.Ident, RoutEntry)]
 preludeRoutines = [
-        ((AS.Ident "writeInt" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TInteger LG.defaultPosn) LG.defaultPosn]),
-        ((AS.Ident "writeReal" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TReal LG.defaultPosn) LG.defaultPosn]),
-        ((AS.Ident "writeChar" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TChar LG.defaultPosn) LG.defaultPosn]),
-        ((AS.Ident "writeString" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TString LG.defaultPosn) LG.defaultPosn]),
-        ((AS.Ident "readInt" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TInteger LG.defaultPosn)),
-        ((AS.Ident "readReal" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TReal LG.defaultPosn)),
-        ((AS.Ident "readChar" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TChar LG.defaultPosn)),
-        ((AS.Ident "readString" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TString LG.defaultPosn))
+        ((AS.Ident "writeInt" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TInteger LG.defaultPosn) LG.defaultPosn] Never),
+        ((AS.Ident "writeReal" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TReal LG.defaultPosn) LG.defaultPosn] Never),
+        ((AS.Ident "writeChar" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TChar LG.defaultPosn) LG.defaultPosn] Never),
+        ((AS.Ident "writeString" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TString LG.defaultPosn) LG.defaultPosn] Never),
+        ((AS.Ident "readInt" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TInteger LG.defaultPosn) Never),
+        ((AS.Ident "readReal" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TReal LG.defaultPosn) Never),
+        ((AS.Ident "readChar" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TChar LG.defaultPosn) Never),
+        ((AS.Ident "readString" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TString LG.defaultPosn) Never)
     ]
 
 -- Construct an environment with the pre-defined routines.
@@ -152,7 +156,8 @@ data Ann
         -- The position of the whole declaration (different symbols can have the same
         -- position if they are declared together).
         -- Nothing if the identifier is not found in the environment.
-        declPos :: Maybe LG.Posn
+        declPos :: Maybe LG.Posn,
+        throws :: When
     }
     | ExpIdentAnn {
         expType :: T.Type,
@@ -178,7 +183,8 @@ data Ann
         -- Errors of the tree rooted by the node with this annotation.
         errs :: [String],
         -- True if the node is unreachable (e.g. after a return statement).
-        unreachable :: Bool
+        unreachable :: Bool,
+        throws :: When
     }
     | StmtRoutCallAnn {
          -- Errors of the tree rooted by the node with this annotation.
@@ -195,9 +201,22 @@ data Ann
         -- The return type of the routine. 
         -- Just ty if it is a function returning type `ty`, 
         -- Nothing if it is a procedure or the identifier is not found in the environment.
-        returnType :: Maybe T.Type
+        returnType :: Maybe T.Type,
+        throws :: When
     }
     deriving (Show)
+
+data When
+    = Never
+    | Sometimes
+    | Always
+    deriving (Show, Eq)
+
+annThrows :: Ann -> When
+annThrows (ExpFunCallAnn { throws = when }) = when
+annThrows (StmtAnn { throws = when }) = when
+annThrows (StmtRoutCallAnn { throws = when }) = when
+annThrows _ = Never
 
 -- Category of an identifier.
 --
