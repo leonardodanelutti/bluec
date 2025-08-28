@@ -3,12 +3,12 @@
 -- What does this example test:
 -- - case statement
 
-var
-    s: Boolean := true;
-    c: Integer := 2;
-
 routines
-    main() is do
+    
+    main() is
+    var
+        c: Integer := 2;
+    do
         case c of
             1:
                 c := c+1;

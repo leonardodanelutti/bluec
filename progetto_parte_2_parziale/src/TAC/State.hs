@@ -5,6 +5,7 @@ import qualified AbsSyn                    as AS
 import qualified Types                     as T
 import TAC.Def
 import Data.Set
+import Control.Monad (unless)
 
 type StateMonad = St.State TACState
 
@@ -95,7 +96,9 @@ attachToNext label = do
 newRoutine :: StateMonad ()
 newRoutine = do
     state <- St.get
-    St.put $ state { routineStack = currentRoutine state : routineStack state,
+    unless (Prelude.null $ nextLabel state) $ out (Comment "Procedure start")
+    state' <- St.get
+    St.put $ state' { routineStack = currentRoutine state' : routineStack state',
                      currentRoutine = [] }
 
 -- Call when ending a routine (cannot be called before a newRoutine)

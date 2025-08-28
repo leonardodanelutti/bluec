@@ -3,11 +3,10 @@ case example 1
 
 [Pretty-Print of source]
 
-var
-	s : Boolean := true;
-	c : Integer := 2;
 routines
 	main() is
+	var
+		c : Integer := 2;
 	do
 		case c of
 		1:
@@ -29,23 +28,22 @@ routines
 
 
 EntryPoint:
-      s@7:5 =(bool) True
-      c@8:5 =(int) 2
       pcall main, 0
       END_PROGRAM
 
-main@11:5:
-      if c@8:5 ==(int) 1 goto L1
-      if c@8:5 ==(int) 2 goto L2
-      if c@8:5 ==(int) 3 goto L3
-      c@8:5 =(int) c@8:5 +(int) 4
+main@8:5:
+      c@10:9 =(int) 2
+      if c@10:9 ==(int) 1 goto L1
+      if c@10:9 ==(int) 2 goto L2
+      if c@10:9 ==(int) 3 goto L3
+      c@10:9 =(int) c@10:9 +(int) 4
       goto L0
       # Start of case bodies
-L1:   c@8:5 =(int) c@8:5 +(int) 1
+L1:   c@10:9 =(int) c@10:9 +(int) 1
       goto L0
-L2:   c@8:5 =(int) c@8:5 +(int) 2
+L2:   c@10:9 =(int) c@10:9 +(int) 2
       goto L0
-L3:   c@8:5 =(int) c@8:5 +(int) 3
+L3:   c@10:9 =(int) c@10:9 +(int) 3
       goto L0
       # End of case bodies
 L0:   return

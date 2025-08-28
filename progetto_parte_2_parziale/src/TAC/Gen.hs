@@ -442,7 +442,7 @@ stringRelName relOp = "string" ++ relName relOp ++ "'"
 stringRelNames :: AS.RelOp -> (Label, Address, Address)
 stringRelNames relOp = let funName = stringRelName relOp in (
         FunctionUnique funName,
-        PName $ ProgramName (funName ++ "val11") Lex.defaultPosn,
+        PName $ ProgramName (funName ++ "val1") Lex.defaultPosn,
         PName $ ProgramName (funName ++ "val2") Lex.defaultPosn
     )
 
