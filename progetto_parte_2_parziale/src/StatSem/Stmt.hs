@@ -39,6 +39,7 @@ annStmt env stmt@AS.StmtContinue{} = (annStmtContinue env stmt, setUnreachable e
 annStmt env stmt@AS.StmtIf{} = annStmtIf env stmt
 annStmt env stmt@AS.StmtIfElse{} = annStmtIfElse env stmt
 annStmt env stmt@AS.StmtLoop{} = annStmtLoop env stmt
+annStmt env stmt@AS.StmtForEach{} = annStmtForEach env stmt
 
 -- Annotate an assignment statement.
 annStmtAss :: Env -> Stmt -> AnnStmt
@@ -361,3 +362,45 @@ annLoopExit env AS.LoopExit {
         errs = condErrs ++ bodyErrs,
         unreachable = isUnreachable env
     }
+
+-- Annotate a for-each statement.
+annStmtForEach :: Env -> Stmt -> (AnnStmt, Env)
+annStmtForEach env AS.StmtForEach {
+    AS.varIterName = iterName,
+    AS.varIterType = iterType,
+    AS.arrayExp = arrayExp,
+    AS.body = body,
+    AS.pos = pos
+} = (AS.StmtForEach {
+    AS.varIterName = iterName,
+    AS.varIterType = iterType,
+    AS.arrayExp = annArrayExp,
+    AS.body = annBody,
+    AS.annot = ann,
+    AS.pos = pos
+}, env'') where
+    -- Annotate the array expression.
+    annArrayExp = SSE.annExp env arrayExp
+    -- Get the errors from the array expression.
+    arrayPropagatedErrs = T.getErrs [expType (AS.expAnnot annArrayExp)]
+    -- Check that it is an array; if so check if its elements' type can be casted to the
+    -- iterator type; if so update the environment accordingly.
+    (env', arrayNewErr) = case expType $ AS.expAnnot annArrayExp of
+        -- FIXME: the positions used below is of the whole foreach. maybe it is not what expected
+        T.TArray { T.elementsType = elementsType } -> if T.sup pos elementsType (T.type_ iterType) == (T.type_ iterType)
+            then mergeEnv env (envFromSymbolBindings [(iterName, (Var pos iterType Nothing))])
+            else (env, [E.err (AS.expPos annArrayExp) "Array element type mismatch."]) -- No update of the environment.
+        _ -> (env, [E.err (AS.expPos annArrayExp) "Array expression expected."]) -- No update of the environment.
+    -- Annotate the body.
+    -- Array size is always >= 1, so it is always executed at least an iteration of the
+    -- body -> so the after-body environment is propagated.
+    (annBody, env'') = annStmts env' body
+    -- Get the errors from the body.
+    bodyErrs = concatMap (errs . AS.annot) annBody
+    -- Create the annotation.
+    ann = StmtAnn {
+        errs = arrayPropagatedErrs ++ arrayNewErr ++ bodyErrs,
+        unreachable = isUnreachable env
+    }
+    -- TODO: canno modify iterator and array inside the body
+annStmtForEach _ _ = error "Unreachable: `annStmtForEach` called with non-`StmtForEach` expression."
