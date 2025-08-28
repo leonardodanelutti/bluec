@@ -108,7 +108,7 @@ caseBranchPrinter CaseBranch{pattern, branchBody} =
 
 caseBranchesPrinter :: Show a => [CaseBranch a] -> String
 caseBranchesPrinter caseBranches =
-    intercalate "\n" (map caseBranchPrinter caseBranches)
+    intercalate "\n\t" (map caseBranchPrinter caseBranches)
 
 -- Corpo della routine
 routineBodyPrinter :: Show a => RoutBody a -> String
@@ -138,10 +138,10 @@ statementPrinter stm = "\t" ++
             "\n\telse\n\t" ++ statementsPrinter bodyF ++ "\n\tend if"
         StmtCase scrutinee cases def _ _ ->
             let defPrint = case def of
-                    Just statements -> "\nelse\n\t" ++ statementsPrinter statements
+                    Just statements -> "\n\telse\n\t" ++ statementsPrinter statements
                     Nothing -> ""
             in
-            "case " ++ expPrinter scrutinee ++ "\n\t" ++ caseBranchesPrinter cases ++ defPrint ++ "\nend case"
+            "case " ++ expPrinter scrutinee ++ "\n\t" ++ caseBranchesPrinter cases ++ defPrint ++ "\n\tend case"
         StmtLoop body exits _ _ ->
             "loop\n\t" ++ statementsPrinter body ++
             (if null exits then "" else "\n\t" ++ exitsPrinter exits) ++ "\n\tend loop"

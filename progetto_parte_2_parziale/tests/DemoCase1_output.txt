@@ -11,13 +11,13 @@ routines
 		case c
 		when 1:
 			c := (c + 1);
-	when (1 + 1):
+		when (1 + 1):
 			c := (c + 2);
-	when 3:
+		when 3:
 			c := (c + 3);
-	else
+		else
 			c := (c + 4);
-	end case
+		end case
 		return;
 	end
 	main
