@@ -1,0 +1,15 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - Checks of array bounds
+
+routines
+    main() is
+        var
+            arr: Array<Array<Integer; 3>; 3> := [[11, 12, 13], [21, 22, 23], [31, 32, 33]];
+            idx: Integer := 0;
+        do
+            idx := arr[0]|5|;
+            idx := arr|idx|[0];
+            return;
+    end main

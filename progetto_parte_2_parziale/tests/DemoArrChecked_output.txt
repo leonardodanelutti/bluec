@@ -1,0 +1,6 @@
+Array Checked example 1
+
+
+Parse failed.
+
+SYNTAX ERROR before ';' at line 13, column 31.
