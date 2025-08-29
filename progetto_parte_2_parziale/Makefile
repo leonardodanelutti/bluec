@@ -152,6 +152,11 @@ demo: bluec
 		./bluec tests/testCaseTryCatch.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoTryCatch_output.txt
 	@{ \
+		echo "example XX: If-then-else in expressions"; \
+		echo ""; \
+		./bluec tests/testCaseIfThenElseExp.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoIfThenElseExp_output.txt
+	@{ \
 		echo "example 21: compile-time shortcut"; \
 		echo ""; \
 		./bluec tests/testCase21.blue || true; \
