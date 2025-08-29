@@ -142,10 +142,10 @@ demo: bluec
 		./bluec tests/testCase20.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo20_output.txt
 	@{ \
-		echo "example 21: for each"; \
+		echo "example XX: for each"; \
 		echo ""; \
-		./bluec tests/testCase21.blue || true; \
-	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo21_output.txt
+		./bluec tests/testCaseDetLoop.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoDetLoop_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
