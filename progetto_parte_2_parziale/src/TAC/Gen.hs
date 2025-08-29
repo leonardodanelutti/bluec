@@ -190,6 +190,8 @@ genUnknownExpr exp addrIn = do
             genArray elements addrOut 0
             return addrOut
 
+        AS.ArrayExpr {} -> error "Array expressions should never be passed to the TAC module"
+
         AS.Cast e ann _ -> do
             addrOut <- getOutAddr addrIn
             addr <- genExprTmp e
@@ -200,7 +202,7 @@ genUnknownExpr exp addrIn = do
             out (UOp addrOut (Coer cast) addr newTypeTAC)
             return addrOut
 
-        AS.IfElse cond thenExp elseExp ann _ -> do
+        AS.IfElse cond thenExp elseExp _ann _ -> do
             addrOut <- getOutAddr addrIn
             elseLabel <- newLabel
             endLabel <- newLabel
@@ -362,13 +364,13 @@ genStringComp relOp = do
     newRoutine
     attachToNext funName
     out (Comment $ "String comparison: " ++ relName relOp)
-    out (NOp idx (Lit $ LitInt (-1)) TInteger)
+    out (NOp idx (Lit $ LitInt 0) TInteger)
 
     -- Main comparison loop
     attachToNext labelLoop
-    out (BOp idx (Add TInteger) (Lit $ LitInt 1) idx TInteger)
     out (IndexGet char1 arg1 idx TChar)
     out (IndexGet char2 arg2 idx TChar)
+    out (BOp idx (Add TInteger) (Lit $ LitInt 1) idx TInteger)
 
     -- Check if characters are equal
     out (BOp cmp (Rel (RelEq TChar)) char1 char2 TBoolean)
@@ -384,21 +386,28 @@ genStringComp relOp = do
 
     -- Characters are different, determine result
     attachToNext labelEnd
-    let tacRelOp = case relOp of
-            AS.Eq -> RelEq TChar    -- Will be false since we know they're different
-            AS.Neq -> RelNeq TChar  -- Will be true since we know they're different  
-            AS.Lt -> RelLt TChar
-            AS.Le -> RelLe TChar
-            AS.Gt -> RelGt TChar
-            AS.Ge -> RelGe TChar
-    out (BOp cmp (Rel tacRelOp) char1 char2 TBoolean)
-    out (Return cmp)
+    case relOp of
+            AS.Eq ->  out (Return (Lit $ LitBool False))
+            AS.Neq -> out (Return (Lit $ LitBool True))
+            AS.Lt -> do
+                out (BOp cmp (Rel (RelLt TChar)) char1 char2 TBoolean)
+                out (Return cmp)
+            AS.Le -> do
+                out (BOp cmp (Rel (RelLe TChar)) char1 char2 TBoolean)
+                out (Return cmp)
+            AS.Gt -> do
+                out (BOp cmp (Rel (RelGt TChar)) char1 char2 TBoolean)
+                out (Return cmp)
+            AS.Ge -> do
+                out (BOp cmp (Rel (RelGe TChar)) char1 char2 TBoolean)
+                out (Return cmp)
     endRoutine
 
 genArrayComp :: AS.RelOp -> T.Type -> StateMonad ()
 genArrayComp relOp innerType = do
     let innerTypeTAC = castTypeToTACType innerType
         (funName, arg1, arg2, size) = arrayRelNames relOp innerType
+        innerTypeSize = T.getTypeSize innerType
     labelLoop <- newLabel
     labelTrue <- newLabel
     labelFalse <- newLabel
@@ -409,46 +418,44 @@ genArrayComp relOp innerType = do
     newRoutine
     attachToNext funName
     out (Comment $ "Array comparison: " ++ relName relOp ++ " for type " ++ show innerType)
-    out (NOp idx (Lit $ LitInt (- (T.getTypeSize innerType))) TInteger)
+    out (NOp idx (Lit $ LitInt 0) TInteger)
 
     -- Start the main comparison loop
     attachToNext labelLoop
-    out (BOp idx (Add TInteger) (Lit $ LitInt (T.getTypeSize innerType)) idx TInteger)
+    
+    -- Check if we reached the end of the array first
+    out (RelJump (RelGe TInteger) idx size (if relOp `elem` [AS.Eq, AS.Le, AS.Ge] then labelTrue else labelFalse))
+    
     out (IndexGet val1 arg1 idx innerTypeTAC)
     out (IndexGet val2 arg2 idx innerTypeTAC)
 
-    -- Check if we reached the end of the array
-    if relOp `elem` [AS.Eq, AS.Le, AS.Ge] then
-        out (RelJump (RelGe TInteger) idx size labelTrue)
-    else
-        out (RelJump (RelLt TInteger) idx size labelFalse)
+    -- Increment index for next iteration
+    out (BOp idx (Add TInteger) idx (Lit $ LitInt innerTypeSize) TInteger)
 
-    -- If elements are equal, continue
+    -- If elements are equal, continue to next iteration
     genRepOp cmp AS.Eq val1 val2 innerType
     out (BoolJumpT cmp labelLoop)
 
-    -- If they are not equal, first check the relation they are in
+    -- Elements are not equal, determine the result based on the comparison
     when (relOp `elem` [AS.Lt, AS.Le]) $ do
         genRepOp cmp AS.Lt val1 val2 innerType
         out (BoolJumpT cmp labelTrue)
+        out (UnJump labelFalse)  -- val1 >= val2, so Lt/Le is false
 
     when (relOp `elem` [AS.Gt, AS.Ge]) $ do
         genRepOp cmp AS.Gt val1 val2 innerType
-        out (BoolJumpT cmp labelFalse)
+        out (BoolJumpT cmp labelTrue)
+        out (UnJump labelFalse)  -- val1 <= val2, so Gt/Ge is false
 
-    -- anf then return the right value
-    if relOp == AS.Neq then do
-        attachToNext labelTrue
-        out (Return (Lit $ LitBool True))
+    when (relOp == AS.Eq) $ do
+        out (UnJump labelFalse)  -- Elements not equal, so Eq is false
 
-        attachToNext labelFalse
-        out (Return (Lit $ LitBool False))
-    else do
-        attachToNext labelFalse
-        out (Return (Lit $ LitBool False))
+    -- Return labels
+    attachToNext labelTrue
+    out (Return (Lit $ LitBool True))
 
-        attachToNext labelTrue
-        out (Return (Lit $ LitBool True))
+    attachToNext labelFalse
+    out (Return (Lit $ LitBool False))
     endRoutine
 
 relName :: AS.RelOp -> String
