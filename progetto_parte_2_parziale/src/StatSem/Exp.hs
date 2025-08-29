@@ -29,6 +29,7 @@ annExp expectedType env exp@AS.Deref{} = annExpDeref expectedType env exp
 annExp _ env exp@AS.ArrayIndex {} = annExpArrayIndex env exp
 annExp expectedType env exp@AS.Array {} = annExpArray expectedType env exp
 annExp expectedType env exp@AS.ArrayExpr {} = annExpArrayExpr expectedType env exp
+annExp expectedType env exp@AS.IfElse {} = annExpIfElse expectedType env exp
 annExp _ _ AS.Cast {} = error "Unreachable: `annExp` called with `Cast` expression, which can only be create by the Semantic Analyzer itself."
 
 -----------
@@ -674,32 +675,45 @@ annExpArrayExpr (Just _) env AS.ArrayExpr {
         ctVal = Nothing
     }
 annExpArrayExpr _ _ _ = error "Unreachable: `annExpArrayExpr` called with non-`ArrayExpr` expression."
+-- TODO: array expression can now build non-constant arrays. It is right?
 
--- getArraySizes :: Type -> Int -> [Int]
--- getArraySizes (T.TArray { T.size = s }) 0 = []
--- getArraySizes (T.TArray { T.elementsType = ty, T.size = s }) n = s : getArraySizes ty (n - 1)
--- getArraySizes _ _ = []
-
--- annExpArrayExpr expectedType env AS.ArrayExpr {
---     AS.e = e,
---     AS.indexes = [index],
---     AS.expPos = pos
--- } = annExpArray AS.Array {
---     AS.elements = elements,
---     AS.expPos = pos
--- } where
---     -- Get the element expected type.
---     elementExpectedType = case expectedType of
---         Just (T.TArray { T.elementsType = et }) -> et
---         _ -> T.TError { T.msgs = [E.err pos "Array expression must have an array type."] }
-
--- -- Given an environment, a list of (index variable, [possible values]), 
--- -- produce all environments with all combinations of assignments.
--- makeIndexEnvs :: Env -> [(AS.Ident, [Integer])] -> [Env]
--- makeIndexEnvs env [] = [env]
--- makeIndexEnvs env ((ident, vals):rest) =
---     [ env' | v <- vals
---            , env' <- makeIndexEnvs (addBinding env ident v) rest ]
---   where
---     -- Add a constant binding for the index variable.
---     addBinding e i v = e { symbols = Map.insert i (Const LG.defaultPosn (AS.LitInt v LG.defaultPosn)) (symbols e) }
+annExpIfElse :: Maybe T.Type -> Env -> Exp -> AnnExp
+annExpIfElse expectedType env AS.IfElse {
+    AS.condExp = cond,
+    AS.thenExp = thenExp,
+    AS.elseExp = elseExp,
+    AS.expPos = pos
+} = AS.IfElse {
+    AS.condExp = castedCond,
+    AS.thenExp = annThen,
+    AS.elseExp = annElse,
+    AS.expAnnot = ann',
+    AS.expPos = pos
+} where
+    -- Annotate the condition.
+    annCond = annExp (Just T.TBoolean) (doNotRequireLExp env) cond
+    -- Cast the condition to a boolean type.
+    castedCond = cast (doNotRequireLExp env) annCond T.TBoolean
+    -- Get the errors from the condition.
+    condErrs = T.getErrs [expType (AS.expAnnot castedCond)]
+    -- Condition compile-time value.
+    condCTVal = getCTValue $ AS.expAnnot castedCond
+    -- Annotate the then and else branches.
+    annThen = annExp expectedType (doNotRequireLExp env) thenExp
+    annElse = annExp expectedType (doNotRequireLExp env) elseExp
+    -- Get the errors from the branches.
+    thenErrs = T.getErrs [expType (AS.expAnnot annThen)]
+    elseErrs = T.getErrs [expType (AS.expAnnot annElse)]
+    -- The type of the expression.
+    branchesType = T.sup pos (expType $ AS.expAnnot annThen) (expType $ AS.expAnnot annElse)
+    -- Compile-time value.
+    ctVal = case condCTVal of
+        Just (CTVBoolean True) -> getCTValue $ AS.expAnnot annThen
+        Just (CTVBoolean False) -> getCTValue $ AS.expAnnot annElse
+        _ -> Nothing
+    ann = ExpAnn {
+        expType = branchesType,
+        ctVal = ctVal
+    }
+    ann' = foldl addErr (foldl addErr (foldl addErr ann condErrs) thenErrs) elseErrs
+annExpIfElse _ _ _ = error "Unreachable: `annExpIfElse` called with non-`IfElse` expression."

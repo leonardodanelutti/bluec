@@ -1,0 +1,16 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - "list comprehension"-like array expressions;
+-- - if-then-else espressions.
+
+const
+    a: Real := 12.32;
+var
+    condition: Boolean := true;
+    as: Array<Array<Real; 5>; 2> := if condition or a = 12 then
+            [j*2 + i *a : i, j]
+        else
+            [j*2 + i *a : j, i]
+        end if;
+routines main is do return; end main

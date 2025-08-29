@@ -774,6 +774,9 @@ Nelle annotazioni delle espressioni un opportuno campo `ctVal` propaga finchè
 determinabile a tempo di analisi semantica statica il valore costante dell'espressione. Le
 costanti non possono essere array o reference.
 
+== Inferenza di tipo.
+TODO:
+
 /*
 == Altro che non so se è da dire
 - durante gli assegnamenti (e dichiarazioni) il numeri di L-expr e di R-expr deve essere lo stesso
