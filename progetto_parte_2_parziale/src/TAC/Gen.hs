@@ -200,6 +200,19 @@ genUnknownExpr exp addrIn = do
             out (UOp addrOut (Coer cast) addr newTypeTAC)
             return addrOut
 
+        AS.IfElse cond thenExp elseExp ann _ -> do
+            addrOut <- getOutAddr addrIn
+            elseLabel <- newLabel
+            endLabel <- newLabel
+
+            genBoolExpIf cond (JumpFalse elseLabel)
+            genExprAddr thenExp addrOut
+            out (UnJump endLabel)
+            attachToNext elseLabel
+            genExprAddr elseExp addrOut
+            attachToNext endLabel
+            return addrOut
+
 -- Generate an expression, the result is stored in a temporary variable that is returned
 genExprTmp :: AS.Exp SS.Ann -> StateMonad Address
 genExprTmp exp = genExpr exp Nothing
@@ -760,13 +773,12 @@ genStmt stmt post = do
                 oldTypeTAC = castTypeToTACType oldType
                 varType' = T.type_ varType
                 typeTAC = castTypeToTACType varType'
-                typeSize = T.getTypeSize varType'
+                typeSize = T.getTypeSize oldType
             arrAddr <- genExprTmp arrayExp
             index <- newTmp
             out (NOp index (Lit $ LitInt 0) TInteger)
-            -- Start loop
-            newLoop
-            (loopStart, _) <- getLoopLabels
+            loopStart <- newLabel
+            attachToNext loopStart
             if varType' == oldType then do
                 out (IndexGet progName arrAddr index typeTAC)
             else do
@@ -779,11 +791,13 @@ genStmt stmt post = do
             mapM_ (`genStmt` post) body
             -- Add array size to index
             out (BOp index (Add TInteger) index (Lit $ LitInt typeSize) TInteger)
-            out (UnJump loopStart)
-            endLoop
+            out (RelJump (RelLt TInteger) index (Lit $ LitInt (T.getTypeSize $ SS.expType $ AS.expAnnot arrayExp)) loopStart)
         AS.StmtContinue _ _ -> do
             (loopStart, _) <- getLoopLabels
             out (UnJump loopStart)
+        AS.StmtBreak _ _ -> do
+            (_, loopEnd) <- getLoopLabels
+            out (UnJump loopEnd)
         AS.StmtIf cond body _ _ -> do
             endLabel <- newLabel
             genBoolExpIf cond (JumpFalse endLabel)
