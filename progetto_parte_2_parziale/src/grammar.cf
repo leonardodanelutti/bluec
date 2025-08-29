@@ -67,6 +67,8 @@ StatementContinue.              Statement ::= "continue" ";";
 StatementIf.                    Statement ::= If "end" "if";
 StatementLoop.                  Statement ::= Loop "end" "loop";
 StatementForEach.               Statement ::= "for" BlueIdent ":" Type "in" RExp "do" [Statement] "end" "for";
+StatementTryCatch.              Statement ::= "try" Statement "catch" Statement "end" "try";
+StatementThrow.                 Statement ::= "throw" "error" ";";
 
 separator RExp ",";
 separator LExp ",";

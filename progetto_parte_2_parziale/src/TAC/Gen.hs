@@ -28,11 +28,28 @@ genEntryPoint :: AS.Declarations SS.Ann -> StateMonad ()
 genEntryPoint (AS.ProgramDecl _ vars routines _) = do
     newRoutine
     attachToNext $ FunctionUnique "EntryPoint"
+    -- Set up the default exception handler
+    defaultHandler <- attachHandler (
+        do
+            -- Write the panic message
+            stringAddr <- outStatic (STVString "Program panicked! An exception has been thrown that has not been handled\0")
+            let localParamName = PName (ProgramName "value" Lex.defaultPosn)
+                writeStringProc = Function (ProgramName "writeString" Lex.defaultPosn)
+            -- Call the writeString procedure
+            out (NOp localParamName stringAddr Addr)
+            out (Param localParamName Addr)
+            out (ProcCall writeStringProc 1)
+            endRoutine
+        )
+    out (PushExceptionHandler defaultHandler)
+
+    -- Generate global variables
     mapM_ genVar vars
     -- Program calls main and then ends
     out (ProcCall (FunctionUnique "main") 0)
     out (Custom "END_PROGRAM")
     endRoutine
+    -- Generate routines
     mapM_ genRoutine routines
 
 genDeclarations :: AS.Declarations SS.Ann -> StateMonad ()
@@ -778,6 +795,13 @@ genStmt stmt post = do
             attachToNext elseLabel
             mapM_ (`genStmt` post) bodyF
             attachToNext endLabel
+        AS.StmtTryCatch try catch _ _ -> do
+            handlerLabel <- attachHandler (do genStmt catch post)
+            out (PushExceptionHandler handlerLabel)
+            genStmt try post
+            out PopExceptionHandler
+        AS.StmtThrow _ _ -> do
+            out Throw
 
 
 -- GENERATION OF ASSIGNMENTS

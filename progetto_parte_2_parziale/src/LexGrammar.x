@@ -185,23 +185,24 @@ resWords =
           (b ">=" 18
              (b "=" 16 (b "<>" 15 N N) (b ">" 17 N N))
              (b "Boolean" 20 (b "Array" 19 N N) N))
-          (b "String" 24
-             (b "Real" 23 (b "Integer" 22 N N) N) (b "]" 26 (b "[" 25 N N) N))))
-    (b "loop" 41
-       (b "end" 34
-          (b "div" 31
-             (b "const" 29 (b "and" 28 N N) (b "continue" 30 N N))
-             (b "else" 33 (b "do" 32 N N) N))
-          (b "if" 38
-             (b "false" 36 (b "exit" 35 N N) (b "for" 37 N N))
-             (b "is" 40 (b "in" 39 N N) N)))
-       (b "routines" 48
-          (b "or" 45
-             (b "not" 43 (b "mod" 42 N N) (b "on" 44 N N))
-             (b "return" 47 (b "ref" 46 N N) N))
-          (b "val" 51
-             (b "true" 50 (b "then" 49 N N) N)
-             (b "var" 53 (b "valres" 52 N N) N))))
+          (b "[" 25
+             (b "Real" 23 (b "Integer" 22 N N) (b "String" 24 N N))
+             (b "^" 27 (b "]" 26 N N) N))))
+    (b "mod" 42
+       (b "end" 35
+          (b "div" 32
+             (b "const" 30 (b "catch" 29 N N) (b "continue" 31 N N))
+             (b "else" 34 (b "do" 33 N N) N))
+          (b "if" 39
+             (b "exit" 37 (b "error" 36 N N) (b "false" 38 N N))
+             (b "loop" 41 (b "is" 40 N N) N)))
+       (b "then" 49
+          (b "ref" 46
+             (b "on" 44 (b "not" 43 N N) (b "or" 45 N N))
+             (b "routines" 48 (b "return" 47 N N) N))
+          (b "val" 53
+             (b "true" 51 (b "throw" 50 N N) (b "try" 52 N N))
+             (b "var" 55 (b "valres" 54 N N) N))))
   where
   b s n = B bs (TS bs n)
     where

@@ -47,6 +47,14 @@ The reserved words used in grammar are the following:
   | ``mod`` | ``not`` | ``on`` | ``or``
   | ``ref`` | ``return`` | ``routines`` | ``then``
   | ``true`` | ``val`` | ``valres`` | ``var``
+  | ``Real`` | ``String`` | ``and`` | ``catch``
+  | ``const`` | ``continue`` | ``div`` | ``do``
+  | ``else`` | ``end`` | ``error`` | ``exit``
+  | ``false`` | ``if`` | ``is`` | ``loop``
+  | ``mod`` | ``not`` | ``on`` | ``or``
+  | ``ref`` | ``return`` | ``routines`` | ``then``
+  | ``throw`` | ``true`` | ``try`` | ``val``
+  | ``valres`` | ``var`` |  |
 
 The symbols used in grammar are the following:
   | : | := | ; | ,
@@ -119,6 +127,8 @@ All other symbols are terminals.
   |  |  **|**  | //If// ``end`` ``if``
   |  |  **|**  | //Loop// ``end`` ``loop``
   |  |  **|**  | ``for`` //Type// //BlueIdent// ``in`` //RExp// ``do`` //[Statement]// ``end`` ``for``
+  |  |  **|**  | ``try`` //Statement// ``catch`` //Statement// ``end`` ``try``
+  |  |  **|**  | ``throw`` ``error`` ``;``
   | //[RExp]// | -> | **eps**
   |  |  **|**  | //RExp//
   |  |  **|**  | //RExp// ``,`` //[RExp]//

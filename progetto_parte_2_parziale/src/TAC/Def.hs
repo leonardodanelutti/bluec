@@ -145,6 +145,9 @@ data Instruction
     | ReturnEmpty
     | Return { r :: Address }
     | ArrayGen { id :: Address, size :: Int }
+    | PushExceptionHandler { to :: Label }
+    | PopExceptionHandler
+    | Throw
     | Custom String
     | Comment String
 

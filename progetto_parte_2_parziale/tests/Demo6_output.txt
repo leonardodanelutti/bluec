@@ -20,23 +20,10 @@ routines
 
 [Generated TAC]
 
-
-EntryPoint:
-      arraygen arr@7:5, 48
-      arr@7:5[0] =(int) 0
-      arr@7:5[4] =(int) 0
-      arr@7:5[8] =(int) 0
-      arr@7:5[12] =(int) 0
-      arr@7:5[16] =(int) 0
-      arr@7:5[20] =(int) 0
-      arr@7:5[24] =(int) 0
-      arr@7:5[28] =(int) 0
-      arr@7:5[32] =(int) 0
-      arr@7:5[36] =(int) 0
-      arr@7:5[40] =(int) 0
-      arr@7:5[44] =(int) 0
-      pcall main, 0
-      END_PROGRAM
+$0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
+L0, EntryPoint: value@0:0 =(addr) $0
+      param(addr) value@0:0
+      pcall writeString@0:0, 1
 
 arrayGtInteger':
       # Array comparison: Gt for type Integer

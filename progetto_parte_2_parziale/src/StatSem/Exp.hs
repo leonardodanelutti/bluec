@@ -194,26 +194,27 @@ annExpRoutCall _ _ = error "Unreachable: `annExpRoutCall` called with non-`FunCa
 -- to the expected types.
 annRoutineCall :: Env -> AS.Ident -> [Exp] -> LG.Posn -> (Ann, [AnnExp])
 annRoutineCall env ident args pos = (ann', castedArgs) where
-    (routType, params, castedArgs, declPos) = case Map.lookup ident (routines env) of
-        Just (Fun declPos params ty) -> case length params == length args of
+    (routType, params, castedArgs, declPos, thisThrows) = case Map.lookup ident (routines env) of
+        Just (Fun declPos params ty thisThrows) -> case length params == length args of
             True  -> case T.getErrs $ map (expType . AS.expAnnot) castedArgs of
-                [] -> (T.type_ ty, Just params, castedArgs, Just declPos)
-                errs -> (T.TError { T.msgs = errs }, Just params, castedArgs, Just declPos)
+                [] -> (T.type_ ty, Just params, castedArgs, Just declPos, thisThrows)
+                errs -> (T.TError { T.msgs = errs }, Just params, castedArgs, Just declPos, thisThrows)
                 where
                     castedArgs = annAndCastRoutArgs env args params
             False -> (T.TError {
                 T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."]
-            }, Just params, map (annExp env) args, Just declPos)
-        Just (Proc declPos params) -> (T.TError {
+            }, Just params, map (annExp env) args, Just declPos, thisThrows)
+        Just (Proc declPos params thisThrows) -> (T.TError {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ PP.identPrinter ident ++ "."]
-        }, Just params, annAndCastRoutArgs env args params, Just declPos)
+        }, Just params, annAndCastRoutArgs env args params, Just declPos, thisThrows)
         Nothing -> (T.TError {
             T.msgs = [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."]
-        }, Nothing, map (annExp (doNotRequireLExp env)) args, Nothing)
+        }, Nothing, map (annExp (doNotRequireLExp env)) args, Nothing, Never)
     ann = ExpFunCallAnn {
         expType = routType,
         params = params,
-        declPos = declPos
+        declPos = declPos,
+        throws = thisThrows
     }
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
     expectedLExpErr = E.err pos "Left-hand side expression required, but found routine call."
@@ -330,8 +331,7 @@ annExpBinOp env AS.BinOp {
     getTypeAndVal [] [] [] [] [] = (T.TError { T.msgs = [E.err pos "Type mismatch: the binary operation " ++ show binOp ++ " expects operands to be compatible with one of the following types: " ++ show expectedTypes ++ ", but got " ++ show typeE1 ++ " and " ++ show typeE2 ++ " instead."] }, Nothing, last castedsE1, last castedsE2)
     getTypeAndVal (at:ats) (v1:vs1) (v2:vs2) (c1:cs1) (c2:cs2) = case (at, v1, v2) of
         (T.TError {}, _, _) -> getTypeAndVal ats vs1 vs2 cs1 cs2
-        (_, Just v1, Just v2) -> (at, Just $ applyBinOp binOp v1 v2, c1, c2)
-        _ -> (at, Nothing, c1, c2)
+        (_, v1, v2) -> (at, applyBinOpSC binOp v1 v2, c1, c2)
     getTypeAndVal _ _ _ _ _ = error "Unreachable: `getTypeAndVal` called with lists of different lengths."
     (newType, newVal, castedE1, castedE2) = case (typeE1, typeE2) of
         (T.TError { T.msgs = msgs1 }, T.TError { T.msgs = msgs2 }) -> (

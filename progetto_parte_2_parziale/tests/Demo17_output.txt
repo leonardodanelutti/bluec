@@ -18,20 +18,10 @@ routines
 
 [Generated TAC]
 
-
-EntryPoint:
-      a@7:9 =(int) 2
-      c@7:9 =(int) 3
-      b@8:9 =(bool) False
-      x@9:5 =(bool) a@7:9 <(int) 20
-      if x@9:5 goto L1
-      x@9:5 =(bool) b@8:9
-      ifFalse x@9:5 goto L0
-L1:   x@9:5 =(bool) b@8:9
-      ifFalse x@9:5 goto L2
-      x@9:5 =(bool) c@7:9 !=(int) 10
-L0, L2: pcall main, 0
-      END_PROGRAM
+$0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
+L0, EntryPoint: value@0:0 =(addr) $0
+      param(addr) value@0:0
+      pcall writeString@0:0, 1
 
 main@13:1:
       return
