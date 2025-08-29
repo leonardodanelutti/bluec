@@ -132,6 +132,9 @@ statementPrinter stm = "\t" ++
         StmtLoop body exits _ _ ->
             "loop\n\t" ++ statementsPrinter body ++
             (if null exits then "" else "\n\t" ++ exitsPrinter exits) ++ "\n\tend loop"
+        StmtForEach varIterName varIterType arrayExp body _ _ ->
+            "for " ++ identPrinter varIterName ++ ": " ++ typePrinter varIterType ++ " in " ++ expPrinter arrayExp ++ " do\n\t" 
+            ++ statementsPrinter body ++ "\n\tend for"
         StmtTryCatch try catch _ _ ->
             "try\n\t" ++ statementPrinter try ++
             "\ncatch\n\t" ++ statementPrinter catch ++ "\nend try"

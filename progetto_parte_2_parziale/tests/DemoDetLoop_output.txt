@@ -1,0 +1,47 @@
+example XX: for each
+
+
+[Pretty-Print of source]
+
+var
+	s : Boolean := true;
+	c : Integer := 2;
+	iterator : Array<Boolean ; 3> := [true, true, false];
+routines
+	main() is
+	var
+		x : Boolean := (s and c);
+	do
+		for iter: Boolean in iterator do
+			x := iter;
+		end for
+		return;
+	end
+	main
+
+
+
+[Generated TAC]
+
+
+EntryPoint:
+      s@7:5 =(bool) True
+      c@8:5 =(int) 2
+      arraygen iterator@9:5, 3
+      iterator@9:5[0] =(bool) True
+      iterator@9:5[1] =(bool) True
+      iterator@9:5[2] =(bool) False
+      pcall main, 0
+      END_PROGRAM
+
+main@12:5:
+      x@14:13 =(bool) s@7:5
+      ifFalse x@14:13 goto L0
+      x@14:13 =(bool) intToBool c@8:5
+L0:   t0 =(int) 0
+L1:   iter@16:17 =(bool) iterator@9:5[t0]
+      x@14:13 =(bool) iter@16:13
+      t0 =(int) t0 +(int) 1
+      goto L1
+L2:   return
+

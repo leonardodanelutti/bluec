@@ -40,6 +40,13 @@ The set of reserved words is the set of terminals appearing in the grammar. Thos
 
 The reserved words used in grammar are the following:
   | ``Array`` | ``Boolean`` | ``Char`` | ``Integer``
+  | ``Real`` | ``String`` | ``and`` | ``const``
+  | ``continue`` | ``div`` | ``do`` | ``else``
+  | ``end`` | ``exit`` | ``false`` | ``for``
+  | ``if`` | ``in`` | ``is`` | ``loop``
+  | ``mod`` | ``not`` | ``on`` | ``or``
+  | ``ref`` | ``return`` | ``routines`` | ``then``
+  | ``true`` | ``val`` | ``valres`` | ``var``
   | ``Real`` | ``String`` | ``and`` | ``catch``
   | ``const`` | ``continue`` | ``div`` | ``do``
   | ``else`` | ``end`` | ``error`` | ``exit``
@@ -119,6 +126,7 @@ All other symbols are terminals.
   |  |  **|**  | ``continue`` ``;``
   |  |  **|**  | //If// ``end`` ``if``
   |  |  **|**  | //Loop// ``end`` ``loop``
+  |  |  **|**  | ``for`` //Type// //BlueIdent// ``in`` //RExp// ``do`` //[Statement]// ``end`` ``for``
   |  |  **|**  | ``try`` //Statement// ``catch`` //Statement// ``end`` ``try``
   |  |  **|**  | ``throw`` ``error`` ``;``
   | //[RExp]// | -> | **eps**

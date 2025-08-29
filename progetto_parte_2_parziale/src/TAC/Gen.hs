@@ -195,12 +195,7 @@ genUnknownExpr exp addrIn = do
             addr <- genExprTmp e
             let oldType = SS.expType $ AS.expAnnot e
                 newType = SS.expType ann
-                cast = case (oldType, newType) of
-                    (T.TInteger, T.TBoolean) -> IntToBool
-                    (T.TInteger, T.TReal)    -> IntToDouble
-                    (T.TChar, T.TInteger)    -> CharToInt
-                    (T.TChar, T.TReal)       -> CharToReal
-                    _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
+                cast = getCoer oldType newType
                 newTypeTAC = castTypeToTACType newType
             out (UOp addrOut (Coer cast) addr newTypeTAC)
             return addrOut
@@ -754,6 +749,33 @@ genStmt stmt post = do
                     genBoolExpIf cond (JumpTrue loopEnd)
                     mapM_ (`genStmt` post) body
                 ) exit
+            out (UnJump loopStart)
+            endLoop
+        AS.StmtForEach varName varType arrayExp body _ _ -> do
+            let progName = PName $ ProgramName (AS.identName varName) (AS.identPos varName)
+                oldType = T.elementsType $ SS.expType $ AS.expAnnot arrayExp
+                oldTypeTAC = castTypeToTACType oldType
+                varType' = T.type_ varType
+                typeTAC = castTypeToTACType varType'
+                typeSize = T.getTypeSize varType'
+            arrAddr <- genExprTmp arrayExp
+            index <- newTmp
+            out (NOp index (Lit $ LitInt 0) TInteger)
+            -- Start loop
+            newLoop
+            (loopStart, _) <- getLoopLabels
+            if varType' == oldType then do
+                out (IndexGet progName arrAddr index typeTAC)
+            else do
+                -- Cast type if needed
+                let coer = getCoer oldType varType'
+                castTmp <- newTmp
+                out (IndexGet castTmp arrAddr index oldTypeTAC)
+                out (UOp progName (Coer coer) castTmp typeTAC)
+            -- Generate foreach body
+            mapM_ (`genStmt` post) body
+            -- Add array size to index
+            out (BOp index (Add TInteger) index (Lit $ LitInt typeSize) TInteger)
             out (UnJump loopStart)
             endLoop
         AS.StmtContinue _ _ -> do

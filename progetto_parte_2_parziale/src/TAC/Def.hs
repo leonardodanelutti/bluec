@@ -37,10 +37,18 @@ data Coercion
     | CharToInt
     | CharToReal
 
+getCoer :: T.Type -> T.Type -> Coercion
+getCoer oldType newType = case (oldType, newType) of
+    (T.TInteger, T.TBoolean) -> IntToBool
+    (T.TInteger, T.TReal)    -> IntToDouble
+    (T.TChar, T.TInteger)    -> CharToInt
+    (T.TChar, T.TReal)       -> CharToReal
+    _ -> error $ "Unsupported cast from " ++ show oldType ++ " to " ++ show newType
+
 -- Types used in TAC
 data TACType = TInteger | TReal | TChar | TBoolean | Addr
 
-castTypeToTACType :: T.Type-> TACType
+castTypeToTACType :: T.Type -> TACType
 castTypeToTACType T.TInteger = TInteger
 castTypeToTACType T.TReal    = TReal
 castTypeToTACType T.TChar    = TChar

@@ -173,7 +173,7 @@ eitherResIdent tv s = treeFind resWords
 -- | The keywords and symbols of the language organized as binary search tree.
 resWords :: BTree
 resWords =
-  b "and" 28
+  b "^" 27
     (b "<=" 14
        (b "-" 7
           (b "*" 4
