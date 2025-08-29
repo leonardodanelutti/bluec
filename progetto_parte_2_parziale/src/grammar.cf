@@ -50,7 +50,7 @@ separator Param ",";
 RoutineBody.                    RoutBody ::=  "is" Declarations "do" [Statement] "end";
 terminator Statement "";
 
-rules Mode ::= "val" | "valres" | "ref" | {- empty -};
+rules Mode ::= "val" | "valres" | "ref" | "const" | {- empty -};
 
 RoutineCall.                    RoutCall ::= BlueIdent "(" [RExp] ")";
 -- RoutCall can be a BlueIdent but the rule below is redoundant because RExpr can be a
@@ -64,10 +64,11 @@ StatementRoutEmptyCall.         Statement ::= BlueIdent ";";
 StatementReturn.                Statement ::= "return" RExp ";";
 StatementReturnEmpty.           Statement ::= "return" ";";
 StatementContinue.              Statement ::= "continue" ";";
+StatementBreak.                 Statement ::= "break" ";";
 StatementIf.                    Statement ::= If "end" "if";
 StatementLoop.                  Statement ::= Loop "end" "loop";
 StatementForEach.               Statement ::= "for" BlueIdent ":" Type "in" RExp "do" [Statement] "end" "for";
-StatementTryCatch.              Statement ::= "try" Statement "catch" Statement "end" "try";
+StatementTryCatch.              Statement ::= "try" [Statement] "catch" [Statement] "end" "try";
 StatementThrow.                 Statement ::= "throw" "error" ";";
 
 separator RExp ",";
@@ -86,6 +87,8 @@ separator Exit "";
 
 -- EXPRESSIONS
 coercions RExp 7;
+
+RExpIf.                         RExp ::= "if" RExp "then" RExp "else" RExp "end" "if";
 RExpOr.                         RExp ::= RExp "or" RExp1;
 RExpAnd.                        RExp1 ::= RExp1 "and" RExp2;
 
@@ -118,6 +121,7 @@ RExpDouble.                     RExp7 ::= Double;
 RExpCall.                       RExp7 ::= RoutCall;
 RExpLExp.                       RExp7 ::= LExp;
 RExpArray.                      RExp7 ::= "[" [RExp] "]";
+RExpArrayExpr.                  RExp7 ::= "[" RExp ":" [BlueIdent] "]";
 
 rules Bool ::= "true" | "false";
 

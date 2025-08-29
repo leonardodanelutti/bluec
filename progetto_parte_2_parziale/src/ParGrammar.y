@@ -52,33 +52,36 @@ import LexGrammar
   ']'         { PT _ (TS _ 26)        }
   '^'         { PT _ (TS _ 27)        }
   'and'       { PT _ (TS _ 28)        }
-  'catch'     { PT _ (TS _ 29)        }
-  'const'     { PT _ (TS _ 30)        }
-  'continue'  { PT _ (TS _ 31)        }
-  'div'       { PT _ (TS _ 32)        }
-  'do'        { PT _ (TS _ 33)        }
-  'else'      { PT _ (TS _ 34)        }
-  'end'       { PT _ (TS _ 35)        }
-  'error'     { PT _ (TS _ 36)        }
-  'exit'      { PT _ (TS _ 37)        }
-  'false'     { PT _ (TS _ 38)        }
-  'if'        { PT _ (TS _ 39)        }
-  'is'        { PT _ (TS _ 40)        }
-  'loop'      { PT _ (TS _ 41)        }
-  'mod'       { PT _ (TS _ 42)        }
-  'not'       { PT _ (TS _ 43)        }
-  'on'        { PT _ (TS _ 44)        }
-  'or'        { PT _ (TS _ 45)        }
-  'ref'       { PT _ (TS _ 46)        }
-  'return'    { PT _ (TS _ 47)        }
-  'routines'  { PT _ (TS _ 48)        }
-  'then'      { PT _ (TS _ 49)        }
-  'throw'     { PT _ (TS _ 50)        }
-  'true'      { PT _ (TS _ 51)        }
-  'try'       { PT _ (TS _ 52)        }
-  'val'       { PT _ (TS _ 53)        }
-  'valres'    { PT _ (TS _ 54)        }
-  'var'       { PT _ (TS _ 55)        }
+  'break'     { PT _ (TS _ 29)        }
+  'catch'     { PT _ (TS _ 30)        }
+  'const'     { PT _ (TS _ 31)        }
+  'continue'  { PT _ (TS _ 32)        }
+  'div'       { PT _ (TS _ 33)        }
+  'do'        { PT _ (TS _ 34)        }
+  'else'      { PT _ (TS _ 35)        }
+  'end'       { PT _ (TS _ 36)        }
+  'error'     { PT _ (TS _ 37)        }
+  'exit'      { PT _ (TS _ 38)        }
+  'false'     { PT _ (TS _ 39)        }
+  'for'       { PT _ (TS _ 40)        }
+  'if'        { PT _ (TS _ 41)        }
+  'in'        { PT _ (TS _ 42)        }
+  'is'        { PT _ (TS _ 43)        }
+  'loop'      { PT _ (TS _ 44)        }
+  'mod'       { PT _ (TS _ 45)        }
+  'not'       { PT _ (TS _ 46)        }
+  'on'        { PT _ (TS _ 47)        }
+  'or'        { PT _ (TS _ 48)        }
+  'ref'       { PT _ (TS _ 49)        }
+  'return'    { PT _ (TS _ 50)        }
+  'routines'  { PT _ (TS _ 51)        }
+  'then'      { PT _ (TS _ 52)        }
+  'throw'     { PT _ (TS _ 53)        }
+  'true'      { PT _ (TS _ 54)        }
+  'try'       { PT _ (TS _ 55)        }
+  'val'       { PT _ (TS _ 56)        }
+  'valres'    { PT _ (TS _ 57)        }
+  'var'       { PT _ (TS _ 58)        }
   L_charac    { PT _ (TC _)           }
   L_doubl     { PT _ (TD _)           }
   L_integ     { PT _ (TI _)           }
@@ -265,6 +268,7 @@ Mode
   : 'val' { A.Mval }
   | 'valres' { A.Mvalres }
   | 'ref' { A.Mref }
+  | 'const' { A.Mconst }
   | {- empty -} { A.Mval }
 
 RoutCall :: { A.RoutineCall () }
@@ -316,6 +320,11 @@ Statement
       A.pos = (mergeTokenPos $1 $2) 
     }
   }
+  | 'break' ';'                    { A.StmtBreak { 
+      A.annot = (),
+      A.pos = (mergeTokenPos $1 $2) 
+    }
+  }
   | If 'end' 'if'                  { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
   | Loop 'end' 'loop'              { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
   | 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' 'for' { A.StmtForEach {
@@ -325,8 +334,9 @@ Statement
       A.body = $8,
       A.annot = (),
       A.pos = (mergePos (tokenPosn $1) (tokenPosn $10))
-  | 'try' Statement 'catch' Statement 'end' 'try' { 
-    A.StmtTryCatch {
+    }
+  }
+  | 'try' ListStatement 'catch' ListStatement 'end' 'try' { A.StmtTryCatch {
       A.try = $2,
       A.catch = $4,
       A.annot = (),
@@ -401,6 +411,14 @@ ListExit : {- empty -} { [] } | Exit ListExit { $1 : $2 }
 RExp :: { A.Exp () }
 RExp 
   : RExp1             { $1 } 
+  | 'if' RExp 'then' RExp 'else' RExp 'end' 'if' { A.IfElse {
+      A.condExp = $2,
+      A.thenExp = $4,
+      A.elseExp = $6,
+      A.expAnnot = (),
+      A.expPos = mergePos (tokenPosn $1) (tokenPosn $8)
+    }
+  }
   | RExp 'or' RExp1   { A.BinOp A.Or  $1 $3 () (mergeExpPos $1 $3) }
 
 RExp1 :: { A.Exp () }
@@ -455,6 +473,13 @@ RExp7
   | RoutCall          { A.FunCall  $1 () (A.routCallPos $1) }
   | LExp              { $1 }
   | '[' ListRExp ']'  { A.Array $2 () (mergeTokenPos $1 $3) }
+  | '[' RExp ':' ListBlueIdent ']' { A.ArrayExpr {
+      A.e = $2,
+      A.indexes = $4,
+      A.expAnnot = (),
+      A.expPos = mergeTokenPos $1 $5
+    }
+  }
 
 Bool :: { A.Literal }
 Bool

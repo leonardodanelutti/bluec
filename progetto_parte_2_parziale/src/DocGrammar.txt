@@ -40,21 +40,15 @@ The set of reserved words is the set of terminals appearing in the grammar. Thos
 
 The reserved words used in grammar are the following:
   | ``Array`` | ``Boolean`` | ``Char`` | ``Integer``
-  | ``Real`` | ``String`` | ``and`` | ``const``
-  | ``continue`` | ``div`` | ``do`` | ``else``
-  | ``end`` | ``exit`` | ``false`` | ``for``
-  | ``if`` | ``in`` | ``is`` | ``loop``
-  | ``mod`` | ``not`` | ``on`` | ``or``
-  | ``ref`` | ``return`` | ``routines`` | ``then``
-  | ``true`` | ``val`` | ``valres`` | ``var``
-  | ``Real`` | ``String`` | ``and`` | ``catch``
-  | ``const`` | ``continue`` | ``div`` | ``do``
-  | ``else`` | ``end`` | ``error`` | ``exit``
-  | ``false`` | ``if`` | ``is`` | ``loop``
-  | ``mod`` | ``not`` | ``on`` | ``or``
-  | ``ref`` | ``return`` | ``routines`` | ``then``
-  | ``throw`` | ``true`` | ``try`` | ``val``
-  | ``valres`` | ``var`` |  |
+  | ``Real`` | ``String`` | ``and`` | ``break``
+  | ``catch`` | ``const`` | ``continue`` | ``div``
+  | ``do`` | ``else`` | ``end`` | ``error``
+  | ``exit`` | ``false`` | ``for`` | ``if``
+  | ``in`` | ``is`` | ``loop`` | ``mod``
+  | ``not`` | ``on`` | ``or`` | ``ref``
+  | ``return`` | ``routines`` | ``then`` | ``throw``
+  | ``true`` | ``try`` | ``val`` | ``valres``
+  | ``var`` |  |  |
 
 The symbols used in grammar are the following:
   | : | := | ; | ,
@@ -116,6 +110,7 @@ All other symbols are terminals.
   | //Mode// | -> | ``val``
   |  |  **|**  | ``valres``
   |  |  **|**  | ``ref``
+  |  |  **|**  | ``const``
   |  |  **|**  | **eps**
   | //RoutCall// | -> | //BlueIdent// ``(`` //[RExp]// ``)``
   | //Statement// | -> | //[LExp]// ``:=`` //[RExpNE]// ``;``
@@ -124,10 +119,11 @@ All other symbols are terminals.
   |  |  **|**  | ``return`` //RExp// ``;``
   |  |  **|**  | ``return`` ``;``
   |  |  **|**  | ``continue`` ``;``
+  |  |  **|**  | ``break`` ``;``
   |  |  **|**  | //If// ``end`` ``if``
   |  |  **|**  | //Loop// ``end`` ``loop``
-  |  |  **|**  | ``for`` //Type// //BlueIdent// ``in`` //RExp// ``do`` //[Statement]// ``end`` ``for``
-  |  |  **|**  | ``try`` //Statement// ``catch`` //Statement// ``end`` ``try``
+  |  |  **|**  | ``for`` //BlueIdent// ``:`` //Type// ``in`` //RExp// ``do`` //[Statement]// ``end`` ``for``
+  |  |  **|**  | ``try`` //[Statement]// ``catch`` //[Statement]// ``end`` ``try``
   |  |  **|**  | ``throw`` ``error`` ``;``
   | //[RExp]// | -> | **eps**
   |  |  **|**  | //RExp//
@@ -145,6 +141,7 @@ All other symbols are terminals.
   | //[Exit]// | -> | **eps**
   |  |  **|**  | //Exit// //[Exit]//
   | //RExp// | -> | //RExp1//
+  |  |  **|**  | ``if`` //RExp// ``then`` //RExp// ``else`` //RExp// ``end`` ``if``
   |  |  **|**  | //RExp// ``or`` //RExp1//
   | //RExp1// | -> | //RExp2//
   |  |  **|**  | //RExp1// ``and`` //RExp2//
@@ -178,6 +175,7 @@ All other symbols are terminals.
   |  |  **|**  | //RoutCall//
   |  |  **|**  | //LExp//
   |  |  **|**  | ``[`` //[RExp]// ``]``
+  |  |  **|**  | ``[`` //RExp// ``:`` //[BlueIdent]// ``]``
   | //Bool// | -> | ``true``
   |  |  **|**  | ``false``
   | //LExp// | -> | //LExp1//

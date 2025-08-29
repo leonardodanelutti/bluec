@@ -73,7 +73,9 @@ data Exp a
   | ArrayIndex { e :: Exp a, index :: Exp a, expAnnot :: a, expPos :: Posn }
   | ExpIdent   { name :: Ident, expAnnot :: a, expPos :: Posn }
   | Array      { elements :: [Exp a], expAnnot :: a, expPos :: Posn }
+  | ArrayExpr  { e :: Exp a, indexes :: [Ident], expAnnot :: a, expPos :: Posn }
   | Cast       { e :: Exp a, expAnnot :: a, expPos :: Posn }
+  | IfElse     { condExp :: Exp a, thenExp :: Exp a, elseExp :: Exp a, expAnnot :: a, expPos :: Posn }
   deriving (Show)
 
 data BinOp = And | Or | Add | Sub | Mul | Div | DivInt | Mod | Pow
@@ -103,7 +105,7 @@ data Param = Param
   }
   deriving (Show)
 
-data Mode = Mval | Mvalres | Mref
+data Mode = Mval | Mvalres | Mref | Mconst
   deriving (Show, Eq)
 
 data RoutBody a = RoutBody
@@ -119,11 +121,12 @@ data Statement a
   | StmtReturn      { valReturn :: Exp a, annot :: a, pos :: Posn }
   | StmtReturnEmpty { annot :: a, pos :: Posn }
   | StmtContinue    { annot :: a, pos :: Posn }
+  | StmtBreak       { annot :: a, pos :: Posn }
   | StmtIf          { cond :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
   | StmtIfElse      { cond :: Exp a, bodyT :: [Statement a], bodyF :: [Statement a], annot :: a, pos :: Posn }
   | StmtLoop        { body :: [Statement a], exit :: [Exit a], annot :: a, pos :: Posn }
   | StmtForEach     { varIterName :: Ident, varIterType :: Ty.TypePos, arrayExp :: Exp a, body :: [Statement a], annot :: a, pos :: Posn }
-  | StmtTryCatch    { try :: Statement a, catch :: Statement a, annot :: a, pos :: Posn }
+  | StmtTryCatch    { try :: [Statement a], catch :: [Statement a], annot :: a, pos :: Posn }
   | StmtThrow       { annot :: a, pos :: Posn }
   deriving (Show)
 
