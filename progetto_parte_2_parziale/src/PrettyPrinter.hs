@@ -69,6 +69,10 @@ expPrinter exp =
         Array e _ _ -> "[" ++ expsPrinter e ++ "]"
         FunCall call _ _ -> routineCallPrinter call
         Cast e _ _ -> expPrinter e
+        ArrayExpr e indexes _ _ -> "[" ++ expPrinter e ++ ": " ++ identsPrinter indexes ++ "]"
+        IfElse cond thenBranch elseBranch _ _ ->
+            "if " ++ expPrinter cond ++ " then\n\t" ++ expPrinter thenBranch ++
+            "\nelse\n\t" ++ expPrinter elseBranch ++ "\n\tend if"
 
 expsPrinter :: Show a => [Exp a] -> String
 expsPrinter exps = intercalate ", " (map expPrinter exps)
@@ -124,6 +128,7 @@ statementPrinter stm = "\t" ++
         StmtRoutCall call _ -> routineCallPrinter call ++ ";" -- inserisci routinePrinter che prende solo la RoutineCall
         StmtReturn vals _ _ -> "return " ++ expPrinter vals ++ ";"
         StmtReturnEmpty _ _ -> "return;"
+        StmtBreak _ _ -> "break;"
         StmtContinue _ _ -> "continue;"
         StmtIf cond body _ _ -> "if " ++ expPrinter cond ++ " then\n\t" ++ statementsPrinter body ++ "\n\tend if"
         StmtIfElse cond bodyT bodyF _ _ ->
@@ -136,10 +141,11 @@ statementPrinter stm = "\t" ++
             "for " ++ identPrinter varIterName ++ ": " ++ typePrinter varIterType ++ " in " ++ expPrinter arrayExp ++ " do\n\t" 
             ++ statementsPrinter body ++ "\n\tend for"
         StmtTryCatch try catch _ _ ->
-            "try\n\t" ++ statementPrinter try ++
-            "\ncatch\n\t" ++ statementPrinter catch ++ "\nend try"
+            "try\n\t" ++ statementsPrinter try ++
+            "\ncatch\n\t" ++ statementsPrinter catch ++ "\nend try"
         StmtThrow _ _ ->
             "throw error;"
+        
 
 
 -- Tipi
@@ -214,3 +220,4 @@ modePrinter m =
         Mval    -> ""
         Mref    -> "ref "
         Mvalres -> "valres "
+        Mconst  -> "const "
