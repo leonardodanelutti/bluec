@@ -157,7 +157,7 @@ genUnknownExpr exp addrIn = do
 
         AS.ArrayIndex _ _ ann _ -> do
             addrOut <- getOutAddr addrIn
-            genArrayIndex exp ann addrOut
+            genArrayIndexing exp ann addrOut
 
         -- ConstCategory is handled by genExpr
         AS.ExpIdent ident (SS.ExpIdentAnn ty _ SS.VarCategory mode (Just declPos)) _ -> do
@@ -454,7 +454,7 @@ stringRelName relOp = "string" ++ relName relOp ++ "'"
 stringRelNames :: AS.RelOp -> (Label, Address, Address)
 stringRelNames relOp = let funName = stringRelName relOp in (
         FunctionUnique funName,
-        PName $ ProgramName (funName ++ "val11") Lex.defaultPosn,
+        PName $ ProgramName (funName ++ "val1") Lex.defaultPosn,
         PName $ ProgramName (funName ++ "val2") Lex.defaultPosn
     )
 
@@ -474,76 +474,79 @@ arrayRelNames relOp ty = let funName = arrayRelName relOp ty in (
 -- GENERATION OF ARRAY INDEXING
 
 -- Generate the address of an array index operation
-genArrayIndex :: AS.Exp SS.Ann -> SS.Ann -> Address -> StateMonad Address
-genArrayIndex exp ann addrOut = do
+genArrayIndexing :: AS.Exp SS.Ann -> SS.Ann -> Address -> StateMonad Address
+genArrayIndexing exp ann addrOut = do
 
     -- Generate base address
     (baseAddr, baseType) <- genArrayBase exp
     -- Generate index
-    indexes <- arrayIndexes exp
-    indexAddr <- genArrayIndex indexes (T.arrayDim baseType)
+    let innerTypeSize = T.getTypeSize $ T.arrayInnerType $ SS.expType ann
+    indexAddr <- genArrayIndex exp (T.arrayDim baseType) innerTypeSize
 
     -- Generate the IndexGet instruction
     out (IndexGet addrOut baseAddr indexAddr (castTypeToTACType $ SS.expType ann))
 
     return addrOut
 
+genArrayBase :: AS.Exp SS.Ann -> StateMonad (Address, T.Type)
+genArrayBase (AS.ArrayIndex expr _ _ _) = genArrayBase expr
+genArrayBase notIndexExpr = do
+    addr <- genExprTmp notIndexExpr
+    let ty = SS.expType $ AS.expAnnot notIndexExpr
+    return (addr, ty)
+
+genArrayIndex :: AS.Exp SS.Ann -> [Int] -> Int -> StateMonad Address
+genArrayIndex exp dims innerTypeSize = do
+    indexes <- arrayIndexes exp
+    genArrayIndex' indexes dims innerTypeSize
+
     where
+    -- Generate the list of indexes from the array indexing expression
+    arrayIndexes :: AS.Exp SS.Ann -> StateMonad [Address]
+    arrayIndexes (AS.ArrayIndex e idx _ _) = do
+        idxAddr <- genExprTmp idx
+        rest <- arrayIndexes e
+        return (rest ++ [idxAddr])
+    arrayIndexes _ = return []
 
-        genArrayBase :: AS.Exp SS.Ann -> StateMonad (Address, T.Type)
-        genArrayBase (AS.ArrayIndex expr _ _ _) = genArrayBase expr
-        genArrayBase notIndexExpr = do
-            addr <- genExprTmp notIndexExpr
-            let ty = SS.expType $ AS.expAnnot notIndexExpr
-            return (addr, ty)
+    -- Generate the array index from the list of addresses and dimensions
+    genArrayIndex' :: [Address] -> [Int] -> Int -> StateMonad Address
+    genArrayIndex' (a:as) (_:ls) innerTypeSize = do
+        let accStart = maybeLit a
+        idxTemp <- newTmp
 
-        -- Generate the list of indexes from the array indexing expression
-        arrayIndexes :: AS.Exp SS.Ann -> StateMonad [Address]
-        arrayIndexes (AS.ArrayIndex e idx _ _) = do
-            idxAddr <- genExprTmp idx
-            rest <- arrayIndexes e
-            return (rest ++ [idxAddr])
-        arrayIndexes _ = return []
+        -- Calculate the index.
+        -- The offset to the first non-literal index is calculated using foldM
+        accEnd <- foldM
+            (\acc (addr, dim) -> case (acc, maybeLit addr) of
+                (Just litAcc, Just newLit) -> do
+                    return (Just ((litAcc * dim) + newLit))
+                (Just litAcc, Nothing) -> do
+                    out (BOp idxTemp (Add TInteger) addr (Lit $ LitInt (litAcc * dim)) TInteger)
+                    return Nothing
+                _ -> do
+                    out (BOp idxTemp (Mul TInteger) (Lit $ LitInt dim) idxTemp TInteger)
+                    out (BOp idxTemp (Add TInteger) addr idxTemp TInteger)
+                    return Nothing
+            )
+            accStart
+            (zip as ls)
 
-        -- Generate the array index from the list of addresses and dimensions
-        genArrayIndex :: [Address] -> [Int] -> StateMonad Address
-        genArrayIndex (a:as) (_:ls) = do
-            let accStart = maybeLit a
-            idxTemp <- newTmp
+        -- Multiply index by inner type size
+        let innerTypeAddr = Lit $ LitInt innerTypeSize
 
-            -- Calculate the index.
-            -- The offset to the first non-literal index is calculated using foldM
-            accEnd <- foldM
-                (\acc (addr, dim) -> case (acc, maybeLit addr) of
-                    (Just litAcc, Just newLit) -> do
-                        return (Just ((litAcc * dim) + newLit))
-                    (Just litAcc, Nothing) -> do
-                        out (BOp idxTemp (Add TInteger) addr (Lit $ LitInt (litAcc * dim)) TInteger)
-                        return Nothing
-                    _ -> do
-                        out (BOp idxTemp (Mul TInteger) (Lit $ LitInt dim) idxTemp TInteger)
-                        out (BOp idxTemp (Add TInteger) addr idxTemp TInteger)
-                        return Nothing
-                )
-                accStart
-                (zip as ls)
+        case accEnd of
+            Just idx -> do
+                return (Lit $ LitInt (idx * innerTypeSize))
+            Nothing -> do
+                out (BOp idxTemp (Mul TInteger) innerTypeAddr idxTemp TInteger)
+                return idxTemp
 
-            -- Multiply index by inner type size
-            let innerTypeSize = T.getTypeSize $ T.arrayInnerType $ SS.expType ann
-                innerTypeAddr = Lit $ LitInt innerTypeSize
-
-            case accEnd of
-                Just idx -> do
-                    return (Lit $ LitInt (idx * innerTypeSize))
-                Nothing -> do
-                    out (BOp idxTemp (Mul TInteger) innerTypeAddr idxTemp TInteger)
-                    return idxTemp
-
-            where
-                maybeLit :: Address -> Maybe Int
-                maybeLit (Lit (LitInt v)) = Just v
-                maybeLit _ = Nothing
-        genArrayIndex _ _ = error "genArrayIndex: expected at least one index address and one dimension"
+        where
+            maybeLit :: Address -> Maybe Int
+            maybeLit (Lit (LitInt v)) = Just v
+            maybeLit _ = Nothing
+    genArrayIndex' _ _ _ = error "genArrayIndex: expected at least one index address and one dimension"
 
 
 -- GENERATION OF ARRAYS DEFINITION
@@ -796,9 +799,9 @@ genStmt stmt post = do
             mapM_ (`genStmt` post) bodyF
             attachToNext endLabel
         AS.StmtTryCatch try catch _ _ -> do
-            handlerLabel <- attachHandler (do genStmt catch post)
+            handlerLabel <- attachHandler (do mapM_ (`genStmt` post) catch)
             out (PushExceptionHandler handlerLabel)
-            genStmt try post
+            mapM_ (`genStmt` post) try
             out PopExceptionHandler
         AS.StmtThrow _ _ -> do
             out Throw
@@ -841,8 +844,9 @@ genLExpr exp = case exp of
     AS.Deref expr _ _ -> do
         addr <- genExprTmp expr
         return $ RefSet addr
-    AS.ArrayIndex expr index _ _ -> do
-        addr <- genExprTmp expr
-        idx <- genExprTmp index
-        return $ ArraySet addr idx
+    AS.ArrayIndex expr _ ann _ -> do
+        (baseAddr, baseType) <- genArrayBase expr
+        let innerTypeSize = T.getTypeSize $ T.arrayInnerType $ SS.expType ann
+        indexAddr <- genArrayIndex exp (T.arrayDim baseType) innerTypeSize
+        return $ ArraySet baseAddr indexAddr
     _ -> error "genLExpr: Invalid left-hand side expression (parser should prevent this)"
