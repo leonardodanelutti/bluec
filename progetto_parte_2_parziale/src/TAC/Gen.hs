@@ -29,7 +29,7 @@ genEntryPoint (AS.ProgramDecl _ vars routines _) = do
     newRoutine
     attachToNext $ FunctionUnique "EntryPoint"
     -- Set up the default exception handler
-    defaultHandler <- attachHandler (
+    (defaultHandler, resumeLabel) <- attachHandler (
         do
             -- Write the panic message
             stringAddr <- outStatic (STVString "Program panicked! An exception has been thrown that has not been handled\0")
@@ -39,7 +39,6 @@ genEntryPoint (AS.ProgramDecl _ vars routines _) = do
             out (NOp localParamName stringAddr Addr)
             out (Param localParamName Addr)
             out (ProcCall writeStringProc 1)
-            endRoutine
         )
     out (PushExceptionHandler defaultHandler)
 
@@ -47,6 +46,7 @@ genEntryPoint (AS.ProgramDecl _ vars routines _) = do
     mapM_ genVar vars
     -- Program calls main and then ends
     out (ProcCall (FunctionUnique "main") 0)
+    attachToNext resumeLabel
     out (Custom "END_PROGRAM")
     endRoutine
     -- Generate routines
@@ -813,10 +813,11 @@ genStmt stmt post = do
             mapM_ (`genStmt` post) bodyF
             attachToNext endLabel
         AS.StmtTryCatch try catch _ _ -> do
-            handlerLabel <- attachHandler (do mapM_ (`genStmt` post) catch)
+            (handlerLabel, resumeLabel) <- attachHandler (do mapM_ (`genStmt` post) catch)
             out (PushExceptionHandler handlerLabel)
             mapM_ (`genStmt` post) try
             out PopExceptionHandler
+            attachToNext resumeLabel
         AS.StmtThrow _ _ -> do
             out Throw
 

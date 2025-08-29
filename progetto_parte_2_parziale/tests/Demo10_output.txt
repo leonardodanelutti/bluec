@@ -22,18 +22,25 @@ routines
 [Generated TAC]
 
 $0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
-L0, EntryPoint: value@0:0 =(addr) $0
+
+EntryPoint:
+      pushHandler H0
+      pcall main, 0
+L0:   END_PROGRAM
+H0:   popHandler
+      value@0:0 =(addr) $0
       param(addr) value@0:0
       pcall writeString@0:0, 1
+      goto L0
 
 main@7:5:
       e@9:9 =(float) 12.0
-L0:   e@9:9 =(float) fcall readReal@0:0, 0
+L1:   e@9:9 =(float) fcall readReal@0:0, 0
       t0 =(char) fcall readChar@0:0, 0
       value@0:0 =(char) t0
       param(char) value@0:0
       pcall writeChar@0:0, 1
-      if e@9:9 ==(float) 12.0 goto L1
-      goto L0
-L1:   return
+      if e@9:9 ==(float) 12.0 goto L2
+      goto L1
+L2:   return
 

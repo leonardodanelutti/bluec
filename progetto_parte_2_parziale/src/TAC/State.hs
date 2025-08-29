@@ -103,28 +103,34 @@ newHandler = do
     state <- St.get
     let k = handlerCount state
     St.put $ state { handlerCount = k + 1 }
-    return $ Loc k
+    return $ Handler k
 
-attachHandler :: StateMonad () -> StateMonad Label
+attachHandler :: StateMonad () -> StateMonad (Label, Label)
 attachHandler action = do
     handlerLabel <- newHandler
-    attachToNext handlerLabel
+    jumpLabel <- newLabel
     state <- St.get
 
     -- Empty current routine code, it will be added after the handler code is generated
     let currentRout = currentRoutine state
+        currentNextLabels = nextLabel state
         routCode = code currentRout
-    St.put $ state { currentRoutine = currentRout { code = [] } }
+    St.put $ state { currentRoutine = currentRout { code = [], handlers = [] }, nextLabel = [] }
 
-    -- Generate the handler code  
+    -- Generate the handler code
+    attachToNext handlerLabel
+    out PopExceptionHandler
     action
+    out (UnJump jumpLabel)
 
     -- Get the handler code and add it to the current routine handlers and restore the routine code
     state' <- St.get
     let handlerCode = code (currentRoutine state')
-    St.put $ state' { currentRoutine = currentRout { code = routCode,
-                                                     handlers = handlerCode : handlers currentRout } }
-    return handlerLabel
+        innerHandlers = handlers (currentRoutine state')
+    St.put $ state' { currentRoutine = TacRoutine { code = routCode,
+                                                     handlers =  innerHandlers ++ handlerCode : handlers currentRout },
+                      nextLabel = currentNextLabels }
+    return (handlerLabel, jumpLabel)
 
 -- Call when starting a new routine, pushes the current routine onto the stack
 -- This is used to menage nested routines
@@ -149,8 +155,8 @@ endRoutine = do
         (r:rs) -> do
             St.put $ state { routineStack = rs,
                              currentRoutine = r,
-                             stream = concat currentRoutHandlers 
-                                      ++ currentRoutCode 
+                             stream = concat currentRoutHandlers
+                                      ++ currentRoutCode
                                       ++ stream state }
 
 -- Call when starting a new loop. Creates a new labels for the loop start and

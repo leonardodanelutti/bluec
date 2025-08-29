@@ -123,6 +123,7 @@ castRelOpToTACRelOp AS.Ge ty     = RelGe  (castTypeToTACType ty)
 -- A label
 data Label
     = Loc Int
+    | Handler Int
     | Function ProgramName
     | FunctionUnique String
 

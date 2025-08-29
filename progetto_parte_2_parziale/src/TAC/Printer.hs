@@ -14,15 +14,26 @@ instance Show LabeledInstruction where
     show (LabeledInstruction [label] inst) = 
         let labelStr = case label of
                 Loc n -> "L" ++ show n ++ ":"
+                Handler n -> "H" ++ show n ++ ":"
                 Function name -> "\n" ++ show name ++ ":\n      " 
                 FunctionUnique name -> "\n" ++ name ++ ":\n      "
         in labelStr ++ replicate (6 - length labelStr) ' ' ++ show inst
     show (LabeledInstruction labels inst) = 
         let labelStr = intercalate ", " (map (\case
                 Loc n -> "L" ++ show n
+                Handler n -> "H" ++ show n
                 Function name -> show name
                 FunctionUnique name -> name) labels)
-        in labelStr ++ ": " ++ show inst
+        in if any isFunction labels then
+            "\n" ++ labelStr ++ ":\n      " ++ show inst
+        else
+            labelStr ++ ": " ++ show inst
+        where
+            isFunction l = case l of
+                Function _ -> True
+                FunctionUnique _ -> True
+                _ -> False
+            
 
 instance Show Instruction where
     show inst = case inst of
@@ -119,6 +130,7 @@ instance Show Coercion where
 
 instance Show Label where
     show (Loc n) = "L" ++ show n
+    show (Handler n) = "H" ++ show n
     show (Function pName) = show pName
     show (FunctionUnique name) = name
 instance Show Temporary where

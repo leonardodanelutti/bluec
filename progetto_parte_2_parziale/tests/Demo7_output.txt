@@ -38,9 +38,16 @@ routines
 [Generated TAC]
 
 $0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
-L0, EntryPoint: value@0:0 =(addr) $0
+
+EntryPoint:
+      pushHandler H0
+      pcall main, 0
+L0:   END_PROGRAM
+H0:   popHandler
+      value@0:0 =(addr) $0
       param(addr) value@0:0
       pcall writeString@0:0, 1
+      goto L0
 
 main@9:5:
       d@16:10 =(float) 1.0
@@ -53,9 +60,9 @@ p@20:9:
 
 test@16:5:
       e@18:17 =(bool) False
-L0:   ifFalse e@18:17 goto L2
+L1:   ifFalse e@18:17 goto L3
       return 4
-      goto L3
-L2:   return 12
-L3:   goto L0
+      goto L4
+L3:   return 12
+L4:   goto L1
 

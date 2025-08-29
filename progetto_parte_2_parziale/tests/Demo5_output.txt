@@ -25,9 +25,109 @@ routines
 [Generated TAC]
 
 $0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
-L0, EntryPoint: value@0:0 =(addr) $0
+
+EntryPoint:
+      pushHandler H0
+      arraygen base0@9:5, 48
+      base0@9:5[0] =(int) 0
+      base0@9:5[4] =(int) 0
+      base0@9:5[8] =(int) 0
+      base0@9:5[12] =(int) 0
+      base0@9:5[16] =(int) 0
+      base0@9:5[20] =(int) 0
+      base0@9:5[24] =(int) 0
+      base0@9:5[28] =(int) 0
+      base0@9:5[32] =(int) 0
+      base0@9:5[36] =(int) 0
+      base0@9:5[40] =(int) 0
+      base0@9:5[44] =(int) 0
+      arraygen a@16:5, 12
+      t0 = &base0@9:5
+      a@16:5[0] =(addr) t0
+      t1 = &base0@9:5
+      a@16:5[4] =(addr) t1
+      t2 = &base0@9:5
+      a@16:5[8] =(addr) t2
+      arraygen b@17:5, 144
+      t3 =(int) base0@9:5[0]
+      b@17:5[0] =(addr) t3
+      t3 =(int) base0@9:5[4]
+      b@17:5[4] =(addr) t3
+      t3 =(int) base0@9:5[8]
+      b@17:5[8] =(addr) t3
+      t3 =(int) base0@9:5[12]
+      b@17:5[12] =(addr) t3
+      t3 =(int) base0@9:5[16]
+      b@17:5[16] =(addr) t3
+      t3 =(int) base0@9:5[20]
+      b@17:5[20] =(addr) t3
+      t3 =(int) base0@9:5[24]
+      b@17:5[24] =(addr) t3
+      t3 =(int) base0@9:5[28]
+      b@17:5[28] =(addr) t3
+      t3 =(int) base0@9:5[32]
+      b@17:5[32] =(addr) t3
+      t3 =(int) base0@9:5[36]
+      b@17:5[36] =(addr) t3
+      t3 =(int) base0@9:5[40]
+      b@17:5[40] =(addr) t3
+      t3 =(int) base0@9:5[44]
+      b@17:5[44] =(addr) t3
+      t4 =(int) base0@9:5[0]
+      b@17:5[48] =(addr) t4
+      t4 =(int) base0@9:5[4]
+      b@17:5[52] =(addr) t4
+      t4 =(int) base0@9:5[8]
+      b@17:5[56] =(addr) t4
+      t4 =(int) base0@9:5[12]
+      b@17:5[60] =(addr) t4
+      t4 =(int) base0@9:5[16]
+      b@17:5[64] =(addr) t4
+      t4 =(int) base0@9:5[20]
+      b@17:5[68] =(addr) t4
+      t4 =(int) base0@9:5[24]
+      b@17:5[72] =(addr) t4
+      t4 =(int) base0@9:5[28]
+      b@17:5[76] =(addr) t4
+      t4 =(int) base0@9:5[32]
+      b@17:5[80] =(addr) t4
+      t4 =(int) base0@9:5[36]
+      b@17:5[84] =(addr) t4
+      t4 =(int) base0@9:5[40]
+      b@17:5[88] =(addr) t4
+      t4 =(int) base0@9:5[44]
+      b@17:5[92] =(addr) t4
+      t5 =(int) base0@9:5[0]
+      b@17:5[96] =(addr) t5
+      t5 =(int) base0@9:5[4]
+      b@17:5[100] =(addr) t5
+      t5 =(int) base0@9:5[8]
+      b@17:5[104] =(addr) t5
+      t5 =(int) base0@9:5[12]
+      b@17:5[108] =(addr) t5
+      t5 =(int) base0@9:5[16]
+      b@17:5[112] =(addr) t5
+      t5 =(int) base0@9:5[20]
+      b@17:5[116] =(addr) t5
+      t5 =(int) base0@9:5[24]
+      b@17:5[120] =(addr) t5
+      t5 =(int) base0@9:5[28]
+      b@17:5[124] =(addr) t5
+      t5 =(int) base0@9:5[32]
+      b@17:5[128] =(addr) t5
+      t5 =(int) base0@9:5[36]
+      b@17:5[132] =(addr) t5
+      t5 =(int) base0@9:5[40]
+      b@17:5[136] =(addr) t5
+      t5 =(int) base0@9:5[44]
+      b@17:5[140] =(addr) t5
+      pcall main, 0
+L0:   END_PROGRAM
+H0:   popHandler
+      value@0:0 =(addr) $0
       param(addr) value@0:0
       pcall writeString@0:0, 1
+      goto L0
 
 main@21:5:
       idx@23:9 =(int) 3

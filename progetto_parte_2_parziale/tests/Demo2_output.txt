@@ -49,25 +49,36 @@ routines
 $0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
 $1 = "Hello world\NUL"
 $2 = "\NUL"
-L0, EntryPoint: value@0:0 =(addr) $0
+
+EntryPoint:
+      pushHandler H0
+      b@9:9 =(float) 1.0
+      x@10:9 =(int) 42
+      p@11:9 = &x@10:9
+      y@12:9 =(int) *p@11:9
+      pcall main, 0
+L0:   END_PROGRAM
+H0:   popHandler
+      value@0:0 =(addr) $0
       param(addr) value@0:0
       pcall writeString@0:0, 1
+      goto L0
 
 main@14:9:
       a@16:17 =(int) 1
-      if a@16:17 <=(int) 0 goto L0
+      if a@16:17 <=(int) 0 goto L1
       a@16:17 =(int) 0
       b@9:9 =(float) 1.0
-L0:   if a@16:17 <=(int) 0 goto L1
+L1:   if a@16:17 <=(int) 0 goto L2
       x@10:9 =(int) 0
-L1:   if a@16:17 !=(int) 1 goto L2
+L2:   if a@16:17 !=(int) 1 goto L3
       a@16:17 =(int) 2
-L2:   return
+L3:   return
 
 __util__@34:1:
       t0 =(bool) *b@34:14
-      ifFalse t0 goto L3
+      ifFalse t0 goto L4
       return $1
-      goto L4
-L3:   return $2
+      goto L5
+L4:   return $2
 

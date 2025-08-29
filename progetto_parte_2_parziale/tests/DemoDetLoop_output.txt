@@ -24,18 +24,31 @@ routines
 [Generated TAC]
 
 $0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
-L0, EntryPoint: value@0:0 =(addr) $0
+
+EntryPoint:
+      pushHandler H0
+      s@7:5 =(bool) True
+      c@8:5 =(int) 2
+      arraygen iterator@9:5, 3
+      iterator@9:5[0] =(bool) True
+      iterator@9:5[1] =(bool) True
+      iterator@9:5[2] =(bool) False
+      pcall main, 0
+L0:   END_PROGRAM
+H0:   popHandler
+      value@0:0 =(addr) $0
       param(addr) value@0:0
       pcall writeString@0:0, 1
+      goto L0
 
 main@12:5:
       x@14:13 =(bool) s@7:5
-      ifFalse x@14:13 goto L0
+      ifFalse x@14:13 goto L1
       x@14:13 =(bool) intToBool c@8:5
-L0:   t0 =(int) 0
-L1:   iter@16:17 =(bool) iterator@9:5[t0]
+L1:   t0 =(int) 0
+L2:   iter@16:17 =(bool) iterator@9:5[t0]
       x@14:13 =(bool) iter@16:13
       t0 =(int) t0 +(int) 1
-      if t0 <(int) 3 goto L1
+      if t0 <(int) 3 goto L2
       return
 

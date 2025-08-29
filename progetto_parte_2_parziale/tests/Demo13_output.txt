@@ -29,22 +29,32 @@ routines
 [Generated TAC]
 
 $0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
-L0, EntryPoint: value@0:0 =(addr) $0
+
+EntryPoint:
+      pushHandler H0
+      a@8:9 =(int) 2
+      c@8:9 =(int) 3
+      b@9:9 =(bool) False
+      pcall main, 0
+L0:   END_PROGRAM
+H0:   popHandler
+      value@0:0 =(addr) $0
       param(addr) value@0:0
       pcall writeString@0:0, 1
+      goto L0
 
 main@13:1:
-      if a@8:9 <(int) 20 goto L2
-      ifFalse b@9:9 goto L0
-L2:   ifFalse b@9:9 goto L0
-      if c@8:9 ==(int) 10 goto L0
+      if a@8:9 <(int) 20 goto L3
+      ifFalse b@9:9 goto L1
+L3:   ifFalse b@9:9 goto L1
+      if c@8:9 ==(int) 10 goto L1
       a@8:9 =(int) 0
-      goto L1
-L0:   a@8:9 =(int) 1
-L1:   b@9:9 =(bool) ! b@9:9
-L3:   if a@8:9 <(int) c@8:9 goto L4
-      if a@8:9 ==(int) c@8:9 goto L4
+      goto L2
+L1:   a@8:9 =(int) 1
+L2:   b@9:9 =(bool) ! b@9:9
+L4:   if a@8:9 <(int) c@8:9 goto L5
+      if a@8:9 ==(int) c@8:9 goto L5
       c@8:9 =(int) c@8:9 +(int) 1
-      goto L3
-L4:   return
+      goto L4
+L5:   return
 
