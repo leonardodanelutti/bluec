@@ -33,15 +33,14 @@ main@21:5:
       idx@23:9 =(int) 3
       res1@24:9 =(int) 0
       res2@24:9 =(int) 0
-      t8 =(addr) a@16:5[8]
-      t7 =(addr) *t8
-      t6 =(addr) t7[12]
-      t6[0] =(int) 1
+      t7 =(addr) a@16:5[8]
+      t6 =(addr) *t7
+      t6[36] =(int) 1
       res1@24:9 =(int) b@17:5[132]
-      t12 =(int) idx@23:9 +(int) 8
-      t12 =(int) 3 *(int) t12
-      t12 =(int) 0 +(int) t12
-      t12 =(int) 4 *(int) t12
-      res2@24:9 =(int) b@17:5[t12]
+      t11 =(int) idx@23:9 +(int) 8
+      t11 =(int) 3 *(int) t11
+      t11 =(int) 0 +(int) t11
+      t11 =(int) 4 *(int) t11
+      res2@24:9 =(int) b@17:5[t11]
       return
 

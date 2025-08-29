@@ -494,7 +494,7 @@ annExpArrayIndex env AS.ArrayIndex {
     }
 annExpArrayIndex _ _ = error "Unreachable: `annExpArrayIndex` called with non-`ArrayIndex` expression."
 
--- Array expressions.
+-- Array.
 -- Rule: RExpArray.
 annExpArray :: Env -> Exp -> AnnExp
 annExpArray env AS.Array {
@@ -528,3 +528,121 @@ annExpArray env AS.Array {
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
 annExpArray _ _ = error "Unreachable: `annExpArray` called with non-`Array` expression."
+{-
+-- Array expressions.
+-- Rule: RExpArrayExpr.
+annExpArrayExpr :: Maybe Type -> Env -> Exp -> AnnExp
+annExpArrayExpr _ env AS.ArrayExpr {
+    AS.e = e,
+    AS.indexes = [],
+    AS.expPos = pos
+} = annExpArrayExpr env AS.ArrayExpr {
+    AS.e = e,
+    AS.indexes = [],
+    AS.expAnnot = ann,
+    AS.expPos = pos
+} where
+    -- Annotate e.
+    annE = annExp (doNotRequireLExp env) e
+    -- Get the e errs.
+    eErrs = T.getErrs $ [expType (AS.expAnnot annE)]
+    -- Annotation.
+    ann = ExpAnn {
+        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have at least one index."] },
+        ctVal = Nothing
+    }
+annExpArrayExpr Nothing env AS.ArrayExpr {
+    AS.e = e,
+    AS.indexes = indexes,
+    AS.expPos = pos
+} = annExpArray AS.Array {
+    AS.elements = elements,
+    AS.expPos = pos
+} where
+    -- Annotate e.
+    annE = annExp (doNotRequireLExp env) e
+    -- Get the e errs.
+    eErrs = T.getErrs $ [expType (AS.expAnnot annE)]
+    -- Annotation.
+    ann = ExpAnn {
+        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression type cannot be inferred. Suggestion: create a constant or a variable and specify the type."] },
+        ctVal = Nothing
+    }
+annExpArrayExpr t@(Just TArray { elementsType = ty, size = s }) env AS.ArrayExpr {
+    AS.e = e,
+    AS.indexes = [index],
+    AS.expPos = pos
+} = annExpArray t AS.Array {
+    AS.elements = annEs,
+    AS.expPos = pos
+} where
+    -- Bind the index.
+    bindings = map (\x -> [(index, Const LG.defaultPosn . LitInt x)]) [1..s]
+    envs = map envFromSymbolBindings bindings
+    -- Annotate e.
+    annEs = map (annExp . doNotRequireLExp) envs
+annExpArrayExpr (Just TArray { elementsType = ty, size = s }) env AS.ArrayExpr {
+    AS.e = e,
+    AS.indexes = (index:indexes),
+    AS.expPos = pos
+} = annExpArray Just ty AS.Array {
+    AS.elements = elements,
+    AS.expPos = pos
+} where
+    -- Bind the index.
+    bindings = map (\x -> [(index, Const LG.defaultPosn . LitInt x)]) [1..s]
+    envs = map envFromSymbolBindings bindings
+    -- Create an ArrayExpr for each environment.
+    eArrayExprs = map (\env' -> AS.ArrayExpr {
+        AS.e = e,
+        AS.indexes = indexes,
+        AS.expPos = pos
+    }) envs
+annExpArrayExpr (Just _) env AS.ArrayExpr {
+    AS.e = e,
+    AS.indexes = indexes,
+    AS.expPos = pos
+} = annExpArray AS.Array {
+    AS.elements = elements,
+    AS.expPos = pos
+} where
+    -- Annotate e.
+    annE = annExp (doNotRequireLExp env) e
+    -- Get the e errs.
+    eErrs = T.getErrs $ [expType (AS.expAnnot annE)]
+    -- Annotation.
+    ann = ExpAnn {
+        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have an array type, but has type " ++ show (expType (AS.expAnnot annE)) "."] }, -- TODO: pretty print type in err
+        ctVal = Nothing
+    }
+
+
+-- getArraySizes :: Type -> Int -> [Int]
+-- getArraySizes (T.TArray { T.size = s }) 0 = []
+-- getArraySizes (T.TArray { T.elementsType = ty, T.size = s }) n = s : getArraySizes ty (n - 1)
+-- getArraySizes _ _ = []
+
+-- annExpArrayExpr expectedType env AS.ArrayExpr {
+--     AS.e = e,
+--     AS.indexes = [index],
+--     AS.expPos = pos
+-- } = annExpArray AS.Array {
+--     AS.elements = elements,
+--     AS.expPos = pos
+-- } where
+--     -- Get the element expected type.
+--     elementExpectedType = case expectedType of
+--         Just (T.TArray { T.elementsType = et }) -> et
+--         _ -> T.TError { T.msgs = [E.err pos "Array expression must have an array type."] }
+
+-- -- Given an environment, a list of (index variable, [possible values]), 
+-- -- produce all environments with all combinations of assignments.
+-- makeIndexEnvs :: Env -> [(AS.Ident, [Integer])] -> [Env]
+-- makeIndexEnvs env [] = [env]
+-- makeIndexEnvs env ((ident, vals):rest) =
+--     [ env' | v <- vals
+--            , env' <- makeIndexEnvs (addBinding env ident v) rest ]
+--   where
+--     -- Add a constant binding for the index variable.
+--     addBinding e i v = e { symbols = Map.insert i (Const LG.defaultPosn (AS.LitInt v LG.defaultPosn)) (symbols e) }
+-}

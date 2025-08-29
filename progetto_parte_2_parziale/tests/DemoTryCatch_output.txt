@@ -59,5 +59,7 @@ L1:   ifFalse x@8:13 goto L3
       goto L4
 L3:   return
 L1:   x@8:13 =(bool) ! x@8:13
-foo@27:5, L4: throw
+
+foo@27:5:
+      throw
 

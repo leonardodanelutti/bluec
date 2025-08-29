@@ -19,8 +19,7 @@ type AnnStmt = AS.Statement Ann
 --
 -- Returns:
 -- - a list of annotated statements;
--- - a bool indicating if it can exits;
--- - a bool indicating if it always returns.
+-- - the environment after the annotation of all stmts.
 annStmts :: Env -> [Stmt] -> ([AnnStmt], Env)
 annStmts env (x:xs) = (xAnn : xsAnn, env'')
     where (xAnn, env') = annStmt env x
@@ -530,21 +529,41 @@ annStmtTryCatch env AS.StmtTryCatch {
     AS.pos = pos
 }, env''') where
     -- Annotate the try statement.
-    (annTry, env') = annStmt env try
+    (annTry, env') = annStmts env try
     -- Get the errors from the try statement.
-    tryAnnot = AS.annot annTry
-    tryErrs = errs tryAnnot
-    tryThrows = throws tryAnnot
+    tryAnnot = map AS.annot annTry
+    tryErrs = concatMap errs tryAnnot
+    -- Try throws:
+    -- - Never if the try's reachable statements' throws field is always `Never` (or if
+    --   there are no reachable statement);
+    -- - Always if it exists a try's reachable statement whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    reachableTry = filter (not . unreachable . AS.annot) annTry
+    tryThrows = if all (== Never) (map (throws . AS.annot) reachableTry)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableTry)
+        then Always
+        else Sometimes
     -- Annotate the catch statement.
-    -- If try never throws then catch is unreachable
+    -- If try never throws then catch is unreachable.
     (annCatch, env'') = if tryThrows == Never then
-        annStmt (setUnreachable env) catch
+        annStmts (setUnreachable env) catch
     else
-        annStmt env catch
+        annStmts env catch
     -- Get the errors from the catch statement.
-    catchAnnot = AS.annot annCatch
-    catchErrs = errs catchAnnot
-    catchThrows = throws catchAnnot
+    catchAnnot = map AS.annot annCatch
+    catchErrs = concatMap errs catchAnnot
+    -- Catch throws:
+    -- - Never if the catch's reachable statements' throws field is always `Never` (or if
+    --   there are no reachable statement);
+    -- - Always if it exists a catch's reachable statement whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    reachableCatch = filter (not . unreachable . AS.annot) annCatch
+    catchThrows = if all (== Never) (map (throws . AS.annot) reachableCatch)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableCatch)
+        then Always
+        else Sometimes
     -- Create the annotation.
     ann = StmtAnn {
         errs = tryErrs ++ catchErrs,
