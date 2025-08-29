@@ -1,0 +1,21 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - compile-time binary operations with shortcut.
+
+var
+    a: Boolean := true;
+
+routines
+    main() is
+        const
+            b: Boolean := false;
+        var
+            c: String := "";
+        do
+            if not(a and b) then
+                return;
+            end if
+            c := "This code is unreachable";
+        end
+    main

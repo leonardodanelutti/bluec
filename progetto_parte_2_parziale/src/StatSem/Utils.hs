@@ -312,6 +312,15 @@ applyBinOp AS.Pow (CTVInteger v1) (CTVInteger v2) = CTVInteger (v1 ^ v2)
 applyBinOp AS.Pow (CTVReal v1) (CTVReal v2) = CTVReal (v1 ** v2)
 applyBinOp _ _ _ = error "Invalid arguments for compile-time binary operation"
 
+-- Apply a binary operation to two compile-time values with short-cut
+applyBinOpSC :: AS.BinOp -> Maybe CTValue -> Maybe CTValue -> Maybe CTValue
+applyBinOpSC AS.And (Just (CTVBoolean False)) _ = Just (CTVBoolean False)
+applyBinOpSC AS.And _ (Just (CTVBoolean False)) = Just (CTVBoolean False)
+applyBinOpSC AS.Or (Just (CTVBoolean True)) _ = Just (CTVBoolean True)
+applyBinOpSC AS.Or _ (Just (CTVBoolean True)) = Just (CTVBoolean True)
+applyBinOpSC op (Just v1) (Just v2) = Just (applyBinOp op v1 v2)
+applyBinOpSC _ _ _ = Nothing
+
 -- Apply a relational operation to two compile-time values.
 -- It assumes that values are already casted to the correct types.
 applyRelOp :: AS.RelOp -> CTValue -> CTValue -> Bool
