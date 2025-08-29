@@ -12,8 +12,9 @@ routines
 	var
 		x : Boolean := (s and c);
 	do
-		foriter:Booleaniniteratordo
-			x := iter;end for
+		for iter: Boolean in iterator do
+			x := iter;
+		end for
 		return;
 	end
 	main
