@@ -440,22 +440,31 @@ genArrayComp relOp innerType = do
     when (relOp `elem` [AS.Lt, AS.Le]) $ do
         genRepOp cmp AS.Lt val1 val2 innerType
         out (BoolJumpT cmp labelTrue)
-        out (UnJump labelFalse)  -- val1 >= val2, so Lt/Le is false
+        attachToNext labelFalse
+        out (Return (Lit $ LitBool False))  -- val1 >= val2, so Lt/Le is false
+        attachToNext labelTrue
+        out (Return (Lit $ LitBool True))
 
     when (relOp `elem` [AS.Gt, AS.Ge]) $ do
         genRepOp cmp AS.Gt val1 val2 innerType
         out (BoolJumpT cmp labelTrue)
-        out (UnJump labelFalse)  -- val1 <= val2, so Gt/Ge is false
+        attachToNext labelFalse
+        out (Return (Lit $ LitBool False))  -- val1 <= val2, so Gt/Ge is false
+        attachToNext labelTrue
+        out (Return (Lit $ LitBool True))
 
     when (relOp == AS.Eq) $ do
-        out (UnJump labelFalse)  -- Elements not equal, so Eq is false
+        attachToNext labelFalse
+        out (Return (Lit $ LitBool False))  -- Elements not equal, so Eq is false
+        attachToNext labelTrue
+        out (Return (Lit $ LitBool True))
 
-    -- Return labels
-    attachToNext labelTrue
-    out (Return (Lit $ LitBool True))
+    when (relOp == AS.Neq) $ do
+        attachToNext labelTrue
+        out (Return (Lit $ LitBool True))   -- Elements not equal, so Ne
+        attachToNext labelFalse
+        out (Return (Lit $ LitBool False))
 
-    attachToNext labelFalse
-    out (Return (Lit $ LitBool False))
     endRoutine
 
 relName :: AS.RelOp -> String

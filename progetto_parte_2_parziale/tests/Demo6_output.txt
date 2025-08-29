@@ -56,9 +56,8 @@ L1:   if t4 >=(int) arrayGtInteger'Size@0:0 goto L3
       if t7 goto L1
       t7 =(bool) t5 >(int) t6
       if t7 goto L2
-      goto L3
-L2:   return True
 L3:   return False
+L2:   return True
 
 arrayNeqInteger':
       # Array comparison: Neq for type Integer
