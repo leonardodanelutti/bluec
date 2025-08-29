@@ -378,23 +378,28 @@ annStmtForEach env AS.StmtForEach {
     AS.body = annBody,
     AS.annot = ann,
     AS.pos = pos
-}, env'') where
+}, env''') where
     -- Annotate the array expression.
-    annArrayExp = SSE.annExp env arrayExp
+    annArrayExp = SSE.annExp (doNotRequireLExp env) arrayExp
     -- Get the errors from the array expression.
     arrayPropagatedErrs = T.getErrs [expType (AS.expAnnot annArrayExp)]
     -- Check that it is an array; if so check if its elements' type can be casted to the
     -- iterator type; if so update the environment accordingly.
     (env', arrayNewErr) = case expType $ AS.expAnnot annArrayExp of
-        -- FIXME: the positions used below is of the whole foreach. maybe it is not what expected
-        T.TArray { T.elementsType = elementsType } -> if T.sup pos elementsType (T.type_ iterType) == (T.type_ iterType)
-            then mergeEnv env (envFromSymbolBindings [(iterName, (Var pos iterType Nothing))])
-            else (env, [E.err (AS.expPos annArrayExp) "Array element type mismatch."]) -- No update of the environment.
+        T.TArray { T.elementsType = elementsType } -> (
+                fst (mergeEnv env (envFromSymbolBindings [(iterName, (Var pos iterType Nothing))])), -- Should be no error because the noew environment does not contain routines.
+                if T.sup pos elementsType (T.type_ iterType) == (T.type_ iterType)
+                then []
+                else [E.err pos "Array element type mismatch: " ++ show elementsType ++ " is not compatible with " ++ show (T.type_ iterType) ++ "."]
+            )
         _ -> (env, [E.err (AS.expPos annArrayExp) "Array expression expected."]) -- No update of the environment.
+    -- -- Add the continue to the environment.
+    -- env'' = addContinue env'
     -- Annotate the body.
-    -- Array size is always >= 1, so it is always executed at least an iteration of the
-    -- body -> so the after-body environment is propagated.
     (annBody, env'') = annStmts env' body
+    -- Array size is always >= 1, so it is always executed at least an iteration of the
+    -- body -> so the unreachable keyword in the after-body environment is propagated.
+    env''' = if isUnreachable env'' then setUnreachable env else env
     -- Get the errors from the body.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Create the annotation.
@@ -402,5 +407,5 @@ annStmtForEach env AS.StmtForEach {
         errs = arrayPropagatedErrs ++ arrayNewErr ++ bodyErrs,
         unreachable = isUnreachable env
     }
-    -- TODO: canno modify iterator and array inside the body
+    -- TODO: aggiungere continue.
 annStmtForEach _ _ = error "Unreachable: `annStmtForEach` called with non-`StmtForEach` expression."
