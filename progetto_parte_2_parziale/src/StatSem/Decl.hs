@@ -76,7 +76,7 @@ annConstA env AS.ConstAss {
     numberErr = if length idents /= length values
                 then [E.err pos "The number of identifiers does not match number of values."]
                 else []
-    valuesAnn = map (annExp (doNotRequireLExp env)) values
+    valuesAnn = map (annExp (Just (T.type_ ty)) (doNotRequireLExp env)) values
     castedValuesAnn = map (\x -> (cast (doNotRequireLExp env) x (T.type_ ty))) valuesAnn
     tryLiterals = map ctvToLiteral castedValuesAnn
     (literals, errs) = partitionEithers tryLiterals
@@ -116,7 +116,7 @@ annVarA env AS.VarAss {
     numberErr = if length idents /= length values
                 then [E.err pos "The number of identifiers does not match number of values."]
                 else []
-    valuesAnn = map (annExp (doNotRequireLExp env)) values
+    valuesAnn = map (annExp (Just (T.type_ ty)) (doNotRequireLExp env)) values
     castedValuesAnn = map (\x -> (cast (doNotRequireLExp env) x (T.type_ ty))) valuesAnn
     errs = T.getErrs $ map (expType . AS.expAnnot) castedValuesAnn
     ann = DeclAnn {

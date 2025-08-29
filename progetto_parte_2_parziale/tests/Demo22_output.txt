@@ -1,0 +1,5 @@
+example 22: array expressions
+
+
+Static Semantics Analysis Failed:
+tests/testCase22.blue:9:25-9:37: ERROR: Array expression type cannot be inferred. Suggestion: create a constant or a variable and specify the type.

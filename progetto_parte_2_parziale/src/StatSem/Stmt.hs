@@ -55,8 +55,8 @@ annStmtAss env AS.StmtAss {
     AS.pos = pos
 }, env') where
     -- Annotate the left and right expressions.
-    annLeft = map (SSE.annExp (requireLExp env)) left
-    annRight = map (SSE.annExp (doNotRequireLExp env)) right
+    annLeft = map (SSE.annExp Nothing (requireLExp env)) left
+    annRight = zipWith (\r ty -> SSE.annExp (Just ty) (doNotRequireLExp env) r) right leftTypes
     -- Right throws:
     -- - Never if the right expressions always `Never` throw (or if there are no right
     --   expressions);
@@ -113,8 +113,8 @@ annStmtRoutCall env AS.StmtRoutCall {
         Nothing -> (Nothing, [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing, Never)
     -- Cast the arguments to the expected types.
     (castedArgs, numberErr) = case params of
-        Nothing -> (map (SSE.annExp (doNotRequireLExp env)) args, []) -- No numberErr because the identifier was not found.
-        Just innerParams | length innerParams /= length args -> (map (SSE.annExp (doNotRequireLExp env)) args, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."])
+        Nothing -> (map (SSE.annExp Nothing (doNotRequireLExp env)) args, []) -- No numberErr because the identifier was not found.
+        Just innerParams | length innerParams /= length args -> (map (SSE.annExp Nothing (doNotRequireLExp env)) args, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."])
         Just innerParams -> (SSE.annAndCastRoutArgs env args innerParams, [])
     -- Argument errors.
     argErrs = T.getErrs $ map (expType . AS.expAnnot) castedArgs
@@ -142,7 +142,7 @@ annStmtReturn env AS.StmtReturn {
     AS.pos = pos
 } where
     -- Annotate the return value.
-    annRet = SSE.annExp (doNotRequireLExp env) ret
+    annRet = SSE.annExp returnType (doNotRequireLExp env) ret
     -- Search for the return keyword in the environment.
     returnEntry = Map.lookup "return" (keywords env)
     -- Check if the return keyword is present.
@@ -220,7 +220,7 @@ annStmtIf env AS.StmtIf {
     AS.pos = pos
 }, env''') where
     -- Annotate the condition.
-    annCond = SSE.annExp (doNotRequireLExp env) cond
+    annCond = SSE.annExp (Just T.TBoolean) (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
     castedCond = SSE.cast (doNotRequireLExp env) annCond T.TBoolean
     -- Get the errors from the condition.
@@ -279,7 +279,7 @@ annStmtIfElse env AS.StmtIfElse {
     AS.pos = pos
 }, env'') where
     -- Annotate the condition.
-    annCond = SSE.annExp (doNotRequireLExp env) cond
+    annCond = SSE.annExp (Just T.TBoolean) (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
     castedCond = SSE.cast (doNotRequireLExp env) annCond T.TBoolean
     -- Get the errors from the condition.
@@ -427,7 +427,7 @@ annLoopExit env AS.LoopExit {
     AS.loopExitPos = pos
 }, env'', canExit) where
     -- Annotate the condition.
-    annCond = SSE.annExp (doNotRequireLExp env) cond
+    annCond = SSE.annExp (Just T.TBoolean) (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
     castedCond = SSE.cast (doNotRequireLExp env) annCond T.TBoolean
     -- Get the errors from the condition.
@@ -486,7 +486,7 @@ annStmtForEach env AS.StmtForEach {
     AS.pos = pos
 }, env''') where
     -- Annotate the array expression.
-    annArrayExp = SSE.annExp (doNotRequireLExp env) arrayExp
+    annArrayExp = SSE.annExp Nothing (doNotRequireLExp env) arrayExp
     -- Get the errors from the array expression.
     arrayPropagatedErrs = T.getErrs [expType (AS.expAnnot annArrayExp)]
     -- Check that it is an array; if so check if its elements' type can be casted to the
@@ -503,6 +503,17 @@ annStmtForEach env AS.StmtForEach {
     -- env'' = addContinue env'
     -- Annotate the body.
     (annBody, env'') = annStmts env' body
+    -- Body throws:
+    -- - Never if the body's reachable statements' throws field is always `Never` (or if
+    --   there are no reachable statement);
+    -- - Always if it exists a body's reachable statement whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    reachableBody = filter (not . unreachable . AS.annot) annBody
+    bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableBody)
+        then Always
+        else Sometimes
     -- Array size is always >= 1, so it is always executed at least an iteration of the
     -- body -> so the unreachable keyword in the after-body environment is propagated.
     env''' = if isUnreachable env'' then setUnreachable env else env
@@ -511,7 +522,8 @@ annStmtForEach env AS.StmtForEach {
     -- Create the annotation.
     ann = StmtAnn {
         errs = arrayPropagatedErrs ++ arrayNewErr ++ bodyErrs,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = bodyThrows
     }
     -- TODO: aggiungere continue.
 annStmtForEach _ _ = error "Unreachable: `annStmtForEach` called with non-`StmtForEach` expression."

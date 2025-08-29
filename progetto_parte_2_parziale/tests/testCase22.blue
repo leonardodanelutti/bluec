@@ -1,0 +1,10 @@
+-- This example should have an error.
+--
+-- What does this example test:
+-- - "list comprehension"-like array expressions.
+
+var
+    a: Real := 12.32;
+    as: Array<Array<Real; 5>; 2> := [j*2 + i *a : i, j];
+    boolean: Boolean := [(i + 1): i] = as; -- Comment this line to test the array expressions.
+routines main is do return; end main

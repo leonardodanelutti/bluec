@@ -16,19 +16,20 @@ type Exp = AS.Exp ()
 type AnnExp = AS.Exp Ann
 
 -- Annotate an expression node.
-annExp :: Env -> Exp -> AnnExp
-annExp env exp@AS.Literal{} = annExpLit env exp
-annExp env exp@AS.ExpIdent{} = annExpIdent env exp
-annExp env exp@AS.FunCall{} = annExpRoutCall env exp
-annExp env exp@AS.Sign{} = annExpSign env exp
-annExp env exp@AS.BinOp{} = annExpBinOp env exp
-annExp env exp@AS.BoolNeg{} = annExpNot env exp
-annExp env exp@AS.RelOp{} = annExpRelOp env exp
-annExp env exp@AS.Ref{} = annExpRef env exp
-annExp env exp@AS.Deref{} = annExpDeref env exp
-annExp env exp@AS.ArrayIndex {} = annExpArrayIndex env exp
-annExp env exp@AS.Array {} = annExpArray env exp
-annExp _ AS.Cast {} = error "Unreachable: `annExp` called with `Cast` expression, which can only be create by the Semantic Analyzer itself."
+annExp :: Maybe T.Type -> Env -> Exp -> AnnExp
+annExp _ env exp@AS.Literal{} = annExpLit env exp
+annExp _ env exp@AS.ExpIdent{} = annExpIdent env exp
+annExp _ env exp@AS.FunCall{} = annExpRoutCall env exp
+annExp expectedType env exp@AS.Sign{} = annExpSign expectedType env exp
+annExp _ env exp@AS.BinOp{} = annExpBinOp env exp
+annExp _ env exp@AS.BoolNeg{} = annExpNot env exp
+annExp _ env exp@AS.RelOp{} = annExpRelOp env exp
+annExp expectedType env exp@AS.Ref{} = annExpRef expectedType env exp
+annExp expectedType env exp@AS.Deref{} = annExpDeref expectedType env exp
+annExp _ env exp@AS.ArrayIndex {} = annExpArrayIndex env exp
+annExp expectedType env exp@AS.Array {} = annExpArray expectedType env exp
+annExp expectedType env exp@AS.ArrayExpr {} = annExpArrayExpr expectedType env exp
+annExp _ _ AS.Cast {} = error "Unreachable: `annExp` called with `Cast` expression, which can only be create by the Semantic Analyzer itself."
 
 -----------
 -- UTILS --
@@ -203,13 +204,13 @@ annRoutineCall env ident args pos = (ann', castedArgs) where
                     castedArgs = annAndCastRoutArgs env args params
             False -> (T.TError {
                 T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."]
-            }, Just params, map (annExp env) args, Just declPos, thisThrows)
+            }, Just params, map (annExp Nothing env) args, Just declPos, thisThrows)
         Just (Proc declPos params thisThrows) -> (T.TError {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ PP.identPrinter ident ++ "."]
         }, Just params, annAndCastRoutArgs env args params, Just declPos, thisThrows)
         Nothing -> (T.TError {
             T.msgs = [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."]
-        }, Nothing, map (annExp (doNotRequireLExp env)) args, Nothing, Never)
+        }, Nothing, map (annExp Nothing (doNotRequireLExp env)) args, Nothing, Never)
     ann = ExpFunCallAnn {
         expType = routType,
         params = params,
@@ -234,16 +235,16 @@ annAndCastRoutArgs env (arg : args) (AS.Param { AS.mode = mode, AS.paramType = T
     where
         castedArg = case mode of
             -- Arguments passed by value do not need to be LExp.
-            AS.Mval -> cast (doNotRequireLExp env) (annExp (doNotRequireLExp env) arg) paramType
+            AS.Mval -> cast (doNotRequireLExp env) (annExp (Just paramType) (doNotRequireLExp env) arg) paramType
             -- Arguments passed by value-result and reference must be LExp and must be non-constant.
-            _       -> cast (requireLExp env) (annExp (requireLExp env) arg) paramType
+            _       -> cast (requireLExp env) (annExp (Just paramType) (requireLExp env) arg) paramType
 annAndCastRoutArgs _ [] [] = []
 annAndCastRoutArgs _ _ _ = error "Unreachable: `annRoutArgs` called with different number of parameters and arguments."
 
 -- Sign expressions.
 -- Rule: RExpSign.
-annExpSign :: Env -> Exp -> AnnExp
-annExpSign env AS.Sign {
+annExpSign :: Maybe T.Type -> Env -> Exp -> AnnExp
+annExpSign expectedType env AS.Sign {
     AS.e = e,
     AS.expPos = pos
 } = AS.Sign {
@@ -251,7 +252,7 @@ annExpSign env AS.Sign {
     AS.expAnnot = ann',
     AS.expPos = pos
 } where
-    annE = annExp (doNotRequireLExp env) e
+    annE = annExp expectedType (doNotRequireLExp env) e
     intCastedAnnE = cast (doNotRequireLExp env) annE T.TInteger
     realCastedAnnE = cast (doNotRequireLExp env) annE T.TReal
     ann = case (expType $ AS.expAnnot intCastedAnnE, expType $ AS.expAnnot realCastedAnnE) of
@@ -277,7 +278,7 @@ annExpSign env AS.Sign {
         }
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
     expectedLExpErr = E.err pos "Sign is forbidden in left-hand side expressions."
-annExpSign _ _ = error "Unreachable: `annExpSign` called with non-`Sign` expression."
+annExpSign _ _ _ = error "Unreachable: `annExpSign` called with non-`Sign` expression."
 
 -- Binary Operation expressions.
 -- Rules: RExpOr, RExpAnd, RExpPlus, RExpMinus, RExpMult, RExpDivReal, RExpDivInt,
@@ -300,8 +301,8 @@ annExpBinOp env AS.BinOp {
         ctVal = newVal
     }
     -- Call recursive annotation for both expressions.
-    annE1 = annExp (doNotRequireLExp env) e1
-    annE2 = annExp (doNotRequireLExp env) e2
+    annE1 = annExp Nothing (doNotRequireLExp env) e1 -- `Nothing` because possibly multiple types are expected
+    annE2 = annExp Nothing (doNotRequireLExp env) e2 -- `Nothing` because possibly multiple types are expected
     -- Get types.
     typeE1 = expType $ AS.expAnnot annE1
     typeE2 = expType $ AS.expAnnot annE2
@@ -358,7 +359,7 @@ annExpNot env AS.BoolNeg {
     AS.expPos = pos
 } where
     -- Call recursive annotation.
-    annE = annExp (doNotRequireLExp env) e
+    annE = annExp (Just T.TBoolean) (doNotRequireLExp env) e
     -- Cast the expression to the expected type (TBoolean).
     castedE = cast (doNotRequireLExp env) annE T.TBoolean
     castedTypeE = expType $ AS.expAnnot castedE
@@ -394,8 +395,8 @@ annExpRelOp env AS.RelOp {
         ctVal = newVal
     }
     -- Call recursive annotation for both expressions.
-    annE1 = annExp (doNotRequireLExp env) e1
-    annE2 = annExp (doNotRequireLExp env) e2
+    annE1 = annExp Nothing (doNotRequireLExp env) e1 -- `Nothing` because any type is acceptable
+    annE2 = annExp Nothing (doNotRequireLExp env) e2 -- `Nothing` because any type is acceptable
     -- Get types.
     typeE1 = expType $ AS.expAnnot annE1
     typeE2 = expType $ AS.expAnnot annE2
@@ -421,8 +422,8 @@ annExpRelOp _ _ = error "Unreachable: `annExpRelOp` called with non-`RelOp` expr
 
 -- Reference expressions.
 -- Rule: RExpRef.
-annExpRef :: Env -> Exp -> AnnExp
-annExpRef env AS.Ref {
+annExpRef :: Maybe T.Type -> Env -> Exp -> AnnExp
+annExpRef expectedType env AS.Ref {
     AS.e = e,
     AS.expPos = pos
 } = AS.Ref {
@@ -430,7 +431,12 @@ annExpRef env AS.Ref {
     AS.expAnnot = ann',
     AS.expPos = pos
 } where
-    annE = annExp (requireLExp env) e -- Only LExp can be referenced.
+    -- Propagate the expected type.
+    innerExpectedType = case expectedType of
+        Just T.TReference { T.refType = ty } -> Just ty
+        _ -> Nothing -- No error because it will be returned when a leaf with a wrong
+                           -- type is encountered.
+    annE = annExp innerExpectedType (requireLExp env) e -- Only LExp can be referenced.
     ann = ExpAnn {
         expType = case refType of
             e@T.TError {} -> e
@@ -440,12 +446,12 @@ annExpRef env AS.Ref {
     refType = expType $ AS.expAnnot annE
     expectedLExpErr = E.err pos "Reference is forbidden in left-hand side expressions."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
-annExpRef _ _ = error "Unreachable: `annExpRef` called with non-`Ref` expression."
+annExpRef _ _ _ = error "Unreachable: `annExpRef` called with non-`Ref` expression."
 
 -- Dereference expressions.
 -- Rule: RExpDeref.
-annExpDeref :: Env -> Exp -> AnnExp
-annExpDeref env AS.Deref {
+annExpDeref :: Maybe T.Type -> Env -> Exp -> AnnExp
+annExpDeref expectedType env AS.Deref {
     AS.e = e,
     AS.expPos = pos
 } = AS.Deref {
@@ -453,7 +459,11 @@ annExpDeref env AS.Deref {
     AS.expAnnot = ann,
     AS.expPos = pos
 } where
-    annE = annExp (requireLExp env) e -- Only LExp can be dereferenced.
+    -- Propagate the expected type.
+    innerExpectedType = case expectedType of
+        Just ty -> Just T.TReference { T.refType = ty }
+        Nothing -> Nothing
+    annE = annExp innerExpectedType (requireLExp env) e -- Only LExp can be dereferenced.
     ann = ExpAnn {
         expType = case expType $ AS.expAnnot annE of
             T.TReference ty -> ty
@@ -463,7 +473,7 @@ annExpDeref env AS.Deref {
             },
         ctVal = Nothing
     }
-annExpDeref _ _ = error "Unreachable: `annExpDeref` called with non-`Deref` expression."
+annExpDeref _ _ _ = error "Unreachable: `annExpDeref` called with non-`Deref` expression."
 
 -- Array dereference expressions. (e[index])
 -- Rule: LExpArrayDeref.
@@ -478,8 +488,8 @@ annExpArrayIndex env AS.ArrayIndex {
     AS.expAnnot = ann,
     AS.expPos = pos
 } where
-    annE = annExp (requireLExp env) e
-    annIndex = annExp (doNotRequireLExp env) index
+    annE = annExp Nothing (requireLExp env) e -- The expected type cannot be propagated because the size of the array is not known.
+    annIndex = annExp (Just T.TInteger) (doNotRequireLExp env) index
     castedIndex = cast (doNotRequireLExp env) annIndex T.TInteger
     typeE = expType $ AS.expAnnot annE
     ty = case typeE of
@@ -496,8 +506,8 @@ annExpArrayIndex _ _ = error "Unreachable: `annExpArrayIndex` called with non-`A
 
 -- Array.
 -- Rule: RExpArray.
-annExpArray :: Env -> Exp -> AnnExp
-annExpArray env AS.Array {
+annExpArray :: Maybe T.Type -> Env -> Exp -> AnnExp
+annExpArray expectedType env AS.Array {
     AS.elements = elements,
     AS.expPos = pos
 } = AS.Array {
@@ -507,7 +517,11 @@ annExpArray env AS.Array {
     AS.expAnnot = ann',
     AS.expPos = pos
 } where
-    annElements = map (annExp (doNotRequireLExp env)) elements
+    -- Propagate the expected type.
+    innerExpectedType = case expectedType of
+        Just T.TArray { T.elementsType = ty } -> Just ty
+        _ -> Nothing -- No error because it will be returned when a leaf with a wrong type is encountered.
+    annElements = map (annExp innerExpectedType (doNotRequireLExp env)) elements
     -- Get the type of all the elements.
     elementTypes = map (expType . AS.expAnnot) annElements
     -- Get the super type of all the elements.
@@ -527,23 +541,27 @@ annExpArray env AS.Array {
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
-annExpArray _ _ = error "Unreachable: `annExpArray` called with non-`Array` expression."
-{-
+annExpArray _ _ _ = error "Unreachable: `annExpArray` called with non-`Array` expression."
+
 -- Array expressions.
 -- Rule: RExpArrayExpr.
-annExpArrayExpr :: Maybe Type -> Env -> Exp -> AnnExp
-annExpArrayExpr _ env AS.ArrayExpr {
+annExpArrayExpr :: Maybe T.Type -> Env -> Exp -> AnnExp
+annExpArrayExpr expectedType env AS.ArrayExpr {
     AS.e = e,
     AS.indexes = [],
     AS.expPos = pos
-} = annExpArrayExpr env AS.ArrayExpr {
-    AS.e = e,
+} = AS.ArrayExpr {
+    AS.e = annE,
     AS.indexes = [],
     AS.expAnnot = ann,
     AS.expPos = pos
 } where
+    -- Propagate the expected type.
+    innerExpectedType = case expectedType of
+        Just T.TArray { T.elementsType = ty } -> Just ty
+        _ -> Nothing -- No error because it will be returned when a leaf with a wrong type is encountered.
     -- Annotate e.
-    annE = annExp (doNotRequireLExp env) e
+    annE = annExp innerExpectedType (doNotRequireLExp env) e
     -- Get the e errs.
     eErrs = T.getErrs $ [expType (AS.expAnnot annE)]
     -- Annotation.
@@ -555,67 +573,107 @@ annExpArrayExpr Nothing env AS.ArrayExpr {
     AS.e = e,
     AS.indexes = indexes,
     AS.expPos = pos
-} = annExpArray AS.Array {
-    AS.elements = elements,
+} = AS.ArrayExpr {
+    AS.e = annE,
+    AS.indexes = indexes,
+    AS.expAnnot = ann,
     AS.expPos = pos
-} where
+ } where
     -- Annotate e.
-    annE = annExp (doNotRequireLExp env) e
-    -- Get the e errs.
-    eErrs = T.getErrs $ [expType (AS.expAnnot annE)]
+    annE = annExp Nothing (doNotRequireLExp env) e
     -- Annotation.
     ann = ExpAnn {
-        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression type cannot be inferred. Suggestion: create a constant or a variable and specify the type."] },
+        -- Errors from annE are not propagated because potentially contain misleading errors (like unbounded indexes variables).
+        expType = T.TError { T.msgs = [E.err pos "Array expression type cannot be inferred. Suggestion: create a constant or a variable and specify the type."] },
         ctVal = Nothing
     }
-annExpArrayExpr t@(Just TArray { elementsType = ty, size = s }) env AS.ArrayExpr {
+annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.ArrayExpr {
     AS.e = e,
     AS.indexes = [index],
     AS.expPos = pos
-} = annExpArray t AS.Array {
-    AS.elements = annEs,
+} = AS.Array {
+    AS.elements = castedElements,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
     -- Bind the index.
-    bindings = map (\x -> [(index, Const LG.defaultPosn . LitInt x)]) [1..s]
-    envs = map envFromSymbolBindings bindings
+    bindings = map (\x -> [(index, Const LG.defaultPosn (AS.LitInt x LG.defaultPosn))]) [1..s]
+    bindingEnvs = map envFromSymbolBindings bindings
+    envs = map (fst . mergeEnv env) bindingEnvs -- The error can be ignored because there are no new routine bindings.
     -- Annotate e.
-    annEs = map (annExp . doNotRequireLExp) envs
-annExpArrayExpr (Just TArray { elementsType = ty, size = s }) env AS.ArrayExpr {
+    annEs = map (\env -> (annExp (Just ty) (doNotRequireLExp env) e)) envs
+    -- Cast to the expected type.
+    castedElements = map (\e -> cast (doNotRequireLExp env) e ty) annEs -- Cast all elements to the super type.
+    -- Get errors.
+    castedEErrs = T.getErrs $ map (expType . AS.expAnnot) castedElements
+    -- Create the annotation.
+    ann = ExpAnn {
+        expType = case castedEErrs of
+            [] -> T.TArray {
+                T.elementsType = ty,
+                T.size = s
+            }
+            _ -> T.TError { T.msgs = [head castedEErrs] }, -- Take only the first error since they are all the same
+        ctVal = Nothing -- Constants cannot be arrays.
+    }
+    expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
+annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.ArrayExpr {
     AS.e = e,
     AS.indexes = (index:indexes),
     AS.expPos = pos
-} = annExpArray Just ty AS.Array {
-    AS.elements = elements,
+} = AS.Array {
+    AS.elements = castedElements,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
     -- Bind the index.
-    bindings = map (\x -> [(index, Const LG.defaultPosn . LitInt x)]) [1..s]
-    envs = map envFromSymbolBindings bindings
+    bindings = map (\x -> [(index, Const LG.defaultPosn (AS.LitInt x LG.defaultPosn))]) [1..s]
+    bindingEnvs = map envFromSymbolBindings bindings
+    envs = map (fst . mergeEnv env) bindingEnvs -- The error can be ignored because there are no new routine bindings.
     -- Create an ArrayExpr for each environment.
-    eArrayExprs = map (\env' -> AS.ArrayExpr {
+    eArrayExprs = map (\env -> annExpArrayExpr (Just ty) env AS.ArrayExpr {
         AS.e = e,
         AS.indexes = indexes,
+        AS.expAnnot = (),
         AS.expPos = pos
     }) envs
+    -- Cast to the expected type.
+    castedElements = map (\e -> cast (doNotRequireLExp env) e ty) eArrayExprs -- Cast all elements to the super type.
+    -- Get errors.
+    castedEErrs = T.getErrs $ map (expType . AS.expAnnot) castedElements
+    -- Create the annotation.
+    ann = ExpAnn {
+        expType = case castedEErrs of
+            [] -> T.TArray {
+                T.elementsType = ty,
+                T.size = s
+            }
+            _ -> T.TError { T.msgs = [head castedEErrs] }, -- Take only the first error since they are all the same
+        ctVal = Nothing -- Constants cannot be arrays.
+    }
+    expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
+    ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
 annExpArrayExpr (Just _) env AS.ArrayExpr {
     AS.e = e,
     AS.indexes = indexes,
     AS.expPos = pos
-} = annExpArray AS.Array {
-    AS.elements = elements,
+} = AS.ArrayExpr {
+    AS.e = annE,
+    AS.indexes = indexes,
+    AS.expAnnot = ann,
     AS.expPos = pos
-} where
+ } where
     -- Annotate e.
-    annE = annExp (doNotRequireLExp env) e
+    annE = annExp Nothing (doNotRequireLExp env) e
     -- Get the e errs.
     eErrs = T.getErrs $ [expType (AS.expAnnot annE)]
     -- Annotation.
     ann = ExpAnn {
-        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have an array type, but has type " ++ show (expType (AS.expAnnot annE)) "."] }, -- TODO: pretty print type in err
+        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have an array type, but has type " ++ show (expType (AS.expAnnot annE)) ++ "."] }, -- TODO: pretty print type in err
         ctVal = Nothing
     }
-
+annExpArrayExpr _ _ _ = error "Unreachable: `annExpArrayExpr` called with non-`ArrayExpr` expression."
 
 -- getArraySizes :: Type -> Int -> [Int]
 -- getArraySizes (T.TArray { T.size = s }) 0 = []
@@ -645,4 +703,3 @@ annExpArrayExpr (Just _) env AS.ArrayExpr {
 --   where
 --     -- Add a constant binding for the index variable.
 --     addBinding e i v = e { symbols = Map.insert i (Const LG.defaultPosn (AS.LitInt v LG.defaultPosn)) (symbols e) }
--}
