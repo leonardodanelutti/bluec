@@ -8,11 +8,11 @@ var
 	c : Integer := 2;
 routines
 	main() is
-	var
-		x : Boolean := (s and c);
-	do
-		return;
-	end
+		var
+			x : Boolean := (s and c);
+		do
+			return;
+		end
 	main
 
 

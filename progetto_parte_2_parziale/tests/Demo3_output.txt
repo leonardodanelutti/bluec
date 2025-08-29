@@ -10,19 +10,19 @@ var
 	q : &Integer := &B[1][1];
 routines
 	main() is
-	do
-		test();
-		return;
-	end
+		do
+			test();
+			return;
+		end
 	main
 
 	test() -> Integer is
-	var
-		x : Integer := (*p)[1];
-		y : Integer := (*q);
-	do
-		return (x + y);
-	end
+		var
+			x : Integer := (*p)[1];
+			y : Integer := (*q);
+		do
+			return (x + y);
+		end
 	test
 
 

@@ -9,14 +9,14 @@ var
 	iterator : Array<Boolean ; 3> := [true, true, false];
 routines
 	main() is
-	var
-		x : Boolean := (s and c);
-	do
-		for iter: Boolean in iterator do
-			x := iter;
-		end for
-		return;
-	end
+		var
+			x : Boolean := (s and c);
+		do
+			for iter: Boolean in iterator do
+				x := iter;
+			end for
+			return;
+		end
 	main
 
 

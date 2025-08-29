@@ -12,34 +12,34 @@ var
 	y : Integer := (*p);
 routines
 	main() is
-	var
-		a : Integer := d;
-	do
-		if (a > 0) then
-			a := 0;
-		b := 1.0;
-		end if
-		if (a > 0) then
-			x := 0;
-		end if
-		if (a = 1) then
-			a := 2;
-		end if
-		return;
-	end
+		var
+			a : Integer := d;
+		do
+			if (a > 0) then
+				a := 0;
+				b := 1.0;
+			end if
+			if (a > 0) then
+				x := 0;
+			end if
+			if (a = 1) then
+				a := 2;
+			end if
+			return;
+		end
 	main
 
 	__util__(ref b : Boolean) -> String is
-	const
-		const1 : String := "Hello world";
-	do
-		if b then
-			return const1;
-		else
+		const
+			const1 : String := "Hello world";
+		do
+			if b then
+				return const1;
+			else
+				return "";
+			end if
 			return "";
-		end if
-		return "";
-	end
+		end
 	__util__
 
 

@@ -8,32 +8,32 @@ const
 	c : Integer := 2;
 routines
 	main() is
-	var
-		x : Boolean := (s and c);
-	do
-		loop
-			x := not x;
-		try
+		var
+			x : Boolean := (s and c);
+		do
+			loop
+				x := not x;
+				try
+					if x then
+						throw error;
+					end if
+				catch
+					x := not x;
+				end try
+				exit on x;
+			end loop
 			if x then
-			throw error;
-		end if
-	catch
-			x := not x;
-	end try
-		exit on x;
-		end loop
-		if x then
-			x := foo;
-		else
-			return;
-		end if
-	end
+				x := foo;
+			else
+				return;
+			end if
+		end
 	main
 
 	foo() -> Boolean is
-	do
-		throw error;
-	end
+		do
+			throw error;
+		end
 	foo
 
 

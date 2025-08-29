@@ -11,12 +11,12 @@ var
 	q : &&Integer := &r;
 routines
 	main() is
-	var
-		x : Integer := (*p)[1];
-		y : Integer := (*(*q));
-	do
-		return;
-	end
+		var
+			x : Integer := (*p)[1];
+			y : Integer := (*(*q));
+		do
+			return;
+		end
 	main
 
 

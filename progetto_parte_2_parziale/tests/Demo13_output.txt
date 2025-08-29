@@ -8,20 +8,20 @@ var
 	b : Boolean := false;
 routines
 	main() is
-	do
-		if (((a < 20) or b) and (b and (c <> 10))) then
-			a := 0;
-		else
-			a := 1;
-		end if
-		b := not b;
-		loop
-		
-		exit on ((a < c) or (a = c));
-			c := (c + 1);
-		end loop
-		return;
-	end
+		do
+			if (((a < 20) or b) and (b and (c <> 10))) then
+				a := 0;
+			else
+				a := 1;
+			end if
+			b := not b;
+			loop
+				exit on ((a < c) or (a = c));
+				c := (c + 1);
+
+			end loop
+			return;
+		end
 	main
 
 

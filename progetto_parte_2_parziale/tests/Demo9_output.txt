@@ -5,16 +5,16 @@ example 9: testing the checking of the presence of the return statement in every
 
 routines
 	main() is
-	var
-		e : Real := 33;
-	do
-		loop
-			e := readReal();
-		if (e = 33) then
-			return;
-		end if
-		end loop
-	end
+		var
+			e : Real := 33;
+		do
+			loop
+				e := readReal();
+				if (e = 33) then
+					return;
+				end if
+			end loop
+		end
 	main
 
 

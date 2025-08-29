@@ -9,9 +9,9 @@ var
 	x : Boolean := (((a < 20) or b) and (b and (c <> 10)));
 routines
 	main() is
-	do
-		return;
-	end
+		do
+			return;
+		end
 	main
 
 

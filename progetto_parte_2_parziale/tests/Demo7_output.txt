@@ -5,32 +5,32 @@ example 7: testing annidated functions
 
 routines
 	main() is
-	var
-		a : Integer := test(1);
-	do
-		return;
-	end
-	main
-
-	test(d : Real) -> Integer is
-	var
-		e : Boolean := not true;
-	routines
-		p(d : Real, e : Integer) is
+		var
+			a : Integer := test(1);
 		do
 			return;
 		end
-		p
-	
-	do
-		loop
-			if e then
-			return 4;
-		else
-			return 12;
-		end if
-		end loop
-	end
+	main
+
+	test(d : Real) -> Integer is
+		var
+			e : Boolean := not true;
+		routines
+			p(d : Real, e : Integer) is
+				do
+					return;
+				end
+			p
+
+		do
+			loop
+				if e then
+					return 4;
+				else
+					return 12;
+				end if
+			end loop
+		end
 	test
 
 

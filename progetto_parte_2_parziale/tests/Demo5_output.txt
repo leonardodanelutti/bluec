@@ -9,15 +9,15 @@ var
 	b : Array<Array<Array<Integer ; 3> ; 4> ; 3> := [base0, base0, base0];
 routines
 	main() is
-	var
-		idx : Integer := 3;
-		res1, res2 : Integer := 0, 0;
-	do
-		(*a[2])[3][0] := 1;
-		res1 := b[2][3][0];
-		res2 := b[2][idx][0];
-		return;
-	end
+		var
+			idx : Integer := 3;
+			res1, res2 : Integer := 0, 0;
+		do
+			(*a[2])[3][0] := 1;
+			res1 := b[2][3][0];
+			res2 := b[2][idx][0];
+			return;
+		end
 	main
 
 

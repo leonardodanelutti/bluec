@@ -7,16 +7,16 @@ var
 	a : Boolean := true;
 routines
 	main() is
-	const
-		b : Boolean := false;
-	var
-		c : String := "";
-	do
-		if not (a and b) then
-			return;
-		end if
-		c := "This code is unreachable";
-	end
+		const
+			b : Boolean := false;
+		var
+			c : String := "";
+		do
+			if not (a and b) then
+				return;
+			end if
+			c := "This code is unreachable";
+		end
 	main
 
 

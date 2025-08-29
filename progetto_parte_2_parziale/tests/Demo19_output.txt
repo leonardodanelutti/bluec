@@ -5,22 +5,22 @@ example 19: parameter passing modalities
 
 routines
 	main() is
-	var
-		a : Integer := 1;
-		c : Char := 'c';
-	do
-		a := test(a, c);
-		return;
-	end
+		var
+			a : Integer := 1;
+			c : Char := 'c';
+		do
+			a := test(a, c);
+			return;
+		end
 	main
 
 	test(ref x : Integer, valres y : Char) -> Integer is
-	do
-		if (y = '?') then
-			x := (x + 1);
-		end if
-		return x;
-	end
+		do
+			if (y = '?') then
+				x := (x + 1);
+			end if
+			return x;
+		end
 	test
 
 

@@ -5,16 +5,16 @@ example 10: testing the pre-defined routines
 
 routines
 	main() is
-	var
-		e : Real := 12;
-	do
-		loop
-			e := readReal();
-		writeChar(readChar());
-		exit on (e = 12);
-		end loop
-		return;
-	end
+		var
+			e : Real := 12;
+		do
+			loop
+				e := readReal();
+				writeChar(readChar());
+				exit on (e = 12);
+			end loop
+			return;
+		end
 	main
 
 
