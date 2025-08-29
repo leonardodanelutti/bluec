@@ -22,8 +22,8 @@ getErrs AS.ProgramDecl { AS.declsAnnot = _ } = error "Unreachable: `ProgramDecl`
 checkMain :: AnnDecls -> [String]
 checkMain AS.ProgramDecl { AS.declsAnnot = DeclAnn { bindings = Env { routines = routinesEnv } } } = 
     case Map.lookup (AS.Ident "main" LG.defaultPosn) routinesEnv of
-        Just (Proc _ [])    -> []
-        Just (Proc _ _)     -> [": " ++ E.prettyerr ++ ": `main` procedure must have no parameters."]
-        Just (Fun _ _ _)    -> [": " ++ E.prettyerr ++ ": `main` routine must be a procedure."]
+        Just (Proc _ [] _)  -> []
+        Just (Proc _ _ _)   -> [": " ++ E.prettyerr ++ ": `main` procedure must have no parameters."]
+        Just (Fun _ _ _ _)  -> [": " ++ E.prettyerr ++ ": `main` routine must be a procedure."]
         _                   -> [": " ++ E.prettyerr ++ ": Missing `main` procedure."]
 checkMain AS.ProgramDecl { AS.declsAnnot = _ } = error "Unreachable: `ProgramDecl` annotated with an annotation other than `DeclAnn`."

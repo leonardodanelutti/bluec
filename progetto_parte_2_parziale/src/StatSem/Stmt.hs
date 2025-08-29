@@ -31,30 +31,42 @@ annStmts env [] = ([], env)
 -- Annotate a statement node.
 -- The environment is propagated because statements can make the next ones unreachable.
 annStmt :: Env -> Stmt -> (AnnStmt, Env)
-annStmt env stmt@AS.StmtAss{} = (annStmtAss env stmt, env)
-annStmt env stmt@AS.StmtRoutCall{} = (annStmtRoutCall env stmt, env)
+annStmt env stmt@AS.StmtAss{} = annStmtAss env stmt
+annStmt env stmt@AS.StmtRoutCall{} = annStmtRoutCall env stmt
 annStmt env stmt@AS.StmtReturn{} = (annStmtReturn env stmt, setUnreachable env)
 annStmt env stmt@AS.StmtReturnEmpty{} = (annStmtReturnEmpty env stmt, setUnreachable env)
 annStmt env stmt@AS.StmtContinue{} = (annStmtContinue env stmt, setUnreachable env)
 annStmt env stmt@AS.StmtIf{} = annStmtIf env stmt
 annStmt env stmt@AS.StmtIfElse{} = annStmtIfElse env stmt
 annStmt env stmt@AS.StmtLoop{} = annStmtLoop env stmt
+annStmt env stmt@AS.StmtTryCatch{} = annStmtTryCatch env stmt
+annStmt env stmt@AS.StmtThrow{} = (annStmtThrow env stmt, setUnreachable env)
 
 -- Annotate an assignment statement.
-annStmtAss :: Env -> Stmt -> AnnStmt
+annStmtAss :: Env -> Stmt -> (AnnStmt, Env)
 annStmtAss env AS.StmtAss {
     AS.left = left,
     AS.right = right,
     AS.pos = pos
-} = AS.StmtAss {
+} = (AS.StmtAss {
     AS.left = annLeft,
     AS.right = castedRight,
     AS.annot = ann,
     AS.pos = pos
-} where
+}, env') where
     -- Annotate the left and right expressions.
     annLeft = map (SSE.annExp (requireLExp env)) left
     annRight = map (SSE.annExp (doNotRequireLExp env)) right
+    -- Right throws:
+    -- - Never if the right expressions always `Never` throw (or if there are no right
+    --   expressions);
+    -- - Always if it exists a right expression whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    rightThrows = if all (== Never) (map (annThrows . AS.expAnnot) annRight)
+        then Never
+        else if any (== Always) (map (annThrows . AS.expAnnot) annRight)
+        then Always
+        else Sometimes
     -- Check that the left and right expressions have the same number of elements.
     numberErr = [E.err pos "The number of identifiers does not match number of values." | length left /= length right]
     -- Get expected types from the left expressions.
@@ -71,31 +83,34 @@ annStmtAss env AS.StmtAss {
     -- Create the annotation.
     ann = StmtAnn {
         errs = errs,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = rightThrows
     }
+    -- If the right exp always throws the environment becomes unreachable.
+    env' = if rightThrows == Always then setUnreachable env else env
 annStmtAss _ _ = error "Unreachable: `annStmtAss` called with non-`StmtAss` expression."
 
 -- Annotate a routine call statement.
-annStmtRoutCall :: Env -> Stmt -> AnnStmt
+annStmtRoutCall :: Env -> Stmt -> (AnnStmt, Env)
 annStmtRoutCall env AS.StmtRoutCall {
     AS.call = rc@AS.RoutineCall {
         AS.routCallName = ident,
         AS.args = args,
         AS.routCallPos = pos
     }
-} = AS.StmtRoutCall {
+} = (AS.StmtRoutCall {
     AS.call = AS.RoutineCall {
         AS.routCallName = ident,
         AS.args = castedArgs,
         AS.routCallPos = pos
     },
     AS.annot = ann
-} where
+}, env') where
     -- Params.
-    (params, lookupErrs, declPos, returnType) = case Map.lookup ident (routines env) of
-        Just (Fun declPos params ty) -> (Just params, [], Just declPos, Just $ T.type_ ty ) -- Future improvement: warn "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."
-        Just (Proc declPos params) -> (Just params, [], Just declPos, Nothing)
-        Nothing -> (Nothing, [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing)
+    (params, lookupErrs, declPos, returnType, thisThrows) = case Map.lookup ident (routines env) of
+        Just (Fun declPos params ty thisThrows) -> (Just params, [], Just declPos, Just $ T.type_ ty, thisThrows) -- Future improvement: warn "Unused return of the function call " ++ PP.routineCallPrinter rc ++ "."
+        Just (Proc declPos params thisThrows) -> (Just params, [], Just declPos, Nothing, thisThrows)
+        Nothing -> (Nothing, [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."], Nothing, Nothing, Never)
     -- Cast the arguments to the expected types.
     (castedArgs, numberErr) = case params of
         Nothing -> (map (SSE.annExp (doNotRequireLExp env)) args, []) -- No numberErr because the identifier was not found.
@@ -109,8 +124,11 @@ annStmtRoutCall env AS.StmtRoutCall {
         unreachable = isUnreachable env,
         params,
         declPos,
-        returnType
+        returnType,
+        throws = thisThrows
     }
+    -- If the routine always throws the environment becomes unreachable.
+    env' = if thisThrows == Always then setUnreachable env else env
 annStmtRoutCall _ _ = error "Unreachable: `annStmtRoutCall` called with non-`StmtRoutCall` expression."
 
 -- Annotate a return statement.
@@ -141,7 +159,8 @@ annStmtReturn env AS.StmtReturn {
     -- Create the annotation.
     ann = StmtAnn {
         errs = returnErr ++ expErrs,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = Never
     }
 annStmtReturn _ _ = error "Unreachable: `annStmtReturn` called with non-`StmtReturn` expression."
 
@@ -163,7 +182,8 @@ annStmtReturnEmpty env AS.StmtReturnEmpty {
     -- Create the annotation.
     ann = StmtAnn {
         errs = returnErr,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = Never
     }
 annStmtReturnEmpty _ _ = error "Unreachable: `annStmtReturnEmpty` called with non-`StmtReturnEmpty` expression."
 
@@ -182,7 +202,8 @@ annStmtContinue env AS.StmtContinue {
     -- Create the annotation.
     ann = StmtAnn {
         errs = continueErr,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = Never
     }
 annStmtContinue _ _ = error "Unreachable: `annStmtContinue` called with non-`StmtContinue` expression."
 
@@ -214,14 +235,32 @@ annStmtIf env AS.StmtIf {
     (annBody, env'') = annStmts env' body
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
+    -- Body throws:
+    -- - Never if the body's reachable statements' throws field is always `Never` (or if
+    --   there are no reachable statement);
+    -- - Always if it exists a body's reachable statement whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    reachableBody = filter (not . unreachable . AS.annot) annBody
+    bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableBody)
+        then Always
+        else Sometimes
     -- If the body is always executed the propagate the body environment.
     env''' = case condCTVal of
         Just (CTVBoolean True) -> env''
         _ -> env'
+    -- When the if statement throws.
+    thisThrows = case condCTVal of
+        Just (CTVBoolean True) -> bodyThrows
+        Just (CTVBoolean False) -> Never
+        Nothing -> if bodyThrows /= Never then Sometimes else Never
+        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = thisThrows
     }
 annStmtIf _ _ = error "Unreachable: `annStmtIf` called with non-`StmtIf` expression."
 
@@ -261,6 +300,23 @@ annStmtIfElse env AS.StmtIfElse {
     -- Body errors.
     bodyTErrs = concatMap (errs . AS.annot) annBodyT
     bodyFErrs = concatMap (errs . AS.annot) annBodyF
+    -- Body throws:
+    -- - Never if the body's reachable statements' throws field is always `Never` (or if
+    --   there are no reachable statement);
+    -- - Always if it exists a body's reachable statement whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    reachableBodyT = filter (not . unreachable . AS.annot) annBodyT
+    bodyTThrows = if all (== Never) (map (throws . AS.annot) reachableBodyT)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableBodyT)
+        then Always
+        else Sometimes
+    reachableBodyF = filter (not . unreachable . AS.annot) annBodyF
+    bodyFThrows = if all (== Never) (map (throws . AS.annot) reachableBodyF)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableBodyF)
+        then Always
+        else Sometimes
     -- If the condition has a compile-time value, we can propagate the respective
     -- environments.
     env'' = case condCTVal of
@@ -269,10 +325,19 @@ annStmtIfElse env AS.StmtIfElse {
         Nothing | isUnreachable envF' && isUnreachable envT' -> setUnreachable env
         Nothing -> env
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
+    -- When the if else statement throws.
+    thisThrows = case condCTVal of
+        Just (CTVBoolean True) -> bodyTThrows
+        Just (CTVBoolean False) -> bodyFThrows
+        Nothing -> if (bodyTThrows == Always) && (bodyFThrows == Always) then Always
+            else if (bodyTThrows == Never) && (bodyFThrows == Never) then Never
+            else Sometimes
+        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyTErrs ++ bodyFErrs,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = thisThrows
     }
 annStmtIfElse _ _ = error "Unreachable: `annStmtIfElse` called with non-`StmtIfElse` expression."
 
@@ -294,8 +359,19 @@ annStmtLoop env AS.StmtLoop {
     (annBody, env'') = annStmts env' body
     -- Get the errors from the body.
     bodyErrs = concatMap (errs . AS.annot) annBody
+    -- Body throws:
+    -- - Never if the body's reachable statements' throws field is always `Never` (or if
+    --   there are no reachable statement);
+    -- - Always if it exists a body's reachable statement whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    reachableBody = filter (not . unreachable . AS.annot) annBody
+    bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableBody)
+        then Always
+        else Sometimes
     -- Annotate the exit.
-    (annExit, _, canExit) = annLoopExits env'' exit
+    (annExit, _, canExit, exitThrows) = annLoopExits env'' exit
     -- If the loop cannot exit the environment after the loop is unreachable.
     env'''' = if canExit then env else setUnreachable env
     -- Get the errors from the exit.
@@ -303,7 +379,10 @@ annStmtLoop env AS.StmtLoop {
     -- Create the annotation.
     ann = StmtAnn {
         errs = bodyErrs ++ exitErrs,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = if bodyThrows == Always || exitThrows == Always then Always
+                 else if bodyThrows == Never && exitThrows == Never then Never
+                 else Sometimes
     }
 annStmtLoop _ _ = error "Unreachable: `annStmtLoop` called with non-`StmtLoop` expression."
 
@@ -312,14 +391,23 @@ annStmtLoop _ _ = error "Unreachable: `annStmtLoop` called with non-`StmtLoop` e
 -- Returns:
 -- - the annotated exit statements;
 -- - the updated environment;
--- - a bool indicating if the list can exit.
-annLoopExits :: Env -> [AS.Exit ()] -> ([AS.Exit Ann], Env, Bool)
-annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, env'', canExit)
+-- - a bool indicating if the list can exit;
+-- - when the list of loop exits throws.
+annLoopExits :: Env -> [AS.Exit ()] -> ([AS.Exit Ann], Env, Bool, When)
+annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, env'', canExit, thisThrows)
     where
         (xAnn, env', xcanExit) = annLoopExit env x
-        (xsAnn, env'', xscanExit) = annLoopExits env' xs
+        xThrows = throws . AS.loopExitAnnot $ xAnn
+        (xsAnn, env'', xscanExit, xsThrows) = annLoopExits env' xs
         canExit = xcanExit || xscanExit
-annLoopExits env [] = ([], env, False) -- If there are no exits, the list never returns and cannot exit.
+        thisThrows = if xThrows == Never && xsThrows == Never
+            then Never
+            else if xcanExit
+            then Sometimes
+            else if xThrows == Always || xsThrows == Always
+            then Always
+            else Sometimes
+annLoopExits env [] = ([], env, False, Never) -- If there are no exits, the list never returns, cannot exit, and never throws.
 
 -- Annotate an exit statement.
 --
@@ -356,8 +444,81 @@ annLoopExit env AS.LoopExit {
     (annBody, env'') = annStmts env' body
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
+    -- Body throws:
+    -- - Never if the body's reachable statements' throws field is always `Never` (or if
+    --   there are no reachable statement);
+    -- - Always if it exists a body's reachable statement whose throws field is `Always`;
+    -- - Sometimes otherwise.
+    reachableBody = filter (not . unreachable . AS.annot) annBody
+    bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
+        then Never
+        else if any (== Always) (map (throws . AS.annot) reachableBody)
+        then Always
+        else Sometimes
+    -- When the exit throws.
+    thisThrows = case condCTVal of
+        Just (CTVBoolean True) -> Never
+        Just (CTVBoolean False) -> bodyThrows
+        Nothing | bodyThrows == Never -> Never
+        Nothing -> Sometimes
+        _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
-        unreachable = isUnreachable env
+        unreachable = isUnreachable env,
+        throws = thisThrows
     }
+
+-- Annotate a try catch statement.
+annStmtTryCatch :: Env -> Stmt -> (AnnStmt, Env)
+annStmtTryCatch env AS.StmtTryCatch {
+    AS.try = try,
+    AS.catch = catch,
+    AS.pos = pos
+} = (AS.StmtTryCatch {
+    AS.try = annTry,
+    AS.catch = annCatch,
+    AS.annot = ann,
+    AS.pos = pos
+}, env''') where
+    -- Annotate the try statement.
+    (annTry, env') = annStmt env try
+    -- Get the errors from the try statement.
+    tryAnnot = AS.annot annTry
+    tryErrs = errs tryAnnot
+    tryThrows = throws tryAnnot
+    -- Annotate the catch statement.
+    -- If try never throws then catch is unreachable
+    (annCatch, env'') = if tryThrows == Never then
+        annStmt (setUnreachable env) catch
+    else
+        annStmt env catch
+    -- Get the errors from the catch statement.
+    catchAnnot = AS.annot annCatch
+    catchErrs = errs catchAnnot
+    catchThrows = throws catchAnnot
+    -- Create the annotation.
+    ann = StmtAnn {
+        errs = tryErrs ++ catchErrs,
+        unreachable = isUnreachable env,
+        throws = catchThrows
+    }
+    -- After the try-catch statement, the environment is unreachable if both catch and try
+    -- are unreachable.
+    env''' = if isUnreachable env' && isUnreachable env'' then setUnreachable env else env
+annStmtTryCatch _ _ = error "Unreachable: `annStmtTryCatch` called with non-`StmtTryCatch` expression."
+
+-- Annotate a throw statement.
+annStmtThrow :: Env -> Stmt -> AnnStmt
+annStmtThrow env AS.StmtThrow {
+    AS.pos = pos
+} = AS.StmtThrow {
+    AS.annot = ann,
+    AS.pos = pos
+} where
+    ann = StmtAnn {
+        errs = [],
+        unreachable = isUnreachable env,
+        throws = Always
+    }
+annStmtThrow _ _ = error "Unreachable: `annStmtThrow` called with non-`StmtThrow` expression."

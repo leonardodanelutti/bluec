@@ -8,11 +8,16 @@ import Data.Set
 
 type StateMonad = St.State TACState
 
+data TacRoutine = TacRoutine {
+    code :: Instructions,
+    handlers :: [Instructions]
+}
+
 data TACState = TACState {
-    tempCount, labelCount, staticCount :: Int,
+    tempCount, labelCount, staticCount, handlerCount :: Int,
     -- The routine stack and the current routine is used to menage nested routines
-    routineStack :: [Instructions],
-    currentRoutine :: Instructions,
+    routineStack :: [TacRoutine],
+    currentRoutine :: TacRoutine,
     -- Current stream for TAC code
     stream :: Instructions,
     -- Static data stream
@@ -31,8 +36,9 @@ initState = TACState {
     tempCount = 0,
     labelCount = 0,
     staticCount = 0,
+    handlerCount = 0,
     routineStack = [],
-    currentRoutine = [],
+    currentRoutine = TacRoutine [] [],
     stream = [],
     staticStream = [],
     nextLabel = [],
@@ -46,8 +52,9 @@ outLabeled :: LabeledInstruction -> StateMonad ()
 outLabeled instrLab = do
     state <- St.get
     let -- Add pending label
-        instrLab' = instrLab { label = nextLabel state }
-        newStream = instrLab' : currentRoutine state
+        instrLab' = instrLab { label = label instrLab ++ nextLabel state }
+        currentRout = currentRoutine state
+        newStream = currentRout { code = instrLab' : code currentRout }
     St.put $ state { currentRoutine = newStream, nextLabel = [] }
 
 -- Add instruction (with no label) to the stream
@@ -90,13 +97,41 @@ attachToNext label = do
     state <- St.get
     St.put $ state { nextLabel = label : nextLabel state }
 
+newHandler :: StateMonad Label
+newHandler = do
+    state <- St.get
+    let k = handlerCount state
+    St.put $ state { handlerCount = k + 1 }
+    return $ Loc k
+
+attachHandler :: StateMonad () -> StateMonad Label
+attachHandler action = do
+    handlerLabel <- newHandler
+    attachToNext handlerLabel
+    state <- St.get
+
+    -- Empty current routine code, it will be added after the handler code is generated
+    let currentRout = currentRoutine state
+        routCode = code currentRout
+    St.put $ state { currentRoutine = currentRout { code = [] } }
+
+    -- Generate the handler code  
+    action
+
+    -- Get the handler code and add it to the current routine handlers and restore the routine code
+    state' <- St.get
+    let handlerCode = code (currentRoutine state')
+    St.put $ state' { currentRoutine = currentRout { code = routCode,
+                                                     handlers = handlerCode : handlers currentRout } }
+    return handlerLabel
+
 -- Call when starting a new routine, pushes the current routine onto the stack
 -- This is used to menage nested routines
 newRoutine :: StateMonad ()
 newRoutine = do
     state <- St.get
     St.put $ state { routineStack = currentRoutine state : routineStack state,
-                     currentRoutine = [] }
+                     currentRoutine = TacRoutine [] [] }
 
 -- Call when ending a routine (cannot be called before a newRoutine)
 -- This is used to menage nested routines
@@ -104,12 +139,16 @@ endRoutine :: StateMonad ()
 endRoutine = do
     state <- St.get
     let currentRout = currentRoutine state
+        currentRoutCode = code currentRout
+        currentRoutHandlers = handlers currentRout
     case routineStack state of
         [] -> St.put state
         (r:rs) -> do
             St.put $ state { routineStack = rs,
                              currentRoutine = r,
-                             stream = currentRout ++ stream state }
+                             stream = concat currentRoutHandlers 
+                                      ++ currentRoutCode 
+                                      ++ stream state }
 
 -- Call when starting a new loop. Creates a new labels for the loop start and
 -- end and pushes them onto a stack.

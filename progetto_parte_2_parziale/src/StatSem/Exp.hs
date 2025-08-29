@@ -194,26 +194,27 @@ annExpRoutCall _ _ = error "Unreachable: `annExpRoutCall` called with non-`FunCa
 -- to the expected types.
 annRoutineCall :: Env -> AS.Ident -> [Exp] -> LG.Posn -> (Ann, [AnnExp])
 annRoutineCall env ident args pos = (ann', castedArgs) where
-    (routType, params, castedArgs, declPos) = case Map.lookup ident (routines env) of
-        Just (Fun declPos params ty) -> case length params == length args of
+    (routType, params, castedArgs, declPos, thisThrows) = case Map.lookup ident (routines env) of
+        Just (Fun declPos params ty thisThrows) -> case length params == length args of
             True  -> case T.getErrs $ map (expType . AS.expAnnot) castedArgs of
-                [] -> (T.type_ ty, Just params, castedArgs, Just declPos)
-                errs -> (T.TError { T.msgs = errs }, Just params, castedArgs, Just declPos)
+                [] -> (T.type_ ty, Just params, castedArgs, Just declPos, thisThrows)
+                errs -> (T.TError { T.msgs = errs }, Just params, castedArgs, Just declPos, thisThrows)
                 where
                     castedArgs = annAndCastRoutArgs env args params
             False -> (T.TError {
                 T.msgs = [E.err pos "Wrong argument number in routine call: " ++ PP.identPrinter ident ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."]
-            }, Just params, map (annExp env) args, Just declPos)
-        Just (Proc declPos params) -> (T.TError {
+            }, Just params, map (annExp env) args, Just declPos, thisThrows)
+        Just (Proc declPos params thisThrows) -> (T.TError {
             T.msgs = [E.err pos "Cannot call a procedure as an expression: " ++ PP.identPrinter ident ++ "."]
-        }, Just params, annAndCastRoutArgs env args params, Just declPos)
+        }, Just params, annAndCastRoutArgs env args params, Just declPos, thisThrows)
         Nothing -> (T.TError {
             T.msgs = [E.err pos "Unbound routine: " ++ PP.identPrinter ident ++ "."]
-        }, Nothing, map (annExp (doNotRequireLExp env)) args, Nothing)
+        }, Nothing, map (annExp (doNotRequireLExp env)) args, Nothing, Never)
     ann = ExpFunCallAnn {
         expType = routType,
         params = params,
-        declPos = declPos
+        declPos = declPos,
+        throws = thisThrows
     }
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
     expectedLExpErr = E.err pos "Left-hand side expression required, but found routine call."

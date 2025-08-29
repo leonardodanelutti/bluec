@@ -1,0 +1,63 @@
+example XX: Try catch
+
+
+[Pretty-Print of source]
+
+const
+	s : Boolean := true;
+	c : Integer := 2;
+routines
+	main() is
+	var
+		x : Boolean := (s and c);
+	do
+		loop
+			x := not x;
+		try
+			if x then
+			throw error;
+		end if
+	catch
+			x := not x;
+	end try
+		exit on x;
+		end loop
+		if x then
+			x := foo;
+		else
+			return;
+		end if
+	end
+	main
+
+	foo() -> Boolean is
+	do
+		throw error;
+	end
+	foo
+
+
+
+[Generated TAC]
+
+$0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
+L0, EntryPoint: value@0:0 =(addr) $0
+      param(addr) value@0:0
+      pcall writeString@0:0, 1
+
+main@6:5:
+      x@8:13 =(bool) True
+L0:   x@8:13 =(bool) ! x@8:13
+      pushHandler L1
+      ifFalse x@8:13 goto L2
+      throw
+L2:   popHandler
+      if x@8:13 goto L1
+      goto L0
+L1:   ifFalse x@8:13 goto L3
+      x@8:13 =(bool) fcall foo@27:5, 0
+      goto L4
+L3:   return
+L1:   x@8:13 =(bool) ! x@8:13
+foo@27:5, L4: throw
+

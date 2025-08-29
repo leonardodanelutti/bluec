@@ -142,6 +142,11 @@ demo: bluec
 		./bluec tests/testCase20.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo20_output.txt
 	@{ \
+		echo "example XX: Try catch"; \
+		echo ""; \
+		./bluec tests/testCaseTryCatch.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoTryCatch_output.txt
+	@{ \
 		echo "example 21: compile-time shortcut"; \
 		echo ""; \
 		./bluec tests/testCase21.blue || true; \
