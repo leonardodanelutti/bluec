@@ -4,7 +4,7 @@
 
 #let template(
   // Your thesis title
-  title: [Parte 2 - Parziale],
+  title: [Parte 2 - Finale],
 
   // The academic year you're graduating in
   academic-year: [2024/2025],
