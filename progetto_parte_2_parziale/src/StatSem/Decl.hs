@@ -2,6 +2,7 @@
 module StatSem.Decl where
 
 import Data.Either (partitionEithers)
+import qualified Data.Map as Map
 import qualified AbsSyn             as AS
 import qualified Types              as T
 import qualified Errors             as E
@@ -127,7 +128,12 @@ annVarA env AS.VarAss {
 -- Annotate a list of routine declarations.
 annRoutines :: Env -> [AS.Routine ()] -> [AS.Routine Ann]
 annRoutines _ [] = []
-annRoutines env (r : rs) = annRoutine env r : annRoutines env rs
+annRoutines env (r : rs) = annR : annRoutines env' rs where
+    annR = annRoutine env r
+    rBindings = Map.toList $ routines $ bindings $ AS.routAnnot annR
+    rBindingsWithNever = map (\(ident, entry) -> (ident, entry { routThrows = Never })) rBindings
+    rEnvWithNever = envFromRoutBindings rBindingsWithNever
+    (env', _) = mergeEnv env rEnvWithNever
 
 -- Get the environment of a list of routine declarations.
 routinesEnv :: [AS.Routine Ann] -> (Env, [String])
@@ -158,20 +164,22 @@ annRoutine env AS.Function {
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)) (AS.mode p == AS.Mconst))) params
     paramEnv = envFromSymbolBindings paramBindings
     env' = addReturn (fst $ mergeEnv env paramEnv) (Just (T.type_ ty))
+    -- Environment for the body to avoid recursion.
+    (env'', _) = mergeEnv env' $ envFromRoutBindings [(ident, Fun pos params ty Never)]
     -- Annotate the body with the new environment.
-    (bodyAnn, env'') = annRoutBody env' body
+    (bodyAnn, env''') = annRoutBody env'' body
     -- Get the body errors.
     bodyErrs = errs $ AS.routBodyAnnot bodyAnn
     -- Check if the routine body contains a return statement for every flow of control
     -- (i.e. at the end of the RoutBody the environment is unreachable)
-    doNotAlwaysReturnErr = if isUnreachable env''
+    doNotAlwaysReturnErr = if isUnreachable env'''
         then []
         else [E.err pos "The function \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
     -- Function throws if its body throws.
     funThrows = throws $ AS.routBodyAnnot bodyAnn
     -- Create the annotation.
     ann = DeclAnn {
-        bindings = envFromRoutBindings [(ident, Fun pos params ty Sometimes)], -- FIXME: determine when it throws without looping
+        bindings = envFromRoutBindings [(ident, Fun pos params ty funThrows)],
         errs = returnRefErr ++ bodyErrs ++ doNotAlwaysReturnErr
     }
 annRoutine env AS.Procedure {
@@ -189,20 +197,22 @@ annRoutine env AS.Procedure {
     paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)) (AS.mode p == AS.Mconst))) params
     paramEnv = envFromSymbolBindings paramBindings
     env' = addReturn (fst $ mergeEnv env paramEnv) Nothing
+    -- Environment for the body to avoid recursion.
+    (env'', _) = mergeEnv env' $ envFromRoutBindings [(ident, Proc pos params Never)]
     -- Annotate the body with the new environment.
-    (bodyAnn, env'') = annRoutBody env' body
+    (bodyAnn, env''') = annRoutBody env'' body
     -- Get the body errors.
     bodyErrs = errs $ AS.routBodyAnnot bodyAnn
     -- Check if the routine body contains a return statement for every flow of control
     -- (i.e. at the end of the RoutBody the environment is unreachable)
-    doNotAlwaysReturnErr = if isUnreachable env''
+    doNotAlwaysReturnErr = if isUnreachable env'''
         then []
         else [E.err pos "The procedure \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
     -- Procedure throws if its body throws.
     procThrows = throws $ AS.routBodyAnnot bodyAnn
     -- Create the annotation.
     ann = DeclAnn {
-        bindings = envFromRoutBindings [(ident, Proc pos params Sometimes)], -- FIXME: determine when it throws without looping
+        bindings = envFromRoutBindings [(ident, Proc pos params procThrows)],
         errs = bodyErrs ++ doNotAlwaysReturnErr
     }
 
@@ -225,17 +235,6 @@ annRoutBody env AS.RoutBody {
     declErrs = errs $ AS.declsAnnot declsAnn
     -- Errs from the statements.
     stmtsErrs = concatMap (errs . AS.annot) stmtsAnn
-    -- Stmts throws:
-    -- - Never if the reachable statements' throws field is always `Never` (or if there
-    --   are no reachable statement);
-    -- - Always if it exists a reachable statement whose throws field is `Always`;
-    -- - Sometimes otherwise.
-    -- reachableStmts = filter (not . unreachable . AS.annot) stmtsAnn
-    -- stmtsThrows = if all (== Never) (map (throws . AS.annot) reachableStmts)
-    --     then Never
-    --     else if any (== Always) (map (throws . AS.annot) reachableStmts)
-    --     then Always
-    --     else Sometimes
     -- Create the annotation.
     ann = StmtAnn {
         errs = declErrs ++ stmtsErrs,

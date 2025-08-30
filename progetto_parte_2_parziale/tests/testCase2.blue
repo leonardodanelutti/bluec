@@ -9,7 +9,8 @@ var
 	b : Real := 1.0;
 	x : Integer := 42;
 	p : &Integer := &x;
-	y : Integer := *(p);
+	y : Boolean := *(p);
+    z: String := "";
 routines
 	main() is
 	var
@@ -25,6 +26,7 @@ routines
 		if (a = 1) then
 			a := 2;
 		end if
+        z := __util__(y);
 	return;
 	end
 	main
@@ -37,7 +39,8 @@ __util__(ref b: Boolean) ->String is
 do
         if b then return const1;
         else
-    return "";
+        main;
+    return __util__(y);
         end if
 	return "";
     end

@@ -44,8 +44,17 @@ data RoutEntry
     -- - Parameters;
     -- - Return type;
     -- - When it throws.
-    = Fun LG.Posn [AS.Param] T.TypePos When
-    | Proc LG.Posn [AS.Param] When
+    = Fun {
+        routPos :: LG.Posn,
+        routParams :: [AS.Param],
+        funReturnType :: T.TypePos,
+        routThrows :: When
+    }
+    | Proc {
+        routPos :: LG.Posn,
+        routParams :: [AS.Param],
+        routThrows :: When
+    }
     deriving (Show)
 
 -- Position of a `RoutEntry`.
@@ -219,6 +228,13 @@ data Ann
         throws :: When
     }
     deriving (Show)
+
+-- Safely access the throw field in the annotations.
+safeThrows :: Ann -> When
+safeThrows (ExpFunCallAnn { throws = when }) = when
+safeThrows (StmtAnn { throws = when }) = when
+safeThrows (StmtRoutCallAnn { throws = when }) = when
+safeThrows _ = Never
 
 data When
     = Never

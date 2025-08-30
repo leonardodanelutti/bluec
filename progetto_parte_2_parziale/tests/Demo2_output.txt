@@ -9,7 +9,8 @@ var
 	b : Real := 1.0;
 	x : Integer := 42;
 	p : &Integer := &x;
-	y : Integer := (*p);
+	y : Boolean := (*p);
+	z : String := "";
 routines
 	main() is
 		var
@@ -25,6 +26,7 @@ routines
 			if (a = 1) then
 				a := 2;
 			end if
+			z := __util__(y);
 			return;
 		end
 	main
@@ -36,7 +38,8 @@ routines
 			if b then
 				return const1;
 			else
-				return "";
+				main();
+				return __util__(y);
 			end if
 			return "";
 		end
@@ -47,15 +50,17 @@ routines
 [Generated TAC]
 
 $0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
-$1 = "Hello world\NUL"
-$2 = "\NUL"
+$1 = "\NUL"
+$2 = "Hello world\NUL"
 
 EntryPoint:
       pushHandler H0
       b@9:9 =(float) 1.0
       x@10:9 =(int) 42
       p@11:9 = &x@10:9
-      y@12:9 =(int) *p@11:9
+      t0 =(int) *p@11:9
+      y@12:9 =(bool) intToBool t0
+      z@13:5 =(addr) $1
       pcall main, 0
 L0:   END_PROGRAM
 H0:   popHandler
@@ -64,21 +69,28 @@ H0:   popHandler
       pcall writeString@0:0, 1
       goto L0
 
-main@14:9:
-      a@16:17 =(int) 1
-      if a@16:17 <=(int) 0 goto L1
-      a@16:17 =(int) 0
+main@15:9:
+      a@17:17 =(int) 1
+      if a@17:17 <=(int) 0 goto L1
+      a@17:17 =(int) 0
       b@9:9 =(float) 1.0
-L1:   if a@16:17 <=(int) 0 goto L2
+L1:   if a@17:17 <=(int) 0 goto L2
       x@10:9 =(int) 0
-L2:   if a@16:17 !=(int) 1 goto L3
-      a@16:17 =(int) 2
-L3:   return
+L2:   if a@17:17 !=(int) 1 goto L3
+      a@17:17 =(int) 2
+L3:   b@36:14 = &y@12:9
+      param(addr) b@36:14
+      z@13:5 =(addr) fcall __util__@36:1, 1
+      return
 
-__util__@34:1:
-      t0 =(bool) *b@34:14
-      ifFalse t0 goto L4
-      return $1
+__util__@36:1:
+      t1 =(bool) *b@36:14
+      ifFalse t1 goto L4
+      return $2
       goto L5
-L4:   return $2
+L4:   pcall main@15:9, 0
+      b@36:14 = &y@12:9
+      param(addr) b@36:14
+      t2 =(addr) fcall __util__@36:1, 1
+      return t2
 
