@@ -171,6 +171,11 @@ demo: bluec
 		echo ""; \
 		./bluec tests/testCase26.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo26_output.txt
+	@{ \
+		echo "example 27: Passing variable by constant"; \
+		echo ""; \
+		./bluec tests/testCase27.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo27_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

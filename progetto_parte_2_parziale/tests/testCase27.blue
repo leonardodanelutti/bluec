@@ -1,0 +1,21 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - passing values by constant
+
+routines 
+
+main is
+var
+    a: Integer := 1;
+    b: Array<Integer; 3> := [1, 2, 3];
+do
+    test(a, b);
+	return;
+end main
+
+test(const x: Integer, const y: Array<Integer; 3>) -> Integer is
+do
+    -- y[2] := x; -- Uncomment this line to get an error
+    return x * y[x];
+end test

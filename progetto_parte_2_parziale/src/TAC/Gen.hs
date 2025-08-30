@@ -582,6 +582,9 @@ genArrayIndex exp dims innerTypeSize = do
         let accStart = maybeLit a
         idxTemp <- newTmp
 
+        when (isNothing accStart) $
+            out (NOp idxTemp a TInteger)
+
         -- Calculate the index.
         -- The offset to the first non-literal index is calculated using foldM
         accEnd <- foldM
@@ -702,7 +705,6 @@ genActualParams args ann =
                     out (Ref paramAddr addr)
                     out (Param paramAddr Addr)
                 (AS.Mconst, _) -> do
-                    out (ArrayGen paramAddr (T.getTypeSize paramType))
                     copy paramAddr addr paramType
                     out (Param paramAddr paramTACType)
                 -- Value-result and reference parameters: pass the address

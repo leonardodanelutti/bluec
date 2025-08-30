@@ -1,0 +1,59 @@
+example 27: Passing variable by constant
+
+
+[Pretty-Print of source]
+
+routines
+	main() is
+		var
+			a : Integer := 1;
+			b : Array<Integer ; 3> := [1, 2, 3];
+		do
+			test(a, b);
+			return;
+		end
+	main
+
+	test(const x : Integer, const y : Array<Integer ; 3>) -> Integer is
+		do
+			return (x * y[x]);
+		end
+	test
+
+
+
+[Generated TAC]
+
+$0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
+
+EntryPoint:
+      pushHandler H0
+      pcall main, 0
+L0:   END_PROGRAM
+H0:   popHandler
+      value@0:0 =(addr) $0
+      param(addr) value@0:0
+      pcall writeString@0:0, 1
+      goto L0
+
+main@8:1:
+      a@10:5 =(int) 1
+      arraygen b@11:5, 12
+      b@11:5[0] =(int) 1
+      b@11:5[4] =(int) 2
+      b@11:5[8] =(int) 3
+      x@17:12 =(int) a@10:5
+      param(int) x@17:12
+      y@17:30 = &b@11:5
+      param(addr) y@17:30
+      t0 =(int) fcall test@17:1, 2
+      return
+
+test@17:1:
+      t3 =(addr) *y@17:30
+      t4 =(int) x@17:12
+      t4 =(int) 4 *(int) t4
+      t2 =(int) t3[t4]
+      t1 =(int) x@17:12 *(int) t2
+      return t1
+

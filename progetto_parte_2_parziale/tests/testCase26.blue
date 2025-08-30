@@ -1,3 +1,9 @@
+-- This example should have no errors.
+-- 
+-- What does this example test:
+-- - try / catch statements
+-- - branches of the try/catch return or throw
+
 const
     s: Boolean := true;
     c: Integer := 2;

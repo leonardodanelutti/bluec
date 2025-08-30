@@ -52,23 +52,23 @@ H0:   popHandler
       pcall writeString@0:0, 1
       goto L0
 
-main@6:5:
-      x@8:13 =(bool) True
-L1:   x@8:13 =(bool) ! x@8:13
+main@12:5:
+      x@14:13 =(bool) True
+L1:   x@14:13 =(bool) ! x@14:13
       pushHandler H1
-      ifFalse x@8:13 goto L4
+      ifFalse x@14:13 goto L4
       throw
 L4:   popHandler
-L3:   if x@8:13 goto L2
+L3:   if x@14:13 goto L2
       goto L1
-L2:   ifFalse x@8:13 goto L5
-      x@8:13 =(bool) fcall foo@27:5, 0
+L2:   ifFalse x@14:13 goto L5
+      x@14:13 =(bool) fcall foo@33:5, 0
       goto L6
 L5:   return
 H1:   popHandler
-      x@8:13 =(bool) ! x@8:13
+      x@14:13 =(bool) ! x@14:13
       goto L3
 
-foo@27:5:
+foo@33:5:
       throw
 
