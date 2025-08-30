@@ -501,6 +501,35 @@ tau_1 = tau'_1 and forall i = 2, ..., n  (tau_i = "sup"(tau_(i-1), tau'_i)))
 ("env" ⊢""_E "Array" { "elements" = [e_1, ..., e_n] } : "Array"<tau_n, n>)
 $
 
+\ *`ARRAY EXPRESSION`*
+
+TODO: è giusto?  no
+
+$
+("env" ⊢""_E e : tau' and sup(tau', tau) = tau
+space space space space space space
+forall i = 1, ..., n ("env" ⊢""_E x_i : "Integer" )
+)
+/
+("env" ⊢""_E "ArrayExpr" { "e" = e , "indexes" = [x_1, ..., x_n]} : "Array"<tau, (d_1, ..., d_n)>)
+$
+
+dove $ "Array"<tau, (d_1, ..., d_n)> = "Array"<"Array"<... "Array"<tau, d_n> ..., d_2)>, d_1> $
+
+\ *`IF-THEN-ELSE`*
+
+L'if-then-else prevede che condExp sia di tipo booleano e che il tipo dei due rami coincida o sia compatibile.
+
+  $
+  ("env" ⊢""_E c : tau_c and sup(tau_c, "Bool") = "Bool" 
+  space space space space space space
+  "env" ⊢""_E e_1 : tau_1 
+  space space space space space space
+  "env" ⊢""_E e_2 : tau_2)
+  /
+  ("env" ⊢""_E "IfElse" { "condExp" = "c", "thenExp" = e_1, "elseExp" = e_2 } : sup(tau_1, tau_2))
+  $
+
 === Statements
 
 In `blue` gli statements sono separati dalle dichiarazioni. Quindi non introducono nuovi
@@ -536,7 +565,7 @@ forall i = 1, ..., n "checkArg"("env", e_i, tau_i, "mode"_i))
 ("env" ⊢""_S "StmtRoutCall" { "call" = "RoutineCall" { "routCallName" = id, "args" = [e_1, ..., e_n] } } : nothing)
 $
 
-\ *`STMTRETRUN`*, *`STMTRETRUNEMPTY`* e *`STMTCONTINUE`*
+\ *`STMTRETRUN`*, *`STMTRETRUNEMPTY`*, *`STMTCONTINUE`*, *`STMTBREAK`*
 
 Per la keyword `return` si controlla il tipo (se presente) che ha nell'environment.
 
@@ -553,11 +582,18 @@ space
 ("env" ⊢""_S "StmtReturnEmpty" { } : nothing)
 $
 
-Per la keyword `continue` si controlla che sia presente nell'environment.
+Per le keyword `continue` e `break` si controlla che siano presenti nell'environment.
 
 $
 space
 ("env"("continue") : nothing)
+/
+("env" ⊢""_S "annStmtContinue" { } : nothing)
+$
+
+$
+space
+("env"("break") : nothing)
 /
 ("env" ⊢""_S "annStmtContinue" { } : nothing)
 $
@@ -587,17 +623,15 @@ space space space space space space
 ("env" ⊢""_S "StmtIfElse" { "cond" = e, "bodyT" = [s_"t1", ..., s_"tn"] "bodyT" = [s_"f1", ..., s_"fn"] } : nothing)
 $
 
-\ *`STMTLOOP`* and *`STMTLOOPEXIT`*
+\ *`STMTLOOP`* e *`STMTLOOPEXIT`*
 
-I loop chiamano ricorsivamente l'annotazione del body e delle condizioni di uscita. Viene
-aggiunta all'environment la keyword "continue" per segnalare al modulo di analisi
-semantica statica la possibilità di usare tale keyword.
+I loop chiamano ricorsivamente l'annotazione del body e delle condizioni di uscita. Viene aggiunta all'environment la keyword "continue" e "break" per segnalare al modulo di analisi semantica statica la possibilità di usare tali keyword.
 
 $
 space
-("env" union "\"continue\"" ⊢""_S s_1, ..., s_n_s
+("env" union "\"continue\"" union "\"break\"" ⊢""_S s_1, ..., s_n_s
 space space space space space space
-"env" union "\"continue\"" ⊢""_S e_1, ..., e_n_e)
+"env" union "\"continue\"" union "\"break\"" ⊢""_S e_1, ..., e_n_e)
 /
 ("env" ⊢""_S "StmtLoop" { "body" = [s_1, ..., s_n_s], "exit" = [e_1, ..., e_n_e] } : nothing)
 $
@@ -612,6 +646,47 @@ space space space space space space
 "env" ⊢""_S s_1, ..., s_n)
 /
 ("env" ⊢""_S "LoopExit" { "cons" = e, "body" = [s_1, ..., s_n] } : nothing)
+$
+
+\ *`STMTFOREACH`*
+
+Nei loop `for each` non possono essere utilizzate le keyword `break` e `continue`, a meno che il loop non sia contenuto all'interno di un loop indeterminato. 
+
+$
+space
+(
+"env"  ⊢""_S s_1, ..., s_n_s
+space space space space space space
+"env" ⊢""_E a : "Array"<tau, n>
+space space space space space space
+"env" ⊢""_E id : tau
+)
+/
+("env" ⊢""_S "StmtForEach" { "varIterName" = id, "arrayExp" = a, "body" = [s_1, ..., s_n_s] } : nothing)
+$
+
+\ *`STMTTRYCATCH`* e *`STMTTHROW`*
+
+Nel blocco `try-catch` si annotano ricorsivamente i due blocchi. Non ci sono vincoli particolari sugli statement che possono essere usati nei due blocchi.
+
+$
+space
+(
+  "env"  ⊢""_S a_1, ..., a_n_a
+  space space space space space space
+  "env"  ⊢""_S b_1, ..., b_n_b
+)
+/
+("env" ⊢""_S "StmtTryCatch" { "try" : [a_1, ..., a_n_a], "catch" : [b_1, ..., b_n_b] } : nothing)
+$
+
+Lo statement `throw` può essere usato in qualsiasi contesto.
+
+$
+space
+()
+/
+("env" ⊢""_S "StmtThrow" { } : nothing)
 $
 
 === Dichiarazioni
@@ -665,10 +740,7 @@ $
 
 \ *`FUNCTION`* e *`PROCEDURE`* e *`ROUTBODY`*
 
-Le funzioni e le procedure vengono annotate all stesso modo. In entrambi i casi viene
-aggiunta all'environment la keyword "return" per segnalare al modulo di analisi semantica
-statica la possibilità di usare tale keyword (nel caso delle funzioni alla keyword è
-associato il tipo di ritorno).
+Le funzioni e le procedure vengono annotate all stesso modo. In entrambi i casi viene aggiunta all'environment la keyword `return` per segnalare al modulo di analisi semantica statica la possibilità di usare tale keyword (nel caso delle funzioni alla keyword è associato il tipo di ritorno).
 
 $
 ("env'" ⊢""_D b
