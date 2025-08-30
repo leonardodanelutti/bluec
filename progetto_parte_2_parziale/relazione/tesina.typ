@@ -18,69 +18,6 @@ par(
 }
 #set strike(stroke: 1.5pt + red)
 
-/*
-= Scelte di design (Integrate nella definizione del linguaggio)
-- Le dichiarazioni di variabili contengono obbligatoriamente l'assegnamento (motivazione:
-  vedi pagina 3 punto 2 `implementazione-compilatori-imperativi.pdf`).
-- Le costanti possono avere solo tipi primitivi (visto che le costanti non devono allocare
-  spazio in memoria) (FIXME: questa è ovvia la toglierei).
-- La stringa è considerata un tipo primitivo (vedi pagina 3 punto 3
-  `implementazione-compilatori-imperativi.pdf`).
-- I due tipi di iterazione indeterminata sono derivabili dall'implementazione del loop
-  come previsto dalla sintassi concreta di Blue.
-- `fn` è syntax sugar di `fn()`. (FIXME: non è una nostra scelta, è una cosa di blue)
-
-== Modifiche alla sintassi concreta (Integrate nella definizione del linguaggio)
-- Dalla sintassi concreta sono state tolte classi, pre post condizioni, etc. perchè non
-  coerenti con quanto richiesto (FIXME: questa è ovvia la toglierei).
-- Nelle function call no punto (ovviamente perchè non abbiamo le classi).
-- Blue supporta solo commenti single line (con "--" o "=="). I commenti "==" sono
-  documentazione per classi/funzioni ed è stata tolta dalla nostra implementazione perchè
-  non richiesti. Inoltre sono stati aggiunti i commenti multi-line "/*"..."*/".
-- Aggiunta keyword `return` nelle funzioni (al posto di avere i nomi delle variabili di
-  ritorno che avrebbero richiesto di avere dichiarazioni senza assegnamento).
-// TODO: queste sono gia dopo, ma anche quelle sopra. Cosa serve questo paragrafo?
-- Le funzioni tornano solo un tipo
-- aggiunti i tipi `val`, `valres` e `ref` per i parametri delle funzioni.
-- La keyword `routines` (che in Blue viene usata solo per la dichiarazione di routines nelle classi)
-  viene usata anche all'interno del corpo delle funzioni in modo che ci possano essere
-  dichiarazioni di routine annidate
-// TODO: dire che per routines intendiamo sia funzioni che procedure, come in Blue
-
-== Risoluzione conflitti (Alcuni conflitti sono già stati risolti nella definizione del linguaggio; il conflitto 105 è scritto sotto)
-- Il conflitto state 105 LExp vs RExp non è un problema. Essendo le LExp sottoinsieme
-  delle RExp basta scegliere sempre la Shift.
-// TODO: MODIFICARE: anche in quelli più interni
-- Le dichiarazioni di funzioni, nell'ambiente più esterno, devono essere precedute dalla
-  keyword `routines` similmente a quanto succede in Blue per le dichiarazioni delle
-  routines nelle classi. Per evitare ambiguità tipo:
-  ```
-
-  var
-    a: Integer := b
-  main ...
-  ```
-  dove main potrebbe essere sia un nome di funzione che un nome di una variabile.
-- Aggiunto `;` alla fine degli Statement (a parte If e Loop) e delle dichiarazioni di
-  costanti e variabili per evitare ambiguità tipo:
-  ```
-  var
-    a: Integer := b
-  ( ...
-  ```
-  dove con un lookahead di 1 non è chiaro se "b (" è l'inizio di una chiamata di funzione
-  oppure "(" è l'inizio di una LExp.
-  Oppure ambiguità tipo:
-  ```
-  var
-    a: Integer := b
-  * ...
-  ```
-  dove "\*" potrebbe essere sia un deref che una moltiplicazione.
-  Per lo stesso motivo è stato aggiunto un ";" anche nell'exit dei loop.
-
-*/
-
 #colorbox(
     title: "Versioni",
     color: "gray",
@@ -265,6 +202,7 @@ Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:\ \
     image("img/types.png", width: 100%, ),
     caption: "Gerarchia dei tipi.")<sup>
 
+Si osserva che la compatibilità tra Int e Bool permette di utilizzare costrutti come `if (1) then _ else _`. Questa scelta riprende la convenzione adottata in linguaggi come C, per cui valori interi diversi da zero vengono interpretati come veri, mentre lo zero come falso e ha lo scopo di rendere la scrittura di codice più compatta.
 == Regole formali per il type system
 
 Per definire il tipo di ogni nodo dell'albero di sintassi astratta, di seguito sono
@@ -695,8 +633,7 @@ $
 
 Un blocco `ProgramDecl` introduce nuove dichiarazioni di costanti, variabili e routine.
 I binding delle routine sono visibili in tutto il blocco, e segnalano errore in presenza
-di conflitti ($union.plus$). La dichiarazione di costanti e variabile procede in ordine
-mascherando eventuali conflitti ($union$). L'ordine di merge tra simboli (costanti e
+di conflitti ($union.plus$). Constanti e variabili sono visibili dal punto della dichiarazione fino alla fine del blocco. La dichiarazione procede in ordine mascherando eventuali conflitti ($union$). L'ordine di merge tra simboli (costanti e variabili) e routine non è importante in quanto namespace separati. L'ordine di merge tra simboli (costanti e
 variabili) e routine non è importante in quanto namespace separati.
 
 $
