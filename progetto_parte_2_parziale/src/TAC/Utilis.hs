@@ -106,3 +106,11 @@ arrayRelNames relOp ty = let funName = arrayRelName relOp ty in (
         PName $ ProgramName (funName ++ "val2") Lex.defaultPosn,
         PName $ ProgramName (funName ++ "Size") Lex.defaultPosn
     )
+
+-- Find all identifiers in a left expression
+findIdentLExpr :: AS.Exp SS.Ann -> [AS.Ident]
+findIdentLExpr exp = case exp of
+    AS.ExpIdent name _ _ -> [name]
+    AS.Deref expr _ _ -> findIdentLExpr expr
+    AS.ArrayIndex expr idx _ _ -> findIdentLExpr expr ++ findIdentLExpr idx
+    _ -> error "genLExpr: Invalid left-hand side expression (parser should prevent this)"

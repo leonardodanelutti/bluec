@@ -60,48 +60,58 @@ genDeclarations (AS.ProgramDecl _ vars routines _) = do
     mapM_ genRoutine routines
 
 genVar :: AS.VarA SS.Ann -> StateMonad ()
-genVar (AS.VarAss identifiers _ (firstValue:remainingValues) _ declarationPos) = do
-    -- Process identifiers to handle circular dependencies in assignments
-    -- For example: x, y := y, x requires temporary variables
-    (_, processedValues) <- foldM processIdentifierDependencies 
-                                  (remainingValues, [firstValue]) 
-                                  identifiers
+genVar (AS.VarAss identifiers _ values _ declarationPos) = do
+    processedValues <- createTemps (map (: []) identifiers) values declarationPos
     -- Generate assignments for each identifier-value pair
     mapM_ generateSingleAssignment (zip identifiers processedValues)
+
+    where
+        generateSingleAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
+        generateSingleAssignment (identifier, expression) = do
+            let variableName = PName $ ProgramName (AS.identName identifier) declarationPos
+            genExprAddr expression variableName
+
+createTemps :: [[AS.Ident]] -> [AS.Exp SS.Ann] -> Lex.Posn -> StateMonad [AS.Exp SS.Ann]
+createTemps identifiers (firstValue:remainingValues) declarationPos = do
+    -- Process identifiers to handle circular dependencies in assignments
+    -- For example: x, y := y, x requires temporary variables
+    (_, processedValues) <- foldM processIdentifierDependencies
+                                  (remainingValues, [firstValue])
+                                  identifiers
+    return processedValues
+    
     where
     -- Process each identifier to detect and resolve circular dependencies, returns updated 
     -- lists of remaining expressions to check and processed values
-    processIdentifierDependencies :: ([AS.Exp SS.Ann], [AS.Exp SS.Ann]) 
-                                  -> AS.Ident 
+    processIdentifierDependencies :: ([AS.Exp SS.Ann], [AS.Exp SS.Ann])
+                                  -> [AS.Ident]
                                   -> StateMonad ([AS.Exp SS.Ann], [AS.Exp SS.Ann])
-    processIdentifierDependencies (expressionsToCheck, processedValues@(currentValue:otherValues)) currentIdent = do
+    processIdentifierDependencies (expressionsToCheck, processedValues@(currentValue:otherValues)) currentIdents = do
         -- Check each remaining expression for dependencies on the current identifier
-        updatedExpressions <- mapM (handleDependency currentIdent currentValue) expressionsToCheck
+        updatedExpressions <- mapM (handleDependency currentIdents (SS.expType $ AS.expAnnot currentValue)) expressionsToCheck
 
         return (tail updatedExpressions, processedValues ++ [head updatedExpressions])
-    
-    handleDependency :: AS.Ident -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad (AS.Exp SS.Ann)
-    handleDependency currentIdent referenceValue expression = 
+
+    handleDependency :: [AS.Ident] -> T.Type -> AS.Exp SS.Ann -> StateMonad (AS.Exp SS.Ann)
+    handleDependency currentIdents ty expression = do
+        foldM (\exp ident -> handleDependency' ident ty exp) expression currentIdents
+
+    handleDependency':: AS.Ident -> T.Type -> AS.Exp SS.Ann -> StateMonad (AS.Exp SS.Ann)
+    handleDependency' currentIdent ty expression =
         if containsIdent currentIdent expression then do
             -- Create a temporary identifier with "Old'" suffix to store current value
             let temporaryIdent = AS.Ident (AS.identName currentIdent ++ "Old'") declarationPos
                 temporaryAddr = PName $ ProgramName (AS.identName temporaryIdent) declarationPos
                 originalAddr = PName $ ProgramName (AS.identName currentIdent) declarationPos
-                valueType = castTypeToTACType $ SS.expType $ AS.expAnnot referenceValue
-            
+                valueType = castTypeToTACType ty
+
             -- Generate TAC instruction to copy current value to temporary
             out (NOp temporaryAddr originalAddr valueType)
-            
+
             -- Replace all occurrences of the identifier in the expression
             return $ replaceIdent currentIdent temporaryIdent expression
         else
             return expression
-
-    generateSingleAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
-    generateSingleAssignment (identifier, expression) = do
-        let variableName = PName $ ProgramName (AS.identName identifier) declarationPos
-        genExprAddr expression variableName
-
 
 genExpr :: AS.Exp SS.Ann -> Maybe Address -> StateMonad Address
 genExpr exp addrIn = do
@@ -457,10 +467,10 @@ genArrayComp relOp innerType = do
 
     -- Start the main comparison loop
     attachToNext labelLoop
-    
+
     -- Check if we reached the end of the array first
     out (RelJump (RelGe TInteger) idx size (if relOp `elem` [AS.Eq, AS.Le, AS.Ge] then labelTrue else labelFalse))
-    
+
     out (IndexGet val1 arg1 idx innerTypeTAC)
     out (IndexGet val2 arg2 idx innerTypeTAC)
 
@@ -749,10 +759,9 @@ genStmt stmt post = do
     if SS.unreachable $ AS.annot stmt then
         return ()
     else case stmt of
-        AS.StmtAss left right _ _ ->
-            -- Evaluate the first left expression, then the first right expression
-            -- then the seconds left expression and so on
-            mapM_ genAssign (zip left right)
+        AS.StmtAss left right _ declPos -> do
+            newRight <- createTemps (map findIdentLExpr left) right declPos
+            mapM_ genAssign (zip left newRight)
         AS.StmtRoutCall call ann -> case SS.returnType ann of
             Just returnType -> do -- Function call
                 k <- newTmp
