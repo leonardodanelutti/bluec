@@ -147,7 +147,7 @@ annStmtRoutCall env AS.StmtRoutCall {
     -- Cast the arguments to the expected types.
     (castedArgs, numberErr) = case params of
         Nothing -> (map (SSE.annExp Nothing (doNotRequireLExp env)) args, []) -- No numberErr because the identifier was not found.
-        Just innerParams | length innerParams /= length args -> (map (SSE.annExp Nothing (doNotRequireLExp env)) args, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."])
+        Just innerParams | length innerParams /= length args -> (map (SSE.annExp Nothing (doNotRequireLExp env)) args, [E.err pos $ "Wrong number of arguments in routine call: " ++ PP.routineCallPrinter 0 rc ++ ". Expected " ++ show (length params) ++ " but got " ++ show (length args) ++ "."])
         Just innerParams -> (SSE.annAndCastRoutArgs env args innerParams, [])
     -- Argument errors.
     argErrs = T.getErrs $ map (expType . AS.expAnnot) castedArgs
