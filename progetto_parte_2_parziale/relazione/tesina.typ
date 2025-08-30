@@ -823,7 +823,7 @@ array: Array<Array<Real; 3>; 2> := [j*2 + i : i, j];
 ```
 è zucchero sintattico per:
 ```blue
-array: Array<Array<Real; 5>; 2> := [[3.0, 5.0, 7.0], [4.0, 6.0, 8.0]];
+array: Array<Array<Real; 3>; 2> := [[0.0, 2.0, 4.0], [1.0, 3.0, 5.0]];
 ```
 Per poter determinare la grandezza (e più in generale il tipo) di un array definito da
 un'array expression è necessario conoscerne il "tipo atteso". Quando è noto è propagato

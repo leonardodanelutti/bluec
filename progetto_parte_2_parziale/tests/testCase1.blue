@@ -5,12 +5,14 @@
 -- - assignments to constants;
 -- - wrong function calls;
 -- - missing return statements;
--- - comments.
+-- - comments;
+-- - array out of bounds.
 
 const
     a, d: Integer := 0, 1;
 var
     _b:Real := 1.0;
+    array: Array<Array<Real; 3>; 2> := [j*2 + i : i, j];
 
 /***
 MAIN/* FUNCTION
@@ -36,6 +38,7 @@ main
 __util__(ref b: Boolean) -> String is
     const
         const1: String:="Hello world";
+        const2: Real := array[1][4];
 do
         if b then return const1;
         else

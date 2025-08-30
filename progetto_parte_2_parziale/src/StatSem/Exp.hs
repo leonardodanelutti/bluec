@@ -507,25 +507,33 @@ annExpArrayIndex env AS.ArrayIndex {
 } = AS.ArrayIndex {
     AS.e = annE,
     AS.index = castedIndex,
-    AS.expAnnot = ann,
+    AS.expAnnot = ann',
     AS.expPos = pos
 } where
     annE = annExp Nothing (requireLExp env) e -- The expected type cannot be propagated because the size of the array is not known.
     annIndex = annExp (Just T.TInteger) (doNotRequireLExp env) index
     castedIndex = cast (doNotRequireLExp env) annIndex T.TInteger
+    castedIndexPos =  AS.expPos castedIndex
+    -- Index CTValue.
+    indexCTVal = getCTValue $ AS.expAnnot castedIndex
     typeE = expType $ AS.expAnnot annE
-    ty = case typeE of
-        T.TArray { T.elementsType = ty } -> ty
-        T.TError {} -> typeE
-        _ -> T.TError {
+    (len, ty) = case typeE of
+        T.TArray { T.size = s, T.elementsType = ty } -> (Just s, ty)
+        T.TError {} -> (Nothing, typeE)
+        _ -> (Nothing, T.TError {
             T.msgs = [E.err pos "Cannot index expression of type " ++ show typeE ++ "."]
-        }
+        })
     ann = ExpAnn {
         expType = ty,
         ctVal = Nothing, -- Constants cannot be arrays.
         -- Dereferencing a read-only reference yields a read-only value.
         readOnly = readOnly $ AS.expAnnot annE
     }
+    -- If the index is known at compile-time, check that it is within bounds.
+    ann' = case (indexCTVal, len) of
+        (Just (CTVInteger i), Just l) | i < 0 || i >= l ->
+            addErr ann $ E.err castedIndexPos $ "Array index " ++ show i ++ " is out of bounds."
+        _ -> ann
 annExpArrayIndex _ _ = error "Unreachable: `annExpArrayIndex` called with non-`ArrayIndex` expression."
 
 -- Array.
@@ -624,7 +632,7 @@ annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.Array
     AS.expPos = pos
 } where
     -- Bind the index.
-    bindings = map (\x -> [(index, Const LG.defaultPosn (AS.LitInt x LG.defaultPosn))]) [1..s]
+    bindings = map (\x -> [(index, Const LG.defaultPosn (AS.LitInt x LG.defaultPosn))]) [0..s-1]
     bindingEnvs = map envFromSymbolBindings bindings
     envs = map (fst . mergeEnv env) bindingEnvs -- The error can be ignored because there are no new routine bindings.
     -- Annotate e.
@@ -656,7 +664,7 @@ annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.Array
     AS.expPos = pos
 } where
     -- Bind the index.
-    bindings = map (\x -> [(index, Const LG.defaultPosn (AS.LitInt x LG.defaultPosn))]) [1..s]
+    bindings = map (\x -> [(index, Const LG.defaultPosn (AS.LitInt x LG.defaultPosn))]) [0..s-1]
     bindingEnvs = map envFromSymbolBindings bindings
     envs = map (fst . mergeEnv env) bindingEnvs -- The error can be ignored because there are no new routine bindings.
     -- Create an ArrayExpr for each environment.

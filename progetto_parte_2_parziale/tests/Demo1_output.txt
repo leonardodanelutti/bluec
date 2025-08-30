@@ -2,8 +2,9 @@ example 1: generic test
 
 
 Static Semantics Analysis Failed:
-tests/testCase1.blue:20:21-20:22: ERROR: Unbound identifier: c.
-tests/testCase1.blue:25:13-25:14: ERROR: Unbound identifier: b.
-tests/testCase1.blue:27:23-27:24: ERROR: Left-hand side expression required, but found constant.
-tests/testCase1.blue:32:9-32:19: ERROR: Wrong number of arguments in routine call: __util__(). Expected 1 but got 0.
-tests/testCase1.blue:18:10-33:5: ERROR: The procedure "main" does not contain a return statement for every flow of control.
+tests/testCase1.blue:22:21-22:22: ERROR: Unbound identifier: c.
+tests/testCase1.blue:27:13-27:14: ERROR: Unbound identifier: b.
+tests/testCase1.blue:29:23-29:24: ERROR: Left-hand side expression required, but found constant.
+tests/testCase1.blue:34:9-34:19: ERROR: Wrong number of arguments in routine call: __util__(). Expected 1 but got 0.
+tests/testCase1.blue:20:10-35:5: ERROR: The procedure "main" does not contain a return statement for every flow of control.
+tests/testCase1.blue:41:34-41:35: ERROR: Array index 4 is out of bounds.
