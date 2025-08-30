@@ -127,7 +127,7 @@ Quando si invoca una funzione è possibile specificare la modalità di passaggio
 Infine, poiché il linguaggio non prevede il concetto di classi, le funzioni non possono essere invocate con la notazione a punto, come `.function()`.
 
 == Gestione delle eccezioni
-Il linguaggio supporta la gestione delle eccezioni tramite le parole chiave `try`, `catch` e `throw`. Le eccezioni possono essere lanciate utilizzando `throw` e catturate con i blocchi `try-catch`.
+Il linguaggio supporta la gestione delle eccezioni tramite le parole chiave `try`, `catch` e `throw`. Le eccezioni possono essere lanciate utilizzando `throw error` e catturate con i blocchi `try-catch`.
 Si osserva che, in questo contesto, non vengono distinte possibili categorie di errore specifiche.
 
 ```blue
@@ -947,10 +947,3 @@ Il pretty printer del TAC utilizza la seguente notazione:
 - Le copie locali dei parametri passati per `valres` hanno il nome del parametro seguito da un apice `param'`;
 - Anche le funzioni di relazione tra stringhe e array presentano un apice alla fine del nome `rel'`;
 - Le variabili che puntano a dati statici sono precedute da `$`.
-
-// Cose che potrebbe chiedere:
-// - Switch
-// - break
-// - loop determinato
-// - array checked
-// - try/catch
