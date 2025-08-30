@@ -9,9 +9,11 @@ import qualified TAC.Printer()
 
 import TAC.Def
 import TAC.State
+import TAC.Utilis
 
 import Control.Monad (when, unless, foldM, void)
 import Data.Maybe
+import Data.List (tails)
 
 -- Entrypoint for TAC generation
 -- Generate the TAC code form the state
@@ -58,15 +60,48 @@ genDeclarations (AS.ProgramDecl _ vars routines _) = do
     mapM_ genRoutine routines
 
 genVar :: AS.VarA SS.Ann -> StateMonad ()
-genVar (AS.VarAss idents _ values _ pos) =
-    -- Evaluate the first left expression, then the first right expression
-    -- then the seconds left expression and so on
-    mapM_ genAssignment (zip idents values)
+genVar (AS.VarAss identifiers _ (firstValue:remainingValues) _ declarationPos) = do
+    -- Process identifiers to handle circular dependencies in assignments
+    -- For example: x, y := y, x requires temporary variables
+    (_, processedValues) <- foldM processIdentifierDependencies 
+                                  (remainingValues, [firstValue]) 
+                                  identifiers
+    -- Generate assignments for each identifier-value pair
+    mapM_ generateSingleAssignment (zip identifiers processedValues)
     where
-    genAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
-    genAssignment (ident, exp) = do
-        let name = PName $ ProgramName (AS.identName ident) pos
-        genExprAddr exp name
+    -- Process each identifier to detect and resolve circular dependencies, returns updated 
+    -- lists of remaining expressions to check and processed values
+    processIdentifierDependencies :: ([AS.Exp SS.Ann], [AS.Exp SS.Ann]) 
+                                  -> AS.Ident 
+                                  -> StateMonad ([AS.Exp SS.Ann], [AS.Exp SS.Ann])
+    processIdentifierDependencies (expressionsToCheck, processedValues@(currentValue:otherValues)) currentIdent = do
+        -- Check each remaining expression for dependencies on the current identifier
+        updatedExpressions <- mapM (handleDependency currentIdent currentValue) expressionsToCheck
+
+        return (tail updatedExpressions, processedValues ++ [head updatedExpressions])
+    
+    handleDependency :: AS.Ident -> AS.Exp SS.Ann -> AS.Exp SS.Ann -> StateMonad (AS.Exp SS.Ann)
+    handleDependency currentIdent referenceValue expression = 
+        if containsIdent currentIdent expression then do
+            -- Create a temporary identifier with "Old'" suffix to store current value
+            let temporaryIdent = AS.Ident (AS.identName currentIdent ++ "Old'") declarationPos
+                temporaryAddr = PName $ ProgramName (AS.identName temporaryIdent) declarationPos
+                originalAddr = PName $ ProgramName (AS.identName currentIdent) declarationPos
+                valueType = castTypeToTACType $ SS.expType $ AS.expAnnot referenceValue
+            
+            -- Generate TAC instruction to copy current value to temporary
+            out (NOp temporaryAddr originalAddr valueType)
+            
+            -- Replace all occurrences of the identifier in the expression
+            return $ replaceIdent currentIdent temporaryIdent expression
+        else
+            return expression
+
+    generateSingleAssignment :: (AS.Ident, AS.Exp SS.Ann) -> StateMonad ()
+    generateSingleAssignment (identifier, expression) = do
+        let variableName = PName $ ProgramName (AS.identName identifier) declarationPos
+        genExprAddr expression variableName
+
 
 genExpr :: AS.Exp SS.Ann -> Maybe Address -> StateMonad Address
 genExpr exp addrIn = do
@@ -466,38 +501,6 @@ genArrayComp relOp innerType = do
         out (Return (Lit $ LitBool False))
 
     endRoutine
-
-relName :: AS.RelOp -> String
-relName relOp = case relOp of
-    AS.Eq -> "Eq"
-    AS.Neq -> "Neq"
-    AS.Lt -> "Lt"
-    AS.Le -> "Le"
-    AS.Gt -> "Gt"
-    AS.Ge -> "Ge"
-
-stringRelName :: AS.RelOp -> String
-stringRelName relOp = "string" ++ relName relOp ++ "'"
-
--- Names for string comparison functions and the respective parameters
-stringRelNames :: AS.RelOp -> (Label, Address, Address)
-stringRelNames relOp = let funName = stringRelName relOp in (
-        FunctionUnique funName,
-        PName $ ProgramName (funName ++ "val1") Lex.defaultPosn,
-        PName $ ProgramName (funName ++ "val2") Lex.defaultPosn
-    )
-
-arrayRelName :: AS.RelOp -> T.Type -> String
-arrayRelName relOp ty = "array" ++ relName relOp ++ show ty ++ "'"
-
--- Names for array comparison functions and the respective parameters
-arrayRelNames :: AS.RelOp -> T.Type -> (Label, Address, Address, Address)
-arrayRelNames relOp ty = let funName = arrayRelName relOp ty in (
-        FunctionUnique funName,
-        PName $ ProgramName (funName ++ "val1") Lex.defaultPosn,
-        PName $ ProgramName (funName ++ "val2") Lex.defaultPosn,
-        PName $ ProgramName (funName ++ "Size") Lex.defaultPosn
-    )
 
 
 -- GENERATION OF ARRAY INDEXING
