@@ -327,13 +327,12 @@ Statement
   }
   | If 'end' 'if'                  { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
   | Loop 'end' 'loop'              { $1 { A.pos = (mergePos (A.pos $1) (tokenPosn $3)) } }
-  | 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' 'for' { A.StmtForEach {
+  | 'for' BlueIdent 'in' RExp 'do' ListStatement 'end' 'for' { A.StmtForEach {
       A.varIterName = $2,
-      A.varIterType = $4,
-      A.arrayExp = $6,
-      A.body = $8,
+      A.arrayExp = $4,
+      A.body = $6,
       A.annot = (),
-      A.pos = (mergePos (tokenPosn $1) (tokenPosn $10))
+      A.pos = (mergePos (tokenPosn $1) (tokenPosn $8))
     }
   }
   | 'try' ListStatement 'catch' ListStatement 'end' 'try' { A.StmtTryCatch {

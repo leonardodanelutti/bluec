@@ -68,7 +68,7 @@ Grammar
 	Statement -> 'break' ';'                           (58)
 	Statement -> If 'end' 'if'                         (59)
 	Statement -> Loop 'end' 'loop'                     (60)
-	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' 'for'   (61)
+	Statement -> 'for' BlueIdent 'in' RExp 'do' ListStatement 'end' 'for'   (61)
 	Statement -> 'try' ListStatement 'catch' ListStatement 'end' 'try'   (62)
 	Statement -> 'throw' 'error' ';'                   (63)
 	ListRExp ->                                        (64)
@@ -395,6 +395,7 @@ State 10
 	'do'           reduce using rule 5
 	'else'         reduce using rule 5
 	'end'          reduce using rule 5
+	'in'           reduce using rule 5
 	'is'           reduce using rule 5
 	'mod'          reduce using rule 5
 	'or'           reduce using rule 5
@@ -534,7 +535,6 @@ State 23
 	','            reduce using rule 26
 	':='           reduce using rule 26
 	';'            reduce using rule 26
-	'in'           reduce using rule 26
 	'is'           reduce using rule 26
 
 
@@ -546,7 +546,6 @@ State 24
 	','            reduce using rule 30
 	':='           reduce using rule 30
 	';'            reduce using rule 30
-	'in'           reduce using rule 30
 	'is'           reduce using rule 30
 
 
@@ -558,7 +557,6 @@ State 25
 	','            reduce using rule 27
 	':='           reduce using rule 27
 	';'            reduce using rule 27
-	'in'           reduce using rule 27
 	'is'           reduce using rule 27
 
 
@@ -570,7 +568,6 @@ State 26
 	','            reduce using rule 28
 	':='           reduce using rule 28
 	';'            reduce using rule 28
-	'in'           reduce using rule 28
 	'is'           reduce using rule 28
 
 
@@ -582,7 +579,6 @@ State 27
 	','            reduce using rule 29
 	':='           reduce using rule 29
 	';'            reduce using rule 29
-	'in'           reduce using rule 29
 	'is'           reduce using rule 29
 
 
@@ -698,7 +694,6 @@ State 37
 	','            reduce using rule 33
 	':='           reduce using rule 33
 	';'            reduce using rule 33
-	'in'           reduce using rule 33
 	'is'           reduce using rule 33
 
 
@@ -710,7 +705,6 @@ State 38
 	','            reduce using rule 34
 	':='           reduce using rule 34
 	';'            reduce using rule 34
-	'in'           reduce using rule 34
 	'is'           reduce using rule 34
 
 
@@ -1779,7 +1773,6 @@ State 90
 	','            reduce using rule 32
 	':='           reduce using rule 32
 	';'            reduce using rule 32
-	'in'           reduce using rule 32
 	'is'           reduce using rule 32
 
 
@@ -3429,7 +3422,7 @@ State 162
 
 State 163
 
-	Statement -> 'for' . BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' 'for'    (rule 61)
+	Statement -> 'for' . BlueIdent 'in' RExp 'do' ListStatement 'end' 'for'    (rule 61)
 
 	L_BlueIdent    shift, and enter state 10
 
@@ -3737,9 +3730,9 @@ State 184
 
 State 185
 
-	Statement -> 'for' BlueIdent . ':' Type 'in' RExp 'do' ListStatement 'end' 'for'    (rule 61)
+	Statement -> 'for' BlueIdent . 'in' RExp 'do' ListStatement 'end' 'for'    (rule 61)
 
-	':'            shift, and enter state 208
+	'in'           shift, and enter state 208
 
 
 State 186
@@ -4151,19 +4144,40 @@ State 207
 
 State 208
 
-	Statement -> 'for' BlueIdent ':' . Type 'in' RExp 'do' ListStatement 'end' 'for'    (rule 61)
+	Statement -> 'for' BlueIdent 'in' . RExp 'do' ListStatement 'end' 'for'    (rule 61)
 
-	'&'            shift, and enter state 40
-	'Array'        shift, and enter state 41
-	'Boolean'      shift, and enter state 23
-	'Char'         shift, and enter state 24
-	'Integer'      shift, and enter state 25
-	'Real'         shift, and enter state 26
-	'String'       shift, and enter state 27
+	'&'            shift, and enter state 67
+	'('            shift, and enter state 68
+	'*'            shift, and enter state 69
+	'-'            shift, and enter state 70
+	'['            shift, and enter state 71
+	'false'        shift, and enter state 72
+	'if'           shift, and enter state 73
+	'not'          shift, and enter state 74
+	'true'         shift, and enter state 75
+	L_charac       shift, and enter state 2
+	L_doubl        shift, and enter state 76
+	L_integ        shift, and enter state 77
+	L_quoted       shift, and enter state 78
+	L_BlueIdent    shift, and enter state 10
 
-	PType          goto state 37
-	CType          goto state 38
-	Type           goto state 223
+	Char           goto state 48
+	Double         goto state 49
+	Integer        goto state 50
+	String         goto state 51
+	BlueIdent      goto state 52
+	RoutCall       goto state 53
+	RExp           goto state 223
+	RExp1          goto state 57
+	RExp2          goto state 58
+	RExp3          goto state 59
+	RExp4          goto state 60
+	RExp5          goto state 61
+	RExp6          goto state 62
+	RExp7          goto state 63
+	Bool           goto state 64
+	LExp           goto state 65
+	LExp1          goto state 66
 
 State 209
 
@@ -4305,7 +4319,6 @@ State 217
 	','            reduce using rule 31
 	':='           reduce using rule 31
 	';'            reduce using rule 31
-	'in'           reduce using rule 31
 	'is'           reduce using rule 31
 
 
@@ -4380,9 +4393,11 @@ State 222
 
 State 223
 
-	Statement -> 'for' BlueIdent ':' Type . 'in' RExp 'do' ListStatement 'end' 'for'    (rule 61)
+	Statement -> 'for' BlueIdent 'in' RExp . 'do' ListStatement 'end' 'for'    (rule 61)
+	RExp -> RExp . 'or' RExp1                           (rule 81)
 
-	'in'           shift, and enter state 229
+	'do'           shift, and enter state 229
+	'or'           shift, and enter state 125
 
 
 State 224
@@ -4454,39 +4469,29 @@ State 228
 
 State 229
 
-	Statement -> 'for' BlueIdent ':' Type 'in' . RExp 'do' ListStatement 'end' 'for'    (rule 61)
+	Statement -> 'for' BlueIdent 'in' RExp 'do' . ListStatement 'end' 'for'    (rule 61)
 
-	'&'            shift, and enter state 67
-	'('            shift, and enter state 68
+	'('            shift, and enter state 106
 	'*'            shift, and enter state 69
-	'-'            shift, and enter state 70
-	'['            shift, and enter state 71
-	'false'        shift, and enter state 72
-	'if'           shift, and enter state 73
-	'not'          shift, and enter state 74
-	'true'         shift, and enter state 75
-	L_charac       shift, and enter state 2
-	L_doubl        shift, and enter state 76
-	L_integ        shift, and enter state 77
-	L_quoted       shift, and enter state 78
+	':='           reduce using rule 67
+	'break'        shift, and enter state 161
+	'continue'     shift, and enter state 162
+	'end'          reduce using rule 44
+	'for'          shift, and enter state 163
+	'if'           shift, and enter state 164
+	'loop'         shift, and enter state 165
+	'return'       shift, and enter state 166
+	'throw'        shift, and enter state 167
+	'try'          shift, and enter state 168
 	L_BlueIdent    shift, and enter state 10
 
-	Char           goto state 48
-	Double         goto state 49
-	Integer        goto state 50
-	String         goto state 51
-	BlueIdent      goto state 52
-	RoutCall       goto state 53
-	RExp           goto state 236
-	RExp1          goto state 57
-	RExp2          goto state 58
-	RExp3          goto state 59
-	RExp4          goto state 60
-	RExp5          goto state 61
-	RExp6          goto state 62
-	RExp7          goto state 63
-	Bool           goto state 64
-	LExp           goto state 65
+	BlueIdent      goto state 154
+	ListStatement  goto state 236
+	Statement      goto state 156
+	ListLExp       goto state 157
+	If             goto state 158
+	Loop           goto state 159
+	LExp           goto state 160
 	LExp1          goto state 66
 
 State 230
@@ -4591,11 +4596,9 @@ State 235
 
 State 236
 
-	Statement -> 'for' BlueIdent ':' Type 'in' RExp . 'do' ListStatement 'end' 'for'    (rule 61)
-	RExp -> RExp . 'or' RExp1                           (rule 81)
+	Statement -> 'for' BlueIdent 'in' RExp 'do' ListStatement . 'end' 'for'    (rule 61)
 
-	'do'           shift, and enter state 238
-	'or'           shift, and enter state 125
+	'end'          shift, and enter state 238
 
 
 State 237
@@ -4616,30 +4619,10 @@ State 237
 
 State 238
 
-	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' . ListStatement 'end' 'for'    (rule 61)
+	Statement -> 'for' BlueIdent 'in' RExp 'do' ListStatement 'end' . 'for'    (rule 61)
 
-	'('            shift, and enter state 106
-	'*'            shift, and enter state 69
-	':='           reduce using rule 67
-	'break'        shift, and enter state 161
-	'continue'     shift, and enter state 162
-	'end'          reduce using rule 44
-	'for'          shift, and enter state 163
-	'if'           shift, and enter state 164
-	'loop'         shift, and enter state 165
-	'return'       shift, and enter state 166
-	'throw'        shift, and enter state 167
-	'try'          shift, and enter state 168
-	L_BlueIdent    shift, and enter state 10
+	'for'          shift, and enter state 240
 
-	BlueIdent      goto state 154
-	ListStatement  goto state 240
-	Statement      goto state 156
-	ListLExp       goto state 157
-	If             goto state 158
-	Loop           goto state 159
-	LExp           goto state 160
-	LExp1          goto state 66
 
 State 239
 
@@ -4651,21 +4634,7 @@ State 239
 
 State 240
 
-	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement . 'end' 'for'    (rule 61)
-
-	'end'          shift, and enter state 241
-
-
-State 241
-
-	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' . 'for'    (rule 61)
-
-	'for'          shift, and enter state 242
-
-
-State 242
-
-	Statement -> 'for' BlueIdent ':' Type 'in' RExp 'do' ListStatement 'end' 'for' .    (rule 61)
+	Statement -> 'for' BlueIdent 'in' RExp 'do' ListStatement 'end' 'for' .    (rule 61)
 
 	'('            reduce using rule 61
 	'*'            reduce using rule 61
@@ -4691,4 +4660,4 @@ Grammar Totals
 Number of rules: 122
 Number of terminals: 63
 Number of non-terminals: 48
-Number of states: 243
+Number of states: 241

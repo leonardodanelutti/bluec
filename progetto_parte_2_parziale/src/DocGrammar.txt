@@ -122,7 +122,7 @@ All other symbols are terminals.
   |  |  **|**  | ``break`` ``;``
   |  |  **|**  | //If// ``end`` ``if``
   |  |  **|**  | //Loop// ``end`` ``loop``
-  |  |  **|**  | ``for`` //BlueIdent// ``:`` //Type// ``in`` //RExp// ``do`` //[Statement]// ``end`` ``for``
+  |  |  **|**  | ``for`` //BlueIdent// ``in`` //RExp// ``do`` //[Statement]// ``end`` ``for``
   |  |  **|**  | ``try`` //[Statement]// ``catch`` //[Statement]// ``end`` ``try``
   |  |  **|**  | ``throw`` ``error`` ``;``
   | //[RExp]// | -> | **eps**
