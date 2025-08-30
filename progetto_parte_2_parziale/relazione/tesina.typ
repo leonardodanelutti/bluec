@@ -755,16 +755,18 @@ La definizione di routine parziali è vietata dal modulo di analisi semantica st
 particolare è garantito che ogni flusso di esecuzione del `body` delle routine esegua
 indefinitivamente o incontri un `return _`.
 
-A tal fine è presente un campo `alwaysReturn :: Bool` nelle annotazioni degli statement.
-Questo campo prende significato solo per statement annidati dentro funzioni, e, come
-suggerisce il nome:
-- è vero se ritorna per ogni esecuzione dello statement. Ad esempio:
+#text(blue)[
+A tal fine è presente un campo `unreachable :: Bool` nelle annotazioni degli statement.
+Questo campo, come suggerisce il nome:
+- è vero se lo statement è irraggiungibile. Ad esempio è vero per l'assegnamento `a := 1`
+  quando inserito nel seguente constesto:
   ```
   if true then
     return 1;
   end if
+  a := 1;
   ```
-- è falso altrimenti. Ad esempio se `a` è una variabile booleana:
+- è falso altrimenti. Ad esempio se `a` è una *variabile* booleana:
   ```
   if a then
     return 1;
@@ -774,22 +776,23 @@ Chiaramente il controllo è conservativo: nell'esempio sopra se `a` assume sempr
 `true` per qualunque esecuzione (ma è una variabile), non è possibile saperlo durante
 l'analisi semantica statica.
 
-L'annotazione di `alwaysReturn` procede dalle foglie fino alla radice dell'AST:
-- le uniche foglie con `alwaysReturn = true` sono le keyword `return _` e `continue` (
-  quest'ultima perchè è permesso ciclare all'infinito senza ritornare);
-- i nodi interni dell'AST sono annotati in base a come controllano il flusso di
-  esecuzione. // TODO: magari è da scrivere nelle regole del type system
+L'annotazione di `unreachable` procede dalla radice fino alle foglie dell'AST: quando
+viene incontrato uno statement che blocca l'esecuzione degli statement che lo seguono
+(come un return o un loop infinito) viene aggiunta la keyword `unreachable`
+nell'envirnoment.
 
-Per compilare correttamente il campo `alwaysReturn` è stato aggiunto un campo `canExit`.
-In generale questo campo è vero se lo statement può impedire l'esecuzione degli eventuali
-statement che lo seguono (allo stesso livello). Ci sono due "eccezioni":
-- il return ha `canExit = false` perchè ci interessano solo i flussi che escono senza
-  ritornare;
-- il continue ha `canExit = false` perchè, come specificato sopra, `continue` è
-  considerato come una foglia che ritorna.
+Per determinare se i loop non terminano mai vengono controllate le condizioni di uscita
+(`break` ed `exit on`).
 
-La stessa logica di controllo del flusso è stata usata per annotare un campo `unreachable`
-utile per evitare di generare codice inutile in TAC. // TODO: al momento non funziona per gli exit?
+Viene marcato come `unreachable` anche il codice dentro un blocco `catch` di un `try` in
+cui non viene mai fatto `throw error`. Per farlo è stato aggiunto un campo `throw :: When`
+nelle annotazioni. Gli viene assegnato valore `Always` (se a compile-time si può
+determinare che fa sempre un `throw error`), `Sometimes` (se dipende dal variabili) o
+`Never` (se non fa mai `throw error`).
+
+Il campo `unreachable` è usato anche dal generatore di codice TAC per evitare di produrre
+codice inutile che non verrebbe mai eseguito.
+]
 
 === Dangling references
 Per evitare puntatori pendenti a variabili deallocate si è deciso di vietare il return di
@@ -821,8 +824,31 @@ Nelle annotazioni delle espressioni un opportuno campo `ctVal` propaga finchè
 determinabile a tempo di analisi semantica statica il valore costante dell'espressione. Le
 costanti non possono essere array o reference.
 
-== Inferenza di tipo.
-TODO:
+#text(blue)[
+== Propagazione del tipo.
+La valutazione delle array-expressions avviene a compile-time durante l'analisi semantica
+statica, ovvero vengono rimpiazzate da normali definizioni di array prima di arrivare al
+modulo di generazione del TAC.
+Ad esempio l'array expression:
+```blue
+array: Array<Array<Real; 3>; 2> := [j*2 + i : i, j];
+```
+è zucchero sintattico per:
+```blue
+array: Array<Array<Real; 5>; 2> := [[3.0, 5.0, 7.0], [4.0, 6.0, 8.0]];
+```
+Per poter determinare la grandezza (e più in generale il tipo) di un array definito da
+un'array expression è necessario conoscerne il "tipo atteso". Quando è noto è propagato
+dalla radice dell'AST verso le foglie. Ad esempio nell'espressione sopra è propagato a
+partire dal tipo esplicitato nel nodo di dichiarazione fino al nodo array expression.
+
+Non sempre il tipo è noto:
+```blue
+boolean: Boolean := [(i + 1): i] = array;
+```
+In espressioni di questo genere un opportuno errore segnala l'impossibilità di inferire il
+tipo, suggerendo di creare una costante/variabile contenente l'array expression.
+]
 
 /*
 == Altro che non so se è da dire
