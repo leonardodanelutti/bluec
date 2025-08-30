@@ -37,6 +37,8 @@ par(
 = Definizione del linguaggio: scelte di design e risoluzione dei conflitti
 Il linguaggio definito per questo progetto è un linguaggio di programmazione imperativo con scoping statico. La sua grammatica si basa sulla sintassi concreta del linguaggio Blue.
 
+Per l'implementazione è stato adottato un approccio a pipeline, in cui prima viene creato l'AST, poi vengono effettuati i controlli di semantica statica ed infine viene generato il TAC. Questo ci ha permesso di mantenere una struttura modulare e facilmente estendibile.
+
 Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzionalità richieste dalla consegna, come per esempio il dereferenziamento, sono stati introdotti alcuni elementi. Tuttavia, non sono presenti né classi né interfacce.
 
 == Tipi
@@ -123,7 +125,7 @@ main ...
 ```
 dove `main` potrebbe rappresentare sia il nome di una funzione che il nome di una variabile.
 
-Quando si invoca una funzione è possibile specificare la modalità di passaggio dei parametri in ingresso : `val` (il default), `valres` e `ref`.
+Quando si invoca una funzione è possibile specificare la modalità di passaggio dei parametri in ingresso : `val` (il default), `valres`, `ref` e `const`.
 Infine, poiché il linguaggio non prevede il concetto di classi, le funzioni non possono essere invocate con la notazione a punto, come `.function()`.
 
 == Gestione delle eccezioni
@@ -152,7 +154,7 @@ Il linguaggio supporta due tipi di commenti:
 - Commenti a blocco, delimitati da `/*` e `*/`.
 
 == Separatori
-Al fine di disambiguare la grammatica e evitare conflitti è fondamentale l'introduzione di separatori alla fine degli Statement, salvo If e Loop, e delle dichiarazioni di costanti e variabili.\ Senza i separatori, infatti, il parser LALR(1) non sarebbe in grado di distinguere con certezza la struttura del codice in determinate situazioni.
+Al fine di disambiguare la grammatica e evitare conflitti è fondamentale l'introduzione di separatori alla fine degli Statement e delle dichiarazioni di costanti e variabili.\ Senza i separatori, infatti, il parser LALR(1) non sarebbe in grado di distinguere con certezza la struttura del codice in determinate situazioni.
 
 Ad esempio:
 ```
@@ -170,7 +172,8 @@ Ad esempio:
   ```
 
   dove `*` potrebbe essere sia un deref che una moltiplicazione.
-  Per lo stesso motivo è stato aggiunto un `;` anche nell'exit dei loop.
+
+  Per lo stesso motivo è stato aggiunto un `;` anche nell'exit dei loop. In Blue questo tipo di conflitti non si presenta in quanto l'unico costrutto permesso in una Left Expression, oltre all'identificatore, è l'index di array.
 
 
 == Risoluzione conflitti rimanenti
@@ -178,22 +181,14 @@ La grammatica definita presenta un solo conflitto, che si verifica nello stato 1
 Questo conflitto è di tipo shift/reduce e non crea problemi dal momento che le `LExp` sono un sottoinsieme delle `RExp`. 
 Pertanto, è sufficiente scegliere sempre l'azione di shift.
 
-
-// TODO: spiegare come lo abbiamo implementato, approccio pipeline: prima viene creato l'AST, poi vengono fatti i check di semantica statica ed infine viene generato il TAC.
-
 = Definizione del lexer e del parser
 Lexer e Parser sono stati realizzati modificando i file-prototipo generati automaticamente da BNFC, in modo tale da adattarli alle specifiche della consegna. La grammatica utilizzata per la costruzione di lexer e parser è quella presente nel file `grammar.cf` e genera il linguaggio descritto in precedenza.
 
 == Modifiche al lexer
-Oltre la posizione iniziale di un token è stata aggiunta anche la sua posizione finale, in modo da poter generare errori più precisi.
+La funzione `tokenPosn` è stata modificata in modo che restituisca oltre la posizione iniziale di un token anche la sua posizione finale, così da poter generare errori più precisi.
 
 == Modifiche al Parser
 Il parser è stato modificato in modo da utilizzare la sintassi astratta da noi definita nel file `AbsSyn.hs` (a differenza di quella generata da BNFC). La struttura delle regole non è stata alterata.
-
-/*
-= TODO:
-- [ ] disambiguare funzioni con lo stesso nome nel tac
-*/
 
 = Definizione del Type system
 == Gerargia dei tipi
@@ -441,12 +436,10 @@ $
 
 \ *`ARRAY EXPRESSION`*
 
-TODO: è giusto?  no
+Il nodo dell'ArrayExpr viene annotato con il tipo inferito tramite la propagazione descritta nella @type-propagation.
 
 $
-("env" ⊢""_E e : tau' and sup(tau', tau) = tau
-space space space space space space
-forall i = 1, ..., n ("env" ⊢""_E x_i : "Integer" )
+( union_i^n {x_i : "Integer"} union "env"  ⊢""_E e : tau' and sup(tau', tau) = tau
 )
 /
 ("env" ⊢""_E "ArrayExpr" { "e" = e , "indexes" = [x_1, ..., x_n]} : "Array"<tau, (d_1, ..., d_n)>)
@@ -533,7 +526,7 @@ $
 space
 ("env"("break") : nothing)
 /
-("env" ⊢""_S "annStmtContinue" { } : nothing)
+("env" ⊢""_S "annStmtBreak" { } : nothing)
 $
 
 \ *`STMTIF`* e *`STMTIFELSE`*
@@ -588,16 +581,14 @@ $
 
 \ *`STMTFOREACH`*
 
-Nei loop `for each` non possono essere utilizzate le keyword `break` e `continue`, a meno che il loop non sia contenuto all'interno di un loop indeterminato. 
+Nei loop `for each` non possono essere utilizzate le keyword `break` e `continue`, a meno che il loop non sia contenuto all'interno di un loop indeterminato. L'espressione dell'array deve essere una left-expression.
 
 $
 space
 (
-"env"  ⊢""_S s_1, ..., s_n_s
+"env" union { id : tau }  ⊢""_S s_1, ..., s_n_s
 space space space space space space
-"env" ⊢""_E a : "Array"<tau, n>
-space space space space space space
-"env" ⊢""_E id : tau
+"env" union "\"LExpr\"" ⊢""_E a : "Array"<tau, n>
 )
 /
 ("env" ⊢""_S "StmtForEach" { "varIterName" = id, "arrayExp" = a, "body" = [s_1, ..., s_n_s] } : nothing)
@@ -672,7 +663,7 @@ non viene propagato perchè è come se venissero dichiarate "contemporaneamente"
 $
 (forall i=1,...,n ("env" ⊢""_E e_i: tau_i and sup(tau, tau_i) = tau))
 /
-("env" ⊢""_D "ConstAss" {"varIdents" = [id_1, ..., id_n], "varType" = tau, "varValues" = [e_1, ..., e_n] }\ : {id_1: tau_1,...,id_n: tau_n})
+("env" ⊢""_D "VarAss" {"varIdents" = [id_1, ..., id_n], "varType" = tau, "varValues" = [e_1, ..., e_n] }\ : {id_1: tau_1,...,id_n: tau_n})
 $
 
 \ *`FUNCTION`* e *`PROCEDURE`* e *`ROUTBODY`*
@@ -787,7 +778,7 @@ Per determinare se i loop non terminano mai vengono controllate le condizioni di
 Viene marcato come `unreachable` anche il codice dentro un blocco `catch` di un `try` in
 cui non viene mai fatto `throw error`. Per farlo è stato aggiunto un campo `throw :: When`
 nelle annotazioni. Gli viene assegnato valore `Always` (se a compile-time si può
-determinare che fa sempre un `throw error`), `Sometimes` (se dipende dal variabili) o
+determinare che fa sempre un `throw error`), `Sometimes` (se dipende dalle variabili) o
 `Never` (se non fa mai `throw error`).
 
 Il campo `unreachable` è usato anche dal generatore di codice TAC per evitare di produrre
@@ -825,7 +816,7 @@ determinabile a tempo di analisi semantica statica il valore costante dell'espre
 costanti non possono essere array o reference.
 
 #text(blue)[
-== Propagazione del tipo.
+== Propagazione del tipo. <type-propagation>
 La valutazione delle array-expressions avviene a compile-time durante l'analisi semantica
 statica, ovvero vengono rimpiazzate da normali definizioni di array prima di arrivare al
 modulo di generazione del TAC.
@@ -859,7 +850,7 @@ tipo, suggerendo di creare una costante/variabile contenente l'array expression.
 
 = Generazione del Three Address Code (TAC)
 
-La generazione del Three Address Code (TAC) è affidata ai moduli contenuti nella cartella `TAC`.
+La generazione del Three Address Code (TAC) è affidata ai moduli contenuti nella cartella `TAC`: all'interno di `TAC/Def` sono definiti i tipi di dato usati per rappresentare il TAC, in `TAC/Gen` sono presenti le funzioni per la generazione del codice, in `TAC/State` viene definito lo stato usato durante la generazione del codice e le funzioni per manipolarlo.
 
 == Estensioni del linguaggio TAC
 Oltre alle istruzioni presentate durante le lezioni, sono state introdotte le seguenti estensioni al linguaggio TAC:
@@ -878,21 +869,23 @@ Alcuni aspetti rilevanti sono i seguenti:
 - Le espressioni e i parametri sono generati da sinistra verso destra.
 - Negli assegnamenti multipli se una variabile appare alla sinistra e in una posizione successiva alla destra, il valore assegnato è quello precedente all'assegnamento. Ad esempio:
   ```
-  x, y :=  y, x;
+  x, y :=  y, 2*x;
   ```
-  Risulterà nello scambio dei valori di `x` e `y`, il codice generato è il seguente:
+  Risulterà nel codice TAC:
 
   ```
   xOld' = x;
   x = y;
-  y = xOld';
+  y = 2 * xOld';
   ```
 
   dove `<varName>Old'` è il nome di una nuova variabile che copia il valore locale del valore di `<varName>` prima dell'assegnamento.
 
-- Le funzioni di relazione tra stringhe e array vengono generate direttamente nel TAC, seguendo la convenzione di denominazione:
-  - `string<relop>'` per le relazioni tra stringhe;
-  - `array<relop><type>'` per le relazioni tra array, dove `<relop>` rappresenta l'operatore di relazione e `<type>` il tipo degli elementi dell'array.
+- Le operazioni di relazione di stringhe e array sono supportate tramite funzioni generate all'interno del TAC. Due stringhe sono considerate uguali se hanno la stessa lunghezza e gli stessi caratteri nella stessa posizione. Due array sono considerati uguali se hanno gli stessi elementi nella stessa posizione. Le operazioni di confronto (`<`, `<=`, `>`, `>=`) tra stringhe e array sono definite tramite ordinamento lessicografico.
+
+  Le funzioni all'interno TAC seguono la convenzione di denominazione:
+    - `string<relop>'` per le relazioni tra stringhe;
+    - `array<relop><type>'` per le relazioni tra array, dove `<relop>` rappresenta l'operatore di relazione e `<type>` il tipo degli elementi dell'array.
 
   I parametri locali di tali funzioni prendono il nome della funzione seguito da "val1", "val2" o "size" (nel caso degli array)
 
