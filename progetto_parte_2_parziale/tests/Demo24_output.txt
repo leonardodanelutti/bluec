@@ -1,0 +1,62 @@
+example 24: break inside loops
+
+
+[Pretty-Print of source]
+
+routines
+	main() is
+		var
+			e : Real := 12;
+		do
+			try
+				loop
+					e := readReal();
+					writeChar(readChar());
+					if (e = 12) then
+						break;
+					end if
+					throw error;
+				end loop
+			catch
+				return;
+			end try
+			e := 13;
+			return;
+		end
+	main
+
+
+
+[Generated TAC]
+
+$0 = "Program panicked! An exception has been thrown that has not been handled\NUL"
+
+EntryPoint:
+      pushHandler H0
+      pcall main, 0
+L0:   END_PROGRAM
+H0:   popHandler
+      value@0:0 =(addr) $0
+      param(addr) value@0:0
+      pcall writeString@0:0, 1
+      goto L0
+
+main@8:5:
+      e@10:9 =(float) 12.0
+      pushHandler H1
+L2:   e@10:9 =(float) fcall readReal@0:0, 0
+      t0 =(char) fcall readChar@0:0, 0
+      value@0:0 =(char) t0
+      param(char) value@0:0
+      pcall writeChar@0:0, 1
+      if e@10:9 !=(float) 12.0 goto L4
+      goto L3
+L4:   throw
+      goto L2
+L3:   popHandler
+L1:   e@10:9 =(float) 13.0
+      return
+H1:   popHandler
+      return
+      goto L1
+

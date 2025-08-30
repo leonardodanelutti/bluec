@@ -7,6 +7,7 @@ import qualified StatSem.Exp    as SSE
 import qualified Errors         as E
 import qualified Types          as T
 import qualified PrettyPrinter  as PP
+import qualified LexGrammar     as LG
 import StatSem.Utils
 
 -- TYPES
@@ -541,13 +542,11 @@ annLoopExit env AS.LoopExit {
 annStmtForEach :: Env -> Stmt -> (AnnStmt, Env, Bool)
 annStmtForEach env AS.StmtForEach {
     AS.varIterName = iterName,
-    AS.varIterType = iterType,
     AS.arrayExp = arrayExp,
     AS.body = body,
     AS.pos = pos
 } = (AS.StmtForEach {
     AS.varIterName = iterName,
-    AS.varIterType = iterType,
     AS.arrayExp = annArrayExp,
     AS.body = annBody,
     AS.annot = ann,
@@ -560,12 +559,7 @@ annStmtForEach env AS.StmtForEach {
     -- Check that it is an array; if so check if its elements' type can be casted to the
     -- iterator type; if so update the environment accordingly.
     (env', arrayNewErr) = case expType $ AS.expAnnot annArrayExp of
-        T.TArray { T.elementsType = elementsType } -> (
-                fst (mergeEnv env (envFromSymbolBindings [(iterName, (Var pos iterType Nothing))])), -- Should be no error because the noew environment does not contain routines.
-                if T.sup pos elementsType (T.type_ iterType) == (T.type_ iterType)
-                then []
-                else [E.err pos "Array element type mismatch: " ++ show elementsType ++ " is not compatible with " ++ show (T.type_ iterType) ++ "."]
-            )
+        T.TArray { T.elementsType = elementsType } -> mergeEnv env (envFromSymbolBindings [(iterName, (Var pos (T.TypePos elementsType LG.defaultPosn) Nothing))])
         _ -> (env, [E.err (AS.expPos annArrayExp) "Array expression expected."]) -- No update of the environment.
     -- Annotate the body.
     (annBody, env'', bodyCanExit, bodyThrows) = annStmts env' body

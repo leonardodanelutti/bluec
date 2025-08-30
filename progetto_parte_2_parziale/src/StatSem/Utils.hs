@@ -277,7 +277,7 @@ ctvToLiteral exp = case getCTValue (AS.expAnnot exp) of
     Nothing             -> case AS.expAnnot exp of
         ExpAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
         ExpIdentAnn { expType = T.TError { T.msgs = msgs } } -> Right msgs
-        _ -> Right [E.err pos $ PP.expPrinter 0 exp ++ " is not a constant expression."]
+        _ -> Right [E.err pos "\"" ++ (PP.expPrinter 0 exp) ++ "\" is not a constant expression."]
     where
         pos = AS.expPos exp
 

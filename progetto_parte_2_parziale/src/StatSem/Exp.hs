@@ -237,6 +237,7 @@ annAndCastRoutArgs env (arg : args) (AS.Param { AS.mode = mode, AS.paramType = T
         castedArg = case mode of
             -- Arguments passed by value do not need to be LExp.
             AS.Mval -> cast (doNotRequireLExp env) (annExp (Just paramType) (doNotRequireLExp env) arg) paramType
+            -- TODO: se è const le variabili non devono essere modificate
             -- Arguments passed by value-result and reference must be LExp and must be non-constant.
             _       -> cast (requireLExp env) (annExp (Just paramType) (requireLExp env) arg) paramType
 annAndCastRoutArgs _ [] [] = []
