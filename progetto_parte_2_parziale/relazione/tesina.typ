@@ -746,7 +746,6 @@ La definizione di routine parziali è vietata dal modulo di analisi semantica st
 particolare è garantito che ogni flusso di esecuzione del `body` delle routine esegua
 indefinitivamente o incontri un `return _`.
 
-#text(blue)[
 A tal fine è presente un campo `unreachable :: Bool` nelle annotazioni degli statement.
 Questo campo, come suggerisce il nome:
 - è vero se lo statement è irraggiungibile. Ad esempio è vero per l'assegnamento `a := 1`
@@ -783,7 +782,6 @@ determinare che fa sempre un `throw error`), `Sometimes` (se dipende dalle varia
 
 Il campo `unreachable` è usato anche dal generatore di codice TAC per evitare di produrre
 codice inutile che non verrebbe mai eseguito.
-]
 
 === Dangling references
 Per evitare puntatori pendenti a variabili deallocate si è deciso di vietare il return di
@@ -815,7 +813,6 @@ Nelle annotazioni delle espressioni un opportuno campo `ctVal` propaga finchè
 determinabile a tempo di analisi semantica statica il valore costante dell'espressione. Le
 costanti non possono essere array o reference.
 
-#text(blue)[
 == Propagazione del tipo. <type-propagation>
 La valutazione delle array-expressions avviene a compile-time durante l'analisi semantica
 statica, ovvero vengono rimpiazzate da normali definizioni di array prima di arrivare al
@@ -839,7 +836,6 @@ boolean: Boolean := [(i + 1): i] = array;
 ```
 In espressioni di questo genere un opportuno errore segnala l'impossibilità di inferire il
 tipo, suggerendo di creare una costante/variabile contenente l'array expression.
-]
 
 /*
 == Altro che non so se è da dire
