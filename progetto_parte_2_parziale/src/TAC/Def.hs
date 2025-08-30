@@ -8,9 +8,11 @@ import LexGrammar (Posn)
 
 -- A program name
 data ProgramName = ProgramName String Posn
+    deriving (Eq)
 
 -- A temporary variable
 newtype Temporary = Temporary Int
+    deriving (Eq)
 
 -- Known values
 data Literal
@@ -18,6 +20,7 @@ data Literal
     | LitReal  Double
     | LitChar  Char
     | LitBool  Bool
+    deriving (Eq)
 
 -- An address can be a program name, a temporary variable, or a Literal
 data Address
@@ -25,6 +28,7 @@ data Address
     | Temp Temporary
     | Lit Literal
     | Stat Int
+    deriving (Eq)
 
 castAddressToProgramName :: Address -> ProgramName
 castAddressToProgramName (PName name) = name

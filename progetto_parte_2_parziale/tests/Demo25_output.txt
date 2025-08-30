@@ -60,7 +60,6 @@ main@12:5:
 L1:   t0 =(int) 0
 L2:   iter@16:17 =(addr) iterator@9:5 +(int) t0
       x@14:13 =(bool) *iter@16:13
-      x@14:13 =(bool) x@14:13
       *iter@16:13 =(bool) x@14:13
       t0 =(int) t0 +(int) 1
       if t0 <(int) 3 goto L2
@@ -74,7 +73,6 @@ foo@25:5:
       t2 =(int) 0
 L3:   iter@27:17 =(addr) t1 +(int) t2
       s@7:5 =(bool) *iter@27:13
-      s@7:5 =(bool) s@7:5
       t2 =(int) t2 +(int) 1
       if t2 <(int) 3 goto L3
       pcall main@12:5, 0

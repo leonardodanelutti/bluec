@@ -301,7 +301,7 @@ genExprAddr exp addr = void $ genExpr exp (Just addr)
 returnAddr :: Maybe Address -> Address -> TACType -> StateMonad Address
 returnAddr addrOutMaybe addrReturn ty = case addrOutMaybe of
     Just addrOut -> do
-        out (NOp addrOut addrReturn ty)
+        unless (addrOut == addrReturn) (out (NOp addrOut addrReturn ty))
         return addrOut
     Nothing -> return addrReturn
 
