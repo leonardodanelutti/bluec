@@ -106,12 +106,6 @@ Poiché Blue è un linguaggio orientato agli oggetti, per garantire le funzional
 Il linguaggio definito prevede i seguenti tipi primitivi:  `Boolean`, `Integer`, `Real`, `String`#footnote[Front-end di un compilatore per un linguaggio imperativo: note generali (p. 3, par. 3)] e `Char`.
 Sono inoltre supportati gli array che sono dichiarati utilizzando nel modo seguente: `Array<Type, Integer>`, dove `Type` rappresenta il tipo degli elementi e  `Integer` indica la dimensione dell'array. Infine vi sono i puntatori, che sono dichiarati con la sintassi `&Type`.
 
-/*
-=== Type system (MEGLIO SOTTO)
-Per il nostro linguaggio, abbiamo definito la seguente gerarchia dei tipi:
-#image("img/types.png", width: 100%)
-*/
-
 == Costanti
 Le costanti sono dichiarate con la keyword `const` e possono essere solo di tipo primitivo (non devono allocare spazio in memoria). Anche in questo caso non è consentito dichiarare costanti senza assegnamento #footnote[Front-end di un compilatore per un linguaggio imperativo: note generali (p. 3, par. 2)].
 
@@ -126,6 +120,15 @@ Le variabili sono dichiarate con la keyword `var` e possono essere di tipo primi
 ```blue
 var
 	c : Real := 1.0;
+```
+
+=== Array Expressions
+
+Oltre alla definizione classica, il costrutto array expression permette di inizializzare un array valutando un'espressione che può dipendere dall'indice dell'array, sia nel contesto monodimensionale che in quello multidimensionale.
+
+```blue
+-- Esempio di array expression
+array: Array<Array<Int; 5>; 2> := [j*2 + i : i, j];
 ```
 
 == Loop
@@ -144,6 +147,20 @@ loop
     exit on _;
 end loop
 ```
+\
+
+Inoltre, è prevista la forma di iterazione determinata `for each`, che consente di iterare su un intervallo di valori.
+La struttura viene implementata nel modo seguente:
+
+```blue
+-- Simulazione del ciclo for each
+for _ in _ do
+    _
+end for
+```
+\
+
+Nei cicli a iterazione indeterminata sono ammesse le istruzioni `break` e  `continue`. Nei cicli a iterazione determinata, tali istruzioni sono permesse soltanto se il ciclo è contenuto all'interno di un ciclo indeterminato. In questo caso, l'istruzione `break` provoca l'uscita dal ciclo più esterno.
 
 == Condizionali
 Il linguaggio immplementa le strutture condizionali semplici `if-then` e `if-then-else`, che permettono di eseguire blocchi di codice in base a condizioni specifiche.
@@ -155,6 +172,9 @@ else
     _
 end if
 ```
+\
+
+Inoltre, è stato introdotto il costrutto `if-then-else` per la categoria sintattica delle espressioni, che consente di valutare un'espressione in base a una condizione booleana.
 
 == Routine
 Le routine comprendono sia funzioni che procedure. Una funzione senza parametri può essere invocata sia con la sintassi completa `function()` sia in forma abbreviata `function`, che è semplicemente zucchero sintattico per la prima. Rispetto alla sintassi concreta del linguaggio Blue, sono rimosse pre e post-condizioni; inoltre i parametri di ritorno non vengono nominati esplicitamente nella dichiarazione: si specificano solamente i tipi restituiti mediante la notazione `-> Type`. Si noti che non è possibile restituire tuple. Per gestire il ritorno esplicito dei valori, è stato introdotto il costrutto `return`.
@@ -168,6 +188,24 @@ dove `main` potrebbe rappresentare sia il nome di una funzione che il nome di un
 
 Quando si invoca una funzione è possibile specificare la modalità di passaggio dei parametri in ingresso : `val` (il default), `valres` e `ref`.
 Infine, poiché il linguaggio non prevede il concetto di classi, le funzioni non possono essere invocate con la notazione a punto, come `.function()`.
+
+== Gestione delle eccezioni
+Il linguaggio supporta la gestione delle eccezioni tramite le parole chiave `try`, `catch` e `throw`. Le eccezioni possono essere lanciate utilizzando `throw` e catturate con i blocchi `try-catch`.
+Si osserva che, in questo contesto, non vengono distinte possibili categorie di errore specifiche.
+
+```blue
+-- Simulazione del blocco try-catch
+try
+    _
+catch
+    _
+end try
+
+-- Simulazione del throw
+_ throw error;
+```
+
+
 
 == Commenti
 Il linguaggio supporta due tipi di commenti:
@@ -199,7 +237,7 @@ Ad esempio:
 
 
 == Risoluzione conflitti rimanenti
-La grammatica definita presenta un solo conflitto, che si verifica nello stato 105, tra le produzioni di `LExp` e `RExp`.
+La grammatica definita presenta un solo conflitto, che si verifica nello stato 108, tra le produzioni di `LExp` e `RExp`.
 Questo conflitto è di tipo shift/reduce e non crea problemi dal momento che le `LExp` sono un sottoinsieme delle `RExp`. 
 Pertanto, è sufficiente scegliere sempre l'azione di shift.
 

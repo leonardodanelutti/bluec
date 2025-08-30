@@ -1,0 +1,12 @@
+example 26: Try catch
+
+
+Static Semantics Analysis Failed:
+tests/testErrorConst.blue:8:27-9:36: ERROR: 
+"if (f(x) > 0)
+then
+	10
+else
+	(f(x) + 1)
+end if"
+Is not a constant expression.
