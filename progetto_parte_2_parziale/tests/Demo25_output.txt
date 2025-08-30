@@ -1,0 +1,6 @@
+example 25: for each
+
+
+Parse failed.
+
+SYNTAX ERROR before ':' at line 16, column 21.

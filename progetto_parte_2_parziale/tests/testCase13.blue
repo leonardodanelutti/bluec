@@ -3,15 +3,19 @@
 -- What does this example test:
 -- - generation of boolean expressions of guards
 -- - if and exit on jumps logic
+-- - multiple declaration and assignments
 
 var
-	a, c: Integer := 2, 3;
+	a, c, d: Integer := 2, 3, 4;
+	a, d: Integer := d, a;
 	b: Boolean := false;
 
 routines 
 
 main is
 do
+	a, c, d := d, a, c;
+
     if (a < 20 or b) and (b and c <> 10) then
 	    a := 0;
 	else

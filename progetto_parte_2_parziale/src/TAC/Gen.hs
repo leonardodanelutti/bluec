@@ -236,6 +236,13 @@ genUnknownExpr exp addrIn = do
                     out (DerefGet addrOut identName tyTAC)
                     returnAddr addrIn addrOut tyTAC
 
+                Just AS.Mconst -> case ty of
+                    T.TArray {} -> do
+                        addrOut <- getOutAddr addrIn
+                        out (DerefGet addrOut identName tyTAC)
+                        returnAddr addrIn addrOut tyTAC
+                    _ -> returnAddr addrIn identName tyTAC
+
                 Just AS.Mval -> returnAddr addrIn identName tyTAC
 
                 Nothing -> returnAddr addrIn identName tyTAC
@@ -691,6 +698,13 @@ genActualParams args ann =
                 (AS.Mval, _) -> do
                     copy paramAddr addr paramType
                     out (Param paramAddr paramTACType)
+                (AS.Mconst, T.TArray {}) -> do
+                    out (Ref paramAddr addr)
+                    out (Param paramAddr Addr)
+                (AS.Mconst, _) -> do
+                    out (ArrayGen paramAddr (T.getTypeSize paramType))
+                    copy paramAddr addr paramType
+                    out (Param paramAddr paramTACType)
                 -- Value-result and reference parameters: pass the address
                 (_, _) -> do
                     out (Ref paramAddr addr)
@@ -901,6 +915,7 @@ genLExpr exp = case exp of
                 Just AS.Mvalres -> Simple identName'
                 Just AS.Mref -> RefSet identName
                 Just AS.Mval -> Simple identName
+                Just AS.Mconst -> error "genLExpr: Cannot assign to a const parameter"
                 Nothing -> Simple identName
         --return $ Simple identName
     AS.Deref expr _ _ -> do

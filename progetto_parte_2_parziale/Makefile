@@ -142,21 +142,6 @@ demo: bluec
 		./bluec tests/testCase20.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo20_output.txt
 	@{ \
-		echo "example XX: for each"; \
-		echo ""; \
-		./bluec tests/testCaseDetLoop.blue || true; \
-	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoDetLoop_output.txt
-	@{ \
-		echo "example XX: Try catch"; \
-		echo ""; \
-		./bluec tests/testCaseTryCatch.blue || true; \
-	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoTryCatch_output.txt
-	@{ \
-		echo "example XX: If-then-else in expressions"; \
-		echo ""; \
-		./bluec tests/testCaseIfThenElseExp.blue || true; \
-	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/DemoIfThenElseExp_output.txt
-	@{ \
 		echo "example 21: compile-time shortcut"; \
 		echo ""; \
 		./bluec tests/testCase21.blue || true; \
@@ -176,6 +161,16 @@ demo: bluec
 		echo ""; \
 		./bluec tests/testCase24.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo24_output.txt
+		@{ \
+		echo "example 25: for each"; \
+		echo ""; \
+		./bluec tests/testCase25.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo25_output.txt
+	@{ \
+		echo "example 26: Try catch"; \
+		echo ""; \
+		./bluec tests/testCase26.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo26_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 

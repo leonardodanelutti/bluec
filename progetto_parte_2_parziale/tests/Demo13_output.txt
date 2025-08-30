@@ -4,11 +4,13 @@ example 13: testing boolean expressions on guards
 [Pretty-Print of source]
 
 var
-	a, c : Integer := 2, 3;
+	a, c, d : Integer := 2, 3, 4;
+	a, d : Integer := d, a;
 	b : Boolean := false;
 routines
 	main() is
 		do
+			a, c, d := d, a, c;
 			if (((a < 20) or b) and (b and (c <> 10))) then
 				a := 0;
 			else
@@ -32,9 +34,13 @@ $0 = "Program panicked! An exception has been thrown that has not been handled\N
 
 EntryPoint:
       pushHandler H0
-      a@8:9 =(int) 2
-      c@8:9 =(int) 3
-      b@9:9 =(bool) False
+      a@9:9 =(int) 2
+      c@9:9 =(int) 3
+      d@9:9 =(int) 4
+      aOld'@10:9 =(int) a@10:9
+      a@10:9 =(int) d@9:9
+      d@10:9 =(int) aOld'@9:9
+      b@11:9 =(bool) False
       pcall main, 0
 L0:   END_PROGRAM
 H0:   popHandler
@@ -43,18 +49,23 @@ H0:   popHandler
       pcall writeString@0:0, 1
       goto L0
 
-main@13:1:
-      if a@8:9 <(int) 20 goto L3
-      ifFalse b@9:9 goto L1
-L3:   ifFalse b@9:9 goto L1
-      if c@8:9 ==(int) 10 goto L1
-      a@8:9 =(int) 0
+main@15:1:
+      aOld'@17:9 =(int) a@17:9
+      cOld'@17:9 =(int) c@17:9
+      a@10:9 =(int) d@10:9
+      c@9:9 =(int) aOld'@10:9
+      d@10:9 =(int) cOld'@9:9
+      if a@10:9 <(int) 20 goto L3
+      ifFalse b@11:9 goto L1
+L3:   ifFalse b@11:9 goto L1
+      if c@9:9 ==(int) 10 goto L1
+      a@10:9 =(int) 0
       goto L2
-L1:   a@8:9 =(int) 1
-L2:   b@9:9 =(bool) ! b@9:9
-L4:   if a@8:9 <(int) c@8:9 goto L5
-      if a@8:9 ==(int) c@8:9 goto L5
-      c@8:9 =(int) c@8:9 +(int) 1
+L1:   a@10:9 =(int) 1
+L2:   b@11:9 =(bool) ! b@11:9
+L4:   if a@10:9 <(int) c@9:9 goto L5
+      if a@10:9 ==(int) c@9:9 goto L5
+      c@9:9 =(int) c@9:9 +(int) 1
       goto L4
 L5:   return
 
