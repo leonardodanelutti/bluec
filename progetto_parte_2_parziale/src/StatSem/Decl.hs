@@ -171,7 +171,7 @@ annRoutine env AS.Function {
     funThrows = throws $ AS.routBodyAnnot bodyAnn
     -- Create the annotation.
     ann = DeclAnn {
-        bindings = envFromRoutBindings [(ident, Fun pos params ty funThrows)],
+        bindings = envFromRoutBindings [(ident, Fun pos params ty Sometimes)], -- FIXME: determine when it throws without looping
         errs = returnRefErr ++ bodyErrs ++ doNotAlwaysReturnErr
     }
 annRoutine env AS.Procedure {
@@ -202,7 +202,7 @@ annRoutine env AS.Procedure {
     procThrows = throws $ AS.routBodyAnnot bodyAnn
     -- Create the annotation.
     ann = DeclAnn {
-        bindings = envFromRoutBindings [(ident, Proc pos params procThrows)],
+        bindings = envFromRoutBindings [(ident, Proc pos params Sometimes)], -- FIXME: determine when it throws without looping
         errs = bodyErrs ++ doNotAlwaysReturnErr
     }
 
