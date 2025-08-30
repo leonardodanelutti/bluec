@@ -707,7 +707,7 @@ annExpArrayExpr (Just ty) env AS.ArrayExpr {
     eErrs = T.getErrs [expType (AS.expAnnot annE)]
     -- Annotation.
     ann = ExpAnn {
-        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have an array type, but has type " ++ show ty ++ "."] }, -- TODO: pretty print type in err
+        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have an array type, but has type " ++ show ty ++ "."] },
         ctVal = Nothing,
         readOnly = False
     }
