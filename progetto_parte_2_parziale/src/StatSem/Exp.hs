@@ -121,15 +121,13 @@ annExpIdent env AS.ExpIdent {
             readOnly = False
         }
         -- Var identifier.
-        (Just (Var varPos ty mode), Nothing) -> ExpIdentAnn {
+        (Just (Var varPos ty mode readOnly), Nothing) -> ExpIdentAnn {
             expType = T.type_ ty,
             ctVal = Nothing,
             identCategory = VarCategory,
             mode = mode,
             declPos = Just varPos,
-            readOnly = case mode of
-                Just AS.Mconst  -> True
-                _               -> False
+            readOnly = readOnly
         }
         -- Const identifier.
         (Just (Const constPos val), Nothing) -> ann'
@@ -150,15 +148,13 @@ annExpIdent env AS.ExpIdent {
             where (ann, _) = annRoutineCall env ident [] pos
         -- Var identifier (the ambiguity is resolved because function calls cannot be
         -- LExp).
-        (Just (Var varPos ty mode), _) | mustBeLExp env -> ExpIdentAnn {
+        (Just (Var varPos ty mode readOnly), _) | mustBeLExp env -> ExpIdentAnn {
             expType = T.type_ ty,
             ctVal = Nothing,
             identCategory = VarCategory,
             mode = mode,
             declPos = Just varPos,
-            readOnly = case mode of
-                Just AS.Mconst  -> True
-                _               -> False
+            readOnly = readOnly
         }
         -- Const identifier (the ambiguity is resolved because function calls cannot be
         -- LExp).

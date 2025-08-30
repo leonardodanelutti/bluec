@@ -32,7 +32,8 @@ data SymbolEntry
     = Var {
         varPos :: LG.Posn,
         varType :: T.TypePos,
-        varMode :: (Maybe AS.Mode)
+        varMode :: (Maybe AS.Mode),
+        varReadOnly :: Bool
     }
     | Const LG.Posn AS.Literal
     deriving (Show)

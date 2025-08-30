@@ -1,7 +1,7 @@
 -- This example should have no errors.
 --
 -- What does this example test:
--- - tries compatibility between bool and integer
+-- - foreach.
 
 var
     s: Boolean := true;
@@ -13,9 +13,23 @@ routines
         var
             x: Boolean := s and c;
         do
-            for iter: Boolean in iterator do
+            for iter in iterator do
                 x := iter;
+                iter := x;
             end for
+            foo(iterator);
             return;
         end
     main
+
+    foo(const iterator: Array<Boolean;3>) is
+        do
+            for iter in iterator do
+                s := iter;
+                -- Uncommenting the line below generates an error because iterator is read-only.
+                --iter := s;
+            end for
+            main;
+            return;
+        end
+    foo

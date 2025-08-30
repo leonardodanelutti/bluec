@@ -120,7 +120,7 @@ annVarA env AS.VarAss {
     castedValuesAnn = map (\x -> (cast (doNotRequireLExp env) x (T.type_ ty))) valuesAnn
     errs = T.getErrs $ map (expType . AS.expAnnot) castedValuesAnn
     ann = DeclAnn {
-        bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty Nothing))),
+        bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty Nothing False))),
         errs = errs ++ numberErr
     }
 
@@ -155,7 +155,7 @@ annRoutine env AS.Function {
     returnRefErr = case T.type_ ty of
         T.TReference {} -> [E.err pos "Functions cannot return a reference type, but `" ++ PP.identPrinter ident ++ "` does."]
         _ -> []
-    paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
+    paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)) (AS.mode p == AS.Mconst))) params
     paramEnv = envFromSymbolBindings paramBindings
     env' = addReturn (fst $ mergeEnv env paramEnv) (Just (T.type_ ty))
     -- Annotate the body with the new environment.
@@ -186,7 +186,7 @@ annRoutine env AS.Procedure {
     AS.routAnnot = ann,
     AS.routPos = pos
 } where
-    paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)))) params
+    paramBindings = map (\p -> (AS.paramName p, Var (AS.paramPos p) (AS.paramType p) (Just (AS.mode p)) (AS.mode p == AS.Mconst))) params
     paramEnv = envFromSymbolBindings paramBindings
     env' = addReturn (fst $ mergeEnv env paramEnv) Nothing
     -- Annotate the body with the new environment.

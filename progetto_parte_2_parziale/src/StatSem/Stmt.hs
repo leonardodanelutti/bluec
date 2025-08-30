@@ -555,13 +555,16 @@ annStmtForEach env AS.StmtForEach {
     AS.pos = pos
 }, env''', bodyCanExit) where
     -- Annotate the array expression.
-    annArrayExp = SSE.annExp Nothing (doNotRequireLExp env) arrayExp
+    annArrayExp = SSE.annExp Nothing (requireLExp env) arrayExp
+    -- Check if the array expression is read only.
+    arrayReadOnly = readOnly (AS.expAnnot annArrayExp)
     -- Get the errors from the array expression.
     arrayPropagatedErrs = T.getErrs [expType (AS.expAnnot annArrayExp)]
     -- Check that it is an array; if so check if its elements' type can be casted to the
     -- iterator type; if so update the environment accordingly.
     (env', arrayNewErr) = case expType $ AS.expAnnot annArrayExp of
-        T.TArray { T.elementsType = elementsType } -> mergeEnv env (envFromSymbolBindings [(iterName, (Var pos (T.TypePos elementsType LG.defaultPosn) Nothing))])
+        T.TArray { T.elementsType = elementsType } -> mergeEnv env (envFromSymbolBindings [(iterName, (Var pos (T.TypePos elementsType LG.defaultPosn) (Just AS.Mref) arrayReadOnly))])
+        T.TError {} -> (env, [])
         _ -> (env, [E.err (AS.expPos annArrayExp) "Array expression expected."]) -- No update of the environment.
     -- Annotate the body.
     (annBody, env'', bodyCanExit, bodyThrows) = annStmts env' body
