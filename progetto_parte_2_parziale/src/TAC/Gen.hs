@@ -813,7 +813,7 @@ genStmt stmt post = do
                 ) exit
             out (UnJump loopStart)
             endLoop
-        AS.StmtForEach varName _ arrayExp body _ _ -> do
+        AS.StmtForEach varName arrayExp body _ _ -> do
             let progName = PName $ ProgramName (AS.identName varName) (AS.identPos varName)
                 oldType = T.elementsType $ SS.expType $ AS.expAnnot arrayExp
                 typeSize = T.getTypeSize oldType
