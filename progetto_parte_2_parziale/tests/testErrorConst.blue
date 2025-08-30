@@ -5,8 +5,7 @@ const
 routines
     main is
         const
-            a: Integer := if f(x) > 0 then 
-            10 else f(x) + 1 end if;
+            a: Integer := f(x);
         do
         return;
     end main
