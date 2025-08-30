@@ -1,5 +1,0 @@
-example 26: Try catch
-
-
-Static Semantics Analysis Failed:
-tests/testErrorConst.blue:8:27-8:31: ERROR: "f(x)" is not a constant expression.
