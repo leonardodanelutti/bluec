@@ -849,11 +849,16 @@ genStmt stmt post = do
             mapM_ (`genStmt` post) bodyF
             attachToNext endLabel
         AS.StmtTryCatch try catch _ _ -> do
-            (handlerLabel, resumeLabel) <- attachHandler (do mapM_ (`genStmt` post) catch)
-            out (PushExceptionHandler handlerLabel)
-            mapM_ (`genStmt` post) try
-            out PopExceptionHandler
-            attachToNext resumeLabel
+            if all (SS.unreachable . AS.annot) catch then
+                -- If all catch blocks are unreachable, just generate the try block
+                mapM_ (`genStmt` post) try
+            else do
+                -- Otherwise, generate the try-catch structure
+                (handlerLabel, resumeLabel) <- attachHandler (do mapM_ (`genStmt` post) catch)
+                out (PushExceptionHandler handlerLabel)
+                mapM_ (`genStmt` post) try
+                out PopExceptionHandler
+                attachToNext resumeLabel
         AS.StmtThrow _ _ -> do
             out Throw
 
