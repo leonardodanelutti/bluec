@@ -1,0 +1,26 @@
+-- This example should have no errors.
+--
+-- What does this example test:
+-- - break inside loop;
+-- - partial routines check.
+
+routines
+    main() is
+    var
+        e: Real := 12;
+	do
+        try
+            loop
+                e := readReal();
+                writeChar(readChar());
+                if e = 12 then
+                    break;
+                end if
+                throw error;
+            end loop
+        catch
+            return;
+        end try
+        e := 13;
+        return;
+	end main

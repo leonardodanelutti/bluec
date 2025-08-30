@@ -166,11 +166,16 @@ demo: bluec
 		echo ""; \
 		./bluec tests/testCase22.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo22_output.txt
-		@{ \
+	@{ \
 		echo "example 23: if-then-else expressions"; \
 		echo ""; \
 		./bluec tests/testCase23.blue || true; \
 	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo23_output.txt
+	@{ \
+		echo "example 24: break inside loops"; \
+		echo ""; \
+		./bluec tests/testCase24.blue || true; \
+	}  2>&1 | sed -r 's/\x1B\[[0-9;]*[mK]//g' > tests/Demo24_output.txt
 
 	@echo "Demo completed. Output saved here: tests/Demo_output.txt"
 
