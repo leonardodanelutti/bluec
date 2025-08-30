@@ -13,7 +13,6 @@ import TAC.Utilis
 
 import Control.Monad (when, unless, foldM, void)
 import Data.Maybe
-import Data.List (tails)
 
 -- Entrypoint for TAC generation
 -- Generate the TAC code form the state
@@ -72,6 +71,7 @@ genVar (AS.VarAss identifiers _ values _ declarationPos) = do
             genExprAddr expression variableName
 
 createTemps :: [[AS.Ident]] -> [AS.Exp SS.Ann] -> Lex.Posn -> StateMonad [AS.Exp SS.Ann]
+createTemps _ [] _ = error "createTemps: No values to process"
 createTemps identifiers (firstValue:remainingValues) declarationPos = do
     -- Process identifiers to handle circular dependencies in assignments
     -- For example: x, y := y, x requires temporary variables
@@ -86,11 +86,12 @@ createTemps identifiers (firstValue:remainingValues) declarationPos = do
     processIdentifierDependencies :: ([AS.Exp SS.Ann], [AS.Exp SS.Ann])
                                   -> [AS.Ident]
                                   -> StateMonad ([AS.Exp SS.Ann], [AS.Exp SS.Ann])
-    processIdentifierDependencies (expressionsToCheck, processedValues@(currentValue:otherValues)) currentIdents = do
+    processIdentifierDependencies (expressionsToCheck, processedValues@(currentValue:_)) currentIdents = do
         -- Check each remaining expression for dependencies on the current identifier
         updatedExpressions <- mapM (handleDependency currentIdents (SS.expType $ AS.expAnnot currentValue)) expressionsToCheck
 
         return (tail updatedExpressions, processedValues ++ [head updatedExpressions])
+    processIdentifierDependencies _ _ = error "processIdentifierDependencies: Unexpected empty processedValues"
 
     handleDependency :: [AS.Ident] -> T.Type -> AS.Exp SS.Ann -> StateMonad (AS.Exp SS.Ann)
     handleDependency currentIdents ty expression = do
@@ -180,9 +181,26 @@ genUnknownExpr exp addrIn = do
 
         AS.Ref e _ _ -> do
             addrOut <- getOutAddr addrIn
-            addr <- genExprTmp e
-            out (Ref addrOut addr)
-            return addrOut
+            case e of
+                -- a = &b[i]
+                AS.ArrayIndex _ _ ann _ -> do
+                    -- Generate base address
+                    (baseAddr, baseType) <- genArrayBase e
+                    -- Generate index
+                    let innerTypeSize = T.getTypeSize $ T.arrayInnerType $ SS.expType ann
+                    indexAddr <- genArrayIndex e (T.arrayDim baseType) innerTypeSize
+                    out (BOp addrOut (Add TInteger) baseAddr indexAddr Addr)
+                    return addrOut
+                -- a = &*b
+                AS.Deref inner _ _ -> do
+                    addr <- genExprTmp inner
+                    out (NOp addrOut addr Addr)
+                    return addrOut
+                -- a = &b
+                _ -> do
+                    addr <- genExprTmp e
+                    out (Ref addrOut addr)
+                    return addrOut
 
         -- Already handled by genExpr
         AS.Literal {} -> error "genUnknownExpr: Literal expressions should be handled by genExpr"
@@ -795,26 +813,16 @@ genStmt stmt post = do
                 ) exit
             out (UnJump loopStart)
             endLoop
-        AS.StmtForEach varName varType arrayExp body _ _ -> do
+        AS.StmtForEach varName _ arrayExp body _ _ -> do
             let progName = PName $ ProgramName (AS.identName varName) (AS.identPos varName)
                 oldType = T.elementsType $ SS.expType $ AS.expAnnot arrayExp
-                oldTypeTAC = castTypeToTACType oldType
-                varType' = T.type_ varType
-                typeTAC = castTypeToTACType varType'
                 typeSize = T.getTypeSize oldType
             arrAddr <- genExprTmp arrayExp
             index <- newTmp
             out (NOp index (Lit $ LitInt 0) TInteger)
             loopStart <- newLabel
             attachToNext loopStart
-            if varType' == oldType then do
-                out (IndexGet progName arrAddr index typeTAC)
-            else do
-                -- Cast type if needed
-                let coer = getCoer oldType varType'
-                castTmp <- newTmp
-                out (IndexGet castTmp arrAddr index oldTypeTAC)
-                out (UOp progName (Coer coer) castTmp typeTAC)
+            out (BOp progName (Add TInteger) arrAddr index Addr)
             -- Generate foreach body
             mapM_ (`genStmt` post) body
             -- Add array size to index

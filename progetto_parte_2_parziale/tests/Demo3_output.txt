@@ -43,8 +43,7 @@ EntryPoint:
       B@8:5[8] =(int) 30
       B@8:5[12] =(int) 40
       p@9:5 = &A@7:5
-      t0 =(int) B@8:5[12]
-      q@10:5 = &t0
+      q@10:5 =(addr) B@8:5 +(int) 12
       pcall main, 0
 L0:   END_PROGRAM
 H0:   popHandler
@@ -54,13 +53,13 @@ H0:   popHandler
       goto L0
 
 main@13:5:
-      t2 =(int) fcall test@19:5, 0
+      t1 =(int) fcall test@19:5, 0
       return
 
 test@19:5:
-      t3 =(addr) *p@9:5
-      x@22:9 =(int) t3[4]
+      t2 =(addr) *p@9:5
+      x@22:9 =(int) t2[4]
       y@23:9 =(int) *q@10:5
-      t5 =(int) x@22:9 +(int) y@23:9
-      return t5
+      t4 =(int) x@22:9 +(int) y@23:9
+      return t4
 

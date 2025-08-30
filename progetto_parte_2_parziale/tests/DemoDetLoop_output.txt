@@ -46,7 +46,7 @@ main@12:5:
       ifFalse x@14:13 goto L1
       x@14:13 =(bool) intToBool c@8:5
 L1:   t0 =(int) 0
-L2:   iter@16:17 =(bool) iterator@9:5[t0]
+L2:   iter@16:17 =(addr) iterator@9:5 +(int) t0
       x@14:13 =(bool) iter@16:13
       t0 =(int) t0 +(int) 1
       if t0 <(int) 3 goto L2
