@@ -9,7 +9,7 @@ var
 	condition : Boolean := true;
 	as : Array<Array<Real ; 5> ; 2> := if (condition or (a = 12))
 		then
-			[((j * 2) + (i * a)): i, j]
+			[[((j * 2) + (i * a)): j]: i]
 		else
 			[((j * 2) + (i * a)): j, i]
 		end if;

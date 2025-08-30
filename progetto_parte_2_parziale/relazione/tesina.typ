@@ -581,7 +581,7 @@ $
 
 \ *`STMTFOREACH`*
 
-Nei loop `for each` non possono essere utilizzate le keyword `break` e `continue`, a meno che il loop non sia contenuto all'interno di un loop indeterminato. L'espressione dell'array deve essere una left-expression.
+Nei loop `for each` non possono essere utilizzate le keyword `break` e `continue`, a meno che il loop non sia contenuto all'interno di un loop indeterminato. L'espressione dell'array deve essere una left-expression. La variabile di iterazione viene considerata come una variabile locale del corpo del ciclo.
 
 $
 space
