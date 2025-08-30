@@ -901,31 +901,52 @@ La generazione del Three Address Code (TAC) è affidata ai moduli contenuti nell
 == Estensioni del linguaggio TAC
 Oltre alle istruzioni presentate durante le lezioni, sono state introdotte le seguenti estensioni al linguaggio TAC:
 
-- `ArrayGen addr size`, utile per la creazione di un array di dimensione `size`;
+- `ArrayGen addr size`, utilizzato per allocare un array di dimensione `size` e memorizzarne l'indirizzo in `addr`;
+- `PushExceptionHandler label`, Il supporto a runtime inserisce il label `label` nello stack degli handler delle eccezioni;
+- `PopExceptionHandler`, rimuove l'handler delle eccezioni più in alto nello stack;
+- `Throw`, salta al label dell'handler delle eccezioni più in alto nello stack;
 - `Custom str`, permette di generare istruzioni personalizzate; ad esempio `END_PROGRAM` che segnala la fine del programma;
 - `Comment`, consente di inserire commenti nel codice TAC.
 \
 
 == Design e convenzioni del TAC
 Alcuni aspetti rilevanti sono i seguenti:
-- Le stringhe (Literal) vengono allocate in una sezione statica e sono accessibili mediante un indirizzo statico.
+- Le stringhe literal vengono allocate in una sezione statica e sono accessibili mediante un indirizzo statico. In generale una stringa è implementata come un puntatore ad un indirizzo di memoria contenente i caratteri della stringa terminati da un carattere nullo.
 - Le espressioni e i parametri sono generati da sinistra verso destra.
-- Gli assegnamenti multipli rappresentano, nel TAC, zucchero sintattico per assegnamenti su più linee; di conseguenza, il codice TAC risultante è equivalente a quello generato da assegnamenti singoli consecutivi. Per esempio:
+- Negli assegnamenti multipli se una variabile appare alla sinistra e in una posizione successiva alla destra, il valore assegnato è quello precedente all'assegnamento. Ad esempio:
+  ```
+  x, y :=  y, x;
+  ```
+  Risulterà nello scambio dei valori di `x` e `y`, il codice generato è il seguente:
 
-```
-x, y, z := 0, 1, 2;
-```
-risulta nello stesso codice TAC di:
-```
-x := 0;
-y := 1;
-z := 2;
-```
+  ```
+  xOld' = x;
+  x = y;
+  y = xOld';
+  ```
 
-È importante osservare che, durante l'analisi semantica statica, l'environment non viene propagato nella stessa dichiarazione. Per questo motivo assegnamenti come:
+  dove `<varName>Old'` è il nome di una nuova variabile che copia il valore locale del valore di `<varName>` prima dell'assegnamento.
 
-`x, y, z := 0, 1, x;`
-non risultano validi.
+- Le funzioni di relazione tra stringhe e array vengono generate direttamente nel TAC, seguendo la convenzione di denominazione:
+  - `string<relop>'` per le relazioni tra stringhe;
+  - `array<relop><type>'` per le relazioni tra array, dove `<relop>` rappresenta l'operatore di relazione e `<type>` il tipo degli elementi dell'array.
+
+  I parametri locali di tali funzioni prendono il nome della funzione seguito da "val1", "val2" o "size" (nel caso degli array)
+
+- Le espressioni booleane, le guardie degli if-then-else nelle espressioni e le condizioni di controllo del flusso (negli statement If e ExitOn) sono valutate mediante short-circuit usando il fall-trough.
+
+- La variabile di iterazione nei loop `for each` viene trattata come un passaggio per reference: ad ogni iterazione la variabile contiene la reference dell'elemento corrente dell'array, se necessario nel corpo vengono effettuate delle dereferenziazioni per ottenere o aggiornare il valore dell'elemento.
+
+- Le eccezioni vengono gestite mediante le istruzioni `PushExceptionHandler`, `PopExceptionHandler` e `Throw`. Quando viene raggiunto un blocco `try-catch` il codice TAC viene generato nel seguente modo:
+  - prima del codice del blocco `try` viene inserita l'istruzione `PushExceptionHandler labelCatch`, dove `labelCatch` è il label che identifica l'inizio del blocco `catch`;
+  - viene generato il codice del corpo del `try`;
+  - alla fine del blocco `try` viene inserita l'istruzione `PopExceptionHandler`;
+  - il codice dell'handler viene generato dopo il corpo della funzione corrente, viene quindi estratta l'etichetta dallo stack tramite un comando `PopExceptionHandler`, viene generato il corpo del blocco `catch` e infine viene inserita un'istruzione di salto incondizionato per il proseguimento del flusso di esecuzione dopo il blocco `try-catch`.
+
+  Quando viene raggiunta l'istruzione `Throw`, il supporto a runtime ha il compito di saltare all'handler delle eccezioni più in alto nello stack. In questo modo quando viene generata un eccezione il flusso di esecuzione salta direttamente al blocco `catch` più interno che la gestisce.
+
+  E' presente un handler delle eccezioni di default quando un eccezione noi viene mai gestita: viene stampato un messaggio di errore e il programma termina.
+
 \
 
 == Passaggio dei parametri
@@ -937,27 +958,27 @@ La gestione delle modalità di passaggio dei parametri nelle chiamate di funzion
 
 - *Passaggio per valore di risultato* - prima della chiamata di funzione ai parametri locali viene assegnata la reference dei parametri formali. Prima del corpo della funzione i parametri locali vengono deferenziati n copie locali (con un apice alla fine del nome). Prima di ogni istruzione `return` il valore della copia locale viene assegnato al parametro locale deferenziato.
 
-==  Dettagli implementativi
-Le funzioni di relazione tra stringhe e array vengono generate direttamente nel TAC, seguendo la convenzione di denominazione:
-- `string<relop>'` per le relazioni tra stringhe;
-- `array<relop><type>'` per le relazioni tra array, dove `<relop>` rappresenta l'operatore di relazione e `<type>` il tipo degli elementi dell'array.
+- *Passaggio per costante* - Se il tipo del parametro è un array allora il paramento viene passato per reference. Altrimenti viene passato per valore.
 
-Sia le espressioni booleane sia le condizioni di controllo del flusso sono valutate mediante short-circuit usando il fall-trough
-\ \
+==  Dettagli implementativi
 
 Il modulo di generazione del TAC (reperibile nella cartella `TAC`) utilizza una monade di stato per generare il codice, per la costruzione del codice, consentendo di mantenere informazioni di contesto quali:
-- Contatori per la creazione di temporanei, label e indirizzi statici;
+- Contatori per la creazione di temporanei, label, indirizzi statici e label delle eccezioni;
 - Lo stream di output per il codice generato (al contrario, come tutti gli altri stream);
 - Uno stack di stream di codice per la gestione delle routine annidate;
+- Uno stack contenete lo stream di codice delle funzione e rispettivi handler delle eccezioni, per la gestione delle funzioni annidate e delle eccezioni;
 - Uno stream per i dati statici (stringhe);
 - Una lista di label che viene associata alla prossima istruzione;
-- Una lista di coppie di label per la gestione di istruzioni `exit` e `continue` all'interno di loop, anche annidati;
+- Una lista di coppie di label per la gestione di istruzioni `exit`, `continue` e `break` all'interno di loop, anche annidati;
 - Un insieme che tiene traccia delle funzioni di comparazione tra stringhe e array già generate.
 
 Nel file `TAC/State.hs`, oltre alla definizione dello stato appena descritto, sono presenti anche funzioni di supporto per la gestione dello stato.
 
 == Pretty printer
 Il pretty printer del TAC utilizza la seguente notazione:
+- I label sono del tipo `L<number>`;
+- I label delle eccezioni sono del tipo `H<number>`;
+- I temporanei sono del tipo `t<number>`;
 - Gli identificatori e i nomi di variabili sono annotati con la posizione nel file originale secondo la sintassi: `<ident>@<line>:<column>`;
 - I commenti sono preceduti da `#`;
 - Le copie locali dei parametri passati per `valres` hanno il nome del parametro seguito da un apice `param'`;
