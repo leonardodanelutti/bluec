@@ -691,7 +691,7 @@ annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.Array
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
-annExpArrayExpr (Just _) env AS.ArrayExpr {
+annExpArrayExpr (Just ty) env AS.ArrayExpr {
     AS.e = e,
     AS.indexes = indexes,
     AS.expPos = pos
@@ -704,15 +704,14 @@ annExpArrayExpr (Just _) env AS.ArrayExpr {
     -- Annotate e.
     annE = annExp Nothing (doNotRequireLExp env) e
     -- Get the e errs.
-    eErrs = T.getErrs $ [expType (AS.expAnnot annE)]
+    eErrs = T.getErrs [expType (AS.expAnnot annE)]
     -- Annotation.
     ann = ExpAnn {
-        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have an array type, but has type " ++ show (expType (AS.expAnnot annE)) ++ "."] }, -- TODO: pretty print type in err
+        expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have an array type, but has type " ++ show ty ++ "."] }, -- TODO: pretty print type in err
         ctVal = Nothing,
         readOnly = False
     }
 annExpArrayExpr _ _ _ = error "Unreachable: `annExpArrayExpr` called with non-`ArrayExpr` expression."
--- TODO: array expression can now build non-constant arrays. It is right?
 
 annExpIfElse :: Maybe T.Type -> Env -> Exp -> AnnExp
 annExpIfElse expectedType env AS.IfElse {
@@ -738,9 +737,6 @@ annExpIfElse expectedType env AS.IfElse {
     -- Annotate the then and else branches.
     annThen = annExp expectedType (doNotRequireLExp env) thenExp
     annElse = annExp expectedType (doNotRequireLExp env) elseExp
-    -- Get the errors from the branches.
-    thenErrs = T.getErrs [expType (AS.expAnnot annThen)]
-    elseErrs = T.getErrs [expType (AS.expAnnot annElse)]
     -- The type of the expression.
     branchesType = T.sup pos (expType $ AS.expAnnot annThen) (expType $ AS.expAnnot annElse)
     -- Compile-time value.
@@ -753,5 +749,5 @@ annExpIfElse expectedType env AS.IfElse {
         ctVal = ctVal,
         readOnly = False
     }
-    ann' = foldl addErr (foldl addErr (foldl addErr ann condErrs) thenErrs) elseErrs
+    ann' = foldl addErr ann condErrs
 annExpIfElse _ _ _ = error "Unreachable: `annExpIfElse` called with non-`IfElse` expression."
