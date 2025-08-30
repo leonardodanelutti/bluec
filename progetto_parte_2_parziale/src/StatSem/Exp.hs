@@ -614,7 +614,7 @@ annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.Array
                 T.elementsType = ty,
                 T.size = s
             }
-            _ -> T.TError { T.msgs = [head castedEErrs] }, -- Take only the first error since they are all the same
+            e:_ -> T.TError { T.msgs = [e] }, -- Take only the first error since they are all the same
         ctVal = Nothing -- Constants cannot be arrays.
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
@@ -650,7 +650,7 @@ annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.Array
                 T.elementsType = ty,
                 T.size = s
             }
-            _ -> T.TError { T.msgs = [head castedEErrs] }, -- Take only the first error since they are all the same
+            e:_ -> T.TError { T.msgs = [e] }, -- Take only the first error since they are all the same
         ctVal = Nothing -- Constants cannot be arrays.
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."

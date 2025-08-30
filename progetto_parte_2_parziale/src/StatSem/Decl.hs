@@ -220,7 +220,7 @@ annRoutBody env AS.RoutBody {
     declsAnn = annDecls env decls
     declEnv = bindings $ AS.declsAnnot declsAnn
     -- Annotate the statements with the environment of the declarations.
-    (stmtsAnn, env') = annStmts declEnv stmts
+    (stmtsAnn, env', _, stmtsThrows) = annStmts declEnv stmts
     -- Errs from the declarations.
     declErrs = errs $ AS.declsAnnot declsAnn
     -- Errs from the statements.
@@ -230,12 +230,12 @@ annRoutBody env AS.RoutBody {
     --   are no reachable statement);
     -- - Always if it exists a reachable statement whose throws field is `Always`;
     -- - Sometimes otherwise.
-    reachableStmts = filter (not . unreachable . AS.annot) stmtsAnn
-    stmtsThrows = if all (== Never) (map (throws . AS.annot) reachableStmts)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableStmts)
-        then Always
-        else Sometimes
+    -- reachableStmts = filter (not . unreachable . AS.annot) stmtsAnn
+    -- stmtsThrows = if all (== Never) (map (throws . AS.annot) reachableStmts)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableStmts)
+    --     then Always
+    --     else Sometimes
     -- Create the annotation.
     ann = StmtAnn {
         errs = declErrs ++ stmtsErrs,

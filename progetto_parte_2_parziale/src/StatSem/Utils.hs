@@ -56,6 +56,8 @@ data KeywordEntry
     = Return (Maybe T.Type)
     -- Allowed inside loops to allow skipping to the next iteration.
     | Continue
+    -- Allowed inside loops to allow breaking out of the loop.
+    | Break
     -- Inserted in the environment of unreachable statements.
     | Unreachable
     -- Insert inside expression environment to require it to be a left-hand side
@@ -111,6 +113,10 @@ envFromRoutBindings bindings = Env Map.empty (Map.fromList bindings) Map.empty
 -- Adds a `continue` keyword to the environment, used inside loops.
 addContinue :: Env -> Env
 addContinue env = env { keywords = Map.insert "continue" Continue (keywords env) }
+
+-- Adds a `break` keyword to the environment, used inside loops.
+addBreak :: Env -> Env
+addBreak env = env { keywords = Map.insert "break" Break (keywords env) }
 
 -- Adds a `return` keyword to the environment, used inside routines.
 addReturn :: Env -> Maybe T.Type -> Env

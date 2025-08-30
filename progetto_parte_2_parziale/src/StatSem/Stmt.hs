@@ -19,31 +19,59 @@ type AnnStmt = AS.Statement Ann
 --
 -- Returns:
 -- - a list of annotated statements;
--- - the environment after the annotation of all stmts.
-annStmts :: Env -> [Stmt] -> ([AnnStmt], Env)
-annStmts env (x:xs) = (xAnn : xsAnn, env'')
-    where (xAnn, env') = annStmt env x
-          (xsAnn, env'') = annStmts env' xs
+-- - the environment after the annotation of all stmts;
+-- - whether it can exit without returning from a loop (i.e. there's a break);
+-- - when it throws.
+annStmts :: Env -> [Stmt] -> ([AnnStmt], Env, Bool, When)
+annStmts env (x:xs) = (xAnn : xsAnn, env'', canExit, whenThrows)
+    where (xAnn, env', xCanExit) = annStmt env x
+          (xsAnn, env'', xsCanExit, xsThrows) = annStmts env' xs
+          canExit = (xCanExit || xsCanExit) && not (isUnreachable env)
+          xThrows = throws . AS.annot $ xAnn
+          -- Throws:
+          -- - Never if the body's reachable statements' throws field is always `Never`
+          --   (or if there are no reachable statement);
+          -- - Always if it exists a body's always reached statement whose throws field is
+          --   `Always`;
+          -- - Sometimes otherwise.
+          whenThrows = case (isUnreachable env, xThrows, xsThrows) of
+              (True, _, _) -> Never
+              (_, Always, _) -> Always
+              (_, _, Always) | xCanExit -> Sometimes
+              (_, _, Always) -> Always
+              (_, Sometimes, _) -> Sometimes
+              (_, _, Sometimes) -> Sometimes
+              _ -> Never
           --env' = if alwaysReturn (AS.annot xAnn) then setUnreachable env else env -- works because in a normal list of statements a stmt cannot always exit without returning
-annStmts env [] = ([], env)
+annStmts env [] = ([], env, False, Never)
+
+-- Utility to unpack a nested tuple.
+threeTuple :: ((a, b), c) -> (a, b, c)
+threeTuple ((x, y), z) = (x, y, z)
 
 -- Annotate a statement node.
--- The environment is propagated because statements can make the next ones unreachable.
-annStmt :: Env -> Stmt -> (AnnStmt, Env)
-annStmt env stmt = (stmtAnn, env'') where
-    (stmtAnn, env') = case stmt of
-        AS.StmtAss{} -> annStmtAss env stmt
-        AS.StmtRoutCall{} -> annStmtRoutCall env stmt
-        AS.StmtReturn{} -> (annStmtReturn env stmt, setUnreachable env)
-        AS.StmtReturnEmpty{} -> (annStmtReturnEmpty env stmt, setUnreachable env)
-        AS.StmtContinue{} -> (annStmtContinue env stmt, setUnreachable env)
+--
+-- Returns:
+-- - an annotated statement;
+-- - the environment after the annotation: the environment is propagated because
+--   statements can make the next ones unreachable;
+-- - whether it can exit without returning from a loop (i.e. there's a break).
+annStmt :: Env -> Stmt -> (AnnStmt, Env, Bool)
+annStmt env stmt = (stmtAnn, env'', canExit) where
+    (stmtAnn, env', canExit) = case stmt of
+        AS.StmtAss{} -> threeTuple (annStmtAss env stmt, False)
+        AS.StmtRoutCall{} -> threeTuple (annStmtRoutCall env stmt, False)
+        AS.StmtReturn{} -> (annStmtReturn env stmt, setUnreachable env, False)
+        AS.StmtReturnEmpty{} -> (annStmtReturnEmpty env stmt, setUnreachable env, False)
+        AS.StmtContinue{} -> (annStmtContinue env stmt, setUnreachable env, False)
+        AS.StmtBreak{} -> (annStmtBreak env stmt, setUnreachable env, True)
         AS.StmtIf{} -> annStmtIf env stmt
         AS.StmtIfElse{} -> annStmtIfElse env stmt
-        AS.StmtLoop{} -> annStmtLoop env stmt
+        AS.StmtLoop{} -> threeTuple (annStmtLoop env stmt, False)
         AS.StmtForEach{} -> annStmtForEach env stmt
         AS.StmtTryCatch{} -> annStmtTryCatch env stmt
-        AS.StmtThrow{} -> (annStmtThrow env stmt, setUnreachable env)
-        _ -> error "Unreachable: `annStmt` called with unknown statement."
+        AS.StmtThrow{} -> (annStmtThrow env stmt, setUnreachable env, False)
+        --_ -> error "Unreachable: `annStmt` called with unknown statement."
     ann = AS.annot stmtAnn
     env'' = if throws ann == Always then setUnreachable env' else env'
 
@@ -212,8 +240,28 @@ annStmtContinue env AS.StmtContinue {
     }
 annStmtContinue _ _ = error "Unreachable: `annStmtContinue` called with non-`StmtContinue` expression."
 
+-- Annotate a break statement.
+annStmtBreak :: Env -> Stmt -> AnnStmt
+annStmtBreak env AS.StmtBreak {
+    AS.pos = pos
+} = AS.StmtBreak {
+    AS.annot = ann,
+    AS.pos = pos
+} where
+    -- Check if the break keyword is present.
+    breakErr = case Map.lookup "break" (keywords env) of
+        Just Break -> []
+        _ -> [E.err pos "Break keyword is not permitted outside loops."]
+    -- Create the annotation.
+    ann = StmtAnn {
+        errs = breakErr,
+        unreachable = isUnreachable env,
+        throws = Never
+    }
+annStmtBreak _ _ = error "Unreachable: `annStmtBreak` called with non-`StmtBreak` expression."
+
 -- Annotate an if statement.
-annStmtIf :: Env -> Stmt -> (AnnStmt, Env)
+annStmtIf :: Env -> Stmt -> (AnnStmt, Env, Bool)
 annStmtIf env AS.StmtIf {
     AS.cond = cond,
     AS.body = body,
@@ -223,7 +271,7 @@ annStmtIf env AS.StmtIf {
     AS.body = annBody,
     AS.annot = ann,
     AS.pos = pos
-}, env''') where
+}, env''', thisCanExit) where
     -- Annotate the condition.
     annCond = SSE.annExp (Just T.TBoolean) (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
@@ -237,7 +285,7 @@ annStmtIf env AS.StmtIf {
         Just (CTVBoolean False) -> setUnreachable env
         _ -> env
     -- Annotate the body.
-    (annBody, env'') = annStmts env' body
+    (annBody, env'', bodyCanExit, bodyThrows) = annStmts env' body
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Body throws:
@@ -245,12 +293,12 @@ annStmtIf env AS.StmtIf {
     --   there are no reachable statement);
     -- - Always if it exists a body's reachable statement whose throws field is `Always`;
     -- - Sometimes otherwise.
-    reachableBody = filter (not . unreachable . AS.annot) annBody
-    bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableBody)
-        then Always
-        else Sometimes
+    -- reachableBody = filter (not . unreachable . AS.annot) annBody
+    -- bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableBody)
+    --     then Always
+    --     else Sometimes
     -- If the body is always executed the propagate the body environment.
     env''' = case condCTVal of
         Just (CTVBoolean True) -> env''
@@ -261,6 +309,10 @@ annStmtIf env AS.StmtIf {
         Just (CTVBoolean False) -> Never
         Nothing -> if bodyThrows /= Never then Sometimes else Never
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
+    -- When the if statement can exit.
+    thisCanExit = case condCTVal of
+        Just (CTVBoolean False) -> False
+        _ -> bodyCanExit
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyErrs,
@@ -269,8 +321,8 @@ annStmtIf env AS.StmtIf {
     }
 annStmtIf _ _ = error "Unreachable: `annStmtIf` called with non-`StmtIf` expression."
 
--- Annotate an if-else statement.
-annStmtIfElse :: Env -> Stmt -> (AnnStmt, Env)
+-- Annotate an if-then-else statement.
+annStmtIfElse :: Env -> Stmt -> (AnnStmt, Env, Bool)
 annStmtIfElse env AS.StmtIfElse {
     AS.cond = cond,
     AS.bodyT = bodyT,
@@ -282,7 +334,7 @@ annStmtIfElse env AS.StmtIfElse {
     AS.bodyF = annBodyF,
     AS.annot = ann,
     AS.pos = pos
-}, env'') where
+}, env'', thisCanExit) where
     -- Annotate the condition.
     annCond = SSE.annExp (Just T.TBoolean) (doNotRequireLExp env) cond
     -- Cast the condition to a boolean type.
@@ -299,9 +351,9 @@ annStmtIfElse env AS.StmtIfElse {
         Just (CTVBoolean True) -> setUnreachable env
         _ -> env
     -- Annotate the true branch.
-    (annBodyT, envT') = annStmts envT bodyT
+    (annBodyT, envT', bodyTCanExit, bodyTThrows) = annStmts envT bodyT
     -- Annotate the false branch.
-    (annBodyF, envF') = annStmts envF bodyF
+    (annBodyF, envF', bodyFCanExit, bodyFThrows) = annStmts envF bodyF
     -- Body errors.
     bodyTErrs = concatMap (errs . AS.annot) annBodyT
     bodyFErrs = concatMap (errs . AS.annot) annBodyF
@@ -310,18 +362,18 @@ annStmtIfElse env AS.StmtIfElse {
     --   there are no reachable statement);
     -- - Always if it exists a body's reachable statement whose throws field is `Always`;
     -- - Sometimes otherwise.
-    reachableBodyT = filter (not . unreachable . AS.annot) annBodyT
-    bodyTThrows = if all (== Never) (map (throws . AS.annot) reachableBodyT)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableBodyT)
-        then Always
-        else Sometimes
-    reachableBodyF = filter (not . unreachable . AS.annot) annBodyF
-    bodyFThrows = if all (== Never) (map (throws . AS.annot) reachableBodyF)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableBodyF)
-        then Always
-        else Sometimes
+    -- reachableBodyT = filter (not . unreachable . AS.annot) annBodyT
+    -- bodyTThrows = if all (== Never) (map (throws . AS.annot) reachableBodyT)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableBodyT)
+    --     then Always
+    --     else Sometimes
+    -- reachableBodyF = filter (not . unreachable . AS.annot) annBodyF
+    -- bodyFThrows = if all (== Never) (map (throws . AS.annot) reachableBodyF)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableBodyF)
+    --     then Always
+    --     else Sometimes
     -- If the condition has a compile-time value, we can propagate the respective
     -- environments.
     env'' = case condCTVal of
@@ -330,7 +382,7 @@ annStmtIfElse env AS.StmtIfElse {
         Nothing | isUnreachable envF' && isUnreachable envT' -> setUnreachable env
         Nothing -> env
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
-    -- When the if else statement throws.
+    -- When the if-then-else statement throws.
     thisThrows = case condCTVal of
         Just (CTVBoolean True) -> bodyTThrows
         Just (CTVBoolean False) -> bodyFThrows
@@ -338,6 +390,11 @@ annStmtIfElse env AS.StmtIfElse {
             else if (bodyTThrows == Never) && (bodyFThrows == Never) then Never
             else Sometimes
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
+    -- When the if-then-else statement can exit.
+    thisCanExit = case condCTVal of
+        Just (CTVBoolean True) -> bodyTCanExit
+        Just (CTVBoolean False) -> bodyFCanExit
+        _ -> bodyTCanExit || bodyFCanExit
     -- Create the annotation.
     ann = StmtAnn {
         errs = condErrs ++ bodyTErrs ++ bodyFErrs,
@@ -358,10 +415,10 @@ annStmtLoop env AS.StmtLoop {
     AS.annot = ann,
     AS.pos = pos
 }, env'''') where
-    -- Add the `continue` keyword to the environment.
-    env' = addContinue env
+    -- Add the `continue` and `break` keywords to the environment.
+    env' = addBreak $ addContinue env
     -- Annotate the body.
-    (annBody, env'') = annStmts env' body
+    (annBody, env'', bodyCanExit, bodyThrows) = annStmts env' body
     -- Get the errors from the body.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Body throws:
@@ -369,14 +426,17 @@ annStmtLoop env AS.StmtLoop {
     --   there are no reachable statement);
     -- - Always if it exists a body's reachable statement whose throws field is `Always`;
     -- - Sometimes otherwise.
-    reachableBody = filter (not . unreachable . AS.annot) annBody
-    bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableBody)
-        then Always
-        else Sometimes
+    -- reachableBody = filter (not . unreachable . AS.annot) annBody
+    -- alwaysReachedBody = 
+    -- bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableBody)
+    --     then Always
+    --     else Sometimes
     -- Annotate the exit.
-    (annExit, _, canExit, exitThrows) = annLoopExits env'' exit
+    (annExit, _, exitsCanExit, exitThrows) = annLoopExits env'' exit
+    -- If the loop statement can exit.
+    canExit = bodyCanExit || exitsCanExit
     -- If the loop cannot exit the environment after the loop is unreachable.
     env'''' = if canExit then env else setUnreachable env
     -- Get the errors from the exit.
@@ -442,11 +502,11 @@ annLoopExit env AS.LoopExit {
     -- If the condition is always true the body is unreachable.
     (env', canExit) = case condCTVal of
         Just (CTVBoolean True) -> (setUnreachable env, True)
-        Just (CTVBoolean False) -> (env, False)
+        Just (CTVBoolean False) -> (env, bodyCanExit)
         Nothing -> (env, True)
         _ -> error "Unreachable: `castedCond` is casted to a boolean type, so it cannot be a constant of another type."
     -- Annotate the body.
-    (annBody, env'') = annStmts env' body
+    (annBody, env'', bodyCanExit, bodyThrows) = annStmts env' body
     -- Body errors.
     bodyErrs = concatMap (errs . AS.annot) annBody
     -- Body throws:
@@ -454,12 +514,12 @@ annLoopExit env AS.LoopExit {
     --   there are no reachable statement);
     -- - Always if it exists a body's reachable statement whose throws field is `Always`;
     -- - Sometimes otherwise.
-    reachableBody = filter (not . unreachable . AS.annot) annBody
-    bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableBody)
-        then Always
-        else Sometimes
+    -- reachableBody = filter (not . unreachable . AS.annot) annBody
+    -- bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableBody)
+    --     then Always
+    --     else Sometimes
     -- When the exit throws.
     thisThrows = case condCTVal of
         Just (CTVBoolean True) -> Never
@@ -475,7 +535,10 @@ annLoopExit env AS.LoopExit {
     }
 
 -- Annotate a for-each statement.
-annStmtForEach :: Env -> Stmt -> (AnnStmt, Env)
+--
+-- Note: `continue` and `break` keyword aren't permitted inside foreach (unless it is
+-- nested inside a loop).
+annStmtForEach :: Env -> Stmt -> (AnnStmt, Env, Bool)
 annStmtForEach env AS.StmtForEach {
     AS.varIterName = iterName,
     AS.varIterType = iterType,
@@ -489,7 +552,7 @@ annStmtForEach env AS.StmtForEach {
     AS.body = annBody,
     AS.annot = ann,
     AS.pos = pos
-}, env''') where
+}, env''', bodyCanExit) where
     -- Annotate the array expression.
     annArrayExp = SSE.annExp Nothing (doNotRequireLExp env) arrayExp
     -- Get the errors from the array expression.
@@ -504,21 +567,19 @@ annStmtForEach env AS.StmtForEach {
                 else [E.err pos "Array element type mismatch: " ++ show elementsType ++ " is not compatible with " ++ show (T.type_ iterType) ++ "."]
             )
         _ -> (env, [E.err (AS.expPos annArrayExp) "Array expression expected."]) -- No update of the environment.
-    -- -- Add the continue to the environment.
-    -- env'' = addContinue env'
     -- Annotate the body.
-    (annBody, env'') = annStmts env' body
+    (annBody, env'', bodyCanExit, bodyThrows) = annStmts env' body
     -- Body throws:
     -- - Never if the body's reachable statements' throws field is always `Never` (or if
     --   there are no reachable statement);
     -- - Always if it exists a body's reachable statement whose throws field is `Always`;
     -- - Sometimes otherwise.
-    reachableBody = filter (not . unreachable . AS.annot) annBody
-    bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableBody)
-        then Always
-        else Sometimes
+    -- reachableBody = filter (not . unreachable . AS.annot) annBody
+    -- bodyThrows = if all (== Never) (map (throws . AS.annot) reachableBody)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableBody)
+    --     then Always
+    --     else Sometimes
     -- Array size is always >= 1, so it is always executed at least an iteration of the
     -- body -> so the unreachable keyword in the after-body environment is propagated.
     env''' = if isUnreachable env'' then setUnreachable env else env
@@ -530,11 +591,10 @@ annStmtForEach env AS.StmtForEach {
         unreachable = isUnreachable env,
         throws = bodyThrows
     }
-    -- TODO: aggiungere continue.
 annStmtForEach _ _ = error "Unreachable: `annStmtForEach` called with non-`StmtForEach` expression."
 
 -- Annotate a try catch statement.
-annStmtTryCatch :: Env -> Stmt -> (AnnStmt, Env)
+annStmtTryCatch :: Env -> Stmt -> (AnnStmt, Env, Bool)
 annStmtTryCatch env AS.StmtTryCatch {
     AS.try = try,
     AS.catch = catch,
@@ -544,9 +604,9 @@ annStmtTryCatch env AS.StmtTryCatch {
     AS.catch = annCatch,
     AS.annot = ann,
     AS.pos = pos
-}, env''') where
+}, env''', canExit) where
     -- Annotate the try statement.
-    (annTry, env') = annStmts env try
+    (annTry, env', tryCanExit, tryThrows) = annStmts env try
     -- Get the errors from the try statement.
     tryAnnot = map AS.annot annTry
     tryErrs = concatMap errs tryAnnot
@@ -555,15 +615,15 @@ annStmtTryCatch env AS.StmtTryCatch {
     --   there are no reachable statement);
     -- - Always if it exists a try's reachable statement whose throws field is `Always`;
     -- - Sometimes otherwise.
-    reachableTry = filter (not . unreachable . AS.annot) annTry
-    tryThrows = if all (== Never) (map (throws . AS.annot) reachableTry)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableTry)
-        then Always
-        else Sometimes
+    -- reachableTry = filter (not . unreachable . AS.annot) annTry
+    -- tryThrows = if all (== Never) (map (throws . AS.annot) reachableTry)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableTry)
+    --     then Always
+    --     else Sometimes
     -- Annotate the catch statement.
     -- If try never throws then catch is unreachable.
-    (annCatch, env'') = if tryThrows == Never then
+    (annCatch, env'', catchCanExit, catchThrows) = if tryThrows == Never then
         annStmts (setUnreachable env) catch
     else
         annStmts env catch
@@ -575,12 +635,14 @@ annStmtTryCatch env AS.StmtTryCatch {
     --   there are no reachable statement);
     -- - Always if it exists a catch's reachable statement whose throws field is `Always`;
     -- - Sometimes otherwise.
-    reachableCatch = filter (not . unreachable . AS.annot) annCatch
-    catchThrows = if all (== Never) (map (throws . AS.annot) reachableCatch)
-        then Never
-        else if any (== Always) (map (throws . AS.annot) reachableCatch)
-        then Always
-        else Sometimes
+    -- reachableCatch = filter (not . unreachable . AS.annot) annCatch
+    -- catchThrows = if all (== Never) (map (throws . AS.annot) reachableCatch)
+    --     then Never
+    --     else if any (== Always) (map (throws . AS.annot) reachableCatch)
+    --     then Always
+    --     else Sometimes
+    -- If the try-catch statement can exit.
+    canExit = tryCanExit || catchCanExit
     -- Create the annotation.
     ann = StmtAnn {
         errs = tryErrs ++ catchErrs,
