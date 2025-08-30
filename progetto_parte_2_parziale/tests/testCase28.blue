@@ -1,0 +1,17 @@
+-- This example should have an error.
+--
+-- What does this example test:
+-- - const parameter passing modality.
+
+routines
+	main() is do return; end main
+
+    foo(const b: &Array<Boolean; 3>) -> String is
+    do
+        if (*b)[1] then
+            return "W";
+        else
+            (*b)[0]:= true;
+            return "L";
+        end if
+    end foo

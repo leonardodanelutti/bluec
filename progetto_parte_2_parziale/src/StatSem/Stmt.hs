@@ -91,6 +91,8 @@ annStmtAss env AS.StmtAss {
     -- Annotate the left and right expressions.
     annLeft = map (SSE.annExp Nothing (requireLExp env)) left
     annRight = zipWith (\r ty -> SSE.annExp (Just ty) (doNotRequireLExp env) r) right leftTypes
+    -- Check if the left expression is read-only.
+    readOnlyErrs = [E.err pos "Expression `" ++ PP.expPrinter 0 i ++ "` is read-only. Suggestion: change the parameter passing modality." | i <- annLeft, readOnly $ AS.expAnnot i]
     -- Right throws:
     -- - Never if the right expressions always `Never` throw (or if there are no right
     --   expressions);
@@ -116,7 +118,7 @@ annStmtAss env AS.StmtAss {
     errs = leftErrs ++ rightErrs ++ numberErr -- -- Errors are printed in the order of evaluation (l-value is evaluated before r-value).
     -- Create the annotation.
     ann = StmtAnn {
-        errs = errs,
+        errs = errs ++ readOnlyErrs,
         unreachable = isUnreachable env,
         throws = rightThrows
     }

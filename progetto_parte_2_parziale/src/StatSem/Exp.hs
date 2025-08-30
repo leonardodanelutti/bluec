@@ -51,7 +51,7 @@ cast env exp newType = case expType ann of
     T.TError {} -> exp
     oldType | oldType == newType -> exp
     oldType -> case T.sup pos oldType newType of
-        err@T.TError {} -> AS.Cast { AS.e = exp, AS.expAnnot = ExpAnn { expType = err, ctVal = Nothing }, AS.expPos = pos }
+        err@T.TError {} -> AS.Cast { AS.e = exp, AS.expAnnot = ExpAnn { expType = err, ctVal = Nothing, readOnly = False }, AS.expPos = pos }
         ty | ty == newType -> case (exp, valCast) of
             (AS.Cast {}, _) -> exp { AS.expAnnot = castAnn' } -- Simplify cast chains.
             _ -> AS.Cast { AS.e = exp, AS.expAnnot = castAnn', AS.expPos = pos }
@@ -59,7 +59,9 @@ cast env exp newType = case expType ann of
             AS.e = exp,
             AS.expAnnot = ExpAnn {
                 expType = T.TError { T.msgs = [E.err pos $ "Cannot cast expression of type " ++ show oldType ++ " to " ++ show newType ++ "."] },
-                ctVal = Nothing },
+                ctVal = Nothing,
+                readOnly = False
+            },
             AS.expPos = pos }
     where
         pos = AS.expPos exp
@@ -67,7 +69,8 @@ cast env exp newType = case expType ann of
         valCast = ctCast (getCTValue ann) newType -- Compile-time cast.
         castAnn = ExpAnn {
             expType = newType,
-            ctVal   = valCast
+            ctVal   = valCast,
+            readOnly = True
         }
         castAnn' = if mustBeLExp env then addErr castAnn expectedLExpErr else castAnn
         expectedLExpErr = E.err pos "Implicit casting is forbidden in left-hand side expressions."
@@ -86,7 +89,8 @@ annExpLit env AS.Literal { AS.val = exp, AS.expPos = expPos } = AS.Literal {
 } where
     ann = ExpAnn {
         expType = expType,
-        ctVal   = Just ctVal
+        ctVal   = Just ctVal,
+        readOnly = False
     }
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
     (expType, ctVal) = getTypeAndValue exp
@@ -113,7 +117,8 @@ annExpIdent env AS.ExpIdent {
             ctVal = Nothing,
             identCategory = ErrorCategory,
             mode = Nothing,
-            declPos = Nothing
+            declPos = Nothing,
+            readOnly = False
         }
         -- Var identifier.
         (Just (Var varPos ty mode), Nothing) -> ExpIdentAnn {
@@ -121,7 +126,10 @@ annExpIdent env AS.ExpIdent {
             ctVal = Nothing,
             identCategory = VarCategory,
             mode = mode,
-            declPos = Just varPos
+            declPos = Just varPos,
+            readOnly = case mode of
+                Just AS.Mconst  -> True
+                _               -> False
         }
         -- Const identifier.
         (Just (Const constPos val), Nothing) -> ann'
@@ -132,7 +140,8 @@ annExpIdent env AS.ExpIdent {
                 ctVal = Just identVal,
                 identCategory = ConstCategory,
                 mode = Nothing,
-                declPos = Just constPos
+                declPos = Just constPos,
+                readOnly = False
             }
             ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
             expectedLExpErr = E.err pos "Left-hand side expression required, but found constant."
@@ -146,7 +155,10 @@ annExpIdent env AS.ExpIdent {
             ctVal = Nothing,
             identCategory = VarCategory,
             mode = mode,
-            declPos = Just varPos
+            declPos = Just varPos,
+            readOnly = case mode of
+                Just AS.Mconst  -> True
+                _               -> False
         }
         -- Const identifier (the ambiguity is resolved because function calls cannot be
         -- LExp).
@@ -158,7 +170,8 @@ annExpIdent env AS.ExpIdent {
                 ctVal = Just identVal,
                 identCategory = ConstCategory,
                 mode = Nothing,
-                declPos = Just constPos
+                declPos = Just constPos,
+                readOnly = False
             }
             ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
             expectedLExpErr = E.err pos "Left-hand side expression required, but found constant."
@@ -168,7 +181,8 @@ annExpIdent env AS.ExpIdent {
             ctVal = Nothing,
             identCategory = ErrorCategory,
             mode = Nothing,
-            declPos = Nothing
+            declPos = Nothing,
+            readOnly = False
         }
 annExpIdent _ _ = error "Unreachable: `annExpIdent` called with non-`ExpIdent` expression."
 
@@ -216,7 +230,8 @@ annRoutineCall env ident args pos = (ann', castedArgs) where
         expType = routType,
         params = params,
         declPos = declPos,
-        throws = thisThrows
+        throws = thisThrows,
+        readOnly = False
     }
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
     expectedLExpErr = E.err pos "Left-hand side expression required, but found routine call."
@@ -237,7 +252,7 @@ annAndCastRoutArgs env (arg : args) (AS.Param { AS.mode = mode, AS.paramType = T
         castedArg = case mode of
             -- Arguments passed by value do not need to be LExp.
             AS.Mval -> cast (doNotRequireLExp env) (annExp (Just paramType) (doNotRequireLExp env) arg) paramType
-            -- TODO: se è const le variabili non devono essere modificate
+            AS.Mconst -> cast (doNotRequireLExp env) (annExp (Just paramType) (doNotRequireLExp env) arg) paramType
             -- Arguments passed by value-result and reference must be LExp and must be non-constant.
             _       -> cast (requireLExp env) (annExp (Just paramType) (requireLExp env) arg) paramType
 annAndCastRoutArgs _ [] [] = []
@@ -263,20 +278,23 @@ annExpSign expectedType env AS.Sign {
             ctVal = case (getCTValue $ AS.expAnnot annE) of
                 Just (CTVInteger v) -> Just (CTVInteger (-v))
                 Nothing             -> Nothing
-                ctv                 -> error $ "Type unconsistency found: exp annotated as Integer but has " ++ show ctv ++ "." -- Should be unreachable.
+                ctv                 -> error $ "Type unconsistency found: exp annotated as Integer but has " ++ show ctv ++ ".", -- Should be unreachable.
+                readOnly = False
         }
         (_, T.TReal) -> ExpAnn {
             expType = T.TReal,
             ctVal = case (getCTValue $ AS.expAnnot annE) of
                 Just (CTVReal v) -> Just (CTVReal (-v))
                 Nothing          -> Nothing
-                ctv              -> error $ "Type unconsistency found: exp annotated as Real but has " ++ show ctv ++ "." -- Should be unreachable.
+                ctv              -> error $ "Type unconsistency found: exp annotated as Real but has " ++ show ctv ++ ".", -- Should be unreachable.
+                readOnly = False
         }
         _ -> ExpAnn {
             expType = T.TError {
-                T.msgs = [E.err pos "Cannot apply sign to expression of type " ++ show (expType $ AS.expAnnot annE)]
+                T.msgs = [E.err pos "Cannot apply sign to expression of type `" ++ show (expType $ AS.expAnnot annE) ++ "`."]
             },
-            ctVal = Nothing
+            ctVal = Nothing,
+            readOnly = False
         }
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
     expectedLExpErr = E.err pos "Sign is forbidden in left-hand side expressions."
@@ -300,7 +318,8 @@ annExpBinOp env AS.BinOp {
 } where
     ann = ExpAnn {
         expType = newType,
-        ctVal = newVal
+        ctVal = newVal,
+        readOnly = False
     }
     -- Call recursive annotation for both expressions.
     annE1 = annExp Nothing (doNotRequireLExp env) e1 -- `Nothing` because possibly multiple types are expected
@@ -371,7 +390,8 @@ annExpNot env AS.BoolNeg {
         expType = castedTypeE,
         ctVal = case castedValE of
             Just (CTVBoolean v) -> Just (CTVBoolean (not v))
-            _ -> Nothing
+            _ -> Nothing,
+        readOnly = False
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found not operation."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
@@ -394,7 +414,8 @@ annExpRelOp env AS.RelOp {
 } where
     ann = ExpAnn {
         expType = newType,
-        ctVal = newVal
+        ctVal = newVal,
+        readOnly = False
     }
     -- Call recursive annotation for both expressions.
     annE1 = annExp Nothing (doNotRequireLExp env) e1 -- `Nothing` because any type is acceptable
@@ -443,7 +464,8 @@ annExpRef expectedType env AS.Ref {
         expType = case refType of
             e@T.TError {} -> e
             _ -> T.TReference refType,
-        ctVal = Nothing
+        ctVal = Nothing,
+        readOnly = False
     }
     refType = expType $ AS.expAnnot annE
     expectedLExpErr = E.err pos "Reference is forbidden in left-hand side expressions."
@@ -473,7 +495,9 @@ annExpDeref expectedType env AS.Deref {
             _ -> T.TError {
                 T.msgs = [E.err pos "Cannot dereference expression of type " ++ show (expType $ AS.expAnnot annE) ++ "."]
             },
-        ctVal = Nothing
+        ctVal = Nothing,
+        -- Dereferencing a read-only reference yields a read-only value.
+        readOnly = readOnly $ AS.expAnnot annE
     }
 annExpDeref _ _ _ = error "Unreachable: `annExpDeref` called with non-`Deref` expression."
 
@@ -502,7 +526,9 @@ annExpArrayIndex env AS.ArrayIndex {
         }
     ann = ExpAnn {
         expType = ty,
-        ctVal = Nothing -- Constants cannot be arrays.
+        ctVal = Nothing, -- Constants cannot be arrays.
+        -- Dereferencing a read-only reference yields a read-only value.
+        readOnly = readOnly $ AS.expAnnot annE
     }
 annExpArrayIndex _ _ = error "Unreachable: `annExpArrayIndex` called with non-`ArrayIndex` expression."
 
@@ -539,7 +565,8 @@ annExpArray expectedType env AS.Array {
                 T.elementsType = supType,
                 T.size = length elements
             },
-        ctVal = Nothing -- Constants cannot be arrays.
+        ctVal = Nothing, -- Constants cannot be arrays.
+        readOnly = False
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
@@ -569,7 +596,8 @@ annExpArrayExpr expectedType env AS.ArrayExpr {
     -- Annotation.
     ann = ExpAnn {
         expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have at least one index."] },
-        ctVal = Nothing
+        ctVal = Nothing,
+        readOnly = False
     }
 annExpArrayExpr Nothing env AS.ArrayExpr {
     AS.e = e,
@@ -587,7 +615,8 @@ annExpArrayExpr Nothing env AS.ArrayExpr {
     ann = ExpAnn {
         -- Errors from annE are not propagated because potentially contain misleading errors (like unbounded indexes variables).
         expType = T.TError { T.msgs = [E.err pos "Array expression type cannot be inferred. Suggestion: create a constant or a variable and specify the type."] },
-        ctVal = Nothing
+        ctVal = Nothing,
+        readOnly = False
     }
 annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.ArrayExpr {
     AS.e = e,
@@ -616,7 +645,8 @@ annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.Array
                 T.size = s
             }
             e:_ -> T.TError { T.msgs = [e] }, -- Take only the first error since they are all the same
-        ctVal = Nothing -- Constants cannot be arrays.
+        ctVal = Nothing, -- Constants cannot be arrays.
+        readOnly = False
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
@@ -652,7 +682,8 @@ annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.Array
                 T.size = s
             }
             e:_ -> T.TError { T.msgs = [e] }, -- Take only the first error since they are all the same
-        ctVal = Nothing -- Constants cannot be arrays.
+        ctVal = Nothing, -- Constants cannot be arrays.
+        readOnly = False
     }
     expectedLExpErr = E.err pos "Left-hand side expression required, but found array."
     ann' = if mustBeLExp env then addErr ann expectedLExpErr else ann
@@ -673,7 +704,8 @@ annExpArrayExpr (Just _) env AS.ArrayExpr {
     -- Annotation.
     ann = ExpAnn {
         expType = T.TError { T.msgs = eErrs ++ [E.err pos "Array expression must have an array type, but has type " ++ show (expType (AS.expAnnot annE)) ++ "."] }, -- TODO: pretty print type in err
-        ctVal = Nothing
+        ctVal = Nothing,
+        readOnly = False
     }
 annExpArrayExpr _ _ _ = error "Unreachable: `annExpArrayExpr` called with non-`ArrayExpr` expression."
 -- TODO: array expression can now build non-constant arrays. It is right?
@@ -714,7 +746,8 @@ annExpIfElse expectedType env AS.IfElse {
         _ -> Nothing
     ann = ExpAnn {
         expType = branchesType,
-        ctVal = ctVal
+        ctVal = ctVal,
+        readOnly = False
     }
     ann' = foldl addErr (foldl addErr (foldl addErr ann condErrs) thenErrs) elseErrs
 annExpIfElse _ _ _ = error "Unreachable: `annExpIfElse` called with non-`IfElse` expression."

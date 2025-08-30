@@ -29,7 +29,11 @@ data Env = Env {
 data SymbolEntry
     -- Posn refers of the whole declaration (meaning that different symbols can have the
     -- same Posn if they are declared together).
-    = Var LG.Posn T.TypePos (Maybe AS.Mode)
+    = Var {
+        varPos :: LG.Posn,
+        varType :: T.TypePos,
+        varMode :: (Maybe AS.Mode)
+    }
     | Const LG.Posn AS.Literal
     deriving (Show)
 
@@ -72,14 +76,14 @@ emptyEnv = Env Map.empty Map.empty Map.empty
 -- Pre-defined routines.
 preludeRoutines :: [(AS.Ident, RoutEntry)]
 preludeRoutines = [
-        ((AS.Ident "writeInt" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TInteger LG.defaultPosn) LG.defaultPosn] Never),
-        ((AS.Ident "writeReal" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TReal LG.defaultPosn) LG.defaultPosn] Never),
-        ((AS.Ident "writeChar" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TChar LG.defaultPosn) LG.defaultPosn] Never),
-        ((AS.Ident "writeString" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TString LG.defaultPosn) LG.defaultPosn] Never),
-        ((AS.Ident "readInt" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TInteger LG.defaultPosn) Never),
-        ((AS.Ident "readReal" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TReal LG.defaultPosn) Never),
-        ((AS.Ident "readChar" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TChar LG.defaultPosn) Never),
-        ((AS.Ident "readString" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TString LG.defaultPosn) Never)
+        ((AS.Ident "writeInt" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TInteger LG.defaultPosn) LG.defaultPosn] Sometimes),
+        ((AS.Ident "writeReal" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TReal LG.defaultPosn) LG.defaultPosn] Sometimes),
+        ((AS.Ident "writeChar" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TChar LG.defaultPosn) LG.defaultPosn] Sometimes),
+        ((AS.Ident "writeString" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TString LG.defaultPosn) LG.defaultPosn] Sometimes),
+        ((AS.Ident "readInt" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TInteger LG.defaultPosn) Sometimes),
+        ((AS.Ident "readReal" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TReal LG.defaultPosn) Sometimes),
+        ((AS.Ident "readChar" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TChar LG.defaultPosn) Sometimes),
+        ((AS.Ident "readString" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TString LG.defaultPosn) Sometimes)
     ]
 
 -- Construct an environment with the pre-defined routines.
@@ -153,7 +157,8 @@ data Ann
     ----------------------------
     = ExpAnn {
         expType :: T.Type,
-        ctVal :: Maybe CTValue
+        ctVal :: Maybe CTValue,
+        readOnly :: Bool
     }
     | ExpFunCallAnn {
         expType :: T.Type,
@@ -163,7 +168,8 @@ data Ann
         -- position if they are declared together).
         -- Nothing if the identifier is not found in the environment.
         declPos :: Maybe LG.Posn,
-        throws :: When
+        throws :: When,
+        readOnly :: Bool
     }
     | ExpIdentAnn {
         expType :: T.Type,
@@ -173,7 +179,8 @@ data Ann
         -- The position of the whole declaration (different symbols can have the same
         -- position if they are declared together).
         -- Nothing if the identifier is not found in the environment.
-        declPos :: Maybe LG.Posn
+        declPos :: Maybe LG.Posn,
+        readOnly :: Bool
     }
     -----------------------------
     -- DECLARATION ANNOTATIONS --

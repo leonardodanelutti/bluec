@@ -225,7 +225,7 @@ genUnknownExpr exp addrIn = do
             genArrayIndexing exp ann addrOut
 
         -- ConstCategory is handled by genExpr
-        AS.ExpIdent ident (SS.ExpIdentAnn ty _ SS.VarCategory mode (Just declPos)) _ -> do
+        AS.ExpIdent ident (SS.ExpIdentAnn ty _ SS.VarCategory mode (Just declPos) _) _ -> do
             let identName = PName $ ProgramName (AS.identName ident) declPos
                 identName' = PName $ ProgramName (AS.identName ident ++ "'") declPos
                 tyTAC = castTypeToTACType ty

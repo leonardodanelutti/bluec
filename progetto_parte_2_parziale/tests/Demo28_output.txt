@@ -1,0 +1,5 @@
+example 28: const parameter passing modality
+
+
+Static Semantics Analysis Failed:
+tests/testCase28.blue:14:14-14:28: ERROR: Expression `(*b)[0]` is read-only. Suggestion: change the parameter passing modality.
