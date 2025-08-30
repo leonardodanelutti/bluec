@@ -98,11 +98,10 @@ annStmtAss env AS.StmtAss {
     --   expressions);
     -- - Always if it exists a right expression whose throws field is `Always`;
     -- - Sometimes otherwise.
-    rightThrows = if all (== Never) (map (annThrows . AS.expAnnot) annRight)
-        then Never
-        else if any (== Always) (map (annThrows . AS.expAnnot) annRight)
-        then Always
-        else Sometimes
+    rightThrows
+      | all ((== Never) . annThrows . AS.expAnnot) annRight = Never
+      | any ((== Always) . annThrows . AS.expAnnot) annRight = Always
+      | otherwise = Sometimes
     -- Check that the left and right expressions have the same number of elements.
     numberErr = [E.err pos "The number of identifiers does not match number of values." | length left /= length right]
     -- Get expected types from the left expressions.
@@ -428,13 +427,11 @@ annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, env'', canExit, thisThrow
         xThrows = throws . AS.loopExitAnnot $ xAnn
         (xsAnn, env'', xscanExit, xsThrows) = annLoopExits env' xs
         canExit = (xcanExit || xscanExit) && not (isUnreachable env)
-        thisThrows = if xThrows == Never && xsThrows == Never
-            then Never
-            else if xcanExit
-            then Sometimes
-            else if xThrows == Always || xsThrows == Always
-            then Always
-            else Sometimes
+        thisThrows
+          | xThrows == Never && xsThrows == Never = Never
+          | xcanExit = Sometimes
+          | xThrows == Always || xsThrows == Always = Always
+          | otherwise = Sometimes
 annLoopExits env [] = ([], env, False, Never) -- If there are no exits, the list never returns, cannot exit, and never throws.
 
 -- Annotate an exit statement.
@@ -512,7 +509,7 @@ annStmtForEach env AS.StmtForEach {
     -- Check that it is an array; if so check if its elements' type can be casted to the
     -- iterator type; if so update the environment accordingly.
     (env', arrayNewErr) = case expType $ AS.expAnnot annArrayExp of
-        T.TArray { T.elementsType = elementsType } -> mergeEnv env (envFromSymbolBindings [(iterName, (Var pos (T.TypePos elementsType LG.defaultPosn) (Just AS.Mref) arrayReadOnly))])
+        T.TArray { T.elementsType = elementsType } -> mergeEnv env (envFromSymbolBindings [(iterName, Var pos (T.TypePos elementsType LG.defaultPosn) (Just AS.Mref) arrayReadOnly)])
         T.TError {} -> (env, [])
         _ -> (env, [E.err (AS.expPos annArrayExp) "Array expression expected."]) -- No update of the environment.
     -- Annotate the body.

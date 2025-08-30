@@ -74,16 +74,14 @@ annConstA env AS.ConstAss {
     AS.constAnnot = ann,
     AS.constPos = pos
 } where
-    numberErr = if length idents /= length values
-                then [E.err pos "The number of identifiers does not match number of values."]
-                else []
+    numberErr = [E.err pos "The number of identifiers does not match number of values." | length idents /= length values]
     valuesAnn = map (annExp (Just (T.type_ ty)) (doNotRequireLExp env)) values
-    castedValuesAnn = map (\x -> (cast (doNotRequireLExp env) x (T.type_ ty))) valuesAnn
+    castedValuesAnn = map (\x -> cast (doNotRequireLExp env) x (T.type_ ty)) valuesAnn
     tryLiterals = map ctvToLiteral castedValuesAnn
     (literals, errs) = partitionEithers tryLiterals
     ann = DeclAnn {
         bindings = envFromSymbolBindings (zip idents (map (Const pos) literals)),
-        errs = (concat errs) ++ numberErr
+        errs = concat errs ++ numberErr
     }
 
 -- Annotate a list of variable declarations.
@@ -114,14 +112,12 @@ annVarA env AS.VarAss {
     AS.varAnnot = ann,
     AS.varPos = pos
 } where
-    numberErr = if length idents /= length values
-                then [E.err pos "The number of identifiers does not match number of values."]
-                else []
+    numberErr = [E.err pos "The number of identifiers does not match number of values." | length idents /= length values]
     valuesAnn = map (annExp (Just (T.type_ ty)) (doNotRequireLExp env)) values
-    castedValuesAnn = map (\x -> (cast (doNotRequireLExp env) x (T.type_ ty))) valuesAnn
+    castedValuesAnn = map (\x -> cast (doNotRequireLExp env) x (T.type_ ty)) valuesAnn
     errs = T.getErrs $ map (expType . AS.expAnnot) castedValuesAnn
     ann = DeclAnn {
-        bindings = envFromSymbolBindings (zip idents (repeat (Var pos ty Nothing False))),
+        bindings = envFromSymbolBindings (map (, Var pos ty Nothing False) idents),
         errs = errs ++ numberErr
     }
 
@@ -140,7 +136,7 @@ routinesEnv :: [AS.Routine Ann] -> (Env, [String])
 routinesEnv [] = (emptyEnv, [])
 routinesEnv (r : rs) = (thisEnv, thisErrs ++ nextErrs) where
     (thisEnv, thisErrs) = mergeEnv (bindings $ AS.routAnnot r) nextEnv
-    (nextEnv, nextErrs) = (routinesEnv rs)
+    (nextEnv, nextErrs) = routinesEnv rs
 
 -- Annotate a routine declaration.
 annRoutine :: Env -> AS.Routine () -> AS.Routine Ann
@@ -172,9 +168,7 @@ annRoutine env AS.Function {
     bodyErrs = errs $ AS.routBodyAnnot bodyAnn
     -- Check if the routine body contains a return statement for every flow of control
     -- (i.e. at the end of the RoutBody the environment is unreachable)
-    doNotAlwaysReturnErr = if isUnreachable env'''
-        then []
-        else [E.err pos "The function \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
+    doNotAlwaysReturnErr = [E.err pos "The function \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control." | not (isUnreachable env''')]
     -- Function throws if its body throws.
     funThrows = throws $ AS.routBodyAnnot bodyAnn
     -- Create the annotation.
@@ -205,9 +199,7 @@ annRoutine env AS.Procedure {
     bodyErrs = errs $ AS.routBodyAnnot bodyAnn
     -- Check if the routine body contains a return statement for every flow of control
     -- (i.e. at the end of the RoutBody the environment is unreachable)
-    doNotAlwaysReturnErr = if isUnreachable env'''
-        then []
-        else [E.err pos "The procedure \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control."]
+    doNotAlwaysReturnErr = [E.err pos "The procedure \"" ++ PP.identPrinter ident ++ "\" does not contain a return statement for every flow of control." | not (isUnreachable env''')]
     -- Procedure throws if its body throws.
     procThrows = throws $ AS.routBodyAnnot bodyAnn
     -- Create the annotation.

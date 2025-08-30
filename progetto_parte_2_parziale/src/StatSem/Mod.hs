@@ -11,7 +11,7 @@ import qualified Errors         as E
 
 -- Main annotation function.
 annotate :: Decls -> AnnDecls
-annotate decls = annDecls preludeEnv decls
+annotate = annDecls preludeEnv
 
 -- Function to retrieve errors from an annotated AST.
 getErrs :: AnnDecls -> [String]
@@ -20,10 +20,10 @@ getErrs AS.ProgramDecl { AS.declsAnnot = _ } = error "Unreachable: `ProgramDecl`
 
 -- Check if there is the main procedure.
 checkMain :: AnnDecls -> [String]
-checkMain AS.ProgramDecl { AS.declsAnnot = DeclAnn { bindings = Env { routines = routinesEnv } } } = 
+checkMain AS.ProgramDecl { AS.declsAnnot = DeclAnn { bindings = Env { routines = routinesEnv } } } =
     case Map.lookup (AS.Ident "main" LG.defaultPosn) routinesEnv of
         Just (Proc _ [] _)  -> []
-        Just (Proc _ _ _)   -> [": " ++ E.prettyerr ++ ": `main` procedure must have no parameters."]
-        Just (Fun _ _ _ _)  -> [": " ++ E.prettyerr ++ ": `main` routine must be a procedure."]
+        Just (Proc {})   -> [": " ++ E.prettyerr ++ ": `main` procedure must have no parameters."]
+        Just (Fun {})  -> [": " ++ E.prettyerr ++ ": `main` routine must be a procedure."]
         _                   -> [": " ++ E.prettyerr ++ ": Missing `main` procedure."]
 checkMain AS.ProgramDecl { AS.declsAnnot = _ } = error "Unreachable: `ProgramDecl` annotated with an annotation other than `DeclAnn`."

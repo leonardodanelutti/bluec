@@ -271,7 +271,7 @@ annExpSign expectedType env AS.Sign {
     ann = case (expType $ AS.expAnnot intCastedAnnE, expType $ AS.expAnnot realCastedAnnE) of
         (T.TInteger, _) -> ExpAnn {
             expType = T.TInteger,
-            ctVal = case (getCTValue $ AS.expAnnot annE) of
+            ctVal = case getCTValue $ AS.expAnnot annE of
                 Just (CTVInteger v) -> Just (CTVInteger (-v))
                 Nothing             -> Nothing
                 ctv                 -> error $ "Type unconsistency found: exp annotated as Integer but has " ++ show ctv ++ ".", -- Should be unreachable.
@@ -279,7 +279,7 @@ annExpSign expectedType env AS.Sign {
         }
         (_, T.TReal) -> ExpAnn {
             expType = T.TReal,
-            ctVal = case (getCTValue $ AS.expAnnot annE) of
+            ctVal = case getCTValue $ AS.expAnnot annE of
                 Just (CTVReal v) -> Just (CTVReal (-v))
                 Nothing          -> Nothing
                 ctv              -> error $ "Type unconsistency found: exp annotated as Real but has " ++ show ctv ++ ".", -- Should be unreachable.
@@ -636,7 +636,7 @@ annExpArrayExpr (Just T.TArray { T.elementsType = ty, T.size = s }) env AS.Array
     bindingEnvs = map envFromSymbolBindings bindings
     envs = map (fst . mergeEnv env) bindingEnvs -- The error can be ignored because there are no new routine bindings.
     -- Annotate e.
-    annEs = map (\env -> (annExp (Just ty) (doNotRequireLExp env) e)) envs
+    annEs = map (\env -> annExp (Just ty) (doNotRequireLExp env) e) envs
     -- Cast to the expected type.
     castedElements = map (\e -> cast (doNotRequireLExp env) e ty) annEs -- Cast all elements to the super type.
     -- Get errors.

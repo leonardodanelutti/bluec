@@ -32,7 +32,7 @@ data SymbolEntry
     = Var {
         varPos :: LG.Posn,
         varType :: T.TypePos,
-        varMode :: (Maybe AS.Mode),
+        varMode :: Maybe AS.Mode,
         varReadOnly :: Bool
     }
     | Const LG.Posn AS.Literal
@@ -86,14 +86,14 @@ emptyEnv = Env Map.empty Map.empty Map.empty
 -- Pre-defined routines.
 preludeRoutines :: [(AS.Ident, RoutEntry)]
 preludeRoutines = [
-        ((AS.Ident "writeInt" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TInteger LG.defaultPosn) LG.defaultPosn] Sometimes),
-        ((AS.Ident "writeReal" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TReal LG.defaultPosn) LG.defaultPosn] Sometimes),
-        ((AS.Ident "writeChar" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TChar LG.defaultPosn) LG.defaultPosn] Sometimes),
-        ((AS.Ident "writeString" LG.defaultPosn), Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TString LG.defaultPosn) LG.defaultPosn] Sometimes),
-        ((AS.Ident "readInt" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TInteger LG.defaultPosn) Sometimes),
-        ((AS.Ident "readReal" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TReal LG.defaultPosn) Sometimes),
-        ((AS.Ident "readChar" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TChar LG.defaultPosn) Sometimes),
-        ((AS.Ident "readString" LG.defaultPosn), Fun LG.defaultPosn [] (T.TypePos T.TString LG.defaultPosn) Sometimes)
+        (AS.Ident "writeInt" LG.defaultPosn, Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TInteger LG.defaultPosn) LG.defaultPosn] Sometimes),
+        (AS.Ident "writeReal" LG.defaultPosn, Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TReal LG.defaultPosn) LG.defaultPosn] Sometimes),
+        (AS.Ident "writeChar" LG.defaultPosn, Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TChar LG.defaultPosn) LG.defaultPosn] Sometimes),
+        (AS.Ident "writeString" LG.defaultPosn, Proc LG.defaultPosn [AS.Param AS.Mval (AS.Ident "value" LG.defaultPosn) (T.TypePos T.TString LG.defaultPosn) LG.defaultPosn] Sometimes),
+        (AS.Ident "readInt" LG.defaultPosn, Fun LG.defaultPosn [] (T.TypePos T.TInteger LG.defaultPosn) Sometimes),
+        (AS.Ident "readReal" LG.defaultPosn, Fun LG.defaultPosn [] (T.TypePos T.TReal LG.defaultPosn) Sometimes),
+        (AS.Ident "readChar" LG.defaultPosn, Fun LG.defaultPosn [] (T.TypePos T.TChar LG.defaultPosn) Sometimes),
+        (AS.Ident "readString" LG.defaultPosn, Fun LG.defaultPosn [] (T.TypePos T.TString LG.defaultPosn) Sometimes)
     ]
 
 -- Construct an environment with the pre-defined routines.

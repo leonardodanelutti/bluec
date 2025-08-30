@@ -34,13 +34,13 @@ declarationsPrinter :: (Show a) => Int -> Declarations a -> String
 declarationsPrinter n (ProgramDecl consts vars routines _) =
     unlines $
         (if not (null consts)
-            then [indent n ++ "const"] ++ map (constPrinter (n+1)) consts
+            then (indent n ++ "const") : map (constPrinter (n+1)) consts
             else []) ++
         (if not (null vars)
-            then [indent n ++ "var"] ++ map (varPrinter (n+1)) vars
+            then (indent n ++ "var") : map (varPrinter (n+1)) vars
             else []) ++
         (if not (null routines)
-            then [indent n ++ "routines"] ++ map (routinePrinter (n+1)) routines
+            then (indent n ++ "routines") : map (routinePrinter (n+1)) routines
             else [])
 -- Pretty print di una costante
 constPrinter :: (Show a) => Int -> ConstA a -> String
@@ -70,8 +70,8 @@ routinePrinter n (Procedure ident params body _ _) =
 -- Corpo della routine
 routineBodyPrinter :: Show a => Int -> RoutBody a -> String
 routineBodyPrinter n (RoutBody decls statements _) =
-    (if null (declarationsPrinter n decls) 
-        then "" 
+    (if null (declarationsPrinter n decls)
+        then ""
         else declarationsPrinter n decls) ++
     (if null statements
         then ""
@@ -102,7 +102,7 @@ expPrinter n exp =
         ArrayExpr e indexes _ _ -> "[" ++ expPrinter n e ++ ": " ++ identsPrinter indexes ++ "]"
         -- IfElse
         IfElse cond thenBranch elseBranch _ pos ->
-            if (sameLine pos)
+            if sameLine pos
                 then "if " ++ expPrinter n cond ++ " then " ++ expPrinter n thenBranch ++ " else " ++ expPrinter n elseBranch ++ " end if"
                 else "if " ++ expPrinter n cond ++ "\n"
                     ++ indent n ++ "then\n"
@@ -182,7 +182,7 @@ statementsPrinter n statements = unlines (map (statementPrinter n) statements)
 exitPrinter :: Show a => Int -> Exit a -> String
 exitPrinter n (LoopExit e body _ _) =
     indent n ++ "exit on " ++ expPrinter (n+1) e ++ ";" ++
-    if null body 
+    if null body
         then ""
         else "\n" ++ statementsPrinter n body
 
