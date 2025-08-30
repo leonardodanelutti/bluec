@@ -54,10 +54,11 @@ test@17:1:
       y'@17:29 =(char) *y@17:29
       # End of preamble
       if y'@17:29 !=(char) '?' goto L1
-      t0 =(int) *x@17:10
-      x@17:10 =(int) t0 +(int) 1
-L1:   t1 =(int) *x@17:10
+      t1 =(int) *x@17:10
+      t0 =(int) t1 +(int) 1
+      *x@17:10 =(int) t0
+L1:   t2 =(int) *x@17:10
       # Start of post-amble
       *y@17:29 =(char) y'@17:29
-      return t1
+      return t2
 

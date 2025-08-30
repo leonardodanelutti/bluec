@@ -881,9 +881,15 @@ data LExprRes
 
 genLExpr :: AS.Exp SS.Ann -> StateMonad LExprRes
 genLExpr exp = case exp of
-    AS.ExpIdent name (SS.ExpIdentAnn {SS.declPos = Just pos}) _ -> do
-        let identName = PName $ ProgramName (AS.identName name) pos
-        return $ Simple identName
+    AS.ExpIdent name (SS.ExpIdentAnn { SS.declPos = Just declPos, SS.mode = mode }) _ -> do
+        let identName = PName $ ProgramName (AS.identName name) declPos
+            identName' = PName $ ProgramName (AS.identName name ++ "'") declPos
+        return $ case mode of
+                Just AS.Mvalres -> Simple identName'
+                Just AS.Mref -> RefSet identName
+                Just AS.Mval -> Simple identName
+                Nothing -> Simple identName
+        --return $ Simple identName
     AS.Deref expr _ _ -> do
         addr <- genExprTmp expr
         return $ RefSet addr
