@@ -30,17 +30,22 @@ annStmts env [] = ([], env)
 -- Annotate a statement node.
 -- The environment is propagated because statements can make the next ones unreachable.
 annStmt :: Env -> Stmt -> (AnnStmt, Env)
-annStmt env stmt@AS.StmtAss{} = annStmtAss env stmt
-annStmt env stmt@AS.StmtRoutCall{} = annStmtRoutCall env stmt
-annStmt env stmt@AS.StmtReturn{} = (annStmtReturn env stmt, setUnreachable env)
-annStmt env stmt@AS.StmtReturnEmpty{} = (annStmtReturnEmpty env stmt, setUnreachable env)
-annStmt env stmt@AS.StmtContinue{} = (annStmtContinue env stmt, setUnreachable env)
-annStmt env stmt@AS.StmtIf{} = annStmtIf env stmt
-annStmt env stmt@AS.StmtIfElse{} = annStmtIfElse env stmt
-annStmt env stmt@AS.StmtLoop{} = annStmtLoop env stmt
-annStmt env stmt@AS.StmtForEach{} = annStmtForEach env stmt
-annStmt env stmt@AS.StmtTryCatch{} = annStmtTryCatch env stmt
-annStmt env stmt@AS.StmtThrow{} = (annStmtThrow env stmt, setUnreachable env)
+annStmt env stmt = (stmtAnn, env'') where
+    (stmtAnn, env') = case stmt of
+        AS.StmtAss{} -> annStmtAss env stmt
+        AS.StmtRoutCall{} -> annStmtRoutCall env stmt
+        AS.StmtReturn{} -> (annStmtReturn env stmt, setUnreachable env)
+        AS.StmtReturnEmpty{} -> (annStmtReturnEmpty env stmt, setUnreachable env)
+        AS.StmtContinue{} -> (annStmtContinue env stmt, setUnreachable env)
+        AS.StmtIf{} -> annStmtIf env stmt
+        AS.StmtIfElse{} -> annStmtIfElse env stmt
+        AS.StmtLoop{} -> annStmtLoop env stmt
+        AS.StmtForEach{} -> annStmtForEach env stmt
+        AS.StmtTryCatch{} -> annStmtTryCatch env stmt
+        AS.StmtThrow{} -> (annStmtThrow env stmt, setUnreachable env)
+        _ -> error "Unreachable: `annStmt` called with unknown statement."
+    ann = AS.annot stmtAnn
+    env'' = if throws ann == Always then setUnreachable env' else env'
 
 -- Annotate an assignment statement.
 annStmtAss :: Env -> Stmt -> (AnnStmt, Env)
@@ -399,7 +404,7 @@ annLoopExits env (x@AS.LoopExit{}:xs) = (xAnn : xsAnn, env'', canExit, thisThrow
         (xAnn, env', xcanExit) = annLoopExit env x
         xThrows = throws . AS.loopExitAnnot $ xAnn
         (xsAnn, env'', xscanExit, xsThrows) = annLoopExits env' xs
-        canExit = xcanExit || xscanExit
+        canExit = (xcanExit || xscanExit) && not (isUnreachable env)
         thisThrows = if xThrows == Never && xsThrows == Never
             then Never
             else if xcanExit
