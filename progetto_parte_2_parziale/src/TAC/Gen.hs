@@ -90,7 +90,9 @@ createTemps identifiers (firstValue:remainingValues) declarationPos = do
         -- Check each remaining expression for dependencies on the current identifier
         updatedExpressions <- mapM (handleDependency currentIdents (SS.expType $ AS.expAnnot currentValue)) expressionsToCheck
 
-        return (tail updatedExpressions, processedValues ++ [head updatedExpressions])
+        case updatedExpressions of
+            (firstUpdated:restUpdated) -> return (restUpdated, processedValues ++ [firstUpdated])
+            [] -> return ([], processedValues)
     processIdentifierDependencies _ _ = error "processIdentifierDependencies: Unexpected empty processedValues"
 
     handleDependency :: [AS.Ident] -> T.Type -> AS.Exp SS.Ann -> StateMonad (AS.Exp SS.Ann)
