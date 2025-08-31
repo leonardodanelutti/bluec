@@ -857,6 +857,9 @@ Oltre alle istruzioni presentate durante le lezioni, sono state introdotte le se
 - `Throw`, salta al label dell'handler delle eccezioni più in alto nello stack;
 - `Custom str`, permette di generare istruzioni personalizzate; ad esempio `END_PROGRAM` che segnala la fine del programma;
 - `Comment`, consente di inserire commenti nel codice TAC.
+
+E' stato inoltre assunto che il TAC supporti solamente i seguenti tipi: interi, reali, caratteri, booleani e indirizzi. Gli array vengono gestiti come indirizzi e le operazioni di indicizzazione del tipo `a[i]` hanno il seguente significato: `*(a + i)`.
+
 \
 
 == Design e convenzioni del TAC
