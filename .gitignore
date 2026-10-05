@@ -14,3 +14,5 @@ ParGrammar.hs
 LexGrammar.hs
 TestGrammar
 /.vscode
+# Course material (not ours to publish)
+*Testo*.pdf
